@@ -1,0 +1,1 @@
+gcc ../_Scripts/Engine.c ../_Scripts/Moves.c EngineTests.c -o EngineTests.exe
