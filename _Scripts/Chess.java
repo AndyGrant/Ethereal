@@ -188,6 +188,7 @@ public class Chess implements GameState{
 		}
 		
 		validMoves = JChessEngine.getAllValid(types,colors,moved,lastMove,gameTurn);
+		//makeMove(null);
 	}
 	
 	public void paint(Graphics g){
@@ -222,14 +223,12 @@ public class Chess implements GameState{
 	public void makeMove(final JMove m){
 		if (waitingOnComputer)
 			return;
-			
-		m.makeMove(types,colors,moved);
-		lastMove = m;
-		if (online){
-			
-		}
 		
-		else if(computer){	
+		if (m != null)
+			m.makeMove(types,colors,moved);
+		lastMove = m;
+		
+		if(computer){	
 			waitingOnComputer = true;
 			parent.repaint();
 			EventQueue.invokeLater(
@@ -239,8 +238,13 @@ public class Chess implements GameState{
 							Process engine = Runtime.getRuntime().exec(buildCommandLineExecuteString(lastMove));
 							engine.waitFor();
 							int AImoveIndex = engine.exitValue();
-							if (AImoveIndex == -1)
+							if (AImoveIndex == -1){
 								activeGame = false;
+								System.out.println("Fatal Error");
+								while (true){
+									
+								}
+							}
 							else{
 								JMove AIMove = JChessEngine.getAllValid(types,colors,moved,lastMove,!gameTurn).get(AImoveIndex);
 								AIMove.makeMove(types,colors,moved);
@@ -304,7 +308,7 @@ public class Chess implements GameState{
 		else
 			command += "0";
 		
-		if (last_move.enablesEnpass)
+		if (last_move != null && last_move.enablesEnpass)
 			command += "4" + last_move.endX + "" + last_move.endY;
 		else
 			command += "000";
