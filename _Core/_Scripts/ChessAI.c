@@ -109,11 +109,12 @@ int findBestMoveIndex(struct Board * board, int * last_move, int turn){
 	int * unsorted = findAllValidMoves(board,turn,&size_unsorted,last_move);
 	
 	int j;
+	int index[4] = {0,1,2,6};
 	for(i = 0; i < size; i++){
-		for(j = 0; j < 7; j++){
-			if (unsorted[i*7+j] != best[j])
+		for(j = 0; j < 4; j++){
+			if (unsorted[i*7+index[j]] != best[index[j]])
 				j = 7;
-			else if (j == 6){
+			else if (j == 3){
 				free(unsorted);
 				return i;
 			}
