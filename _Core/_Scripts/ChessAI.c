@@ -38,7 +38,7 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 		return -1;
 	
 	if (USE_GOOD_HEURISTIC == 1)
-		moves = goodHeuristic(board,size,moves,turn);
+		moves = goodHeuristic(table,board,size,moves,turn);
 		
 	int * moves_pointer = moves;
 	
@@ -50,7 +50,7 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 	TOTAL_MOVES_FOUND += size;
 	for(i = 0; i < size; i++, moves += 7){
 		temp = TOTAL_BOARDS_SEARCHED;
-		values[i] = alphaBetaPrune(board,!turn,moves,DEPTH,alpha,beta,turn);
+		values[i] = alphaBetaPrune(table, board,!turn,moves,DEPTH,alpha,beta,turn);
 		if (values[i] > alpha)
 			alpha = values[i];
 		printf("#%d \t Value: %d \t Alpha: %d \t Searched: %d \n",i,values[i],alpha,TOTAL_BOARDS_SEARCHED-temp);
@@ -88,7 +88,7 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 	return -1;
 }
 
-int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, int beta, int evaluating_player){	
+int alphaBetaPrune(TTable *table, Board * board, int turn, int * move, int depth, int alpha, int beta, int evaluating_player){	
 
 	applyGenericMove(board,move);	
 	if (depth == 0){
@@ -126,7 +126,7 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 	if (turn == evaluating_player){
 		value = -MATE - 1;
 		for(i = 0; i < size; i++, moves += 7){
-			v = alphaBetaPrune(board,!turn,moves,depth-1,alpha,beta,evaluating_player);
+			v = alphaBetaPrune(table, board,!turn,moves,depth-1,alpha,beta,evaluating_player);
 			value = value > v ? value : v;
 			alpha = alpha > value? alpha : value;
 			if (beta <= alpha)
@@ -137,7 +137,7 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 	else {
 		value = MATE + 1;		
 		for(i = 0; i < size; i++, moves += 7){
-			v = alphaBetaPrune(board,!turn,moves,depth-1,alpha,beta,evaluating_player);
+			v = alphaBetaPrune(table, board,!turn,moves,depth-1,alpha,beta,evaluating_player);
 			value = value < v ? value : v;
 			beta = beta < value? beta : value;
 			if (beta <= alpha)
@@ -205,7 +205,7 @@ int evaluateMoves(Board *board, int player, int * lastMove){
 	return value;
 }
 
-int * goodHeuristic(Board *board, int size, int * moves, int turn){
+int * goodHeuristic(TTable *table, Board *board, int size, int * moves, int turn){
 	int * sorted = malloc(28 * size);
 	moves = weakHeuristic(board,size,moves,turn);
 	int * moves_pointer = moves;
@@ -217,7 +217,7 @@ int * goodHeuristic(Board *board, int size, int * moves, int turn){
 	
 	int i,j;
 	for(i = 0; i < size; i++, moves += 7){
-		values[i] = alphaBetaPrune(board,!turn,moves,HEURISTIC_DEPTH,alpha,beta,turn);	
+		values[i] = alphaBetaPrune(table, board,!turn,moves,HEURISTIC_DEPTH,alpha,beta,turn);	
 		if (values[i] > alpha)
 			alpha = values[i];
 	}
@@ -250,8 +250,6 @@ int * goodHeuristic(Board *board, int size, int * moves, int turn){
 }
 
 int * weakHeuristic(Board *board, int size, int * moves, int turn){	
-
-	
 	int * sorted = malloc(28 * size);
 	int * moves_pointer = moves;
 	int * sorted_pointer = sorted;
