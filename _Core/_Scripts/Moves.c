@@ -1,6 +1,8 @@
 #include "Engine.h"
 #include "Moves.h"
+
 #include <stdio.h>
+
 /*
  * Function : createNormalMove
  * ---------------------------

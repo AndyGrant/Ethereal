@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "Engine.h"
 #include "Moves.h"
 #include "ChessAI.h"
@@ -24,8 +25,12 @@ int TOTAL_MOVES_FOUND = 0;
 int USE_GOOD_HEURISTIC = 1;
 int USE_BAD_HEURISTIC = 1;
 
-
 int findBestMoveIndex(struct Board * board, int * last_move, int turn){
+
+	int (*hash)(struct Board *);
+	hash = hashBoard;
+	TTable * table = constructTranspositionTable(DEPTH+1,64,hash);
+	
 	int size = 0;
 	int * moves = findAllValidMoves(board,turn,&size,last_move);
 	
@@ -43,14 +48,12 @@ int findBestMoveIndex(struct Board * board, int * last_move, int turn){
 	int i, temp;
 	
 	TOTAL_MOVES_FOUND += size;
-	for(i = 0; i < size; i++){
+	for(i = 0; i < size; i++, moves += 7){
 		temp = TOTAL_BOARDS_SEARCHED;
 		values[i] = alphaBetaPrune(board,!turn,moves,DEPTH,alpha,beta,turn);
 		if (values[i] > alpha)
 			alpha = values[i];
-		moves += 7;
 		printf("#%d \t Value: %d \t Alpha: %d \t Searched: %d \n",i,values[i],alpha,TOTAL_BOARDS_SEARCHED-temp);
-		//printf("Alpha %d Evaluated Move #%d to %d \t %d Board(s) \n",alpha,i,values[i],TOTAL_BOARDS_SEARCHED-temp);
 	}
 	
 	printf("Total Evals %d \n",TOTAL_BOARDS_SEARCHED);
@@ -182,10 +185,6 @@ int evaluateMoves(struct Board *board, int player, int * lastMove){
 	value += size;
 	int i;
 
-	
-	
-	
-	
 	int * t = *(board->types);
 	for(i = 0; i < size; i++, moves+=7){
 		if (t[moves[1]] == 1)

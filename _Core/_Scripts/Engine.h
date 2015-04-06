@@ -1,3 +1,6 @@
+#ifndef Engine
+#define Engine
+
 struct Board{
 	int types[8][8];
 	int colors[8][8];
@@ -14,3 +17,4 @@ void findMappedNoIters(struct Board *, int *, int *, int , int , int , int *, in
 void findCastles(struct Board *, int * , int *, int , int , int );
 void checkMove(struct Board *, int *, int);
 
+#endif
