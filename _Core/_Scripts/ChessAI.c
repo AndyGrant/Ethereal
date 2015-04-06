@@ -47,12 +47,13 @@ int findBestMoveIndex(struct Board * board, int * last_move, int turn){
 		values[i] = alphaBetaPrune(board,!turn,moves,DEPTH,alpha,beta,turn);
 		if (values[i] > alpha)
 			alpha = values[i];
-		moves += 7;		
-		printf("Alpha %d Evaluated Move #%d to %d \t %d Board(s) \n",alpha,i,values[i],TOTAL_BOARDS_SEARCHED-temp);
+		moves += 7;
+		printf("#%d \t Value: %d \t Alpha: %d \t Searched: %d \n",i,values[i],alpha,TOTAL_BOARDS_SEARCHED-temp);
+		//printf("Alpha %d Evaluated Move #%d to %d \t %d Board(s) \n",alpha,i,values[i],TOTAL_BOARDS_SEARCHED-temp);
 	}
 	
 	printf("Total Evals %d \n",TOTAL_BOARDS_SEARCHED);
-	printf("Total Moves Found %d \n", TOTAL_MOVES_FOUND);
+	printf("Total Moves Found %d \n \n", TOTAL_MOVES_FOUND);
 	
 	int best_index = 0;
 	for(i = 1; i < size; i++)
