@@ -2,6 +2,7 @@ import java.util.*;
 import java.awt.*;
 import java.awt.image.*;
 import java.awt.event.*; 
+import java.io.*;
  
 public class Chess implements GameState{
 	
@@ -238,6 +239,13 @@ public class Chess implements GameState{
 							Process engine = Runtime.getRuntime().exec(buildCommandLineExecuteString(lastMove));
 							engine.waitFor();
 							int AImoveIndex = engine.exitValue();
+							
+							String line;
+							BufferedReader input = new BufferedReader(new InputStreamReader(engine.getInputStream()));
+							while ((line = input.readLine()) != null) 
+								System.out.println(line);
+							input.close();
+							
 							if (AImoveIndex == -1){
 								activeGame = false;
 								System.out.println("Fatal Error");
@@ -245,22 +253,15 @@ public class Chess implements GameState{
 									
 								}
 							}
+							
+							
 							else{
 								JMove AIMove = JChessEngine.getAllValid(types,colors,moved,lastMove,!gameTurn).get(AImoveIndex);
 								AIMove.makeMove(types,colors,moved);
 								lastMove = AIMove;
 								validMoves = JChessEngine.getAllValid(types,colors,moved,lastMove,gameTurn);
 							}
-							/*
-							JMove AImove = JChessAI.findMove(types,colors,moved,m,!gameTurn);
-							if (AImove != null){
-								AImove.makeMove(types,colors,moved);
-								lastMove = AImove;
-								validMoves = JChessEngine.getAllValid(types,colors,moved,lastMove,gameTurn);
-							}
-							else{
-								activeGame = false;									
-							}*/
+							
 							waitingOnComputer = false;
 							parent.repaint();
 						} catch(Exception e){
