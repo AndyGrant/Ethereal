@@ -23,45 +23,6 @@ int TOTAL_MOVES_FOUND = 0;
 int USE_GOOD_HEURISTIC = 1;
 int USE_BAD_HEURISTIC = 1;
 
-int * findBestMove(struct Board * board, int * last_move, int turn){
-	int size = 0;
-	int * moves = findAllValidMoves(board,turn,&size,last_move);
-	
-	if (USE_GOOD_HEURISTIC == 1)
-		moves = goodHeuristic(board,size,moves,turn);
-		
-	int * moves_pointer = moves;
-	
-	int values[size];
-	int alpha = -MATE - 1;
-	int beta = MATE + 1;
-	int i, temp;
-	
-	TOTAL_MOVES_FOUND += size;
-	for(i = 0; i < size; i++){
-		temp = TOTAL_BOARDS_SEARCHED;
-		values[i] = alphaBetaPrune(board,!turn,moves,DEPTH,alpha,beta,turn);
-		if (values[i] > alpha)
-			alpha = values[i];
-		moves += 7;		
-		printf("Alpha %d Evaluated Move #%d to %d \t %d Board(s) \n",alpha,i,values[i],TOTAL_BOARDS_SEARCHED-temp);
-	}
-	
-	printf("Total Evals %d \n",TOTAL_BOARDS_SEARCHED);
-	printf("Total Moves Found %d \n", TOTAL_MOVES_FOUND);
-	
-	int best_index = 0;
-	for(i = 1; i < size; i++)
-		if (values[i] > values[best_index])
-			best_index = i;
-	
-	int * best = malloc(28);
-	for(i = 0;  i < 7; i++)
-		best[i] = moves_pointer[(best_index*7) + i];
-	
-	free(moves_pointer);
-	return best;
-}
 
 int findBestMoveIndex(struct Board * board, int * last_move, int turn){
 	int size = 0;
@@ -92,7 +53,6 @@ int findBestMoveIndex(struct Board * board, int * last_move, int turn){
 	
 	printf("Total Evals %d \n",TOTAL_BOARDS_SEARCHED);
 	printf("Total Moves Found %d \n", TOTAL_MOVES_FOUND);
-	printBoard(board);
 	
 	int best_index = 0;
 	for(i = 1; i < size; i++)
