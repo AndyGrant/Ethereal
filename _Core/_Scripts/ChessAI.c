@@ -49,7 +49,6 @@ int * findBestMove(struct Board * board, int * last_move, int turn){
 	
 	printf("Total Evals %d \n",TOTAL_BOARDS_SEARCHED);
 	printf("Total Moves Found %d \n", TOTAL_MOVES_FOUND);
-	printBoard(board);
 	
 	int best_index = 0;
 	for(i = 1; i < size; i++)
