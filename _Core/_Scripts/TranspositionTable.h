@@ -1,3 +1,8 @@
+#ifndef TranspositionTable
+#define TranspositionTable
+
+#include "Engine.h"
+
 typedef struct TTable{
 	struct HashMap * maps;
 	int num_maps;
@@ -30,3 +35,8 @@ Node * getElement(TTable * table, int depth, char * key);
 Node * getNode(Bucket * bucket, char * key);
 void insertElement(TTable * table, int depth, char * key, int value);
 void expandBucket(Bucket * bucket);
+char * encodeBoard(struct Board * board);
+int hashBoard(struct Board * board);
+
+
+#endif

@@ -1,7 +1,8 @@
-struct Tuple{
-	int value;
-	int num;
-};
+#ifndef ChessAI
+#define ChessAI
+
+#include "Engine.h"
+#include "TranspositionTable.h"
 
 int * findBestMove(struct Board * board, int * last_move, int turn);
 int findBestMoveIndex(struct Board * board, int * last_move, int turn);
@@ -12,3 +13,5 @@ int evaluateMoves(struct Board *b, int player, int * lastMove);
 int * goodHeuristic(struct Board *,int,int *, int);
 int * weakHeuristic(struct Board *,int,int *, int);
 int evaluate(struct Board *b, int * move, int turn, int value, int depth);
+
+#endif

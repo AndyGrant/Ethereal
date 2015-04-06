@@ -1,3 +1,8 @@
+#ifndef Moves
+#define Moves
+
+#include "Engine.h"
+
 void createNormalMove(struct Board *, int *, int* , int *, int);
 void createCastleMove(struct Board *, int *, int* , int *, int);
 void createPromotionMove(struct Board *, int *, int* , int *, int);
@@ -14,3 +19,5 @@ void revertNormalMove(struct Board *, int *);
 void revertCastleMove(struct Board *, int *);
 void revertPromotionMove(struct Board *, int *);
 void revertEnpassMove(struct Board *, int *);
+
+#endif

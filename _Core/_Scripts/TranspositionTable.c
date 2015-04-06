@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "TranspositionTable.h"
 
+#include "TranspositionTable.h"
+#include "Engine.h"
 
 TTable * constructTranspositionTable(int depth, int num_buckets, void * hash){
 	TTable * table = malloc(sizeof(TTable));
@@ -86,4 +87,32 @@ void expandBucket(Bucket * bucket){
 	free(bucket->nodes);
 	bucket->nodes = temp;
 }
+
+char * encodeBoard(struct Board * board){
+	char * key = calloc(64,sizeof(char));
+	int x,y,i;
+	
+	for(x = 0, i = 0; x < 8; x++)
+		for(y = 0; y < 8; y++, i++){
+			if (board->types[x][y] == 9)
+				key[i] = (char)240;
+			int m = board->moved[x][y] * 100;
+			int c = board->colors[x][y] * 50;
+			int t = board->types[x][y];
+			key[i] = (char)(t+c+m);
+		}
+	
+	return key;
+}
+
+int hashBoard(struct Board * board){
+	int v,x,y,i;
+	for(v = 0, i = 0, x = 0; x < 8; x++)
+		for(y = 0; y < 8; i++)
+			if (board->types[x][y] != 9)
+				v += i;
+	return v % 64;
+}
+
+
 
