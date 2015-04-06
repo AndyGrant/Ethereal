@@ -1,1 +1,0 @@
-gcc -o3 _Scripts/Engine.c _Scripts/Moves.c _Scripts/ChessAI.c getBestMove.c -o getBestMove.exe
