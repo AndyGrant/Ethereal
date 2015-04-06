@@ -25,9 +25,9 @@ int TOTAL_MOVES_FOUND = 0;
 int USE_GOOD_HEURISTIC = 1;
 int USE_BAD_HEURISTIC = 1;
 
-int findBestMoveIndex(struct Board * board, int * last_move, int turn){
+int findBestMoveIndex(Board * board, int * last_move, int turn){
 
-	int (*hash)(struct Board *);
+	int (*hash)(Board *);
 	hash = hashBoard;
 	TTable * table = constructTranspositionTable(DEPTH+1,64,hash);
 	
@@ -88,7 +88,7 @@ int findBestMoveIndex(struct Board * board, int * last_move, int turn){
 	return -1;
 }
 
-int alphaBetaPrune(struct Board * board, int turn, int * move, int depth, int alpha, int beta, int evaluating_player){	
+int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, int beta, int evaluating_player){	
 
 	applyGenericMove(board,move);	
 	if (depth == 0){
@@ -150,7 +150,7 @@ int alphaBetaPrune(struct Board * board, int turn, int * move, int depth, int al
 	return value;
 }
 
-int evaluateBoard(struct Board *board, int player, int * lastMove){
+int evaluateBoard(Board *board, int player, int * lastMove){
 	
 	TOTAL_BOARDS_SEARCHED += 1;
 	int value = 	evaluateMaterial(board,player) + 
@@ -159,7 +159,7 @@ int evaluateBoard(struct Board *board, int player, int * lastMove){
 	return value;
 }
 
-int evaluateMaterial(struct Board *board, int player){
+int evaluateMaterial(Board *board, int player){
 	int value = 0;
 	int x,y;
 	for(x = 0; x < 8; x++){
@@ -176,7 +176,7 @@ int evaluateMaterial(struct Board *board, int player){
 	return value;
 }
 
-int evaluateMoves(struct Board *board, int player, int * lastMove){
+int evaluateMoves(Board *board, int player, int * lastMove){
 	int size = 0;
 	int * moves = findAllValidMoves(board,player,&size,lastMove);
 	int * moves_pointer = moves;
@@ -205,7 +205,7 @@ int evaluateMoves(struct Board *board, int player, int * lastMove){
 	return value;
 }
 
-int * goodHeuristic(struct Board *board, int size, int * moves, int turn){
+int * goodHeuristic(Board *board, int size, int * moves, int turn){
 	int * sorted = malloc(28 * size);
 	moves = weakHeuristic(board,size,moves,turn);
 	int * moves_pointer = moves;
@@ -249,7 +249,7 @@ int * goodHeuristic(struct Board *board, int size, int * moves, int turn){
 	return sorted;
 }
 
-int * weakHeuristic(struct Board *board, int size, int * moves, int turn){	
+int * weakHeuristic(Board *board, int size, int * moves, int turn){	
 
 	
 	int * sorted = malloc(28 * size);

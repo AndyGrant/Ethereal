@@ -15,7 +15,7 @@
  * 		move : integer array defining the move
  * 		turn : WHITE or BLACK
  */
-void createNormalMove(struct Board *b, int *moves, int* moves_found, int *move, int turn){
+void createNormalMove(Board *b, int *moves, int* moves_found, int *move, int turn){
 	int *types = *(b->types);
 	int *colors = *(b->colors);
 	int *moved = *(b->moved);
@@ -50,7 +50,7 @@ void createNormalMove(struct Board *b, int *moves, int* moves_found, int *move, 
  * 		move : integer array defining the move
  * 		turn : WHITE or BLACK
  */
-void createCastleMove(struct Board *b, int *moves, int *moves_found, int *move, int turn){
+void createCastleMove(Board *b, int *moves, int *moves_found, int *move, int turn){
 	int start = (move[1] << 3) + move[2];
 	int end = (move[3] << 3) + move[4];
 	int rookStart = (move[5] << 3) + move[6];
@@ -83,7 +83,7 @@ void createCastleMove(struct Board *b, int *moves, int *moves_found, int *move, 
  * 		move : integer array defining the move
  * 		turn : WHITE or BLACK
  */
-void createPromotionMove(struct Board *b, int *moves, int *moves_found, int *move, int turn){
+void createPromotionMove(Board *b, int *moves, int *moves_found, int *move, int turn){
 	int *types = *(b->types);
 	int *colors = *(b->colors);
 	int *moved = *(b->moved);
@@ -118,7 +118,7 @@ void createPromotionMove(struct Board *b, int *moves, int *moves_found, int *mov
  * 		move : integer array defining the move
  * 		turn : WHITE or BLACK
  */
-void createEnpassMove(struct Board *b, int *moves, int *moves_found, int *move, int turn){
+void createEnpassMove(Board *b, int *moves, int *moves_found, int *move, int turn){
 	
 	int start = (move[1] << 3) + move[2];
 	int end = (move[3] << 3) + move[4];
@@ -146,7 +146,7 @@ void createEnpassMove(struct Board *b, int *moves, int *moves_found, int *move, 
  *		b : Board structure pointer
  * 		move : integer array defining the move
  */
-void applyNormalMove(struct Board *b, int *move){
+void applyNormalMove(Board *b, int *move){
 	int * types = *(b->types);
 	int * colors = *(b->colors);
 	int * moved = *(b->moved);
@@ -174,7 +174,7 @@ void applyNormalMove(struct Board *b, int *move){
  *		b : Board structure pointer
  * 		move : integer array defining the move
  */
-void applyCastleMove(struct Board *b, int *move){
+void applyCastleMove(Board *b, int *move){
 	int * types = *(b->types);
 	int * colors = *(b->colors);
 	int * moved = *(b->moved);
@@ -208,7 +208,7 @@ void applyCastleMove(struct Board *b, int *move){
  *		b : Board structure pointer
  * 		move : integer array defining the move
  */
-void applyPromotionMove(struct Board *b, int *move){
+void applyPromotionMove(Board *b, int *move){
 	int * types = *(b->types);
 	int * colors = *(b->colors);
 	int * moved = *(b->moved);
@@ -232,7 +232,7 @@ void applyPromotionMove(struct Board *b, int *move){
  *		b : Board structure pointer
  * 		move : integer array defining the move
  */
-void applyEnpassMove(struct Board *b, int *move){
+void applyEnpassMove(Board *b, int *move){
 	int * types = *(b->types);
 	int * colors = *(b->colors);
 	int * moved = *(b->moved);
@@ -260,7 +260,7 @@ void applyEnpassMove(struct Board *b, int *move){
  *		b : Board structure pointer
  * 		move : integer array defining the move
  */
-void revertNormalMove(struct Board *b, int *move){
+void revertNormalMove(Board *b, int *move){
 	int * types = *(b->types);
 	int * colors = *(b->colors);
 	int * moved = *(b->moved);
@@ -290,7 +290,7 @@ void revertNormalMove(struct Board *b, int *move){
  *		b : Board structure pointer
  * 		move : integer array defining the move
  */
-void revertCastleMove(struct Board *b, int *move){
+void revertCastleMove(Board *b, int *move){
 	int * types = *(b->types);
 	int * colors = *(b->colors);
 	int * moved = *(b->moved);
@@ -324,7 +324,7 @@ void revertCastleMove(struct Board *b, int *move){
  *		b : Board structure pointer
  * 		move : integer array defining the move
  */
-void revertPromotionMove(struct Board *b, int *move){
+void revertPromotionMove(Board *b, int *move){
 	int * types = *(b->types);
 	int * colors = *(b->colors);
 	int * moved = *(b->moved);
@@ -348,7 +348,7 @@ void revertPromotionMove(struct Board *b, int *move){
  *		b : Board structure pointer
  * 		move : integer array defining the move
  */
-void revertEnpassMove(struct Board *b, int *move){
+void revertEnpassMove(Board *b, int *move){
 	int * types = *(b->types);
 	int * colors = *(b->colors);
 	int * moved = *(b->moved);
@@ -376,7 +376,7 @@ void revertEnpassMove(struct Board *b, int *move){
  *		b : Board structure pointer
  * 		move : integer array defining the move	
  */
-void applyGenericMove(struct Board *b, int * move){
+void applyGenericMove(Board *b, int * move){
 	int type = move[0];
 	if (type == 0 || type == 4)
 		applyNormalMove(b,move);
@@ -398,7 +398,7 @@ void applyGenericMove(struct Board *b, int * move){
  *		b : Board structure pointer
  * 		move : integer array defining the move	
  */
-void revertGenericMove(struct Board *b, int * move){
+void revertGenericMove(Board *b, int * move){
 	int type = move[0];
 	if (type == 0 || type == 4)
 		revertNormalMove(b,move);

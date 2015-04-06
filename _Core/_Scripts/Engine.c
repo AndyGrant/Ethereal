@@ -29,7 +29,7 @@ static int EMPTY = 9;
  *	Arguments:
  *		board : Board structure pointer
  */
-void printBoard(struct Board * board){
+void printBoard(Board * board){
 	int row,col;
 	for(row = 0; row < 8; row++){
 		for(col = 0; col < 8; col++)
@@ -65,9 +65,9 @@ void printBoard(struct Board * board){
  * 	Return:
  * 		Board Structure Pointer
  */
-struct Board * createBoard(int board[8][8]){
+Board * createBoard(int board[8][8]){
 	
-	static struct Board b;
+	static Board b;
 	int x, y;
 	for(x = 0; x < 8; x++){
 		for(y = 0; y < 8; y++){
@@ -120,7 +120,7 @@ struct Board * createBoard(int board[8][8]){
  * 		moves_size_p : integer pointer for moves found
  * 		last_move : integer array for last move
  */
-int * findAllValidMoves(struct Board * b, int turn, int * moves_size_p, int * last_move){
+int * findAllValidMoves(Board * b, int turn, int * moves_size_p, int * last_move){
 	int moves[1400];
 	int row,col;
 	
@@ -175,7 +175,7 @@ int * findAllValidMoves(struct Board * b, int turn, int * moves_size_p, int * la
  * 		y : y location in board arrays
  * 		last_move : integer array of last move made
  */
-void findPawnMoves(struct Board * b, int * moves, int * moves_found, int turn, int x, int y, int * last_move){
+void findPawnMoves(Board * b, int * moves, int * moves_found, int turn, int x, int y, int * last_move){
 	int dir;
 	if (b->colors[x][y] == WHITE)
 		dir = -1;
@@ -258,7 +258,7 @@ void findPawnMoves(struct Board * b, int * moves, int * moves_found, int turn, i
  * 		map : integer array of move mappings
 * 		map_size : length of map
  */
-void findMappedIters(struct Board * b, int * moves, int *moves_found, int turn, int x, int y, int * map, int map_size){
+void findMappedIters(Board * b, int * moves, int *moves_found, int turn, int x, int y, int * map, int map_size){
 	int mapiter, newX, newY;
 
 	for(mapiter = map_size; mapiter > 0; mapiter--){
@@ -302,7 +302,7 @@ void findMappedIters(struct Board * b, int * moves, int *moves_found, int turn, 
  * 		map : integer array of move mappings
  * 		map_size : length of map
  */
-void findMappedNoIters(struct Board * b, int * moves, int * moves_found, int turn, int x, int y, int * map, int map_size){
+void findMappedNoIters(Board * b, int * moves, int * moves_found, int turn, int x, int y, int * map, int map_size){
 	int mapiter, newX, newY;
 	for(mapiter = map_size; mapiter > 0; mapiter--){
 		newX = x + *map; 
@@ -337,7 +337,7 @@ void findMappedNoIters(struct Board * b, int * moves, int * moves_found, int tur
  * 		x : x location in board arrays
  * 		y : y location in board arrays
  */
-void findCastles(struct Board * b, int * moves, int * moves_found, int turn, int x, int y){
+void findCastles(Board * b, int * moves, int * moves_found, int turn, int x, int y){
 	// Moved kings cannot castle
 	if (b->moved[x][y] == 0)
 		return;
@@ -423,7 +423,7 @@ void findCastles(struct Board * b, int * moves, int * moves_found, int turn, int
  * 		moves_found : integer pointer to moves size
  * 		turn : WHITE or BLACK	
 */
-void checkMove(struct Board *b, int * moves_found, int turn){
+void checkMove(Board *b, int * moves_found, int turn){
 	int x, y, kingX, kingY,i;
 	kingX = b->kingLocations[turn] / 8;
 	kingY = b->kingLocations[turn] % 8;

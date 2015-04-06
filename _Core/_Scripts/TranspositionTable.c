@@ -88,7 +88,7 @@ void expandBucket(Bucket * bucket){
 	bucket->nodes = temp;
 }
 
-char * encodeBoard(struct Board * board){
+char * encodeBoard(Board * board){
 	char * key = calloc(64,sizeof(char));
 	int x,y,i;
 	
@@ -105,7 +105,7 @@ char * encodeBoard(struct Board * board){
 	return key;
 }
 
-int hashBoard(struct Board * board){
+int hashBoard(Board * board){
 	int v,x,y,i;
 	for(v = 0, i = 0, x = 0; x < 8; x++)
 		for(y = 0; y < 8; i++)
