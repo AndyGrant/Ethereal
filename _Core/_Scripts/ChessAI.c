@@ -3,6 +3,7 @@
 #include "Engine.h"
 #include "Moves.h"
 #include "ChessAI.h"
+#include "TranspositionTable.h"
 
 int MATE = 99999;
 int MATERIAL_VALUES[6] = {100,300,300,600,1000,10000};
