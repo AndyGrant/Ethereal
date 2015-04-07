@@ -25,10 +25,13 @@ int TOTAL_MOVES_FOUND = 0;
 int USE_GOOD_HEURISTIC = 1;
 int USE_BAD_HEURISTIC = 1;
 
+int USE_TABLE = 1;
+
 int findBestMoveIndex(Board * board, int * last_move, int turn){
 
-	int (*hash)(Board *);
+	int (*hash)(char [66]);
 	hash = hashBoard;
+	
 	TTable * table = constructTranspositionTable(DEPTH+1,64,hash);
 	
 	int size = 0;
@@ -37,8 +40,13 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 	if (size == 0)
 		return -1;
 	
-	if (USE_GOOD_HEURISTIC == 1)
+	if (USE_GOOD_HEURISTIC == 1){
 		moves = goodHeuristic(table,board,size,moves,turn);
+		if(USE_TABLE){
+			deleteTranspositionTable(table);
+			table = constructTranspositionTable(DEPTH+1,64,hash);
+		}
+	}
 		
 	int * moves_pointer = moves;
 	
@@ -56,8 +64,16 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 		printf("#%d \t Value: %d \t Alpha: %d \t Searched: %d \n",i,values[i],alpha,TOTAL_BOARDS_SEARCHED-temp);
 	}
 	
+	
+	
+	
 	printf("Total Evals %d \n",TOTAL_BOARDS_SEARCHED);
-	printf("Total Moves Found %d \n \n", TOTAL_MOVES_FOUND);
+	printf("Total Moves Found %d \n", TOTAL_MOVES_FOUND);
+	
+	if (USE_TABLE)
+		printf("Total Table Entries %d \n \n", table->entries);
+	
+	deleteTranspositionTable(table);
 	
 	int best_index = 0;
 	for(i = 1; i < size; i++)
@@ -91,9 +107,22 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 int alphaBetaPrune(TTable *table, Board * board, int turn, int * move, int depth, int alpha, int beta, int evaluating_player){	
 
 	applyGenericMove(board,move);	
+	char * key;
+	
+	if (USE_TABLE){
+		key = encodeBoard(board,move[0] == 4,turn);
+		Node * node = getElement(table,depth,key);
+		if (node != NULL){
+			revertGenericMove(board,move);
+			return node->value;
+		}
+	}
+	
 	if (depth == 0){
-		int value = evaluateBoard(board,evaluating_player,move);
+		int value = evaluateBoard(board,evaluating_player,move);		
 		revertGenericMove(board,move);
+		if(USE_TABLE)
+			insertElement(table,depth,key,value);
 		return value;
 	}
 	
@@ -147,6 +176,10 @@ int alphaBetaPrune(TTable *table, Board * board, int turn, int * move, int depth
 	
 	revertGenericMove(board,move);
 	free(moves_pointer);
+	
+	if(USE_TABLE)
+		insertElement(table,depth,key,value);
+		
 	return value;
 }
 

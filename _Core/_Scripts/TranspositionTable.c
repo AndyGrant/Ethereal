@@ -16,6 +16,9 @@ TTable * constructTranspositionTable(int depth, int num_buckets, void * hash){
 	int n;
 	for(n = 0; n < depth; n++)
 		constructHashMap(&(table->maps[n]),num_buckets,hash);
+		
+	table->num_maps = depth;
+	table->entries = 0;
 	
 	return table;
 }
@@ -35,31 +38,40 @@ void constructHashMap(HashMap * map, int num_buckets, void * hash){
 }
 
 void constructBucket(Bucket * bucket){
-	bucket->nodes = calloc(4,sizeof(Node));
+	bucket->nodes = calloc(64,sizeof(Node));
 	if (bucket->nodes == NULL)
 		exit(EXIT_FAILURE);
 		
 	bucket->entries = 0;
-	bucket->max = 4;
+	bucket->max = 64;
 }
 
 Node * getElement(TTable * table, int depth, char * key){
-	int (*hash)(char [64]) = table->maps[depth].Hash;
+	int (*hash)(char [66]) = table->maps[depth].Hash;
 	int hash_code = hash(key);
 	return getNode(&(table->maps[depth].buckets[hash_code]), key);
 }
 
 Node * getNode(Bucket * bucket, char * key){
 	int n;
-	for(n = 0; n < bucket->entries; n++)
-		if (strcmp(&key,&(bucket->nodes[n].key)) == 0)
+	for(n = 0; n < bucket->entries; n++){
+		if(compareString(key,bucket->nodes[n].key) == 1)
 			return &(bucket->nodes[n]);
+	}
 	
 	return NULL;
 }
 
+int compareString(char * a, char * b){
+	int i;
+	for(i = 0; i < 66; i++)
+		if (a[i] != b[i])
+			return 0;
+	return 1;
+}
+
 void insertElement(TTable * table, int depth, char * key, int value){
-	int (*hash)(char *) = table->maps[depth].Hash;
+	int (*hash)(char [66]) = table->maps[depth].Hash;
 	int hash_code = hash(key);
 	Bucket * bucket = &(table->maps[depth].buckets[hash_code]);
 	if (bucket->entries == bucket->max)
@@ -74,7 +86,6 @@ void insertElement(TTable * table, int depth, char * key, int value){
 }
 
 void expandBucket(Bucket * bucket){
-	printf("Expanded");
 	bucket->max *= 2;
 	Node * temp = calloc(bucket->max,sizeof(Node));
 	
@@ -88,30 +99,62 @@ void expandBucket(Bucket * bucket){
 	bucket->nodes = temp;
 }
 
-char * encodeBoard(Board * board){
-	char * key = calloc(64,sizeof(char));
+char * encodeBoard(Board * board, int enpass, int turn){
+	char * key = calloc(66,sizeof(char));
 	int x,y,i;
 	
 	for(x = 0, i = 0; x < 8; x++)
 		for(y = 0; y < 8; y++, i++){
 			if (board->types[x][y] == 9)
-				key[i] = (char)240;
-			int m = board->moved[x][y] * 100;
-			int c = board->colors[x][y] * 50;
-			int t = board->types[x][y];
-			key[i] = (char)(t+c+m);
+				key[i] = (char)200;
+			else{
+				int m = board->moved[x][y] * 40;
+				int c = board->colors[x][y] * 15;
+				int t = board->types[x][y];
+				key[i] = (char)(t+c+m);
+			}
 		}
-	
+	key[64] = (char)(enpass);
+	key[65] = (char)(turn);
 	return key;
 }
 
-int hashBoard(Board * board){
-	int v,x,y,i;
-	for(v = 0, i = 0, x = 0; x < 8; x++)
-		for(y = 0; y < 8; i++)
-			if (board->types[x][y] != 9)
-				v += i;
+int hashBoard(char * key){
+	int v = 0;
+	int i;
+	for(i = 0; i < 64; i++)
+		if (key[i] != (char)(200))
+			v += i;
 	return v % 64;
+}
+
+void deleteTranspositionTable(TTable * table){
+	int n;
+	for(n = 0; n < table->num_maps; n++)
+		deleteHashMap(&(table->maps[n]));
+		
+	free(table->maps);
+	free(table);
+}
+
+void deleteHashMap(HashMap * map){
+	int n;
+	for(n = 0; n < map->num_buckets; n++)
+		deleteBucket(&(map->buckets[n]));
+	
+	free(map->buckets);
+}
+
+void deleteBucket(Bucket * bucket){
+	int n;
+	for(n = 0; n < bucket->entries; n++)
+		deleteNode(&(bucket->nodes[n]));
+	
+	free(bucket->nodes);
+}
+
+void deleteNode(Node * node){
+	free(node->key);
 }
 
 
