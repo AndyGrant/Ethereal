@@ -7,7 +7,6 @@ typedef struct TTable{
 	struct HashMap * maps;
 	int num_maps;
 	int entries;
-	int last_accessed;
 } TTable;
 
 typedef struct HashMap{
@@ -35,8 +34,14 @@ Node * getElement(TTable * table, int depth, char * key);
 Node * getNode(Bucket * bucket, char * key);
 void insertElement(TTable * table, int depth, char * key, int value);
 void expandBucket(Bucket * bucket);
-char * encodeBoard(struct Board * board);
-int hashBoard(struct Board * board);
+char * encodeBoard(struct Board * board, int enpass, int turn);
+int hashBoard(char *);
+int compareString(char * a, char * b);
+
+void deleteTranspositionTable(TTable * table);
+void deleteHashMap(HashMap * map);
+void deleteBucket(Bucket * bucket);
+void deleteNode(Node * node);
 
 
 #endif
