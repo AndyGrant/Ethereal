@@ -17,15 +17,12 @@ int VALUE_KING_SURROUNDINGS_ATTACKED = 4;
 int TOTAL_BOARDS_SEARCHED = 0;
 
 int DEPTH = 4;
-int HEURISTIC_DEPTH = 2;
 int ORIGINAL_PLAYER;
 
 int TOTAL_MOVES_FOUND = 0;
 
 int USE_GOOD_HEURISTIC = 1;
 int USE_BAD_HEURISTIC = 1;
-
-int USE_TABLE = 1;
 
 int findBestMoveIndex(Board * board, int * last_move, int turn){
 
@@ -41,18 +38,25 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 		return -1;
 	
 	if (USE_GOOD_HEURISTIC == 1){
-		moves = goodHeuristic(table,board,size,moves,turn);
-		if(USE_TABLE){
-			deleteTranspositionTable(table);
-			table = constructTranspositionTable(DEPTH+1,128,hash);
-		}
+		moves = goodHeuristic(table,board,size,moves,turn,2);
+		deleteTranspositionTable(table);
+		table = constructTranspositionTable(DEPTH+1,128,hash);
+		
+		//moves = goodHeuristic(table,board,size,moves,turn,4);
+		//deleteTranspositionTable(table);
+		//table = constructTranspositionTable(DEPTH+1,128,hash);
 	}
 		
 	int * moves_pointer = moves;
 	
 	int values[size];
-	int alpha = -MATE - 1;
-	int beta = MATE + 1;
+	
+	int alpha, beta;
+	alpha = -MATE - 1;
+	beta = MATE + 1;
+
+	
+	
 	int i, temp;
 	
 	TOTAL_MOVES_FOUND += size;
@@ -65,13 +69,9 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 	}
 	
 	
-	
-	
 	printf("Total Evals %d \n",TOTAL_BOARDS_SEARCHED);
 	printf("Total Moves Found %d \n", TOTAL_MOVES_FOUND);
-	
-	if (USE_TABLE)
-		printf("Total Table Entries %d \n \n", table->entries);
+	printf("Total Table Entries %d \n \n", table->entries);
 	
 	deleteTranspositionTable(table);
 	
@@ -107,22 +107,22 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 int alphaBetaPrune(TTable *table, Board * board, int turn, int * move, int depth, int alpha, int beta, int evaluating_player){	
 
 	applyGenericMove(board,move);	
-	char * key;
 	
-	if (USE_TABLE){
-		key = encodeBoard(board,move[0] == 4,turn);
-		Node * node = getElement(table,depth,key);
-		if (node != NULL){
-			revertGenericMove(board,move);
-			return node->value;
-		}
+	char * key;
+	key = encodeBoard(board,move[0] == 4,turn);
+	Node * node = getElement(table,depth,key);
+	if (node != NULL){
+		revertGenericMove(board,move);
+		if (node->key[65] != (char)turn)
+			return node->value * -1;
+		return node->value;
 	}
+	
 	
 	if (depth == 0){
 		int value = evaluateBoard(board,evaluating_player,move);		
 		revertGenericMove(board,move);
-		if(USE_TABLE)
-			insertElement(table,depth,key,value);
+		insertElement(table,depth,key,value);
 		return value;
 	}
 	
@@ -177,8 +177,7 @@ int alphaBetaPrune(TTable *table, Board * board, int turn, int * move, int depth
 	revertGenericMove(board,move);
 	free(moves_pointer);
 	
-	if(USE_TABLE)
-		insertElement(table,depth,key,value);
+	insertElement(table,depth,key,value);
 		
 	return value;
 }
@@ -215,7 +214,7 @@ int evaluateMoves(Board *board, int player, int * lastMove){
 	int * moves_pointer = moves;
 	
 	int value = 0;
-	value += size;
+	//value += size;
 	int i;
 
 	int * t = *(board->types);
@@ -238,9 +237,9 @@ int evaluateMoves(Board *board, int player, int * lastMove){
 	return value;
 }
 
-int * goodHeuristic(TTable *table, Board *board, int size, int * moves, int turn){
+int * goodHeuristic(TTable *table, Board *board, int size, int * moves, int turn, int depth){
 	int * sorted = malloc(28 * size);
-	moves = weakHeuristic(board,size,moves,turn);
+	//moves = weakHeuristic(board,size,moves,turn);
 	int * moves_pointer = moves;
 	
 	int values[size];
@@ -250,7 +249,7 @@ int * goodHeuristic(TTable *table, Board *board, int size, int * moves, int turn
 	
 	int i,j;
 	for(i = 0; i < size; i++, moves += 7){
-		values[i] = alphaBetaPrune(table, board,!turn,moves,HEURISTIC_DEPTH,alpha,beta,turn);	
+		values[i] = alphaBetaPrune(table, board,!turn,moves,depth,alpha,beta,turn);	
 		if (values[i] > alpha)
 			alpha = values[i];
 	}
