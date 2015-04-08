@@ -32,7 +32,7 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 	int (*hash)(char [66]);
 	hash = hashBoard;
 	
-	TTable * table = constructTranspositionTable(DEPTH+1,64,hash);
+	TTable * table = constructTranspositionTable(DEPTH+1,128,hash);
 	
 	int size = 0;
 	int * moves = findAllValidMoves(board,turn,&size,last_move);
@@ -44,7 +44,7 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 		moves = goodHeuristic(table,board,size,moves,turn);
 		if(USE_TABLE){
 			deleteTranspositionTable(table);
-			table = constructTranspositionTable(DEPTH+1,64,hash);
+			table = constructTranspositionTable(DEPTH+1,128,hash);
 		}
 	}
 		

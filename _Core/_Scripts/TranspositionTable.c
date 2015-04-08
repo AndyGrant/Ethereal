@@ -4,6 +4,8 @@
 #include "TranspositionTable.h"
 #include "Engine.h"
 
+int NUM_BUCKETS = 128;
+
 TTable * constructTranspositionTable(int depth, int num_buckets, void * hash){
 	TTable * table = malloc(sizeof(TTable));
 	if (table == NULL)
@@ -38,12 +40,12 @@ void constructHashMap(HashMap * map, int num_buckets, void * hash){
 }
 
 void constructBucket(Bucket * bucket){
-	bucket->nodes = calloc(64,sizeof(Node));
+	bucket->nodes = calloc(NUM_BUCKETS,sizeof(Node));
 	if (bucket->nodes == NULL)
 		exit(EXIT_FAILURE);
 		
 	bucket->entries = 0;
-	bucket->max = 64;
+	bucket->max = NUM_BUCKETS;
 }
 
 Node * getElement(TTable * table, int depth, char * key){
@@ -125,7 +127,7 @@ int hashBoard(char * key){
 	for(i = 0; i < 64; i++)
 		if (key[i] != (char)(200))
 			v += i;
-	return v % 64;
+	return v % NUM_BUCKETS;
 }
 
 void deleteTranspositionTable(TTable * table){
