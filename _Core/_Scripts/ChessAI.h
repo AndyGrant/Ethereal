@@ -10,7 +10,7 @@ int alphaBetaPrune(struct TTable *, struct Board *b, int turn, int * move, int d
 int evaluateBoard(struct Board *b, int player, int * lastMove);
 int evaluateMaterial(struct Board *b, int player);
 int evaluateMoves(struct Board *b, int player, int * lastMove);
-int * goodHeuristic(struct TTable *, struct Board *,int,int *, int);
+int * goodHeuristic(struct TTable *, struct Board *,int,int *, int, int);
 int * weakHeuristic(struct Board *, int, int *, int);
 int evaluate(struct Board *b, int * move, int turn, int value, int depth);
 
