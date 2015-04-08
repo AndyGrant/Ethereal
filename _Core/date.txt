@@ -1,0 +1,379 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  ms/call  ms/call  name    
+ 33.85      0.22     0.22  2255546     0.00     0.00  checkMove
+ 20.77      0.35     0.14  8758447     0.00     0.00  compareString
+  9.23      0.41     0.06  2230302     0.00     0.00  revertNormalMove
+  6.15      0.46     0.04  2186351     0.00     0.00  createNormalMove
+  6.15      0.49     0.04   548306     0.00     0.00  findPawnMoves
+  4.62      0.53     0.03   348520     0.00     0.00  findMappedIters
+  4.62      0.56     0.03    70199     0.00     0.01  findAllValidMoves
+  3.08      0.57     0.02    70199     0.00     0.00  findCastles
+  3.08      0.59     0.02    31939     0.00     0.00  evaluateMaterial
+  1.54      0.60     0.01    63878     0.00     0.01  evaluateMoves
+  1.54      0.61     0.01    43962     0.00     0.00  encodeBoard
+  1.54      0.62     0.01    31939     0.00     0.01  evaluateBoard
+  1.54      0.64     0.01      762     0.01     0.01  revertEnpassMove
+  0.77      0.64     0.01  2230302     0.00     0.00  applyNormalMove
+  0.77      0.65     0.01    43962     0.00     0.00  getNode
+  0.77      0.65     0.01      751     0.01     0.02  createEnpassMove
+  0.00      0.65     0.00   207980     0.00     0.00  findMappedNoIters
+  0.00      0.65     0.00    82219     0.00     0.00  hashBoard
+  0.00      0.65     0.00    43962     0.00     0.00  applyGenericMove
+  0.00      0.65     0.00    43962     0.00     0.00  getElement
+  0.00      0.65     0.00    43962     0.00     0.00  revertGenericMove
+  0.00      0.65     0.00    38257     0.00     0.00  deleteNode
+  0.00      0.65     0.00    38257     0.00     0.00  insertElement
+  0.00      0.65     0.00     6320     0.00     0.00  weakHeuristic
+  0.00      0.65     0.00     1280     0.00     0.00  constructBucket
+  0.00      0.65     0.00     1280     0.00     0.00  deleteBucket
+  0.00      0.65     0.00      762     0.00     0.00  applyEnpassMove
+  0.00      0.65     0.00      421     0.00     0.00  applyCastleMove
+  0.00      0.65     0.00      421     0.00     0.00  createCastleMove
+  0.00      0.65     0.00      421     0.00     0.00  revertCastleMove
+  0.00      0.65     0.00      196     0.00     0.00  convChar
+  0.00      0.65     0.00      151     0.00     0.00  expandBucket
+  0.00      0.65     0.00       40     0.00    16.25  alphaBetaPrune
+  0.00      0.65     0.00       10     0.00     0.00  constructHashMap
+  0.00      0.65     0.00       10     0.00     0.00  deleteHashMap
+  0.00      0.65     0.00        2     0.00     0.00  constructTranspositionTable
+  0.00      0.65     0.00        2     0.00     0.00  deleteTranspositionTable
+  0.00      0.65     0.00        1     0.00   650.00  findBestMoveIndex
+  0.00      0.65     0.00        1     0.00   324.99  goodHeuristic
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+ 
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this 
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 4 byte(s) for 1.54% of 0.65 seconds
+
+index % time    self  children    called     name
+                0.00    0.65       1/1           main [2]
+[1]    100.0    0.00    0.65       1         findBestMoveIndex [1]
+                0.00    0.32      20/40          alphaBetaPrune [3]
+                0.00    0.32       1/1           goodHeuristic [7]
+                0.00    0.00       2/70199       findAllValidMoves [4]
+                0.00    0.00       2/2           constructTranspositionTable [40]
+                0.00    0.00       2/2           deleteTranspositionTable [41]
+-----------------------------------------------
+                                                 <spontaneous>
+[2]    100.0    0.00    0.65                 main [2]
+                0.00    0.65       1/1           findBestMoveIndex [1]
+                0.00    0.00     196/196         convChar [36]
+-----------------------------------------------
+                               43922             alphaBetaPrune [3]
+                0.00    0.32      20/40          findBestMoveIndex [1]
+                0.00    0.32      20/40          goodHeuristic [7]
+[3]    100.0    0.00    0.65      40+43922   alphaBetaPrune [3]
+                0.01    0.45   31939/31939       evaluateBoard [5]
+                0.00    0.14   43962/43962       getElement [12]
+                0.00    0.04    6319/70199       findAllValidMoves [4]
+                0.01    0.00   43962/43962       encodeBoard [20]
+                0.00    0.00   43962/43962       revertGenericMove [23]
+                0.00    0.00   43962/43962       applyGenericMove [24]
+                0.00    0.00       1/2255546     checkMove [9]
+                0.00    0.00   38257/38257       insertElement [29]
+                0.00    0.00    6319/6320        weakHeuristic [30]
+                               43922             alphaBetaPrune [3]
+-----------------------------------------------
+                0.00    0.00       2/70199       findBestMoveIndex [1]
+                0.00    0.04    6319/70199       alphaBetaPrune [3]
+                0.03    0.39   63878/70199       evaluateMoves [6]
+[4]     70.5    0.03    0.43   70199         findAllValidMoves [4]
+                0.04    0.15  548306/548306      findPawnMoves [10]
+                0.03    0.11  348520/348520      findMappedIters [11]
+                0.00    0.07  207980/207980      findMappedNoIters [15]
+                0.02    0.01   70199/70199       findCastles [17]
+-----------------------------------------------
+                0.01    0.45   31939/31939       alphaBetaPrune [3]
+[5]     70.4    0.01    0.45   31939         evaluateBoard [5]
+                0.01    0.42   63878/63878       evaluateMoves [6]
+                0.02    0.00   31939/31939       evaluateMaterial [18]
+-----------------------------------------------
+                0.01    0.42   63878/63878       evaluateBoard [5]
+[6]     65.7    0.01    0.42   63878         evaluateMoves [6]
+                0.03    0.39   63878/70199       findAllValidMoves [4]
+-----------------------------------------------
+                0.00    0.32       1/1           findBestMoveIndex [1]
+[7]     50.0    0.00    0.32       1         goodHeuristic [7]
+                0.00    0.32      20/40          alphaBetaPrune [3]
+                0.00    0.00       1/6320        weakHeuristic [30]
+-----------------------------------------------
+                0.01    0.06  468213/2186351     findMappedNoIters [15]
+                0.01    0.10  787801/2186351     findMappedIters [11]
+                0.02    0.12  930337/2186351     findPawnMoves [10]
+[8]     48.8    0.04    0.28 2186351         createNormalMove [8]
+                0.21    0.00 2186351/2255546     checkMove [9]
+                0.06    0.00 2186351/2230302     revertNormalMove [16]
+                0.00    0.00 2186351/2230302     applyNormalMove [22]
+-----------------------------------------------
+                0.00    0.00       1/2255546     alphaBetaPrune [3]
+                0.00    0.00     421/2255546     createCastleMove [25]
+                0.00    0.00     751/2255546     createEnpassMove [19]
+                0.01    0.00   68022/2255546     findCastles [17]
+                0.21    0.00 2186351/2255546     createNormalMove [8]
+[9]     33.8    0.22    0.00 2255546         checkMove [9]
+-----------------------------------------------
+                0.04    0.15  548306/548306      findAllValidMoves [4]
+[10]    29.2    0.04    0.15  548306         findPawnMoves [10]
+                0.02    0.12  930337/2186351     createNormalMove [8]
+                0.01    0.01     751/751         createEnpassMove [19]
+-----------------------------------------------
+                0.03    0.11  348520/348520      findAllValidMoves [4]
+[11]    22.2    0.03    0.11  348520         findMappedIters [11]
+                0.01    0.10  787801/2186351     createNormalMove [8]
+-----------------------------------------------
+                0.00    0.14   43962/43962       alphaBetaPrune [3]
+[12]    21.5    0.00    0.14   43962         getElement [12]
+                0.01    0.14   43962/43962       getNode [13]
+                0.00    0.00   43962/82219       hashBoard [27]
+-----------------------------------------------
+                0.01    0.14   43962/43962       getElement [12]
+[13]    21.5    0.01    0.14   43962         getNode [13]
+                0.14    0.00 8758447/8758447     compareString [14]
+-----------------------------------------------
+                0.14    0.00 8758447/8758447     getNode [13]
+[14]    20.8    0.14    0.00 8758447         compareString [14]
+-----------------------------------------------
+                0.00    0.07  207980/207980      findAllValidMoves [4]
+[15]    10.4    0.00    0.07  207980         findMappedNoIters [15]
+                0.01    0.06  468213/2186351     createNormalMove [8]
+-----------------------------------------------
+                0.00    0.00   43951/2230302     revertGenericMove [23]
+                0.06    0.00 2186351/2230302     createNormalMove [8]
+[16]     9.2    0.06    0.00 2230302         revertNormalMove [16]
+-----------------------------------------------
+                0.02    0.01   70199/70199       findAllValidMoves [4]
+[17]     4.1    0.02    0.01   70199         findCastles [17]
+                0.01    0.00   68022/2255546     checkMove [9]
+                0.00    0.00     421/421         createCastleMove [25]
+-----------------------------------------------
+                0.02    0.00   31939/31939       evaluateBoard [5]
+[18]     3.1    0.02    0.00   31939         evaluateMaterial [18]
+-----------------------------------------------
+                0.01    0.01     751/751         findPawnMoves [10]
+[19]     2.3    0.01    0.01     751         createEnpassMove [19]
+                0.01    0.00     751/762         revertEnpassMove [21]
+                0.00    0.00     751/2255546     checkMove [9]
+                0.00    0.00     751/762         applyEnpassMove [33]
+-----------------------------------------------
+                0.01    0.00   43962/43962       alphaBetaPrune [3]
+[20]     1.5    0.01    0.00   43962         encodeBoard [20]
+-----------------------------------------------
+                0.00    0.00      11/762         revertGenericMove [23]
+                0.01    0.00     751/762         createEnpassMove [19]
+[21]     1.5    0.01    0.00     762         revertEnpassMove [21]
+-----------------------------------------------
+                0.00    0.00   43951/2230302     applyGenericMove [24]
+                0.00    0.00 2186351/2230302     createNormalMove [8]
+[22]     0.8    0.01    0.00 2230302         applyNormalMove [22]
+-----------------------------------------------
+                0.00    0.00   43962/43962       alphaBetaPrune [3]
+[23]     0.2    0.00    0.00   43962         revertGenericMove [23]
+                0.00    0.00   43951/2230302     revertNormalMove [16]
+                0.00    0.00      11/762         revertEnpassMove [21]
+-----------------------------------------------
+                0.00    0.00   43962/43962       alphaBetaPrune [3]
+[24]     0.0    0.00    0.00   43962         applyGenericMove [24]
+                0.00    0.00   43951/2230302     applyNormalMove [22]
+                0.00    0.00      11/762         applyEnpassMove [33]
+-----------------------------------------------
+                0.00    0.00     421/421         findCastles [17]
+[25]     0.0    0.00    0.00     421         createCastleMove [25]
+                0.00    0.00     421/2255546     checkMove [9]
+                0.00    0.00     421/421         applyCastleMove [34]
+                0.00    0.00     421/421         revertCastleMove [35]
+-----------------------------------------------
+                0.00    0.00   38257/82219       insertElement [29]
+                0.00    0.00   43962/82219       getElement [12]
+[27]     0.0    0.00    0.00   82219         hashBoard [27]
+-----------------------------------------------
+                0.00    0.00   38257/38257       deleteBucket [32]
+[28]     0.0    0.00    0.00   38257         deleteNode [28]
+-----------------------------------------------
+                0.00    0.00   38257/38257       alphaBetaPrune [3]
+[29]     0.0    0.00    0.00   38257         insertElement [29]
+                0.00    0.00   38257/82219       hashBoard [27]
+                0.00    0.00     151/151         expandBucket [37]
+-----------------------------------------------
+                0.00    0.00       1/6320        goodHeuristic [7]
+                0.00    0.00    6319/6320        alphaBetaPrune [3]
+[30]     0.0    0.00    0.00    6320         weakHeuristic [30]
+-----------------------------------------------
+                0.00    0.00    1280/1280        constructHashMap [38]
+[31]     0.0    0.00    0.00    1280         constructBucket [31]
+-----------------------------------------------
+                0.00    0.00    1280/1280        deleteHashMap [39]
+[32]     0.0    0.00    0.00    1280         deleteBucket [32]
+                0.00    0.00   38257/38257       deleteNode [28]
+-----------------------------------------------
+                0.00    0.00      11/762         applyGenericMove [24]
+                0.00    0.00     751/762         createEnpassMove [19]
+[33]     0.0    0.00    0.00     762         applyEnpassMove [33]
+-----------------------------------------------
+                0.00    0.00     421/421         createCastleMove [25]
+[34]     0.0    0.00    0.00     421         applyCastleMove [34]
+-----------------------------------------------
+                0.00    0.00     421/421         createCastleMove [25]
+[35]     0.0    0.00    0.00     421         revertCastleMove [35]
+-----------------------------------------------
+                0.00    0.00     196/196         main [2]
+[36]     0.0    0.00    0.00     196         convChar [36]
+-----------------------------------------------
+                0.00    0.00     151/151         insertElement [29]
+[37]     0.0    0.00    0.00     151         expandBucket [37]
+-----------------------------------------------
+                0.00    0.00      10/10          constructTranspositionTable [40]
+[38]     0.0    0.00    0.00      10         constructHashMap [38]
+                0.00    0.00    1280/1280        constructBucket [31]
+-----------------------------------------------
+                0.00    0.00      10/10          deleteTranspositionTable [41]
+[39]     0.0    0.00    0.00      10         deleteHashMap [39]
+                0.00    0.00    1280/1280        deleteBucket [32]
+-----------------------------------------------
+                0.00    0.00       2/2           findBestMoveIndex [1]
+[40]     0.0    0.00    0.00       2         constructTranspositionTable [40]
+                0.00    0.00      10/10          constructHashMap [38]
+-----------------------------------------------
+                0.00    0.00       2/2           findBestMoveIndex [1]
+[41]     0.0    0.00    0.00       2         deleteTranspositionTable [41]
+                0.00    0.00      10/10          deleteHashMap [39]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function is in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+Copyright (C) 2012 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Index by function name
+
+   [3] alphaBetaPrune          [8] createNormalMove       [11] findMappedIters
+  [34] applyCastleMove        [32] deleteBucket           [15] findMappedNoIters
+  [33] applyEnpassMove        [39] deleteHashMap          [10] findPawnMoves
+  [24] applyGenericMove       [28] deleteNode             [12] getElement
+  [22] applyNormalMove        [41] deleteTranspositionTable [13] getNode
+   [9] checkMove              [20] encodeBoard             [7] goodHeuristic
+  [14] compareString           [5] evaluateBoard          [27] hashBoard
+  [31] constructBucket        [18] evaluateMaterial       [29] insertElement
+  [38] constructHashMap        [6] evaluateMoves          [35] revertCastleMove
+  [40] constructTranspositionTable [37] expandBucket      [21] revertEnpassMove
+  [36] convChar                [4] findAllValidMoves      [23] revertGenericMove
+  [25] createCastleMove        [1] findBestMoveIndex      [16] revertNormalMove
+  [19] createEnpassMove       [17] findCastles            [30] weakHeuristic
