@@ -1,3 +1,3 @@
 cd _Scripts
-java -cp ../_Classes JChess >> ../output.txt
+java -cp ../_Classes JChess >> ../BinaryTable.txt
 cd ../
