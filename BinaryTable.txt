@@ -1,0 +1,202 @@
+#0 	 Value: 68 	 Alpha: 68 	 Searched: 1390 
+#1 	 Value: 100 	 Alpha: 100 	 Searched: 6758 
+#2 	 Value: 100 	 Alpha: 100 	 Searched: 1413 
+#3 	 Value: 97 	 Alpha: 100 	 Searched: 1238 
+#4 	 Value: 100 	 Alpha: 100 	 Searched: 8372 
+#5 	 Value: 99 	 Alpha: 100 	 Searched: 1244 
+#6 	 Value: 100 	 Alpha: 100 	 Searched: 1297 
+#7 	 Value: 95 	 Alpha: 100 	 Searched: 608 
+#8 	 Value: 98 	 Alpha: 100 	 Searched: 1010 
+#9 	 Value: 99 	 Alpha: 100 	 Searched: 1399 
+#10 	 Value: 84 	 Alpha: 100 	 Searched: 608 
+#11 	 Value: 96 	 Alpha: 100 	 Searched: 315 
+#12 	 Value: 96 	 Alpha: 100 	 Searched: 402 
+#13 	 Value: 88 	 Alpha: 100 	 Searched: 272 
+#14 	 Value: 96 	 Alpha: 100 	 Searched: 466 
+#15 	 Value: 99 	 Alpha: 100 	 Searched: 229 
+#16 	 Value: 92 	 Alpha: 100 	 Searched: 518 
+#17 	 Value: 17 	 Alpha: 100 	 Searched: 310 
+#18 	 Value: 100 	 Alpha: 100 	 Searched: 139 
+#19 	 Value: 5 	 Alpha: 100 	 Searched: 418 
+Total Evals 28406 
+Total Moves Found 180531 
+Total Table Entries 34357 
+ 
+Time taken 0 seconds 570 milliseconds 
+
+#0 	 Value: 153 	 Alpha: 153 	 Searched: 7070 
+#1 	 Value: 147 	 Alpha: 153 	 Searched: 1660 
+#2 	 Value: 153 	 Alpha: 153 	 Searched: 2963 
+#3 	 Value: 126 	 Alpha: 153 	 Searched: 807 
+#4 	 Value: 151 	 Alpha: 153 	 Searched: 1353 
+#5 	 Value: 150 	 Alpha: 153 	 Searched: 1218 
+#6 	 Value: 147 	 Alpha: 153 	 Searched: 1143 
+#7 	 Value: 147 	 Alpha: 153 	 Searched: 683 
+#8 	 Value: 150 	 Alpha: 153 	 Searched: 847 
+#9 	 Value: 150 	 Alpha: 153 	 Searched: 541 
+#10 	 Value: 151 	 Alpha: 153 	 Searched: 896 
+#11 	 Value: 147 	 Alpha: 153 	 Searched: 827 
+#12 	 Value: 150 	 Alpha: 153 	 Searched: 1343 
+#13 	 Value: 144 	 Alpha: 153 	 Searched: 493 
+#14 	 Value: 152 	 Alpha: 153 	 Searched: 1036 
+#15 	 Value: 147 	 Alpha: 153 	 Searched: 469 
+#16 	 Value: 148 	 Alpha: 153 	 Searched: 545 
+#17 	 Value: 151 	 Alpha: 153 	 Searched: 1127 
+#18 	 Value: 152 	 Alpha: 153 	 Searched: 2971 
+#19 	 Value: 133 	 Alpha: 153 	 Searched: 536 
+#20 	 Value: 153 	 Alpha: 153 	 Searched: 1671 
+#21 	 Value: 147 	 Alpha: 153 	 Searched: 229 
+#22 	 Value: 150 	 Alpha: 153 	 Searched: 468 
+#23 	 Value: 153 	 Alpha: 153 	 Searched: 457 
+#24 	 Value: 136 	 Alpha: 153 	 Searched: 203 
+#25 	 Value: 123 	 Alpha: 153 	 Searched: 242 
+#26 	 Value: 59 	 Alpha: 153 	 Searched: 622 
+#27 	 Value: 62 	 Alpha: 153 	 Searched: 293 
+#28 	 Value: -159 	 Alpha: 153 	 Searched: 430 
+Total Evals 33143 
+Total Moves Found 145871 
+Total Table Entries 37766 
+ 
+Time taken 0 seconds 670 milliseconds 
+
+#0 	 Value: 155 	 Alpha: 155 	 Searched: 5801 
+#1 	 Value: 163 	 Alpha: 163 	 Searched: 3385 
+#2 	 Value: 163 	 Alpha: 163 	 Searched: 7180 
+#3 	 Value: 163 	 Alpha: 163 	 Searched: 7675 
+#4 	 Value: 156 	 Alpha: 163 	 Searched: 2043 
+#5 	 Value: 156 	 Alpha: 163 	 Searched: 1413 
+#6 	 Value: 162 	 Alpha: 163 	 Searched: 2458 
+#7 	 Value: 163 	 Alpha: 163 	 Searched: 4188 
+#8 	 Value: 163 	 Alpha: 163 	 Searched: 3521 
+#9 	 Value: 162 	 Alpha: 163 	 Searched: 3214 
+#10 	 Value: 162 	 Alpha: 163 	 Searched: 1444 
+#11 	 Value: 162 	 Alpha: 163 	 Searched: 1743 
+#12 	 Value: 159 	 Alpha: 163 	 Searched: 2241 
+#13 	 Value: 162 	 Alpha: 163 	 Searched: 1578 
+#14 	 Value: 162 	 Alpha: 163 	 Searched: 1013 
+#15 	 Value: 162 	 Alpha: 163 	 Searched: 2141 
+#16 	 Value: 162 	 Alpha: 163 	 Searched: 1452 
+#17 	 Value: 162 	 Alpha: 163 	 Searched: 1163 
+#18 	 Value: 162 	 Alpha: 163 	 Searched: 2738 
+#19 	 Value: 162 	 Alpha: 163 	 Searched: 909 
+#20 	 Value: 155 	 Alpha: 163 	 Searched: 2017 
+#21 	 Value: 148 	 Alpha: 163 	 Searched: 656 
+#22 	 Value: 147 	 Alpha: 163 	 Searched: 999 
+#23 	 Value: 139 	 Alpha: 163 	 Searched: 874 
+#24 	 Value: 127 	 Alpha: 163 	 Searched: 984 
+#25 	 Value: 123 	 Alpha: 163 	 Searched: 792 
+#26 	 Value: 136 	 Alpha: 163 	 Searched: 1147 
+#27 	 Value: 136 	 Alpha: 163 	 Searched: 982 
+#28 	 Value: -95 	 Alpha: 163 	 Searched: 860 
+#29 	 Value: -571 	 Alpha: 163 	 Searched: 484 
+#30 	 Value: -579 	 Alpha: 163 	 Searched: 466 
+#31 	 Value: -6 	 Alpha: 163 	 Searched: 26 
+#32 	 Value: -384 	 Alpha: 163 	 Searched: 425 
+#33 	 Value: 37 	 Alpha: 163 	 Searched: 91 
+#34 	 Value: -81 	 Alpha: 163 	 Searched: 76 
+#35 	 Value: -118 	 Alpha: 163 	 Searched: 336 
+#36 	 Value: -60 	 Alpha: 163 	 Searched: 89 
+#37 	 Value: -106 	 Alpha: 163 	 Searched: 165 
+#38 	 Value: -106 	 Alpha: 163 	 Searched: 165 
+Total Evals 68934 
+Total Moves Found 254829 
+Total Table Entries 76432 
+ 
+Time taken 1 seconds 460 milliseconds 
+
+#0 	 Value: 115 	 Alpha: 115 	 Searched: 4579 
+#1 	 Value: 150 	 Alpha: 150 	 Searched: 5278 
+#2 	 Value: 150 	 Alpha: 150 	 Searched: 2032 
+#3 	 Value: 149 	 Alpha: 150 	 Searched: 1754 
+#4 	 Value: 94 	 Alpha: 150 	 Searched: 704 
+#5 	 Value: 11 	 Alpha: 150 	 Searched: 753 
+#6 	 Value: -597 	 Alpha: 150 	 Searched: 583 
+#7 	 Value: -784 	 Alpha: 150 	 Searched: 630 
+#8 	 Value: -370 	 Alpha: 150 	 Searched: 675 
+#9 	 Value: 51 	 Alpha: 150 	 Searched: 398 
+#10 	 Value: 73 	 Alpha: 150 	 Searched: 1185 
+#11 	 Value: -70 	 Alpha: 150 	 Searched: 786 
+#12 	 Value: -72 	 Alpha: 150 	 Searched: 769 
+#13 	 Value: -83 	 Alpha: 150 	 Searched: 716 
+#14 	 Value: -84 	 Alpha: 150 	 Searched: 558 
+#15 	 Value: 63 	 Alpha: 150 	 Searched: 832 
+#16 	 Value: 69 	 Alpha: 150 	 Searched: 868 
+#17 	 Value: -89 	 Alpha: 150 	 Searched: 454 
+#18 	 Value: -92 	 Alpha: 150 	 Searched: 332 
+#19 	 Value: -89 	 Alpha: 150 	 Searched: 516 
+#20 	 Value: -104 	 Alpha: 150 	 Searched: 226 
+#21 	 Value: -662 	 Alpha: 150 	 Searched: 265 
+#22 	 Value: -95 	 Alpha: 150 	 Searched: 236 
+#23 	 Value: -92 	 Alpha: 150 	 Searched: 255 
+#24 	 Value: -662 	 Alpha: 150 	 Searched: 215 
+#25 	 Value: -70 	 Alpha: 150 	 Searched: 223 
+#26 	 Value: -101 	 Alpha: 150 	 Searched: 158 
+#27 	 Value: -92 	 Alpha: 150 	 Searched: 126 
+#28 	 Value: -662 	 Alpha: 150 	 Searched: 517 
+#29 	 Value: -92 	 Alpha: 150 	 Searched: 197 
+#30 	 Value: -95 	 Alpha: 150 	 Searched: 121 
+#31 	 Value: -662 	 Alpha: 150 	 Searched: 183 
+#32 	 Value: -104 	 Alpha: 150 	 Searched: 515 
+#33 	 Value: -67 	 Alpha: 150 	 Searched: 82 
+#34 	 Value: -95 	 Alpha: 150 	 Searched: 114 
+#35 	 Value: -46 	 Alpha: 150 	 Searched: 123 
+#36 	 Value: -92 	 Alpha: 150 	 Searched: 98 
+#37 	 Value: -101 	 Alpha: 150 	 Searched: 101 
+#38 	 Value: -662 	 Alpha: 150 	 Searched: 72 
+#39 	 Value: -103 	 Alpha: 150 	 Searched: 98 
+#40 	 Value: -112 	 Alpha: 150 	 Searched: 58 
+#41 	 Value: -112 	 Alpha: 150 	 Searched: 17 
+Total Evals 28402 
+Total Moves Found 124268 
+Total Table Entries 32144 
+ 
+Time taken 0 seconds 600 milliseconds 
+
+#0 	 Value: 99999 	 Alpha: 99999 	 Searched: 0 
+#1 	 Value: 997 	 Alpha: 99999 	 Searched: 1222 
+#2 	 Value: 99999 	 Alpha: 99999 	 Searched: 1152 
+#3 	 Value: 891 	 Alpha: 99999 	 Searched: 1067 
+#4 	 Value: 99999 	 Alpha: 99999 	 Searched: 1431 
+#5 	 Value: 921 	 Alpha: 99999 	 Searched: 1197 
+#6 	 Value: 916 	 Alpha: 99999 	 Searched: 931 
+#7 	 Value: 99999 	 Alpha: 99999 	 Searched: 1244 
+#8 	 Value: 99999 	 Alpha: 99999 	 Searched: 1224 
+#9 	 Value: 915 	 Alpha: 99999 	 Searched: 626 
+#10 	 Value: 99999 	 Alpha: 99999 	 Searched: 1243 
+#11 	 Value: 99999 	 Alpha: 99999 	 Searched: 916 
+#12 	 Value: 99999 	 Alpha: 99999 	 Searched: 821 
+#13 	 Value: 99999 	 Alpha: 99999 	 Searched: 906 
+#14 	 Value: 99999 	 Alpha: 99999 	 Searched: 780 
+#15 	 Value: 99999 	 Alpha: 99999 	 Searched: 878 
+#16 	 Value: 1052 	 Alpha: 99999 	 Searched: 279 
+#17 	 Value: 99999 	 Alpha: 99999 	 Searched: 660 
+#18 	 Value: 99999 	 Alpha: 99999 	 Searched: 592 
+#19 	 Value: 99999 	 Alpha: 99999 	 Searched: 1227 
+#20 	 Value: 916 	 Alpha: 99999 	 Searched: 443 
+#21 	 Value: 99999 	 Alpha: 99999 	 Searched: 508 
+#22 	 Value: 905 	 Alpha: 99999 	 Searched: 592 
+#23 	 Value: 99999 	 Alpha: 99999 	 Searched: 513 
+#24 	 Value: 908 	 Alpha: 99999 	 Searched: 412 
+#25 	 Value: 905 	 Alpha: 99999 	 Searched: 530 
+#26 	 Value: 862 	 Alpha: 99999 	 Searched: 811 
+#27 	 Value: 899 	 Alpha: 99999 	 Searched: 287 
+#28 	 Value: 862 	 Alpha: 99999 	 Searched: 773 
+#29 	 Value: 712 	 Alpha: 99999 	 Searched: 505 
+#30 	 Value: 712 	 Alpha: 99999 	 Searched: 664 
+#31 	 Value: 99999 	 Alpha: 99999 	 Searched: 1408 
+#32 	 Value: 99999 	 Alpha: 99999 	 Searched: 1200 
+#33 	 Value: 565 	 Alpha: 99999 	 Searched: 728 
+#34 	 Value: 99999 	 Alpha: 99999 	 Searched: 1039 
+#35 	 Value: 550 	 Alpha: 99999 	 Searched: 759 
+#36 	 Value: -556 	 Alpha: 99999 	 Searched: 566 
+#37 	 Value: -112 	 Alpha: 99999 	 Searched: 567 
+#38 	 Value: -767 	 Alpha: 99999 	 Searched: 606 
+#39 	 Value: -109 	 Alpha: 99999 	 Searched: 516 
+#40 	 Value: -87 	 Alpha: 99999 	 Searched: 185 
+#41 	 Value: -121 	 Alpha: 99999 	 Searched: 555 
+Total Evals 32563 
+Total Moves Found 90494 
+Total Table Entries 35254 
+ 
+Time taken 0 seconds 690 milliseconds 
+
