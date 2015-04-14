@@ -423,7 +423,6 @@ void findCastles(Board * b, int * moves, int * moves_found, int turn, int x, int
  * 		moves_found : integer pointer to moves size
  * 		turn : WHITE or BLACK	
 */
-
 void checkMove(Board *b, int * moves_found, int turn){
 	int x, y, kingX, kingY,i;
 	kingX = b->kingLocations[turn] / 8;
