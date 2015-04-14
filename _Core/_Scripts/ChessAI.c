@@ -1,10 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-
 #include "Engine.h"
 #include "Moves.h"
 #include "ChessAI.h"
-
 #include "BinTable.h"
 
 int MATE = 99999;
@@ -106,8 +104,7 @@ int alphaBetaPrune(BinaryTable *table, Board * board, int turn, int * move, int 
 
 	applyGenericMove(board,move);	
 	
-	char * key;
-	key = encodeBoard(board,move[0] == 4,turn);
+	char * key = encodeBoard(board,move[0] == 4,turn);
 	
 	Node * node = getElement(table,depth,key);
 	if (node != NULL){
@@ -140,13 +137,19 @@ int alphaBetaPrune(BinaryTable *table, Board * board, int turn, int * move, int 
 		revertGenericMove(board,move);
 		free(moves_pointer);
 		if (is_Check_Mate == 0){
-			if (turn == evaluating_player)
+			if (turn == evaluating_player){
+				insertElement(table,depth,-MATE,key);
 				return -MATE;
-			else
+			}
+			else{
+				insertElement(table,depth,MATE,key);
 				return MATE;
+			}
 		}
-		else 
+		else{
+			insertElement(table,depth,0,key);
 			return 0;
+		}
 	}
 	
 	int i, v, value;
@@ -175,18 +178,16 @@ int alphaBetaPrune(BinaryTable *table, Board * board, int turn, int * move, int 
 	
 	revertGenericMove(board,move);
 	free(moves_pointer);
-	
 	insertElement(table,depth,value,key);
 		
 	return value;
 }
 
 int evaluateBoard(Board *board, int player, int * lastMove){
-	
 	TOTAL_BOARDS_SEARCHED += 1;
 	int value = 	evaluateMaterial(board,player) + 
-					evaluateMoves(board,player,lastMove) - 
-					evaluateMoves(board,!player,lastMove);
+				evaluateMoves(board,player,lastMove) - 
+				evaluateMoves(board,!player,lastMove);
 	return value;
 }
 
@@ -195,7 +196,7 @@ int evaluateMaterial(Board *board, int player){
 	int x,y;
 	for(x = 0; x < 8; x++){
 		for(y = 0; y < 8; y++){
-			if (board->types[x][y] != 9){
+			if (board->types[x][y] != EMPTY){
 				if (board->colors[x][y] == player)
 					value += MATERIAL_VALUES[board->types[x][y]];
 				else
@@ -214,22 +215,21 @@ int evaluateMoves(Board *board, int player, int * lastMove){
 	
 	int value = 0;
 	//value += size;
-	int i;
+	int i,x,y;
 
 	int * t = *(board->types);
 	for(i = 0; i < size; i++, moves+=7){
-		if (t[moves[1]] == 1)
+		if (t[moves[1]] == KNIGHT)
 			value += VALUE_KNIGHT_RANGE;
-		if (t[moves[1]] == 2)
+		if (t[moves[1]] == BISHOP)
 			value += VALUE_BISHOP_RANGE;
 		if ((t[moves[1]] != 0 || moves[1] % 8 != moves[2] % 8) && moves[2] / 8 > 2 && moves[2] / 8 < 5 && moves[2] % 8 > 2 && moves[2] % 8 < 5)
 			value += VALUE_CENTER_SQUARE_ATTACKED;
 	}
 	
-	int x,y;
 	for(x = 3; x < 5; x++)
 		for(y = 3; y < 5; y++)
-			if (board->types[x][y] != 9 && board->colors[x][y] == player)
+			if (board->types[x][y] != EMPTY && board->colors[x][y] == player)
 				value += VALUE_CENTER_SQUARE_ATTACKED;
 	
 	free(moves_pointer);
@@ -238,7 +238,6 @@ int evaluateMoves(Board *board, int player, int * lastMove){
 
 int * goodHeuristic(BinaryTable *table, Board *board, int size, int * moves, int turn, int depth){
 	int * sorted = malloc(28 * size);
-	//moves = weakHeuristic(board,size,moves,turn);
 	int * moves_pointer = moves;
 	
 	int values[size];
@@ -307,24 +306,4 @@ int * weakHeuristic(Board *board, int size, int * moves, int turn){
 	
 	free(moves_pointer);
 	return sorted_pointer;
-		
-	
-
-	for(i = 0; i < size; i++)
-		if (types[moves[i*7 + 2]] != 9)			
-			for(j = 0; j < 7; j++)
-				sorted[i * 7 + j] = moves[i * 7 + j];
-	
-	
-	sorted = sorted_pointer;
-	moves = moves_pointer;
-	
-	for(i = 0; i < size; i++)
-		if (types[moves[i*7 + 2]] == 9)			
-			for(j = 0; j < 7; j++)
-				sorted[i * 7 + j] = moves[i * 7 + j];
-	
-	
-	free(moves_pointer);
-	return sorted_pointer;	
 }

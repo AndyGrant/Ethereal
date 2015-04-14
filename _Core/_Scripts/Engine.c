@@ -13,13 +13,13 @@ static int move_map_king[8][2] = {{1,1},{-1,1},{-1,-1},{1,-1},{1,0},{-1,0},{0,1}
 static int WHITE = 0;
 static int BLACK = 1;
 
-static int PAWN = 0;
-static int KNIGHT = 1;
-static int BISHOP = 2;
-static int ROOK = 3;
-static int QUEEN = 4;
-static int KING = 5;
-static int EMPTY = 9;
+int PAWN = 0;
+int KNIGHT = 1;
+int BISHOP = 2;
+int ROOK = 3;
+int QUEEN = 4;
+int KING = 5;
+int EMPTY = 9;
 
 /*
  * Function : printBoard
