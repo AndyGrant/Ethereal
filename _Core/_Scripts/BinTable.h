@@ -22,18 +22,18 @@ typedef struct Node{
 } Node;
 
 
-struct BinaryTable * createTable(int size);
-struct BinaryTree * createTree();
+BinaryTable * createTable(int size);
+BinaryTree * createTree();
 Node * createNode(int value, char * key);
 
-void destroyTable(struct BinaryTable * table);
-void destroyTree(struct BinaryTree * tree);
+void destroyTable(BinaryTable * table);
+void destroyTree(BinaryTree * tree);
 void destroyNode(Node * node);
 
-void insertElement(struct BinaryTable * table, int depth, int value, char * key);
-Node * getElement(struct BinaryTable * table, int depth, char * key);
+void insertElement(BinaryTable * table, int depth, int value, char * key);
+Node * getElement(BinaryTable * table, int depth, char * key);
 
 int compareKey(char * key1, char * key2);
-char * encodeBoard(struct Board * b, int enpass, int turn);
+char * encodeBoard(Board * b, int enpass, int turn);
 
 #endif

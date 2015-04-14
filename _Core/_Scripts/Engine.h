@@ -1,6 +1,16 @@
 #ifndef Engine
 #define Engine
 
+extern int PAWN;
+extern int PAWN;
+extern int KNIGHT;
+extern int BISHOP;
+extern int ROOK;
+extern int QUEEN;
+extern int KING;
+extern int EMPTY;
+
+
 typedef struct Board{
 	int types[8][8];
 	int colors[8][8];
@@ -8,13 +18,16 @@ typedef struct Board{
 	int kingLocations[2];
 } Board;
 
-struct Board * createBoard(int[8][8]);
-void printBoard(struct Board *);
-int * findAllValidMoves(struct Board *, int, int *, int *);
-void findPawnMoves(struct Board *, int * , int *, int , int , int, int *);
-void findMappedIters(struct Board *, int *, int *, int , int , int , int *, int);
-void findMappedNoIters(struct Board *, int *, int *, int , int , int , int *, int);
-void findCastles(struct Board *, int * , int *, int , int , int );
-void checkMove(struct Board *, int *, int);
+Board * createBoard(int board[8][8]);
+void printBoard(Board * board);
+
+int * findAllValidMoves(Board * b, int turn, int * moves_size_p, int * last_move);
+void findPawnMoves(Board * b, int * moves, int * moves_found, int turn, int x, int y, int * last_move);
+void findMappedIters(Board * b, int * moves, int *moves_found, int turn, int x, int y, int * map, int map_size);
+void findMappedNoIters(Board * b, int * moves, int * moves_found, int turn, int x, int y, int * map, int map_size);
+void findCastles(Board * b, int * moves, int * moves_found, int turn, int x, int y);
+
+void checkMove(Board *b, int * moves_found, int turn);
 
 #endif
+

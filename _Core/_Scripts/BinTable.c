@@ -59,6 +59,7 @@ void destroyNode(Node * node){
 	free(node);	
 }
 
+
 void insertElement(BinaryTable * table, int depth, int value, char * key){
 	table->elements += 1;
 	table->trees[depth]->elements += 1;
@@ -117,6 +118,7 @@ Node * getElement(BinaryTable * table, int depth, char * key){
 	}
 }
 
+
 int compareKey(char * key1, char * key2){
 	int i = 0;
 	for(i = 0; i < KEY_SIZE; i++){
@@ -130,19 +132,24 @@ int compareKey(char * key1, char * key2){
 
 char * encodeBoard(Board * board, int enpass, int turn){
 	char * key = calloc(66,sizeof(char));
-	int x,y,i;
+	int x,y,i,m,c,t;
 	
-	for(x = 0, i = 0; x < 8; x++)
+	for(x = 0, i = 0; x < 8; x++){
 		for(y = 0; y < 8; y++, i++){
 			if (board->types[x][y] == 9)
 				key[i] = (char)200;
 			else{
-				int m = board->moved[x][y] * 40;
-				int c = board->colors[x][y] * 15;
-				int t = board->types[x][y];
+				if (board->types[x][y] > PAWN && board->types[x][y] < KING && board->types[x][y] != ROOK)
+					m = 40;
+				else
+					m = board->moved[x][y] * 40;
+				c = board->colors[x][y] * 15;
+				t = board->types[x][y];
 				key[i] = (char)(t+c+m);
 			}
 		}
+	}
+	
 	key[64] = (char)(enpass);
 	key[65] = (char)(turn);
 	return key;

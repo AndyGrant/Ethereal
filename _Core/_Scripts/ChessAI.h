@@ -4,14 +4,14 @@
 #include "Engine.h"
 #include "BinTable.h"
 
-int * findBestMove(struct Board * board, int * last_move, int turn);
-int findBestMoveIndex(struct Board * board, int * last_move, int turn);
-int alphaBetaPrune(struct BinaryTable *, struct Board *b, int turn, int * move, int depth, int alpha, int beta, int evaluatingPlayer);
-int evaluateBoard(struct Board *b, int player, int * lastMove);
-int evaluateMaterial(struct Board *b, int player);
-int evaluateMoves(struct Board *b, int player, int * lastMove);
-int * goodHeuristic(struct BinaryTable *, struct Board *,int,int *, int, int);
-int * weakHeuristic(struct Board *, int, int *, int);
-int evaluate(struct Board *b, int * move, int turn, int value, int depth);
+int findBestMoveIndex(Board * board, int * last_move, int turn);
+int alphaBetaPrune(BinaryTable *, Board *b, int turn, int * move, int depth, int alpha, int beta, int evaluatingPlayer);
+
+int evaluateBoard(Board *b, int player, int * lastMove);
+int evaluateMaterial(Board *b, int player);
+int evaluateMoves(Board *b, int player, int * lastMove);
+
+int * goodHeuristic(BinaryTable *table, Board * board, int size, int * moves, int turn, int depth);
+int * weakHeuristic(Board *board, int size, int * moves, int turn);
 
 #endif
