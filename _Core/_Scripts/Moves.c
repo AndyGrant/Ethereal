@@ -14,8 +14,9 @@
  * 		moves_found : integer pointer to moves size
  * 		move : integer array defining the move
  * 		turn : WHITE or BLACK
+ *		eval_check : integer determining need to validate move
  */
-void createNormalMove(Board * b, int * moves, int * moves_found, int * move, int turn){
+void createNormalMove(Board * b, int * moves, int * moves_found, int * move, int turn, int eval_check){
 	int *types = *(b->types);
 	int *colors = *(b->colors);
 	int *moved = *(b->moved);
@@ -32,9 +33,13 @@ void createNormalMove(Board * b, int * moves, int * moves_found, int * move, int
 	moves[start_index+5] = moved[end];
 	moves[start_index+6] = moved[start];
 	
-	applyNormalMove(b, moves + start_index);
-	checkMove(b,moves_found,turn);
-	revertNormalMove(b, moves + start_index);
+	if(eval_check){
+		applyNormalMove(b, moves + start_index);
+		checkMove(b,moves_found,turn);
+		revertNormalMove(b, moves + start_index);
+	}
+	else
+		*moves_found += 1;
 }
 
 
@@ -82,8 +87,9 @@ void createCastleMove(Board * b, int * moves, int * moves_found, int * move, int
  * 		moves_found : integer pointer to moves size
  * 		move : integer array defining the move
  * 		turn : WHITE or BLACK
+ *		eval_check : integer determining need to validate move
  */
-void createPromotionMove(Board * b, int * moves, int * moves_found, int * move, int turn){
+void createPromotionMove(Board * b, int * moves, int * moves_found, int * move, int turn, int eval_check){
 	int *types = *(b->types);
 	int *colors = *(b->colors);
 	int *moved = *(b->moved);
@@ -100,9 +106,13 @@ void createPromotionMove(Board * b, int * moves, int * moves_found, int * move, 
 	moves[start_index+5] = moved[end];
 	moves[start_index+6] = move[5];
 	
-	applyPromotionMove(b,moves + start_index);
-	checkMove(b,moves_found,turn);
-	revertPromotionMove(b,moves + start_index);
+	if(eval_check){
+		applyPromotionMove(b,moves + start_index);
+		checkMove(b,moves_found,turn);
+		revertPromotionMove(b,moves + start_index);
+	}
+	else
+		*moves_found += 1;
 }
 
 
@@ -117,8 +127,9 @@ void createPromotionMove(Board * b, int * moves, int * moves_found, int * move, 
  * 		moves_found : integer pointer to moves size
  * 		move : integer array defining the move
  * 		turn : WHITE or BLACK
+ *		eval_check : integer determining need to validate move
  */
-void createEnpassMove(Board * b, int * moves, int * moves_found, int * move, int turn){
+void createEnpassMove(Board * b, int * moves, int * moves_found, int * move, int turn, int eval_check){
 	
 	int start = (move[1] << 3) + move[2];
 	int end = (move[3] << 3) + move[4];
@@ -130,9 +141,13 @@ void createEnpassMove(Board * b, int * moves, int * moves_found, int * move, int
 	moves[start_index+2] = end;
 	moves[start_index+3] = pass;
 	
-	applyEnpassMove(b,moves + start_index);
-	checkMove(b,moves_found,turn);
-	revertEnpassMove(b,moves + start_index);
+	if(eval_check){
+		applyEnpassMove(b,moves + start_index);
+		checkMove(b,moves_found,turn);
+		revertEnpassMove(b,moves + start_index);
+	}
+	else
+		*moves_found += 1;
 	
 }
 

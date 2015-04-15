@@ -4,14 +4,23 @@
 
 #include "Engine.h"
 
-static int move_map_knight[8][2] = {{2,1},{2,-1},{-2,1},{-2,-1},{1,2},{1,-2},{-1,2},{-1,-2}};
-static int move_map_bishop[4][2] = {{1,1},{-1,1},{-1,-1},{1,-1}};
-static int move_map_rook[4][2] = {{1,0},{-1,0},{0,1},{0,-1}};
-static int move_map_queen[8][2] = {{1,1},{-1,1},{-1,-1},{1,-1},{1,0},{-1,0},{0,1},{0,-1}};
-static int move_map_king[8][2] = {{1,1},{-1,1},{-1,-1},{1,-1},{1,0},{-1,0},{0,1},{0,-1}};
+int move_map_knight[8][2] = {{2,1},{2,-1},{-2,1},{-2,-1},{1,2},{1,-2},{-1,2},{-1,-2}};
+int move_map_bishop[4][2] = {{1,1},{-1,1},{-1,-1},{1,-1}};
+int move_map_rook[4][2] = {{1,0},{-1,0},{0,1},{0,-1}};
+int move_map_queen[8][2] = {{1,1},{-1,1},{-1,-1},{1,-1},{1,0},{-1,0},{0,1},{0,-1}};
+int move_map_king[8][2] = {{1,1},{-1,1},{-1,-1},{1,-1},{1,0},{-1,0},{0,1},{0,-1}};
 
-static int WHITE = 0;
-static int BLACK = 1;
+int DIRECTION_MAPPINGS[6][8] = {
+	{0,0,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0},
+	{1,1,1,1,0,0,0,0},
+	{0,0,0,0,1,1,1,1},
+	{1,1,1,1,1,1,1,1},
+	{1,1,1,1,1,1,1,1},
+};
+
+int WHITE = 0;
+int BLACK = 1;
 
 int PAWN = 0;
 int KNIGHT = 1;
@@ -20,6 +29,8 @@ int ROOK = 3;
 int QUEEN = 4;
 int KING = 5;
 int EMPTY = 9;
+
+int SIZE_OF_MOVE = 7;
 
 /*
  * Function : printBoard
@@ -117,41 +128,44 @@ Board * createBoard(int board[8][8]){
  * 	Arguments:
  * 		b : Board structure pointer
  *		turn : WHITE or BLACK
- * 		moves_size_p : integer pointer for moves found
+ * 		moves_found : integer pointer for moves found
  * 		last_move : integer array for last move
  */
-int * findAllValidMoves(Board * b, int turn, int * moves_size_p, int * last_move){
+int * findAllValidMoves(Board * b, int turn, int * moves_found, int * last_move){
 	int moves[1400];
-	int row,col;
+	int row,col,i;	
+	
+	int eval_check[8][8];
+	determineCheckValidations(eval_check, b, turn);
+	
 	
 	for(row = 0; row < 8; row++){
 		for(col = 0; col < 8; col++){
 			if (b->colors[row][col] == turn){
 				int type = b->types[row][col];
 				if (type == PAWN)
-					findPawnMoves(b,moves,moves_size_p,turn,row,col,last_move);
+					findPawnMoves(b,moves,moves_found,turn,row,col,last_move,eval_check[row][col]);
 				else if (type == KNIGHT)
-					findMappedNoIters(b,moves,moves_size_p,turn,row,col,*move_map_knight, 8);
+					findMappedNoIters(b,moves,moves_found,turn,row,col,*move_map_knight, 8, eval_check[row][col]);
 				else if (type == BISHOP)
-					findMappedIters(b,moves,moves_size_p,turn,row,col,*move_map_bishop, 4);
+					findMappedIters(b,moves,moves_found,turn,row,col,*move_map_bishop, 4, eval_check[row][col]);
 				else if (type == ROOK)
-					findMappedIters(b,moves,moves_size_p,turn,row,col,*move_map_rook, 4);
+					findMappedIters(b,moves,moves_found,turn,row,col,*move_map_rook, 4, eval_check[row][col]);
 				else if (type == QUEEN)
-					findMappedIters(b,moves,moves_size_p,turn,row,col,*move_map_queen, 8);
+					findMappedIters(b,moves,moves_found,turn,row,col,*move_map_queen, 8, eval_check[row][col]);
 				else if (type == KING){
-					findMappedNoIters(b,moves,moves_size_p,turn,row,col,*move_map_king, 8);
-					findCastles(b,moves,moves_size_p,turn,row,col);
+					findMappedNoIters(b,moves,moves_found,turn,row,col,*move_map_king, 8, eval_check[row][col]);
+					findCastles(b,moves,moves_found,turn,row,col);
 				}
 			}
 		}
 	}
 	
-	int * moves_final = malloc(*moves_size_p * 28);
+	int * moves_final = malloc(SIZE_OF_MOVE * sizeof(int) * *moves_found);
 	int * moves_final_p = moves_final;
 	int * moves_p = moves;
 	
-	int i;
-	for(i = 0; i < *moves_size_p * 7; i++){
+	for(i = 0; i < *moves_found * SIZE_OF_MOVE; i++){
 		*moves_final_p = *moves_p;
 		moves_p++;
 		moves_final_p++;
@@ -174,8 +188,9 @@ int * findAllValidMoves(Board * b, int turn, int * moves_size_p, int * last_move
  * 		x : x location in board arrays
  * 		y : y location in board arrays
  * 		last_move : integer array of last move made
+ *		eval_check : integer determining need to validate move
  */
-void findPawnMoves(Board * b, int * moves, int * moves_found, int turn, int x, int y, int * last_move){
+void findPawnMoves(Board * b, int * moves, int * moves_found, int turn, int x, int y, int * last_move, int eval_check){
 	int dir;
 	if (b->colors[x][y] == WHITE)
 		dir = -1;
@@ -189,16 +204,16 @@ void findPawnMoves(Board * b, int * moves, int * moves_found, int turn, int x, i
 		if (x+dir == 0 || x+dir == 7){
 			for(pt = QUEEN; pt != PAWN; pt--){
 				int move[9] = {2,x,y,x+dir,y,pt};
-				createPromotionMove(b,moves,moves_found,move,turn);
+				createPromotionMove(b,moves,moves_found,move,turn,eval_check);
 			}
 		}
 		else{
 			int move[9] = {0,x,y,x+dir,y,0,0,0,0};
-			createNormalMove(b,moves,moves_found,move,turn);
+			createNormalMove(b,moves,moves_found,move,turn,eval_check);
 			
 			if (b->moved[x][y] == 1 && b->types[x+dir+dir][y] == 9){
 				int move[9] = {4,x,y,x+dir+dir,y,0,0,0,0};
-				createNormalMove(b,moves,moves_found,move,turn);
+				createNormalMove(b,moves,moves_found,move,turn,eval_check);
 			}		
 		}
 	}
@@ -207,7 +222,7 @@ void findPawnMoves(Board * b, int * moves, int * moves_found, int turn, int x, i
 	if (last_move[0] == 4 && abs((y - last_move[2] % 8)) == 1 && x == 3 + b->colors[x][y]){
 		if(b->colors[last_move[2]/8][last_move[2]%8] != turn){
 			int move[9] = {3,x,y,x+dir,last_move[2] % 8,last_move[2] / 8,last_move[2] % 8,0,0};
-			createEnpassMove(b,moves,moves_found,move,turn);
+			createEnpassMove(b,moves,moves_found,move,turn,eval_check);
 		}
 	}
 	
@@ -216,12 +231,12 @@ void findPawnMoves(Board * b, int * moves, int * moves_found, int turn, int x, i
 		if (x+dir == 0 || x+dir == 7){
 			for(pt = QUEEN; pt != PAWN; pt--){
 				int move[9] = {2,x,y,x+dir,y+1,pt};
-				createPromotionMove(b,moves,moves_found,move,turn);
+				createPromotionMove(b,moves,moves_found,move,turn,eval_check);
 			}
 		}
 		else{
 			int move[9] = {0,x,y,x+dir,y+1,0,0,0,0};
-			createNormalMove(b,moves,moves_found,move,turn);
+			createNormalMove(b,moves,moves_found,move,turn,eval_check);
 		}
 	}
 	
@@ -230,12 +245,12 @@ void findPawnMoves(Board * b, int * moves, int * moves_found, int turn, int x, i
 		if (x+dir == 0 || x+dir == 7){
 			for(pt = QUEEN; pt != PAWN; pt--){
 				int move[9] = {2,x,y,x+dir,y-1,pt};
-				createPromotionMove(b,moves,moves_found,move,turn);
+				createPromotionMove(b,moves,moves_found,move,turn,eval_check);
 			}
 		}
 		else{
 			int move[9] = {0,x,y,x+dir,y-1,0,0,0,0};
-			createNormalMove(b,moves,moves_found,move,turn);
+			createNormalMove(b,moves,moves_found,move,turn,eval_check);
 		}
 	}
 }
@@ -256,9 +271,10 @@ void findPawnMoves(Board * b, int * moves, int * moves_found, int turn, int x, i
  * 		x : x location in board arrays
  * 		y : y location in board arrays
  * 		map : integer array of move mappings
-* 		map_size : length of map
+ * 		map_size : length of map
+ *		eval_check : integer determining need to validate move
  */
-void findMappedIters(Board * b, int * moves, int *moves_found, int turn, int x, int y, int * map, int map_size){
+void findMappedIters(Board * b, int * moves, int *moves_found, int turn, int x, int y, int * map, int map_size, int eval_check){
 	int mapiter, newX, newY;
 
 	for(mapiter = map_size; mapiter > 0; mapiter--){
@@ -272,11 +288,11 @@ void findMappedIters(Board * b, int * moves, int *moves_found, int turn, int x, 
 			
 			if (b->types[newX][newY] == EMPTY){
 				int data[5] = {0,x,y,newX,newY};
-				createNormalMove(b,moves,moves_found,data,turn);
+				createNormalMove(b,moves,moves_found,data,turn,eval_check);
 			}
 			else if (b->colors[newX][newY] != turn){
 				int data[5] = {0,x,y,newX,newY};
-				createNormalMove(b,moves,moves_found,data,turn);
+				createNormalMove(b,moves,moves_found,data,turn,eval_check);
 				break;
 			}
 			else
@@ -301,8 +317,9 @@ void findMappedIters(Board * b, int * moves, int *moves_found, int turn, int x, 
  * 		y : y location in board arrays
  * 		map : integer array of move mappings
  * 		map_size : length of map
+ *		eval_check : integer determining need to validate move
  */
-void findMappedNoIters(Board * b, int * moves, int * moves_found, int turn, int x, int y, int * map, int map_size){
+void findMappedNoIters(Board * b, int * moves, int * moves_found, int turn, int x, int y, int * map, int map_size, int eval_check){
 	int mapiter, newX, newY;
 	for(mapiter = map_size; mapiter > 0; mapiter--){
 		newX = x + *map; 
@@ -314,11 +331,11 @@ void findMappedNoIters(Board * b, int * moves, int * moves_found, int turn, int 
 		
 		if (b->types[newX][newY] == EMPTY){
 			int data[5] = {0,x,y,newX,newY};
-			createNormalMove(b,moves,moves_found,data,turn);
+			createNormalMove(b,moves,moves_found,data,turn,eval_check);
 		}
 		else if (b->colors[newX][newY] != turn){
 			int data[5] = {0,x,y,newX,newY};
-			createNormalMove(b,moves,moves_found,data,turn);
+			createNormalMove(b,moves,moves_found,data,turn,eval_check);
 		}
 	}
 }
@@ -506,4 +523,103 @@ void checkMove(Board *b, int * moves_found, int turn){
 	
 	*moves_found += 1;
 	return;
+}
+
+
+/*
+ * Function : determineCheckValidations
+ * ------------------------------------
+ * 	Build a two dimensional integer array that can determine 
+ * 		with no false positives when a piece does not need
+ * 		to have it's moves validated for check. 
+ *
+ *	Arguments:
+ *		eval_check : two dimensional array to fill with bits
+ *		board : Board structure pointer
+ *		turn : WHITE or BLACK
+ */
+void determineCheckValidations(int eval_check[8][8],Board * board, int turn){
+	int not_in_check = 0;
+	checkMove(board, &not_in_check, turn);
+	
+	int row, col, m;
+	
+	if(not_in_check){
+		for(row = 0; row < 8; row++)
+			for(col = 0; col < 8; col++)
+				eval_check[row][col] = 0;
+			
+		
+		int kx = board->kingLocations[turn] / 8;
+		int ky = board->kingLocations[turn] % 8;
+		
+		for(m = 0; m < 8; m++)
+			checkDirection(eval_check,board,turn,kx,ky,m);
+		
+		eval_check[kx][ky] = 1;
+		
+	}
+	else{
+		for(row = 0; row < 8; row++)
+			for(col = 0; col < 8; col++)
+				eval_check[row][col] = 1;
+	}
+	
+	
+}
+
+
+/*
+ * Function : checkDirection
+ * ------------------------------------
+ * 	Build a two dimensional integer array that can determine 
+ * 		with no false positives when a piece does not need
+ * 		to have it's moves validated for check. 
+ *
+ *	Arguments:
+ *		eval_check : two dimensional array to fill with bits
+ *		board : Board structure pointer
+ *		turn : WHITE or BLACK
+ */
+void checkDirection(int eval_check[8][8], Board * board, int turn, int kx, int ky, int move){
+	int x = kx;
+	int y = ky;
+	int blocks = 0;
+	
+	while(1){
+		x += move_map_king[move][0];
+		y += move_map_king[move][1];
+		
+		if (x < 0 || y < 0 || x > 7 || y > 7)
+			return;
+				
+		else if (board->colors[x][y] == turn){
+			if (blocks == 1)
+				return;
+			else
+				blocks = 1;
+		}
+		
+		else if (board->colors[x][y] != turn && board->types[x][y] != EMPTY){
+			if (DIRECTION_MAPPINGS[board->types[x][y]][move] == 0)
+				return;
+			else{
+				fillDirection(eval_check,kx,ky,move);
+				return;
+			}
+			
+		}			
+	}
+}
+
+void fillDirection(int eval_check[8][8], int x, int y, int move){
+	while(1){
+		x += move_map_king[move][0];;
+		y += move_map_king[move][1];;
+		
+		if (x < 0 || y < 0 || x > 7 || y > 7)
+			return;
+			
+		eval_check[x][y] = 1;
+	}
 }

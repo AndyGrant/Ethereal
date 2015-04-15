@@ -3,10 +3,10 @@
 
 #include "Engine.h"
 
-void createNormalMove(Board *b, int *moves, int* moves_found, int *move, int turn);
+void createNormalMove(Board *b, int *moves, int* moves_found, int *move, int turn, int eval_check);
 void createCastleMove(Board *b, int *moves, int* moves_found, int *move, int turn);
-void createPromotionMove(Board *b, int *moves, int* moves_found, int *move, int turn);
-void createEnpassMove(Board *b, int *moves, int* moves_found, int *move, int turn);
+void createPromotionMove(Board *b, int *moves, int* moves_found, int *move, int turn, int eval_check);
+void createEnpassMove(Board *b, int *moves, int* moves_found, int *move, int turn, int eval_check);
 
 void applyGenericMove(Board * board, int * moves);
 void applyNormalMove(Board * board, int * moves);
