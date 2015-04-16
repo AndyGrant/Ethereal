@@ -15,7 +15,7 @@ int VALUE_KING_SURROUNDINGS_ATTACKED = 4;
 
 int TOTAL_BOARDS_SEARCHED = 0;
 
-int DEPTH = 4;
+int DEPTH = 6;
 int ORIGINAL_PLAYER;
 
 int TOTAL_MOVES_FOUND = 0;
@@ -35,8 +35,9 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 	
 	if (USE_GOOD_HEURISTIC == 1){
 		moves = goodHeuristic(table,board,size,moves,turn,2);
+		moves = goodHeuristic(table,board,size,moves,turn,4);
 		//destroyTable(table);
-		table = createTable(DEPTH+1);
+		//table = createTable(DEPTH+1);
 		
 		//moves = goodHeuristic(table,board,size,moves,turn,4);
 		//deleteTranspositionTable(table);
