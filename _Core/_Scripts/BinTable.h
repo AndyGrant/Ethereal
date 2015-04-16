@@ -3,6 +3,9 @@
 
 #include "engine.h"
 
+extern int KEY_SIZE;
+extern int LAST_KEY;
+
 typedef struct BinaryTable{
 	int size;
 	int elements;

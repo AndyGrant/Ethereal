@@ -6,6 +6,7 @@
 
 
 int KEY_SIZE = 66;
+int LAST_KEY = KEY_SIZE - 1;
 
 BinaryTable * createTable(int size){
 	BinaryTable * table = calloc(1,sizeof(BinaryTable));
