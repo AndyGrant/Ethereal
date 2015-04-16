@@ -36,12 +36,6 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 	if (USE_GOOD_HEURISTIC == 1){
 		moves = goodHeuristic(table,board,size,moves,turn,2);
 		moves = goodHeuristic(table,board,size,moves,turn,4);
-		//destroyTable(table);
-		//table = createTable(DEPTH+1);
-		
-		//moves = goodHeuristic(table,board,size,moves,turn,4);
-		//deleteTranspositionTable(table);
-		//table = constructTranspositionTable(DEPTH+1,128,hash);
 	}
 		
 	int * moves_pointer = moves;
@@ -110,7 +104,7 @@ int alphaBetaPrune(BinaryTable *table, Board * board, int turn, int * move, int 
 	Node * node = getElement(table,depth,key);
 	if (node != NULL){
 		revertGenericMove(board,move);
-		if (node->key[65] != (char)turn)
+		if (node->key[LAST_KEY] != (char)turn)
 			return node->value * -1;
 		return node->value;
 	}
