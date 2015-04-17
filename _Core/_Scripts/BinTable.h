@@ -19,7 +19,7 @@ typedef struct BinaryTree{
 
 typedef struct Node{
 	int value;
-	int * key;
+	unsigned int * key;
 	struct Node * left;
 	struct Node * right;
 } Node;
@@ -27,16 +27,16 @@ typedef struct Node{
 
 BinaryTable * createTable(int size);
 BinaryTree * createTree();
-Node * createNode(int value, int * key);
+Node * createNode(int value, unsigned int * key);
 
 void destroyTable(BinaryTable * table);
 void destroyTree(BinaryTree * tree);
 void destroyNode(Node * node);
 
-void insertElement(BinaryTable * table, int depth, int value, int * key);
-Node * getElement(BinaryTable * table, int depth, int * key);
+void insertElement(BinaryTable * table, int depth, int value, unsigned int * key);
+Node * getElement(BinaryTable * table, int depth, unsigned int * key);
 
-int compareKey(int * key1, int * key2);
-int * encodeBoard(Board * b, int enpass, int turn);
+int compareKey(unsigned int * key1, unsigned int * key2);
+unsigned int * encodeBoard(Board * b, int enpass, int turn);
 
 #endif

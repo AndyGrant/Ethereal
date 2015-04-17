@@ -5,8 +5,8 @@
 #include "engine.h"
 
 
-int KEY_SIZE = 18;
-int LAST_KEY = 17;
+int KEY_SIZE = 10;
+int LAST_KEY = 9;
 
 BinaryTable * createTable(int size){
 	BinaryTable * table = calloc(1,sizeof(BinaryTable));
@@ -29,7 +29,7 @@ BinaryTree * createTree(){
 	return tree;
 }
 
-Node * createNode(int value, int * key){
+Node * createNode(int value, unsigned int * key){
 	Node * node = calloc(1,sizeof(Node));
 	node->value = value;
 	node->key = key;
@@ -61,7 +61,7 @@ void destroyNode(Node * node){
 }
 
 
-void insertElement(BinaryTable * table, int depth, int value, int * key){
+void insertElement(BinaryTable * table, int depth, int value, unsigned int * key){
 	table->elements += 1;
 	table->trees[depth]->elements += 1;
 	
@@ -96,7 +96,7 @@ void insertElement(BinaryTable * table, int depth, int value, int * key){
 	}
 }
 
-Node * getElement(BinaryTable * table, int depth, int * key){
+Node * getElement(BinaryTable * table, int depth, unsigned int * key){
 	Node * node = table->trees[depth]->root;
 	
 	if (node == NULL)
@@ -120,9 +120,9 @@ Node * getElement(BinaryTable * table, int depth, int * key){
 }
 
 
-int compareKey(int * key1, int * key2){
+int compareKey(unsigned int * key1, unsigned int * key2){
 	int i = 0;
-	for(i = 0; i < KEY_SIZE; i++){
+	for(i = 0; i < LAST_KEY; i++){
 		if (key1[i] > key2[i])
 			return 1;
 		else if(key1[i] < key2[i])
@@ -131,33 +131,38 @@ int compareKey(int * key1, int * key2){
 	return 0;
 }
 
-int * encodeBoard(Board * board, int enpass, int turn){	
-	int * key = calloc(KEY_SIZE,sizeof(int));
-	int x, y, i, n;
+unsigned int * encodeBoard(Board * board, int enpass, int turn){
+	unsigned int * key = calloc(KEY_SIZE,sizeof(unsigned int));
+	int x, y, i;
 	int t,c,m;
 	
+	int enc[6] = {1,1,2,2,3,3};
 	
-	for(x = 0, i = 0; x < 8; x++)
-		for(y = 0; y < 8; i++){
-			key[i] = 0;
-			for(n = 0; n < 4; n++, y++){
-				key[i] <<= 8;
-				if (board->types[x][y] == 9)
-					key[i] += 150;
-				else{
-					if (board->types[x][y] > PAWN && board->types[x][y] < KING && board->types[x][y] != ROOK)
-						m = 40;
-					else
-						m = board->moved[x][y] * 40;
-					c = board->colors[x][y] * 15;
-					t = board->types[x][y];
-					key[i] += t+c+m;
-				}
-			}
-		}
-		
-	key[16] = enpass;
-	key[17] = turn;
-	return key;
+	for(x = 0, i = 0; x < 8; x++, i++){
+		key[i] = 0;
+		for(y = 0; y < 8; y++){
+			key[i] <<= 4;
+			int t = board->types[x][y];
+			int c = board->colors[x][y];
+			int m = board->moved[x][y];
 			
+			if (t == EMPTY)
+				key[i] += 0;
+			else if (t > PAWN && t < KING && t != ROOK)
+				key[i] += enc[t] + (3 * c);
+			else{
+				if (m == 0)
+					key[i] += 15;
+				else
+					key[i] += enc[t] + (3 * c);
+				
+			}
+				
+		}
+	}
+	
+	key[8] = enpass;
+	key[9] = turn;
+	
+	return key;			
 }
