@@ -15,7 +15,7 @@ int VALUE_KING_SURROUNDINGS_ATTACKED = 4;
 
 int TOTAL_BOARDS_SEARCHED = 0;
 
-int DEPTH = 6;
+int DEPTH = 5;
 int ORIGINAL_PLAYER;
 
 int TOTAL_MOVES_FOUND = 0;
@@ -99,12 +99,12 @@ int alphaBetaPrune(BinaryTable *table, Board * board, int turn, int * move, int 
 
 	applyGenericMove(board,move);	
 	
-	char * key = encodeBoard(board,move[0] == 4,turn);
+	int * key = encodeBoard(board,move[0] == 4,turn);
 	
 	Node * node = getElement(table,depth,key);
 	if (node != NULL){
 		revertGenericMove(board,move);
-		if (node->key[LAST_KEY] != (char)turn)
+		if (node->key[LAST_KEY] != turn)
 			return node->value * -1;
 		return node->value;
 	}

@@ -5,8 +5,8 @@
 #include "engine.h"
 
 
-int KEY_SIZE = 66;
-int LAST_KEY = KEY_SIZE - 1;
+int KEY_SIZE = 18;
+int LAST_KEY = 17;
 
 BinaryTable * createTable(int size){
 	BinaryTable * table = calloc(1,sizeof(BinaryTable));
@@ -29,7 +29,7 @@ BinaryTree * createTree(){
 	return tree;
 }
 
-Node * createNode(int value, char * key){
+Node * createNode(int value, int * key){
 	Node * node = calloc(1,sizeof(Node));
 	node->value = value;
 	node->key = key;
@@ -61,7 +61,7 @@ void destroyNode(Node * node){
 }
 
 
-void insertElement(BinaryTable * table, int depth, int value, char * key){
+void insertElement(BinaryTable * table, int depth, int value, int * key){
 	table->elements += 1;
 	table->trees[depth]->elements += 1;
 	
@@ -96,7 +96,7 @@ void insertElement(BinaryTable * table, int depth, int value, char * key){
 	}
 }
 
-Node * getElement(BinaryTable * table, int depth, char * key){
+Node * getElement(BinaryTable * table, int depth, int * key){
 	Node * node = table->trees[depth]->root;
 	
 	if (node == NULL)
@@ -120,7 +120,7 @@ Node * getElement(BinaryTable * table, int depth, char * key){
 }
 
 
-int compareKey(char * key1, char * key2){
+int compareKey(int * key1, int * key2){
 	int i = 0;
 	for(i = 0; i < KEY_SIZE; i++){
 		if (key1[i] > key2[i])
@@ -131,27 +131,33 @@ int compareKey(char * key1, char * key2){
 	return 0;
 }
 
-char * encodeBoard(Board * board, int enpass, int turn){
-	char * key = calloc(66,sizeof(char));
-	int x,y,i,m,c,t;
+int * encodeBoard(Board * board, int enpass, int turn){	
+	int * key = calloc(KEY_SIZE,sizeof(int));
+	int x, y, i, n;
+	int t,c,m;
 	
-	for(x = 0, i = 0; x < 8; x++){
-		for(y = 0; y < 8; y++, i++){
-			if (board->types[x][y] == 9)
-				key[i] = (char)200;
-			else{
-				if (board->types[x][y] > PAWN && board->types[x][y] < KING && board->types[x][y] != ROOK)
-					m = 40;
-				else
-					m = board->moved[x][y] * 40;
-				c = board->colors[x][y] * 15;
-				t = board->types[x][y];
-				key[i] = (char)(t+c+m);
+	
+	for(x = 0, i = 0; x < 8; x++)
+		for(y = 0; y < 8; i++){
+			key[i] = 0;
+			for(n = 0; n < 4; n++, y++){
+				key[i] <<= 8;
+				if (board->types[x][y] == 9)
+					key[i] += 150;
+				else{
+					if (board->types[x][y] > PAWN && board->types[x][y] < KING && board->types[x][y] != ROOK)
+						m = 40;
+					else
+						m = board->moved[x][y] * 40;
+					c = board->colors[x][y] * 15;
+					t = board->types[x][y];
+					key[i] += t+c+m;
+				}
 			}
 		}
-	}
-	
-	key[64] = (char)(enpass);
-	key[65] = (char)(turn);
+		
+	key[16] = enpass;
+	key[17] = turn;
 	return key;
+			
 }
