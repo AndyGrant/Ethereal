@@ -14,4 +14,4 @@ int evaluateMoves(Board *b, int player, int * lastMove);
 int * goodHeuristic(BinaryTable *table, Board * board, int size, int * moves, int turn, int depth);
 int * weakHeuristic(Board *board, int size, int * moves, int turn);
 
-#endifc
+#endif
