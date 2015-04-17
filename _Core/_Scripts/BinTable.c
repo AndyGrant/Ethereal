@@ -29,7 +29,7 @@ BinaryTree * createTree(){
 	return tree;
 }
 
-Node * createNode(int value, unsigned int * key){
+Node * createNode(int value, int * key){
 	Node * node = calloc(1,sizeof(Node));
 	node->value = value;
 	node->key = key;
@@ -61,7 +61,7 @@ void destroyNode(Node * node){
 }
 
 
-void insertElement(BinaryTable * table, int depth, int value, unsigned int * key){
+void insertElement(BinaryTable * table, int depth, int value, int * key){
 	table->elements += 1;
 	table->trees[depth]->elements += 1;
 	
@@ -96,7 +96,7 @@ void insertElement(BinaryTable * table, int depth, int value, unsigned int * key
 	}
 }
 
-Node * getElement(BinaryTable * table, int depth, unsigned int * key){
+Node * getElement(BinaryTable * table, int depth, int * key){
 	Node * node = table->trees[depth]->root;
 	
 	if (node == NULL)
@@ -120,9 +120,9 @@ Node * getElement(BinaryTable * table, int depth, unsigned int * key){
 }
 
 
-int compareKey(unsigned int * key1, unsigned int * key2){
+int compareKey(int * key1, int * key2){
 	int i = 0;
-	for(i = 0; i < LAST_KEY; i++){
+	for(i = 0; i < KEY_SIZE; i++){
 		if (key1[i] > key2[i])
 			return 1;
 		else if(key1[i] < key2[i])
@@ -131,8 +131,8 @@ int compareKey(unsigned int * key1, unsigned int * key2){
 	return 0;
 }
 
-unsigned int * encodeBoard(Board * board, int enpass, int turn){
-	unsigned int * key = calloc(KEY_SIZE,sizeof(unsigned int));
+int * encodeBoard(Board * board, int enpass, int turn){
+	int * key = calloc(KEY_SIZE,sizeof(int));
 	int x, y, i;
 	int t,c,m;
 	
@@ -154,7 +154,7 @@ unsigned int * encodeBoard(Board * board, int enpass, int turn){
 				if (m == 0)
 					key[i] += 15;
 				else
-					key[i] += enc[t] + (3 * c);
+					key[i] += enc[t] + (3 * c) + 7;
 				
 			}
 				
