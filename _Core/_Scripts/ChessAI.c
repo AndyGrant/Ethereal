@@ -99,13 +99,14 @@ int alphaBetaPrune(BinaryTable *table, Board * board, int turn, int * move, int 
 
 	applyGenericMove(board,move);	
 	
-	int * key = encodeBoard(board,move[0] == 4,turn);
+	unsigned int * key = encodeBoard(board,move[0] == 4,turn);
 	
 	Node * node = getElement(table,depth,key);
 	if (node != NULL){
 		revertGenericMove(board,move);
-		if (node->key[LAST_KEY] != turn)
+		if (node->key[LAST_KEY] != turn){
 			return node->value * -1;
+		}
 		return node->value;
 	}
 	
