@@ -16,7 +16,7 @@ int VALUE_CENTRAL_KNIGHT = 5;
 
 int TOTAL_BOARDS_SEARCHED = 0;
 
-int DEPTH = 4;
+int DEPTH = 5;
 int ORIGINAL_PLAYER;
 
 int TOTAL_MOVES_FOUND = 0;
@@ -37,7 +37,7 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 	if (USE_GOOD_HEURISTIC == 1){
 		moves = goodHeuristic(table,board,size,moves,turn,2);
 		//moves = goodHeuristic(table,board,size,moves,turn,3);
-		//moves = goodHeuristic(table,board,size,moves,turn,4);
+		moves = goodHeuristic(table,board,size,moves,turn,4);
 		//moves = goodHeuristic(table,board,size,moves,turn,5);
 		
 	}
@@ -99,12 +99,11 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 	return -1;
 }
 
-int alphaBetaPrune(BinaryTable *table, Board * board, int turn, int * move, int depth, int alpha, int beta, int evaluating_player){	
+int alphaBetaPrune(BinaryTable * table, Board * board, int turn, int * move, int depth, int alpha, int beta, int evaluating_player){	
 
 	applyGenericMove(board,move);	
 	
 	int * key = encodeBoard(board,move[0] == 4,turn);
-	
 	Node * node = getElement(table,depth,key);
 	if (node != NULL){
 		revertGenericMove(board,move);
@@ -171,12 +170,12 @@ int alphaBetaPrune(BinaryTable *table, Board * board, int turn, int * move, int 
 			if (beta <= alpha)
 				break;
 		}
-	}	
+	}
 	
 	revertGenericMove(board,move);
 	free(moves_pointer);
 	insertElement(table,depth,value,key);
-		
+	
 	return value;
 }
 
