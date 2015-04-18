@@ -12,10 +12,11 @@ int VALUE_KNIGHT_RANGE = 3;
 int VALUE_BISHOP_RANGE = 3;
 int VALUE_CENTER_SQUARE_ATTACKED = 8;
 int VALUE_KING_SURROUNDINGS_ATTACKED = 4;
+int VALUE_CENTRAL_KNIGHT = 5;
 
 int TOTAL_BOARDS_SEARCHED = 0;
 
-int DEPTH = 5;
+int DEPTH = 4;
 int ORIGINAL_PLAYER;
 
 int TOTAL_MOVES_FOUND = 0;
@@ -35,7 +36,10 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 	
 	if (USE_GOOD_HEURISTIC == 1){
 		moves = goodHeuristic(table,board,size,moves,turn,2);
-		moves = goodHeuristic(table,board,size,moves,turn,4);
+		//moves = goodHeuristic(table,board,size,moves,turn,3);
+		//moves = goodHeuristic(table,board,size,moves,turn,4);
+		//moves = goodHeuristic(table,board,size,moves,turn,5);
+		
 	}
 		
 	int * moves_pointer = moves;
@@ -207,18 +211,24 @@ int evaluateMoves(Board *board, int player, int * lastMove){
 	int * moves_pointer = moves;
 	
 	int value = 0;
-	//value += size;
+
 	int i,x,y;
 
 	int * t = *(board->types);
 	for(i = 0; i < size; i++, moves+=7){
 		if (t[moves[1]] == KNIGHT)
 			value += VALUE_KNIGHT_RANGE;
-		if (t[moves[1]] == BISHOP)
+		else if (t[moves[1]] == BISHOP)
 			value += VALUE_BISHOP_RANGE;
-		if ((t[moves[1]] != 0 || moves[1] % 8 != moves[2] % 8) && moves[2] / 8 > 2 && moves[2] / 8 < 5 && moves[2] % 8 > 2 && moves[2] % 8 < 5)
+		if (moves[2] / 8 > 2 && moves[2] / 8 < 5 && moves[2] % 8 > 2 && moves[2] % 8 < 5)
 			value += VALUE_CENTER_SQUARE_ATTACKED;
 	}
+	
+	for(x = 2; x < 6; x++)
+		for(y = 2; y < 6; y++)
+			if (board->types[x][y] == KNIGHT && board->colors[x][y] == player)
+				value += VALUE_CENTRAL_KNIGHT;
+
 	
 	for(x = 3; x < 5; x++)
 		for(y = 3; y < 5; y++)
@@ -272,7 +282,7 @@ int * goodHeuristic(BinaryTable *table, Board *board, int size, int * moves, int
 	return sorted;
 }
 
-int * weakHeuristic(Board *board, int size, int * moves, int turn){	
+int * weakHeuristic(Board * board, int size, int * moves, int turn){	
 	int * sorted = malloc(28 * size);
 	int * moves_pointer = moves;
 	int * sorted_pointer = sorted;
