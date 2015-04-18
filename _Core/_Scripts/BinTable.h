@@ -36,7 +36,6 @@ void destroyNode(Node * node);
 void insertElement(BinaryTable * table, int depth, int value, int * key);
 Node * getElement(BinaryTable * table, int depth, int * key);
 
-int compareKey(int * key1, int * key2);
 int * encodeBoard(Board * b, int enpass, int turn);
 
 #endif
