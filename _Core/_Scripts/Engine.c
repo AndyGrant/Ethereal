@@ -32,6 +32,9 @@ int EMPTY = 9;
 
 int SIZE_OF_MOVE = 7;
 
+int eval_check[8][8];
+
+
 /*
  * Function : printBoard
  * ---------------------
@@ -135,7 +138,6 @@ int * findAllValidMoves(Board * b, int turn, int * moves_found, int * last_move)
 	int moves[1400];
 	int row,col,i;	
 	
-	int eval_check[8][8];
 	determineCheckValidations(eval_check, b, turn);
 	
 	
@@ -440,7 +442,7 @@ void findCastles(Board * b, int * moves, int * moves_found, int turn, int x, int
  * 		moves_found : integer pointer to moves size
  * 		turn : WHITE or BLACK	
 */
-void checkMove(Board *b, int * moves_found, int turn){
+void checkMove(Board * b, int * moves_found, int turn){
 	int x, y, kingX, kingY,i;
 	kingX = b->kingLocations[turn] / 8;
 	kingY = b->kingLocations[turn] % 8;
@@ -468,7 +470,6 @@ void checkMove(Board *b, int * moves_found, int turn){
 		if (b->types[x][y] == 1 && b->colors[x][y] != turn)
 			return;
 	}
-	
 	
 	// Bishop
 	for(i = 0; i < 4; i++){
@@ -538,13 +539,14 @@ void checkMove(Board *b, int * moves_found, int turn){
  *		board : Board structure pointer
  *		turn : WHITE or BLACK
  */
-void determineCheckValidations(int eval_check[8][8],Board * board, int turn){
+void determineCheckValidations(int eval_check[8][8], Board * board, int turn){
 	int not_in_check = 0;
 	checkMove(board, &not_in_check, turn);
 	
 	int row, col, m;
 	
 	if(not_in_check){
+		
 		for(row = 0; row < 8; row++)
 			for(col = 0; col < 8; col++)
 				eval_check[row][col] = 0;
