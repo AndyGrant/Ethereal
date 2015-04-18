@@ -7,6 +7,9 @@
 
 int KEY_SIZE = 10;
 int LAST_KEY = 9;
+int KEY_BYTES = 10 * sizeof(int);
+
+int enc[6] = {1,1,2,2,3,3};
 
 BinaryTable * createTable(int size){
 	BinaryTable * table = calloc(1,sizeof(BinaryTable));
@@ -72,7 +75,7 @@ void insertElement(BinaryTable * table, int depth, int value, int * key){
 		
 	Node * node = table->trees[depth]->root;
 	while(1){
-		int comp = compareKey(key,node->key);
+		int comp = memcmp(key,node->key,KEY_BYTES);
 		if (comp == -1){
 			if (node->left == NULL){
 				node->left = createNode(value,key);
@@ -103,7 +106,7 @@ Node * getElement(BinaryTable * table, int depth, int * key){
 		return NULL;
 		
 	while(1){
-		int comp = compareKey(key,node->key);
+		int comp = memcmp(key,node->key,KEY_BYTES);
 		if (comp == -1){
 			if (node->left == NULL)
 				return NULL;
@@ -119,24 +122,10 @@ Node * getElement(BinaryTable * table, int depth, int * key){
 	}
 }
 
-
-int compareKey(int * key1, int * key2){
-	int i = 0;
-	for(i = 0; i < KEY_SIZE; i++){
-		if (key1[i] > key2[i])
-			return 1;
-		else if(key1[i] < key2[i])
-			return -1;
-	}
-	return 0;
-}
-
 int * encodeBoard(Board * board, int enpass, int turn){
-	int * key = calloc(KEY_SIZE,sizeof(int));
+	int * key = malloc(KEY_SIZE * sizeof(int));
 	int x, y, i;
 	int t,c,m;
-	
-	int enc[6] = {1,1,2,2,3,3};
 	
 	for(x = 0, i = 0; x < 8; x++, i++){
 		key[i] = 0;
