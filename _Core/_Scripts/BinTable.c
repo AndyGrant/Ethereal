@@ -32,7 +32,7 @@ BinaryTree * createTree(){
 	return tree;
 }
 
-Node * createNode(int value, int * key){
+Node * createNode(int value, unsigned int * key){
 	Node * node = calloc(1,sizeof(Node));
 	node->value = value;
 	node->key = key;
@@ -46,11 +46,15 @@ void destroyTable(BinaryTable * table){
 	int n;
 	for(n = 0; n < table->size; n++)
 		destroyTree(table->trees[n]);
+	free(table->trees);
 	free(table);
 }
 
 void destroyTree(BinaryTree * tree){
-	destroyNode(tree->root);
+	if (tree->root != NULL)
+		destroyNode(tree->root);
+	else
+		free(tree->root);
 	free(tree);
 }
 
@@ -58,13 +62,17 @@ void destroyNode(Node * node){
 	free(node->key);
 	if (node->left != NULL)
 		destroyNode(node->left);
+	else
+		free(node->left);
 	if (node->right != NULL)
 		destroyNode(node->right);
+	else
+		free(node->right);
 	free(node);	
 }
 
 
-void insertElement(BinaryTable * table, int depth, int value, int * key){
+void insertElement(BinaryTable * table, int depth, int value, unsigned int * key){
 	table->elements += 1;
 	table->trees[depth]->elements += 1;
 	
@@ -99,7 +107,7 @@ void insertElement(BinaryTable * table, int depth, int value, int * key){
 	}
 }
 
-Node * getElement(BinaryTable * table, int depth, int * key){
+Node * getElement(BinaryTable * table, int depth, unsigned int * key){
 	Node * node = table->trees[depth]->root;
 	
 	if (node == NULL)
@@ -122,8 +130,8 @@ Node * getElement(BinaryTable * table, int depth, int * key){
 	}
 }
 
-int * encodeBoard(Board * board, int enpass, int turn){
-	int * key = malloc(KEY_SIZE * sizeof(int));
+unsigned int * encodeBoard(Board * board, int enpass, int turn){
+	unsigned int * key = malloc(KEY_SIZE * sizeof(int));
 	int x, y, i;
 	int t,c,m;
 	

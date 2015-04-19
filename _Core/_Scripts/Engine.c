@@ -33,6 +33,7 @@ int EMPTY = 9;
 int SIZE_OF_MOVE = 7;
 
 int eval_check[8][8];
+int moves[2800];
 
 
 /*
@@ -135,28 +136,27 @@ Board * createBoard(int board[8][8]){
  * 		last_move : integer array for last move
  */
 int * findAllValidMoves(Board * b, int turn, int * moves_found, int * last_move){
-	int moves[1400];
+	
 	int row,col,i;	
-	
 	determineCheckValidations(eval_check, b, turn);
-	
+	int * eval_check_p = &(eval_check[0][0]);
 	
 	for(row = 0; row < 8; row++){
-		for(col = 0; col < 8; col++){
+		for(col = 0; col < 8; col++, eval_check_p++){
 			if (b->colors[row][col] == turn){
 				int type = b->types[row][col];
 				if (type == PAWN)
-					findPawnMoves(b,moves,moves_found,turn,row,col,last_move,eval_check[row][col]);
+					findPawnMoves(b,moves,moves_found,turn,row,col,last_move,*eval_check_p);
 				else if (type == KNIGHT)
-					findMappedNoIters(b,moves,moves_found,turn,row,col,*move_map_knight, 8, eval_check[row][col]);
+					findMappedNoIters(b,moves,moves_found,turn,row,col,*move_map_knight, 8, *eval_check_p);
 				else if (type == BISHOP)
-					findMappedIters(b,moves,moves_found,turn,row,col,*move_map_bishop, 4, eval_check[row][col]);
+					findMappedIters(b,moves,moves_found,turn,row,col,*move_map_bishop, 4, *eval_check_p);
 				else if (type == ROOK)
-					findMappedIters(b,moves,moves_found,turn,row,col,*move_map_rook, 4, eval_check[row][col]);
+					findMappedIters(b,moves,moves_found,turn,row,col,*move_map_rook, 4, *eval_check_p);
 				else if (type == QUEEN)
-					findMappedIters(b,moves,moves_found,turn,row,col,*move_map_queen, 8, eval_check[row][col]);
+					findMappedIters(b,moves,moves_found,turn,row,col,*move_map_queen, 8, *eval_check_p);
 				else if (type == KING){
-					findMappedNoIters(b,moves,moves_found,turn,row,col,*move_map_king, 8, eval_check[row][col]);
+					findMappedNoIters(b,moves,moves_found,turn,row,col,*move_map_king, 8, *eval_check_p);
 					findCastles(b,moves,moves_found,turn,row,col);
 				}
 			}

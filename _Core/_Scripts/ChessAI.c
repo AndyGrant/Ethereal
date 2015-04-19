@@ -10,7 +10,7 @@ int MATERIAL_VALUES[6] = {100,300,300,600,1000,10000};
 
 int VALUE_KNIGHT_RANGE = 3;
 int VALUE_BISHOP_RANGE = 3;
-int VALUE_CENTER_SQUARE_ATTACKED = 8;
+int VALUE_CENTER_SQUARE_ATTACKED = 4;
 int VALUE_KING_SURROUNDINGS_ATTACKED = 4;
 int VALUE_CENTRAL_KNIGHT = 5;
 
@@ -36,8 +36,11 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 	
 	if (USE_GOOD_HEURISTIC == 1){
 		moves = goodHeuristic(table,board,size,moves,turn,2);
-		//moves = goodHeuristic(table,board,size,moves,turn,3);
+		destroyTable(table);
+		table = createTable(DEPTH+1);
 		moves = goodHeuristic(table,board,size,moves,turn,4);
+		destroyTable(table);
+		table = createTable(DEPTH+1);
 		//moves = goodHeuristic(table,board,size,moves,turn,5);
 		
 	}
@@ -103,7 +106,7 @@ int alphaBetaPrune(BinaryTable * table, Board * board, int turn, int * move, int
 
 	applyGenericMove(board,move);	
 	
-	int * key = encodeBoard(board,move[0] == 4,turn);
+	unsigned int * key = encodeBoard(board,move[0] == 4,turn);
 	Node * node = getElement(table,depth,key);
 	if (node != NULL){
 		revertGenericMove(board,move);
@@ -222,6 +225,14 @@ int evaluateMoves(Board *board, int player, int * lastMove){
 		if (moves[2] / 8 > 2 && moves[2] / 8 < 5 && moves[2] % 8 > 2 && moves[2] % 8 < 5)
 			value += VALUE_CENTER_SQUARE_ATTACKED;
 	}
+	
+	int pawn_end = player * 7;
+	int pawn_start = 6 + (player * -5);
+	for(x = 1; pawn_start < pawn_end; pawn_start++, x++)
+		for(y = 0; y < 8; y++)
+			if (board->types[pawn_start][y] == PAWN && board->colors[pawn_start][y] == player)
+				value += x;
+	
 	
 	for(x = 2; x < 6; x++)
 		for(y = 2; y < 6; y++)
