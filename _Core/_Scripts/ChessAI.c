@@ -108,8 +108,6 @@ int endAISearch(int reached, int size, int * values, int * moves, int * unsorted
 	printf("Table Size: %d \n",table->elements);
 	printf("Positions Reused: %d \n",BOARDS_REUSED);
 	
-	destroyTable(table);
-	
 	int i;
 	int best_index = 0;
 	for(i = 1; i < reached; i++)
@@ -127,12 +125,13 @@ int endAISearch(int reached, int size, int * values, int * moves, int * unsorted
 		for(j = 0; j < 5; j++){
 			if (unsorted[i*7+index[j]] != best[index[j]])
 				j = 7;
-			else if (j == 3){
+			else if (j == 4){
 				free(unsorted);
 				return i;
 			}
 		}
 	}
+	
 	
 	return -1;
 }
