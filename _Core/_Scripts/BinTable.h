@@ -1,7 +1,7 @@
 #ifndef BinTable
 #define BinTable
 
-#include "engine.h"
+#include "Engine.h"
 
 extern int KEY_SIZE;
 extern int LAST_KEY;
