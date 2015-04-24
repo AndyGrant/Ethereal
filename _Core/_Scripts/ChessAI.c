@@ -41,7 +41,7 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 	if (size == 0)
 		return -1;
 		
-	clock_t start = clock(), diff;
+	clock_t start = clock();
 	
 	int values[size];
 	int alpha, beta, i, move, cur_depth;
@@ -71,7 +71,6 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 	
 	return endAISearch(size,size,values,moves,unsorted,table);
 	
-	diff = clock() - start;
 }
 
 int * sortMoves(int * values, int * moves, int size){	

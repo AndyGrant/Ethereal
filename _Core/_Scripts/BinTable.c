@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #include "BinTable.h"
-#include "engine.h"
+#include "Engine.h"
 
 
 int KEY_SIZE = 9;
