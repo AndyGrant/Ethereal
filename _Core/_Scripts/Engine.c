@@ -220,6 +220,7 @@ void findPawnMoves(Board * b, int * moves, int * moves_found, int turn, int x, i
 		}
 	}
 	
+	
 	// En Passant
 	if (last_move[0] == 4 && abs((y - last_move[2] % 8)) == 1 && x == 3 + b->colors[x][y]){
 		if(b->colors[last_move[2]/8][last_move[2]%8] != turn){
