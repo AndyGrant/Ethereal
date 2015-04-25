@@ -7,6 +7,8 @@ Windows:
     with GCC, run C_compile.bat, 
     
       if you do not have GCC, open the file and use your own compiler
+    
+    exectute Chess.bat
       
 
 Linux:
@@ -16,6 +18,8 @@ Linux:
     With GCC, run C_compile
     
       if you do not have GCC, open the file and use your own compiler
+      
+    run Chess
       
       
       
