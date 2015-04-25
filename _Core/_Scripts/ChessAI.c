@@ -28,7 +28,7 @@ int MIN_DEPTH = 2;
 int MAX_DEPTH = 20;
 int MAX_SECONDS = 7;
 
-
+time_t START_TIME;
 
 int findBestMoveIndex(Board * board, int * last_move, int turn){	
 	int size = 0;
@@ -42,7 +42,7 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 		return -1;
 	
 	
-	time_t start = time(NULL);
+	START_TIME = time(NULL);
 	
 	int values[size];
 	int alpha, beta, i, move, cur_depth;
@@ -58,7 +58,7 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 			printf("#%d \t Value: %d \t Searched: %d \n",i,values[i],TOTAL_BOARDS_SEARCHED-searched);
 			if (values[i] > alpha)
 				alpha = values[i];
-			if (alpha == MATE || start + MAX_SECONDS < time(NULL))
+			if (alpha == MATE || START_TIME + MAX_SECONDS < time(NULL))
 				return endAISearch(i+1,size,values,moves,unsorted,table);
 			
 			
@@ -138,6 +138,9 @@ int endAISearch(int reached, int size, int * values, int * moves, int * unsorted
 }
 
 int alphaBetaPrune(BinaryTable * table, Board * board, int turn, int * move, int depth, int alpha, int beta, int evaluating_player){	
+	
+	if (START_TIME + MAX_SECONDS < time(NULL))
+		return -MATE;
 	
 	applyGenericMove(board,move);
 
