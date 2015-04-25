@@ -41,11 +41,10 @@ void findMappedIters(Board * b, int * moves, int *moves_found, int turn, int x, 
 void findMappedNoIters(Board * b, int * moves, int * moves_found, int turn, int x, int y, int * map, int map_size, int eval_check);
 void findCastles(Board * b, int * moves, int * moves_found, int turn, int x, int y);
 
-void checkMove(Board *b, int * moves_found, int turn);
-
 void determineCheckValidations(int eval_check[8][8], Board * board, int turn);
 void checkDirection(int eval_check[8][8], Board * board, int turn, int kx, int ky, int move);
 void fillDirection(int eval_check[8][8], int x, int y, int move);
+void checkMove(Board *b, int * moves_found, int turn);
 
 #endif
 

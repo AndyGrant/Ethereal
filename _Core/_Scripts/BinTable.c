@@ -10,7 +10,14 @@ int KEY_BYTES = 9 * sizeof(int);
 
 int enc[6] = {1,1,2,2,3,3};
 
-
+/*
+ * Function : createTable
+ * ----------------------
+ * 	Construct a Binary Tree to hold Transpositions
+ * 
+ * 	Arguments:
+ * 		None
+ */
 BinaryTable * createTable(){
 	BinaryTable * tree = malloc(sizeof(BinaryTable));
 	tree->elements = 0;
@@ -18,6 +25,16 @@ BinaryTable * createTable(){
 	return tree;
 }
 
+
+/* 
+ * Function : createNode
+ * ---------------------
+ * 	Create a node with given value and key
+ * 
+ * 	Arguments:
+ * 		value : value of position
+ * 		key : encoded board
+ */
 Node * createNode(int value, int * key){
 	Node * node = malloc(sizeof(Node));
 	node->value = value;
@@ -27,6 +44,15 @@ Node * createNode(int value, int * key){
 	return node;
 }
 
+
+/*
+ * Function : destroyTable
+ * -----------------------
+ * 	Free a table and all it's transpositions
+ * 	
+ * 	Arguments:
+ * 		table : BinaryTable to free
+ */
 void destroyTable(BinaryTable * table){
 	if (table->root != NULL)
 		destroyNode(table->root);
@@ -35,6 +61,15 @@ void destroyTable(BinaryTable * table){
 	free(table);
 }
 
+
+/*
+ * Function : destroyNode
+ * ----------------------
+ * 	Free a node, it's key and it's branches
+ * 	
+ * 	Arguments:
+ * 		node : Node to free
+ */
 void destroyNode(Node * node){
 	free(node->key);
 	if (node->left != NULL)
@@ -49,6 +84,17 @@ void destroyNode(Node * node){
 }
 
 
+/*
+ * Function insertElement
+ * -----------------------
+ * 	Create and insert a node into it's position based
+ * 		off of a given board encoding called key
+ * 	
+ * 	Arguments:
+ * 		table : BinaryTable to store in
+ * 		value : value for created Node
+ * 		key : board encoding for locating
+ */
 void insertElement(BinaryTable * table, int value, int * key){
 	table->elements += 1;
 	
@@ -80,6 +126,17 @@ void insertElement(BinaryTable * table, int value, int * key){
 	}
 }
 
+
+/*
+ * Function : getElement
+ * ---------------------
+ * 	Retrieve a node from the tree which matches the
+ * 		the key passed into the function
+ * 
+ * 	Arguments :
+ * 		table : BinaryTable to serach
+ * 		key : key to search for 
+ */
 Node * getElement(BinaryTable * table, int * key){
 	Node * node = table->root;
 	
@@ -104,6 +161,19 @@ Node * getElement(BinaryTable * table, int * key){
 	}
 }
 
+
+/*
+ * Function : encodeBoard
+ * ----------------------
+ * 	Uniquly identify the relevant components of a board
+ * 	 as nine integers, the first eight being a row compressed
+ * 	 into a single integer, each tile in the row represented 
+ * 	 with a total of 4 bits
+ * 
+ * 	Arguments : 
+ * 		board : board to encode
+ * 		enpass : zero or index of last pawn move enabling enpass
+ */
 int * encodeBoard(Board * board, int enpass){
 	int * key = calloc(KEY_SIZE, sizeof(int));
 	int x, y, i, j;
