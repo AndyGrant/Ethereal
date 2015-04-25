@@ -472,7 +472,7 @@ void checkMove(Board * b, int * moves_found, int turn){
 			return;
 	}
 	
-	// Bishop
+	// Bishop & Queen
 	for(i = 0; i < 4; i++){
 		x = kingX;
 		y = kingY;
@@ -492,7 +492,7 @@ void checkMove(Board * b, int * moves_found, int turn){
 	}
 	
 	
-	// Rook
+	// Rook & Queen
 	for(i = 0; i < 4; i++){
 		x = kingX;
 		y = kingY;
@@ -574,7 +574,7 @@ void determineCheckValidations(int eval_check[8][8], Board * board, int turn){
 
 /*
  * Function : checkDirection
- * ------------------------------------
+ * -------------------------
  * 	Build a two dimensional integer array that can determine 
  * 		with no false positives when a piece does not need
  * 		to have it's moves validated for check. 
@@ -583,6 +583,9 @@ void determineCheckValidations(int eval_check[8][8], Board * board, int turn){
  *		eval_check : two dimensional array to fill with bits
  *		board : Board structure pointer
  *		turn : WHITE or BLACK
+ * 		kx : x location of king
+ * 		ky : y location of king
+ * 		move : move mapping int[2]
  */
 void checkDirection(int eval_check[8][8], Board * board, int turn, int kx, int ky, int move){
 	int x = kx;
@@ -615,6 +618,19 @@ void checkDirection(int eval_check[8][8], Board * board, int turn, int kx, int k
 	}
 }
 
+
+/*
+ * Function : fillDirection
+ * ------------------------
+ * 	Starting from x,y, fill every index in the direction of
+ * 		move with a 1 to indicate a need to search for check
+ * 
+ * 	Arguments:
+ * 		eval_check : two dimensional array to fill with bits
+ * 		x : starting x location
+ * 		y : starting y location
+ * 		move : move mapping int[2]
+ */
 void fillDirection(int eval_check[8][8], int x, int y, int move){
 	while(1){
 		x += move_map_king[move][0];;
