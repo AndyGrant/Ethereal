@@ -30,13 +30,11 @@ int main(int argc, char *argv[]){
 	last_move[0] = convChar(argv[1][193]);
 	last_move[2] = 8 * convChar(argv[1][194]) + convChar(argv[1][195]);
 	
-	clock_t start = clock(), diff;
+	time_t start = time(NULL);
 	
 	int best = findBestMoveIndex(board,last_move,turn);
 	
-	diff = clock() - start;
-	int msec = diff * 1000 / CLOCKS_PER_SEC;
-	printf("Time taken %d seconds %d milliseconds \n\n", msec/1000, msec%1000);
+	printf("Seconds Taken: %d \n\n",time(NULL)-start);
 	
 	return best;
 }
