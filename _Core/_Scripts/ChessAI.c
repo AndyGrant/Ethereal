@@ -26,7 +26,7 @@ int BOARDS_REUSED = 0;
 
 int MIN_DEPTH = 2;
 int MAX_DEPTH = 20;
-int MAX_TIME_MILI = 7500;
+int MAX_SECONDS = 7;
 
 
 
@@ -40,8 +40,9 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 	
 	if (size == 0)
 		return -1;
-		
-	clock_t start = clock();
+	
+	
+	time_t start = time(NULL);
 	
 	int values[size];
 	int alpha, beta, i, move, cur_depth;
@@ -58,7 +59,7 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 			printf("#%d \t Value: %d \t Searched: %d \n",i,values[i],TOTAL_BOARDS_SEARCHED-searched);
 			if (values[i] > alpha)
 				alpha = values[i];
-			if (alpha == MATE || (clock() - start) * 1000 / CLOCKS_PER_SEC > MAX_TIME_MILI)
+			if (alpha == MATE || start + MAX_SECONDS < time(NULL))
 				return endAISearch(i+1,size,values,moves,unsorted,table);
 			
 			
