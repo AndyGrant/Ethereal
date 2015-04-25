@@ -43,7 +43,7 @@ class EngineTest:
 		
 		
 suits = [
-	["_TestData/EngineTests.txt","EngineTests.exe",EngineTest],
+	["./_TestData/EngineTests.txt","./EngineTests.exe",EngineTest],
 ]
 
 for suit in suits:
