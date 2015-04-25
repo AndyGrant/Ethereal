@@ -1,0 +1,4 @@
+*.exe
+*.class
+_Scripts/gmon.out
+
