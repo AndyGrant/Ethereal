@@ -284,8 +284,6 @@ public class Chess implements GameState{
 	}
 	
 	public String[] buildCommandLineExecuteString(JMove last_move){
-		//String val = "valgrind";
-		//String opt = "--leak-check=yes";
 		String core = "../_Core/engineFromJava.exe";
 		String command = "";
 		for(int i = 0; i < 8; i++){
@@ -315,7 +313,7 @@ public class Chess implements GameState{
 			command += "4" + last_move.endX + "" + last_move.endY;
 		else
 			command += "000";
-		System.out.println(command);
+			
 		return new String[]{core,command};	
 	}
 	
