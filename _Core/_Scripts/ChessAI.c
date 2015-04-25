@@ -49,7 +49,6 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 	
 	BinaryTable * table = createTable();
 	for(cur_depth = MIN_DEPTH; cur_depth < MAX_DEPTH; cur_depth += 2){
-		BinaryTable * table = createTable(cur_depth + 2);
 		int alpha = -MATE - 1;
 		int beta = MATE + 1;
 		printf("SEARCHING DEPTH LEVEL %d \n", cur_depth);
@@ -108,6 +107,8 @@ int endAISearch(int reached, int size, int * values, int * moves, int * unsorted
 	printf("Table Size: %d \n",table->elements);
 	printf("Positions Reused: %d \n",BOARDS_REUSED);
 	
+	destroyTable(table);
+	
 	int i;
 	int best_index = 0;
 	for(i = 1; i < reached; i++)
@@ -126,6 +127,7 @@ int endAISearch(int reached, int size, int * values, int * moves, int * unsorted
 			if (unsorted[i*7+index[j]] != best[index[j]])
 				j = 7;
 			else if (j == 4){
+				free(moves);
 				free(unsorted);
 				return i;
 			}
@@ -148,6 +150,7 @@ int alphaBetaPrune(BinaryTable * table, Board * board, int turn, int * move, int
 		if (node != NULL){
 			BOARDS_REUSED += 1;
 			revertGenericMove(board,move);
+			free(key);
 			return node->value;
 		}
 		
@@ -283,7 +286,7 @@ int evaluateMoves(Board *board, int player, int * lastMove){
 }
 
 int * weakHeuristic(Board * board, int size, int * moves, int turn){	
-	int * sorted = malloc(28 * size);
+	int * sorted = malloc(7 * sizeof(int) * size);
 	int * moves_pointer = moves;
 	int * sorted_pointer = sorted;
 	int * types = *(board->types);
@@ -305,7 +308,7 @@ int * weakHeuristic(Board * board, int size, int * moves, int turn){
 				*sorted = *moves;
 		else
 			moves += 7;
-	}
+	}			
 	
 	free(moves_pointer);
 	return sorted_pointer;
