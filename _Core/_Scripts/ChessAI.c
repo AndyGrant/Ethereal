@@ -127,7 +127,6 @@ int endAISearch(int reached, int size, int * values, int * moves, int * unsorted
 			if (unsorted[i*7+index[j]] != best[index[j]])
 				j = 7;
 			else if (j == 4){
-				free(moves);
 				free(unsorted);
 				return i;
 			}
@@ -255,19 +254,19 @@ int evaluateMoves(Board *board, int player, int * lastMove){
 			value += VALUE_KNIGHT_RANGE;
 		else if (t[moves[1]] == BISHOP)
 			value += VALUE_BISHOP_RANGE;
-		//else if (t[moves[1]] == ROOK)
-			//value += VALUE_ROOK_RANGE;
+		else if (t[moves[1]] == ROOK)
+			value += VALUE_ROOK_RANGE;
 		if (moves[2] / 8 > 2 && moves[2] / 8 < 5 && moves[2] % 8 > 2 && moves[2] % 8 < 5)
 			value += VALUE_CENTER_SQUARE_ATTACKED;		
 	}
 	
-	/*
+	
 	int pawn_end = player * 7;
-	int pawn_start = 6 + (player * -5);
+	int pawn_start = 6 - (player * 5);
 	for(x = 1; pawn_start < pawn_end; pawn_start++, x++)
 		for(y = 0; y < 8; y++)
 			if (board->types[pawn_start][y] == PAWN && board->colors[pawn_start][y] == player)
-				value += x;*/
+				value += x;
 	
 	
 	for(x = 2; x < 6; x++)
