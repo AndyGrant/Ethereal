@@ -133,7 +133,7 @@ void insertElement(BinaryTable * table, int value, int * key){
  * 	Retrieve a node from the tree which matches the
  * 		the key passed into the function
  * 
- * 	Arguments :
+ * 	Arguments:
  * 		table : BinaryTable to serach
  * 		key : key to search for 
  */
@@ -170,7 +170,7 @@ Node * getElement(BinaryTable * table, int * key){
  * 	 into a single integer, each tile in the row represented 
  * 	 with a total of 4 bits
  * 
- * 	Arguments : 
+ * 	Arguments: 
  * 		board : board to encode
  * 		enpass : zero or index of last pawn move enabling enpass
  */

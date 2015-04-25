@@ -11,7 +11,7 @@ int evaluateBoard(Board *b, int player, int * lastMove);
 int evaluateMaterial(Board *b, int player);
 int evaluateMoves(Board *b, int player, int * lastMove);
 
-int * weakHeuristic(Board *board, int size, int * moves, int turn);
+int * weakHeuristic(Board *board, int size, int * moves);
 
 int endAISearch(int reached, int size, int * values, int * moves, int * unsorted, BinaryTable * table);
 int * sortMoves(int * values, int * moves, int size);
