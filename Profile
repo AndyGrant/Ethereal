@@ -1,0 +1,3 @@
+#!/bin/sh
+
+gprof _Core/engineFromJava.exe _Scripts/gmon.out > profiler_data.txt
