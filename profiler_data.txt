@@ -3,45 +3,46 @@ Flat profile:
 Each sample counts as 0.01 seconds.
   %   cumulative   self              self     total           
  time   seconds   seconds    calls   s/call   s/call  name    
- 16.91      0.81     0.81  5423328     0.00     0.00  checkMove
- 16.49      1.60     0.79  1090078     0.00     0.00  findAllValidMoves
-  8.14      1.99     0.39   882776     0.00     0.00  encodeBoard
-  7.93      2.37     0.38   929362     0.00     0.00  evaluateMoves
-  7.62      2.73     0.36 36735701     0.00     0.00  createNormalMove
-  7.52      3.10     0.36   882776     0.00     0.00  getElement
-  6.89      3.42     0.33  5347981     0.00     0.00  findMappedIters
-  5.01      3.67     0.24  3220845     0.00     0.00  findMappedNoIters
-  4.18      3.87     0.20  1090078     0.00     0.00  determineCheckValidations
-  3.55      4.04     0.17   464681     0.00     0.00  evaluateMaterial
-  2.92      4.17     0.14  8480144     0.00     0.00  checkDirection
-  2.71      4.30     0.13  8517907     0.00     0.00  findPawnMoves
-  2.71      4.43     0.13   464681     0.00     0.00  insertElement
-  1.88      4.53     0.09  4337110     0.00     0.00  revertNormalMove
-  1.67      4.61     0.08   160714     0.00     0.00  weakHeuristic
-  1.04      4.66     0.05  1090078     0.00     0.00  findCastles
-  0.84      4.70     0.04        1     0.04     0.04  destroyNode
-  0.63      4.72     0.03  4337110     0.00     0.00  applyNormalMove
-  0.42      4.75     0.02    21236     0.00     0.00  createCastleMove
-  0.31      4.76     0.01   137464     0.00     0.00  fillDirection
-  0.21      4.77     0.01  1043490     0.00     0.00  applyGenericMove
-  0.21      4.78     0.01   464681     0.00     0.00  createNode
-  0.21      4.79     0.01       41     0.00     0.12  alphaBetaPrune
-  0.00      4.79     0.00  1043490     0.00     0.00  revertGenericMove
-  0.00      4.79     0.00   464681     0.00     0.00  evaluateBoard
-  0.00      4.79     0.00    21449     0.00     0.00  applyCastleMove
-  0.00      4.79     0.00    21449     0.00     0.00  revertCastleMove
-  0.00      4.79     0.00    17524     0.00     0.00  createPromotionMove
-  0.00      4.79     0.00     9727     0.00     0.00  createEnpassMove
-  0.00      4.79     0.00      217     0.00     0.00  applyEnpassMove
-  0.00      4.79     0.00      217     0.00     0.00  revertEnpassMove
-  0.00      4.79     0.00      196     0.00     0.00  convChar
-  0.00      4.79     0.00      128     0.00     0.00  applyPromotionMove
-  0.00      4.79     0.00      128     0.00     0.00  revertPromotionMove
-  0.00      4.79     0.00        2     0.00     0.00  sortMoves
-  0.00      4.79     0.00        1     0.00     0.00  createTable
-  0.00      4.79     0.00        1     0.00     0.04  destroyTable
-  0.00      4.79     0.00        1     0.00     0.04  endAISearch
-  0.00      4.79     0.00        1     0.00     4.79  findBestMoveIndex
+ 20.75      0.77     0.77  1487452     0.00     0.00  findAllValidMoves
+ 15.50      1.34     0.57  7346147     0.00     0.00  checkMove
+  9.57      1.70     0.35  1215435     0.00     0.00  encodeBoard
+  7.82      1.99     0.29 48901747     0.00     0.00  createNormalMove
+  7.28      2.26     0.27  7278010     0.00     0.00  findMappedIters
+  7.14      2.52     0.27  1215435     0.00     0.00  getElement
+  5.12      2.71     0.19  1278972     0.00     0.00  evaluateMoves
+  4.31      2.88     0.16  4396549     0.00     0.00  findMappedNoIters
+  3.37      3.00     0.12  1487452     0.00     0.00  determineCheckValidations
+  3.23      3.12     0.12 11444673     0.00     0.00  findPawnMoves
+  3.23      3.24     0.12   639486     0.00     0.00  insertElement
+  2.16      3.32     0.08   639486     0.00     0.00  evaluateMaterial
+  1.89      3.39     0.07   639486     0.00     0.00  evaluatePosition
+  1.62      3.45     0.06  5815661     0.00     0.00  revertNormalMove
+  1.48      3.50     0.06 11547856     0.00     0.00  checkDirection
+  1.35      3.56     0.05   208478     0.00     0.00  weakHeuristic
+  1.08      3.60     0.04  5815661     0.00     0.00  applyNormalMove
+  0.81      3.62     0.03  1487452     0.00     0.00  findCastles
+  0.81      3.65     0.03        1     0.03     0.03  destroyNode
+  0.40      3.67     0.01  1423913     0.00     0.00  revertGenericMove
+  0.40      3.69     0.01   209352     0.00     0.00  fillDirection
+  0.27      3.69     0.01   639486     0.00     0.00  evaluateBoard
+  0.27      3.71     0.01    26384     0.00     0.00  createCastleMove
+  0.13      3.71     0.01  1423913     0.00     0.00  applyGenericMove
+  0.00      3.71     0.00   639486     0.00     0.00  createNode
+  0.00      3.71     0.00   120096     0.00     0.00  createPromotionMove
+  0.00      3.71     0.00    39312     0.00     0.00  applyPromotionMove
+  0.00      3.71     0.00    39312     0.00     0.00  revertPromotionMove
+  0.00      3.71     0.00    26638     0.00     0.00  applyCastleMove
+  0.00      3.71     0.00    26638     0.00     0.00  revertCastleMove
+  0.00      3.71     0.00    13568     0.00     0.00  createEnpassMove
+  0.00      3.71     0.00      301     0.00     0.00  applyEnpassMove
+  0.00      3.71     0.00      301     0.00     0.00  revertEnpassMove
+  0.00      3.71     0.00      196     0.00     0.00  convChar
+  0.00      3.71     0.00       55     0.00     0.07  alphaBetaPrune
+  0.00      3.71     0.00        2     0.00     0.00  sortMoves
+  0.00      3.71     0.00        1     0.00     0.00  createTable
+  0.00      3.71     0.00        1     0.00     0.03  destroyTable
+  0.00      3.71     0.00        1     0.00     0.03  endAISearch
+  0.00      3.71     0.00        1     0.00     3.71  findBestMoveIndex
 
  %         the percentage of the total running time of the
 time       program used by this function.
@@ -79,203 +80,207 @@ notice and this notice are preserved.
 		     Call graph (explanation follows)
 
 
-granularity: each sample hit covers 4 byte(s) for 0.21% of 4.79 seconds
+granularity: each sample hit covers 4 byte(s) for 0.27% of 3.71 seconds
 
 index % time    self  children    called     name
-                0.00    4.79       1/1           main [2]
-[1]    100.0    0.00    4.79       1         findBestMoveIndex [1]
-                0.01    4.74      41/41          alphaBetaPrune [3]
-                0.00    0.04       1/1           endAISearch [23]
-                0.00    0.00       2/1090078     findAllValidMoves [5]
-                0.00    0.00       2/2           sortMoves [39]
-                0.00    0.00       1/1           createTable [40]
+                0.00    3.71       1/1           main [2]
+[1]    100.0    0.00    3.71       1         findBestMoveIndex [1]
+                0.00    3.68      55/55          alphaBetaPrune [3]
+                0.00    0.03       1/1           endAISearch [25]
+                0.00    0.00       2/1487452     findAllValidMoves [5]
+                0.00    0.00       2/2           sortMoves [41]
+                0.00    0.00       1/1           createTable [42]
 -----------------------------------------------
                                                  <spontaneous>
-[2]    100.0    0.00    4.79                 main [2]
-                0.00    4.79       1/1           findBestMoveIndex [1]
-                0.00    0.00     196/196         convChar [36]
+[2]    100.0    0.00    3.71                 main [2]
+                0.00    3.71       1/1           findBestMoveIndex [1]
+                0.00    0.00     196/196         convChar [40]
 -----------------------------------------------
-                             1043497             alphaBetaPrune [3]
-                0.01    4.74      41/41          findBestMoveIndex [1]
-[3]     99.2    0.01    4.74      41+1043497 alphaBetaPrune [3]
-                0.00    3.26  464681/464681      evaluateBoard [4]
-                0.12    0.35  160714/1090078     findAllValidMoves [5]
-                0.39    0.00  882776/882776      encodeBoard [13]
-                0.36    0.00  882776/882776      getElement [14]
-                0.13    0.01  464681/464681      insertElement [18]
-                0.08    0.00  160714/160714      weakHeuristic [20]
-                0.00    0.02 1043490/1043490     revertGenericMove [26]
-                0.01    0.01 1043490/1043490     applyGenericMove [27]
-                0.00    0.00       5/5423328     checkMove [8]
-                             1043497             alphaBetaPrune [3]
+                             1423937             alphaBetaPrune [3]
+                0.00    3.68      55/55          findBestMoveIndex [1]
+[3]     99.2    0.00    3.68      55+1423937 alphaBetaPrune [3]
+                0.01    2.49  639486/639486      evaluateBoard [4]
+                0.35    0.00 1215435/1215435     encodeBoard [11]
+                0.11    0.24  208478/1487452     findAllValidMoves [5]
+                0.27    0.00 1215435/1215435     getElement [14]
+                0.12    0.00  639486/639486      insertElement [16]
+                0.05    0.00  208478/208478      weakHeuristic [21]
+                0.01    0.01 1423913/1423913     revertGenericMove [26]
+                0.01    0.01 1423913/1423913     applyGenericMove [28]
+                0.00    0.00       8/7346147     checkMove [8]
+                             1423937             alphaBetaPrune [3]
 -----------------------------------------------
-                0.00    3.26  464681/464681      alphaBetaPrune [3]
-[4]     68.1    0.00    3.26  464681         evaluateBoard [4]
-                0.38    2.71  929362/929362      evaluateMoves [6]
-                0.17    0.00  464681/464681      evaluateMaterial [16]
+                0.01    2.49  639486/639486      alphaBetaPrune [3]
+[4]     67.3    0.01    2.49  639486         evaluateBoard [4]
+                0.19    2.15 1278972/1278972     evaluateMoves [6]
+                0.08    0.00  639486/639486      evaluateMaterial [17]
+                0.07    0.00  639486/639486      evaluatePosition [19]
 -----------------------------------------------
-                0.00    0.00       2/1090078     findBestMoveIndex [1]
-                0.12    0.35  160714/1090078     alphaBetaPrune [3]
-                0.67    2.04  929362/1090078     evaluateMoves [6]
-[5]     66.4    0.79    2.39 1090078         findAllValidMoves [5]
-                0.33    0.37 5347981/5347981     findMappedIters [9]
-                0.20    0.32 1090078/1090078     determineCheckValidations [10]
-                0.13    0.36 8517907/8517907     findPawnMoves [11]
-                0.24    0.22 3220845/3220845     findMappedNoIters [12]
-                0.05    0.18 1090078/1090078     findCastles [15]
+                0.00    0.00       2/1487452     findBestMoveIndex [1]
+                0.11    0.24  208478/1487452     alphaBetaPrune [3]
+                0.66    1.48 1278972/1487452     evaluateMoves [6]
+[5]     67.3    0.77    1.73 1487452         findAllValidMoves [5]
+                0.27    0.28 7278010/7278010     findMappedIters [9]
+                0.12    0.27 11444673/11444673     findPawnMoves [10]
+                0.16    0.16 4396549/4396549     findMappedNoIters [12]
+                0.12    0.19 1487452/1487452     determineCheckValidations [13]
+                0.03    0.12 1487452/1487452     findCastles [15]
 -----------------------------------------------
-                0.38    2.71  929362/929362      evaluateBoard [4]
-[6]     64.6    0.38    2.71  929362         evaluateMoves [6]
-                0.67    2.04  929362/1090078     findAllValidMoves [5]
+                0.19    2.15 1278972/1278972     evaluateBoard [4]
+[6]     63.0    0.19    2.15 1278972         evaluateMoves [6]
+                0.66    1.48 1278972/1487452     findAllValidMoves [5]
 -----------------------------------------------
-                0.08    0.13 8464695/36735701     findMappedNoIters [12]
-                0.14    0.22 13756006/36735701     findPawnMoves [11]
-                0.14    0.23 14515000/36735701     findMappedIters [9]
-[7]     19.8    0.36    0.58 36735701         createNormalMove [7]
-                0.49    0.00 3294031/5423328     checkMove [8]
-                0.07    0.00 3294031/4337110     revertNormalMove [19]
-                0.02    0.00 3294031/4337110     applyNormalMove [24]
+                0.07    0.10 11180668/48901747     findMappedNoIters [12]
+                0.11    0.16 18707574/48901747     findPawnMoves [10]
+                0.11    0.16 19013505/48901747     findMappedIters [9]
+[7]     19.1    0.29    0.42 48901747         createNormalMove [7]
+                0.34    0.00 4392274/7346147     checkMove [8]
+                0.05    0.00 4392274/5815661     revertNormalMove [20]
+                0.03    0.00 4392274/5815661     applyNormalMove [22]
 -----------------------------------------------
-                0.00    0.00       5/5423328     alphaBetaPrune [3]
-                0.00    0.00      19/5423328     createEnpassMove [31]
-                0.00    0.00     128/5423328     createPromotionMove [30]
-                0.00    0.00   21236/5423328     createCastleMove [25]
-                0.15    0.00 1017831/5423328     findCastles [15]
-                0.16    0.00 1090078/5423328     determineCheckValidations [10]
-                0.49    0.00 3294031/5423328     createNormalMove [7]
-[8]     16.9    0.81    0.00 5423328         checkMove [8]
+                0.00    0.00       8/7346147     alphaBetaPrune [3]
+                0.00    0.00      29/7346147     createEnpassMove [31]
+                0.00    0.00   26384/7346147     createCastleMove [29]
+                0.00    0.00   39312/7346147     createPromotionMove [30]
+                0.11    0.00 1400688/7346147     findCastles [15]
+                0.12    0.00 1487452/7346147     determineCheckValidations [13]
+                0.34    0.00 4392274/7346147     createNormalMove [7]
+[8]     15.5    0.57    0.00 7346147         checkMove [8]
 -----------------------------------------------
-                0.33    0.37 5347981/5347981     findAllValidMoves [5]
-[9]     14.7    0.33    0.37 5347981         findMappedIters [9]
-                0.14    0.23 14515000/36735701     createNormalMove [7]
+                0.27    0.28 7278010/7278010     findAllValidMoves [5]
+[9]     14.7    0.27    0.28 7278010         findMappedIters [9]
+                0.11    0.16 19013505/48901747     createNormalMove [7]
 -----------------------------------------------
-                0.20    0.32 1090078/1090078     findAllValidMoves [5]
-[10]    10.8    0.20    0.32 1090078         determineCheckValidations [10]
-                0.16    0.00 1090078/5423328     checkMove [8]
-                0.14    0.01 8480144/8480144     checkDirection [17]
+                0.12    0.27 11444673/11444673     findAllValidMoves [5]
+[10]    10.6    0.12    0.27 11444673         findPawnMoves [10]
+                0.11    0.16 18707574/48901747     createNormalMove [7]
+                0.00    0.00  120096/120096      createPromotionMove [30]
+                0.00    0.00   13568/13568       createEnpassMove [31]
 -----------------------------------------------
-                0.13    0.36 8517907/8517907     findAllValidMoves [5]
-[11]    10.1    0.13    0.36 8517907         findPawnMoves [11]
-                0.14    0.22 13756006/36735701     createNormalMove [7]
-                0.00    0.00   17524/17524       createPromotionMove [30]
-                0.00    0.00    9727/9727        createEnpassMove [31]
+                0.35    0.00 1215435/1215435     alphaBetaPrune [3]
+[11]     9.6    0.35    0.00 1215435         encodeBoard [11]
 -----------------------------------------------
-                0.24    0.22 3220845/3220845     findAllValidMoves [5]
-[12]     9.6    0.24    0.22 3220845         findMappedNoIters [12]
-                0.08    0.13 8464695/36735701     createNormalMove [7]
+                0.16    0.16 4396549/4396549     findAllValidMoves [5]
+[12]     8.7    0.16    0.16 4396549         findMappedNoIters [12]
+                0.07    0.10 11180668/48901747     createNormalMove [7]
 -----------------------------------------------
-                0.39    0.00  882776/882776      alphaBetaPrune [3]
-[13]     8.1    0.39    0.00  882776         encodeBoard [13]
+                0.12    0.19 1487452/1487452     findAllValidMoves [5]
+[13]     8.4    0.12    0.19 1487452         determineCheckValidations [13]
+                0.12    0.00 1487452/7346147     checkMove [8]
+                0.06    0.01 11547856/11547856     checkDirection [18]
 -----------------------------------------------
-                0.36    0.00  882776/882776      alphaBetaPrune [3]
-[14]     7.5    0.36    0.00  882776         getElement [14]
+                0.27    0.00 1215435/1215435     alphaBetaPrune [3]
+[14]     7.1    0.27    0.00 1215435         getElement [14]
 -----------------------------------------------
-                0.05    0.18 1090078/1090078     findAllValidMoves [5]
-[15]     4.7    0.05    0.18 1090078         findCastles [15]
-                0.15    0.00 1017831/5423328     checkMove [8]
-                0.02    0.00   21236/21236       createCastleMove [25]
+                0.03    0.12 1487452/1487452     findAllValidMoves [5]
+[15]     4.1    0.03    0.12 1487452         findCastles [15]
+                0.11    0.00 1400688/7346147     checkMove [8]
+                0.01    0.00   26384/26384       createCastleMove [29]
 -----------------------------------------------
-                0.17    0.00  464681/464681      evaluateBoard [4]
-[16]     3.5    0.17    0.00  464681         evaluateMaterial [16]
+                0.12    0.00  639486/639486      alphaBetaPrune [3]
+[16]     3.2    0.12    0.00  639486         insertElement [16]
+                0.00    0.00  639486/639486      createNode [33]
 -----------------------------------------------
-                0.14    0.01 8480144/8480144     determineCheckValidations [10]
-[17]     3.2    0.14    0.01 8480144         checkDirection [17]
-                0.01    0.00  137464/137464      fillDirection [28]
+                0.08    0.00  639486/639486      evaluateBoard [4]
+[17]     2.2    0.08    0.00  639486         evaluateMaterial [17]
 -----------------------------------------------
-                0.13    0.01  464681/464681      alphaBetaPrune [3]
-[18]     2.9    0.13    0.01  464681         insertElement [18]
-                0.01    0.00  464681/464681      createNode [29]
+                0.06    0.01 11547856/11547856     determineCheckValidations [13]
+[18]     1.9    0.06    0.01 11547856         checkDirection [18]
+                0.01    0.00  209352/209352      fillDirection [27]
 -----------------------------------------------
-                0.02    0.00 1043079/4337110     revertGenericMove [26]
-                0.07    0.00 3294031/4337110     createNormalMove [7]
-[19]     1.9    0.09    0.00 4337110         revertNormalMove [19]
+                0.07    0.00  639486/639486      evaluateBoard [4]
+[19]     1.9    0.07    0.00  639486         evaluatePosition [19]
 -----------------------------------------------
-                0.08    0.00  160714/160714      alphaBetaPrune [3]
-[20]     1.7    0.08    0.00  160714         weakHeuristic [20]
+                0.01    0.00 1423387/5815661     revertGenericMove [26]
+                0.05    0.00 4392274/5815661     createNormalMove [7]
+[20]     1.6    0.06    0.00 5815661         revertNormalMove [20]
 -----------------------------------------------
-                              464680             destroyNode [21]
-                0.04    0.00       1/1           destroyTable [22]
-[21]     0.8    0.04    0.00       1+464680  destroyNode [21]
-                              464680             destroyNode [21]
+                0.05    0.00  208478/208478      alphaBetaPrune [3]
+[21]     1.3    0.05    0.00  208478         weakHeuristic [21]
 -----------------------------------------------
-                0.00    0.04       1/1           endAISearch [23]
-[22]     0.8    0.00    0.04       1         destroyTable [22]
-                0.04    0.00       1/1           destroyNode [21]
+                0.01    0.00 1423387/5815661     applyGenericMove [28]
+                0.03    0.00 4392274/5815661     createNormalMove [7]
+[22]     1.1    0.04    0.00 5815661         applyNormalMove [22]
 -----------------------------------------------
-                0.00    0.04       1/1           findBestMoveIndex [1]
-[23]     0.8    0.00    0.04       1         endAISearch [23]
-                0.00    0.04       1/1           destroyTable [22]
+                              639485             destroyNode [23]
+                0.03    0.00       1/1           destroyTable [24]
+[23]     0.8    0.03    0.00       1+639485  destroyNode [23]
+                              639485             destroyNode [23]
 -----------------------------------------------
-                0.01    0.00 1043079/4337110     applyGenericMove [27]
-                0.02    0.00 3294031/4337110     createNormalMove [7]
-[24]     0.6    0.03    0.00 4337110         applyNormalMove [24]
+                0.00    0.03       1/1           endAISearch [25]
+[24]     0.8    0.00    0.03       1         destroyTable [24]
+                0.03    0.00       1/1           destroyNode [23]
 -----------------------------------------------
-                0.02    0.00   21236/21236       findCastles [15]
-[25]     0.5    0.02    0.00   21236         createCastleMove [25]
-                0.00    0.00   21236/5423328     checkMove [8]
-                0.00    0.00   21236/21449       applyCastleMove [32]
-                0.00    0.00   21236/21449       revertCastleMove [33]
+                0.00    0.03       1/1           findBestMoveIndex [1]
+[25]     0.8    0.00    0.03       1         endAISearch [25]
+                0.00    0.03       1/1           destroyTable [24]
 -----------------------------------------------
-                0.00    0.02 1043490/1043490     alphaBetaPrune [3]
-[26]     0.5    0.00    0.02 1043490         revertGenericMove [26]
-                0.02    0.00 1043079/4337110     revertNormalMove [19]
-                0.00    0.00     213/21449       revertCastleMove [33]
-                0.00    0.00     198/217         revertEnpassMove [35]
+                0.01    0.01 1423913/1423913     alphaBetaPrune [3]
+[26]     0.8    0.01    0.01 1423913         revertGenericMove [26]
+                0.01    0.00 1423387/5815661     revertNormalMove [20]
+                0.00    0.00     272/301         revertEnpassMove [39]
+                0.00    0.00     254/26638       revertCastleMove [37]
 -----------------------------------------------
-                0.01    0.01 1043490/1043490     alphaBetaPrune [3]
-[27]     0.4    0.01    0.01 1043490         applyGenericMove [27]
-                0.01    0.00 1043079/4337110     applyNormalMove [24]
-                0.00    0.00     213/21449       applyCastleMove [32]
-                0.00    0.00     198/217         applyEnpassMove [34]
+                0.01    0.00  209352/209352      checkDirection [18]
+[27]     0.4    0.01    0.00  209352         fillDirection [27]
 -----------------------------------------------
-                0.01    0.00  137464/137464      checkDirection [17]
-[28]     0.3    0.01    0.00  137464         fillDirection [28]
+                0.01    0.01 1423913/1423913     alphaBetaPrune [3]
+[28]     0.4    0.01    0.01 1423913         applyGenericMove [28]
+                0.01    0.00 1423387/5815661     applyNormalMove [22]
+                0.00    0.00     272/301         applyEnpassMove [38]
+                0.00    0.00     254/26638       applyCastleMove [36]
 -----------------------------------------------
-                0.01    0.00  464681/464681      insertElement [18]
-[29]     0.2    0.01    0.00  464681         createNode [29]
+                0.01    0.00   26384/26384       findCastles [15]
+[29]     0.3    0.01    0.00   26384         createCastleMove [29]
+                0.00    0.00   26384/7346147     checkMove [8]
+                0.00    0.00   26384/26638       applyCastleMove [36]
+                0.00    0.00   26384/26638       revertCastleMove [37]
 -----------------------------------------------
-                0.00    0.00   17524/17524       findPawnMoves [11]
-[30]     0.0    0.00    0.00   17524         createPromotionMove [30]
-                0.00    0.00     128/5423328     checkMove [8]
-                0.00    0.00     128/128         applyPromotionMove [37]
-                0.00    0.00     128/128         revertPromotionMove [38]
+                0.00    0.00  120096/120096      findPawnMoves [10]
+[30]     0.1    0.00    0.00  120096         createPromotionMove [30]
+                0.00    0.00   39312/7346147     checkMove [8]
+                0.00    0.00   39312/39312       applyPromotionMove [34]
+                0.00    0.00   39312/39312       revertPromotionMove [35]
 -----------------------------------------------
-                0.00    0.00    9727/9727        findPawnMoves [11]
-[31]     0.0    0.00    0.00    9727         createEnpassMove [31]
-                0.00    0.00      19/5423328     checkMove [8]
-                0.00    0.00      19/217         applyEnpassMove [34]
-                0.00    0.00      19/217         revertEnpassMove [35]
+                0.00    0.00   13568/13568       findPawnMoves [10]
+[31]     0.0    0.00    0.00   13568         createEnpassMove [31]
+                0.00    0.00      29/7346147     checkMove [8]
+                0.00    0.00      29/301         applyEnpassMove [38]
+                0.00    0.00      29/301         revertEnpassMove [39]
 -----------------------------------------------
-                0.00    0.00     213/21449       applyGenericMove [27]
-                0.00    0.00   21236/21449       createCastleMove [25]
-[32]     0.0    0.00    0.00   21449         applyCastleMove [32]
+                0.00    0.00  639486/639486      insertElement [16]
+[33]     0.0    0.00    0.00  639486         createNode [33]
 -----------------------------------------------
-                0.00    0.00     213/21449       revertGenericMove [26]
-                0.00    0.00   21236/21449       createCastleMove [25]
-[33]     0.0    0.00    0.00   21449         revertCastleMove [33]
+                0.00    0.00   39312/39312       createPromotionMove [30]
+[34]     0.0    0.00    0.00   39312         applyPromotionMove [34]
 -----------------------------------------------
-                0.00    0.00      19/217         createEnpassMove [31]
-                0.00    0.00     198/217         applyGenericMove [27]
-[34]     0.0    0.00    0.00     217         applyEnpassMove [34]
+                0.00    0.00   39312/39312       createPromotionMove [30]
+[35]     0.0    0.00    0.00   39312         revertPromotionMove [35]
 -----------------------------------------------
-                0.00    0.00      19/217         createEnpassMove [31]
-                0.00    0.00     198/217         revertGenericMove [26]
-[35]     0.0    0.00    0.00     217         revertEnpassMove [35]
+                0.00    0.00     254/26638       applyGenericMove [28]
+                0.00    0.00   26384/26638       createCastleMove [29]
+[36]     0.0    0.00    0.00   26638         applyCastleMove [36]
+-----------------------------------------------
+                0.00    0.00     254/26638       revertGenericMove [26]
+                0.00    0.00   26384/26638       createCastleMove [29]
+[37]     0.0    0.00    0.00   26638         revertCastleMove [37]
+-----------------------------------------------
+                0.00    0.00      29/301         createEnpassMove [31]
+                0.00    0.00     272/301         applyGenericMove [28]
+[38]     0.0    0.00    0.00     301         applyEnpassMove [38]
+-----------------------------------------------
+                0.00    0.00      29/301         createEnpassMove [31]
+                0.00    0.00     272/301         revertGenericMove [26]
+[39]     0.0    0.00    0.00     301         revertEnpassMove [39]
 -----------------------------------------------
                 0.00    0.00     196/196         main [2]
-[36]     0.0    0.00    0.00     196         convChar [36]
------------------------------------------------
-                0.00    0.00     128/128         createPromotionMove [30]
-[37]     0.0    0.00    0.00     128         applyPromotionMove [37]
------------------------------------------------
-                0.00    0.00     128/128         createPromotionMove [30]
-[38]     0.0    0.00    0.00     128         revertPromotionMove [38]
+[40]     0.0    0.00    0.00     196         convChar [40]
 -----------------------------------------------
                 0.00    0.00       2/2           findBestMoveIndex [1]
-[39]     0.0    0.00    0.00       2         sortMoves [39]
+[41]     0.0    0.00    0.00       2         sortMoves [41]
 -----------------------------------------------
                 0.00    0.00       1/1           findBestMoveIndex [1]
-[40]     0.0    0.00    0.00       1         createTable [40]
+[42]     0.0    0.00    0.00       1         createTable [42]
 -----------------------------------------------
 
  This table describes the call tree of the program, and was sorted by
@@ -368,16 +373,17 @@ notice and this notice are preserved.
 
 Index by function name
 
-   [3] alphaBetaPrune         [30] createPromotionMove    [15] findCastles
-  [32] applyCastleMove        [40] createTable             [9] findMappedIters
-  [34] applyEnpassMove        [21] destroyNode            [12] findMappedNoIters
-  [27] applyGenericMove       [22] destroyTable           [11] findPawnMoves
-  [24] applyNormalMove        [10] determineCheckValidations [14] getElement
-  [37] applyPromotionMove     [13] encodeBoard            [18] insertElement
-  [17] checkDirection         [23] endAISearch            [33] revertCastleMove
-   [8] checkMove               [4] evaluateBoard          [35] revertEnpassMove
-  [36] convChar               [16] evaluateMaterial       [26] revertGenericMove
-  [25] createCastleMove        [6] evaluateMoves          [19] revertNormalMove
-  [31] createEnpassMove       [28] fillDirection          [38] revertPromotionMove
-  [29] createNode              [5] findAllValidMoves      [39] sortMoves
-   [7] createNormalMove        [1] findBestMoveIndex      [20] weakHeuristic
+   [3] alphaBetaPrune         [42] createTable             [9] findMappedIters
+  [36] applyCastleMove        [23] destroyNode            [12] findMappedNoIters
+  [38] applyEnpassMove        [24] destroyTable           [10] findPawnMoves
+  [28] applyGenericMove       [13] determineCheckValidations [14] getElement
+  [22] applyNormalMove        [11] encodeBoard            [16] insertElement
+  [34] applyPromotionMove     [25] endAISearch            [37] revertCastleMove
+  [18] checkDirection          [4] evaluateBoard          [39] revertEnpassMove
+   [8] checkMove              [17] evaluateMaterial       [26] revertGenericMove
+  [40] convChar                [6] evaluateMoves          [20] revertNormalMove
+  [29] createCastleMove       [19] evaluatePosition       [35] revertPromotionMove
+  [31] createEnpassMove       [27] fillDirection          [41] sortMoves
+  [33] createNode              [5] findAllValidMoves      [21] weakHeuristic
+   [7] createNormalMove        [1] findBestMoveIndex
+  [30] createPromotionMove    [15] findCastles
