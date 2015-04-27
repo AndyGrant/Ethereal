@@ -1,3 +1,4 @@
 *.exe
 *.class
-gmon.out
+_Scripts/gmon.out
+profiler_data.txt
