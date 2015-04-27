@@ -9,6 +9,7 @@ int KEY_SIZE = 9;
 int KEY_BYTES = 9 * sizeof(int);
 
 int enc[6] = {1,1,2,2,3,3};
+int MOVED_MATTERS[6] = {0,1,1,0,1,0};
 
 /*
  * Function : createTable
@@ -175,7 +176,7 @@ Node * getElement(BinaryTable * table, int * key){
  * 		enpass : zero or index of last pawn move enabling enpass
  */
 int * encodeBoard(Board * board, int enpass){
-	int * key = calloc(KEY_SIZE, sizeof(int));
+	int * key = malloc(KEY_SIZE * sizeof(int));
 	int x, y, i, j;
 	int t,c,m;	
 	
@@ -189,7 +190,7 @@ int * encodeBoard(Board * board, int enpass){
 			
 			if (t == EMPTY)
 				key[i] += 0;
-			else if (t > PAWN && t < KING && t != ROOK)
+			else if (MOVED_MATTERS[t])
 				key[i] += enc[t] + (3 * c);
 			else{
 				if (m == 0)
