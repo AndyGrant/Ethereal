@@ -135,7 +135,7 @@ int * sortMoves(int * values, int * moves, int size){
  * 	Arguments:
  * 		reached : cut off for search
  * 		size : number of moves
- * 		values : value of ecah move
+ * 		values : value of each move
  * 		moves : sorted by depth N-2 of moves
  * 		unsorted : original array of moves
  * 		table : BinaryTable of transpositions
@@ -190,7 +190,7 @@ int endAISearch(int reached, int size, int * values, int * moves, int * unsorted
  * 		board : game board
  * 		turn : player of the current search depth
  * 		move : last move made
- * 		depth : counter to zero for cutoff
+ * 		depth : counter to zero for cut-off
  * 		alpha : best found
  * 		beta: worst found
  * 		evauluating_player: original player to find move for
@@ -290,13 +290,58 @@ int alphaBetaPrune(BinaryTable * table, Board * board, int turn, int * move, int
  */
 int evaluateBoard(Board *board, int player, int * lastMove){
 	TOTAL_BOARDS_SEARCHED += 1;
-	int value = 	evaluateMaterial(board,player) + 
+	int value = evaluateMaterial(board,player) + 
+				evaluatePosition(board,player) + 
 				evaluateMoves(board,player,lastMove) - 
 				evaluateMoves(board,!player,lastMove);
 	return value;
 }
 
 
+int evaluatePosition(Board * board, int player){
+
+	int x, y, value = 0;
+	int pawn_start, pawn_end;
+	
+	pawn_end = player * 7;
+	pawn_start = 6 - (player * 5);
+	for(x = 1; pawn_start < pawn_end; pawn_start++, x++)
+		for(y = 0; y < 8; y++)
+			if (board->types[pawn_start][y] == PAWN && board->colors[pawn_start][y] == player)
+				value += x;
+			
+	pawn_end = !player * 7;
+	pawn_start = 6 - (!player * 5);
+	for(x = 1; pawn_start < pawn_end; pawn_start++, x++)
+		for(y = 0; y < 8; y++)
+			if (board->types[pawn_start][y] == PAWN && board->colors[pawn_start][y] == !player)
+				value -= x;
+	
+	
+	for(x = 2; x < 6; x++){
+		for(y = 2; y < 6; y++){
+			if (board->types[x][y] == KNIGHT){
+				if (board->colors[x][y] == player)
+					value += VALUE_CENTRAL_KNIGHT;
+				else
+					value -= VALUE_CENTRAL_KNIGHT;
+			}
+		}
+	}
+			
+	for(x = 3; x < 5; x++){
+		for(y = 3; y < 5; y++){
+			if (board->types[x][y] != EMPTY){
+				if(board->colors[x][y] == player)
+					value += VALUE_CENTER_SQUARE_ATTACKED;
+				else
+					value -= VALUE_CENTER_SQUARE_ATTACKED;
+			}
+		}
+	}
+	
+	return value;
+}
 /*
  * Function : evaluateMaterial
  * ---------------------------
@@ -343,7 +388,7 @@ int evaluateMoves(Board *board, int player, int * lastMove){
 	
 	int value = 0;
 
-	int i,x,y;
+	int i;
 
 	int * t = *(board->types);
 	for(i = 0; i < size; i++, moves+=7){
@@ -356,26 +401,6 @@ int evaluateMoves(Board *board, int player, int * lastMove){
 		if (moves[2] / 8 > 2 && moves[2] / 8 < 5 && moves[2] % 8 > 2 && moves[2] % 8 < 5)
 			value += VALUE_CENTER_SQUARE_ATTACKED;		
 	}
-	
-	
-	int pawn_end = player * 7;
-	int pawn_start = 6 - (player * 5);
-	for(x = 1; pawn_start < pawn_end; pawn_start++, x++)
-		for(y = 0; y < 8; y++)
-			if (board->types[pawn_start][y] == PAWN && board->colors[pawn_start][y] == player)
-				value += x;
-	
-	
-	for(x = 2; x < 6; x++)
-		for(y = 2; y < 6; y++)
-			if (board->types[x][y] == KNIGHT && board->colors[x][y] == player)
-				value += VALUE_CENTRAL_KNIGHT;
-
-	
-	for(x = 3; x < 5; x++)
-		for(y = 3; y < 5; y++)
-			if (board->types[x][y] != EMPTY && board->colors[x][y] == player)
-				value += VALUE_CENTER_SQUARE_ATTACKED;
 	
 	free(moves_pointer);
 	return value;
