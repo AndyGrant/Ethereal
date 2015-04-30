@@ -30,6 +30,9 @@ int MAX_SECONDS = 7;
 
 time_t START_TIME;
 
+Board * BOARD;
+BinaryTable * TABLE;
+
 /*
  * Function : findBestMoveIndex
  * ----------------------------
@@ -37,40 +40,44 @@ time_t START_TIME;
  * 		With the greatest value
  * 	
  * 	Arguments:
- * 		board : game board
+ * 		game_board : game board
  * 		last_move : boolean of last_move enables enpassant
  * 		turn : turn of player
  */
-int findBestMoveIndex(Board * board, int * last_move, int turn){	
+int findBestMoveIndex(Board * board, int * last_move, int turn){
+
+	START_TIME = time(NULL);
+	BOARD = board;
+	TABLE = createTable();
+	
 	int size = 0;
-	int * moves = findAllValidMoves(board,turn,&size,last_move);
+	int * moves = findAllValidMoves(BOARD,turn,&size,last_move);
 	int * moves_p = moves;
 	
 	int unsorted_size = 0;
-	int * unsorted = findAllValidMoves(board,turn,&unsorted_size,last_move);
+	int * unsorted = findAllValidMoves(BOARD,turn,&unsorted_size,last_move);
 	
 	if (size == 0)
 		return -1;
 	
 	
-	START_TIME = time(NULL);
+	
 	
 	int values[size];
 	int alpha, beta, i, move, cur_depth;
 	
-	BinaryTable * table = createTable();
 	for(cur_depth = MIN_DEPTH; cur_depth < MAX_DEPTH; cur_depth += 2){
 		int alpha = -MATE - 1;
 		int beta = MATE + 1;
 		printf("SEARCHING DEPTH LEVEL %d \n", cur_depth);
 		for(i = 0; i < size; i++, moves_p += 7){
 			int searched = TOTAL_BOARDS_SEARCHED;
-			values[i] = alphaBetaPrune(table,board,!turn,moves_p,cur_depth,alpha,beta,turn);
+			values[i] = alphaBetaPrune(!turn,moves_p,cur_depth,alpha,beta,turn);
 			printf("#%d \t Value: %d \t Searched: %d \n",i,values[i],TOTAL_BOARDS_SEARCHED-searched);
 			if (values[i] > alpha)
 				alpha = values[i];
 			if (alpha == MATE || START_TIME + MAX_SECONDS < time(NULL))
-				return endAISearch(i+1,size,values,moves,unsorted,table);
+				return endAISearch(i+1,size,values,moves,unsorted);
 			
 			
 		}
@@ -80,7 +87,7 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 		moves_p = moves;
 	}
 	
-	return endAISearch(size,size,values,moves,unsorted,table);
+	return endAISearch(size,size,values,moves,unsorted);
 	
 }
 
@@ -138,15 +145,14 @@ int * sortMoves(int * values, int * moves, int size){
  * 		values : value of each move
  * 		moves : sorted by depth N-2 of moves
  * 		unsorted : original array of moves
- * 		table : BinaryTable of transpositions
  */
-int endAISearch(int reached, int size, int * values, int * moves, int * unsorted, BinaryTable * table){
+int endAISearch(int reached, int size, int * values, int * moves, int * unsorted){
 
 	printf("Moves Found: %d \n",TOTAL_BOARDS_SEARCHED);
-	printf("Table Size: %d \n",table->elements);
+	printf("Table Size: %d \n",TABLE->elements);
 	printf("Positions Reused: %d \n",BOARDS_REUSED);
 	
-	destroyTable(table);
+	destroyTable(TABLE);
 	
 	int i;
 	int best_index = 0;
@@ -186,8 +192,6 @@ int endAISearch(int reached, int size, int * values, int * moves, int * unsorted
  * 		aid of a transposition tables
  * 
  * 	Arguments: 
- * 		table : BinaryTree of transpositions
- * 		board : game board
  * 		turn : player of the current search depth
  * 		move : last move made
  * 		depth : counter to zero for cut-off
@@ -195,43 +199,43 @@ int endAISearch(int reached, int size, int * values, int * moves, int * unsorted
  * 		beta: worst found
  * 		evauluating_player: original player to find move for
  */
-int alphaBetaPrune(BinaryTable * table, Board * board, int turn, int * move, int depth, int alpha, int beta, int evaluating_player){	
+int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int evaluating_player){	
 	
 	if (START_TIME + MAX_SECONDS < time(NULL))
 		return -MATE;
 	
-	applyGenericMove(board,move);
+	applyGenericMove(BOARD,move);
 
 	if (depth == 0){
 		int enpass = move[0] == 4 ? move[1] : 0;
-		int * key = encodeBoard(board,enpass);
-		Node * node = getElement(table,key);
+		int * key = encodeBoard(BOARD,enpass);
+		Node * node = getElement(TABLE,key);
 		
 		if (node != NULL){
 			BOARDS_REUSED += 1;
-			revertGenericMove(board,move);
+			revertGenericMove(BOARD,move);
 			free(key);
 			return node->value;
 		}
 		
-		int value = evaluateBoard(board,evaluating_player,move);		
-		revertGenericMove(board,move);
-		insertElement(table,value,key);
+		int value = evaluateBoard(evaluating_player,move);		
+		revertGenericMove(BOARD,move);
+		insertElement(TABLE,value,key);
 		return value;
 	}
 	
 	
 	int size = 0;
-	int * moves = findAllValidMoves(board,turn,&size,move);	
-	moves = weakHeuristic(board,size,moves);
+	int * moves = findAllValidMoves(BOARD,turn,&size,move);	
+	moves = weakHeuristic(size,moves);
 		
 	int * moves_pointer = moves;
 	TOTAL_MOVES_FOUND += size;
 	
 	if (size == 0){
 		int is_Check_Mate = 0;
-		checkMove(board,&is_Check_Mate,turn);
-		revertGenericMove(board,move);
+		checkMove(BOARD,&is_Check_Mate,turn);
+		revertGenericMove(BOARD,move);
 		free(moves_pointer);
 		if (is_Check_Mate == 0){
 			if (turn == evaluating_player)
@@ -249,7 +253,7 @@ int alphaBetaPrune(BinaryTable * table, Board * board, int turn, int * move, int
 	if (turn == evaluating_player){
 		value = -MATE - 1;
 		for(i = 0; i < size; i++, moves += 7){
-			v = alphaBetaPrune(table, board,!turn,moves,depth-1,alpha,beta,evaluating_player);
+			v = alphaBetaPrune(!turn,moves,depth-1,alpha,beta,evaluating_player);
 			value = value > v ? value : v;
 			alpha = alpha > value? alpha : value;
 			if (beta <= alpha)
@@ -261,7 +265,7 @@ int alphaBetaPrune(BinaryTable * table, Board * board, int turn, int * move, int
 	else {
 		value = MATE + 1;		
 		for(i = 0; i < size; i++, moves += 7){
-			v = alphaBetaPrune(table, board,!turn,moves,depth-1,alpha,beta,evaluating_player);
+			v = alphaBetaPrune(!turn,moves,depth-1,alpha,beta,evaluating_player);
 			value = value < v ? value : v;
 			beta = beta < value? beta : value;
 			if (beta <= alpha)
@@ -270,7 +274,7 @@ int alphaBetaPrune(BinaryTable * table, Board * board, int turn, int * move, int
 		}
 	}
 	
-	revertGenericMove(board,move);
+	revertGenericMove(BOARD,move);
 	free(moves_pointer);	
 	return value;
 }
@@ -284,21 +288,29 @@ int alphaBetaPrune(BinaryTable * table, Board * board, int turn, int * move, int
  * 		child moves of that board
  * 	
  * 	Arguments:
- * 		board : game board
  * 		player : player to evaluate relative to
  * 		lastMove: lastMove applied to get here
  */
-int evaluateBoard(Board *board, int player, int * lastMove){
+int evaluateBoard(int player, int * lastMove){
 	TOTAL_BOARDS_SEARCHED += 1;
-	int value = evaluateMaterial(board,player) + 
-				evaluatePosition(board,player) + 
-				evaluateMoves(board,player,lastMove) - 
-				evaluateMoves(board,!player,lastMove);
+	int value = evaluateMaterial(player) + 
+				evaluatePosition(player) + 
+				evaluateMoves(player,lastMove) - 
+				evaluateMoves(!player,lastMove);
 	return value;
 }
 
 
-int evaluatePosition(Board * board, int player){
+/*
+ * Function : evaluatePosition
+ * ---------------------------
+ * 	Assign an integer value to the set-up of the pieces
+ * 		on the game board.
+ * 	
+ * 	Arguments:
+ * 		player : player to evaluate for
+ */
+int evaluatePosition(int player){
 
 	int x, y, value = 0;
 	int pawn_start, pawn_end;
@@ -307,21 +319,21 @@ int evaluatePosition(Board * board, int player){
 	pawn_start = 6 - (player * 5);
 	for(x = 1; pawn_start < pawn_end; pawn_start++, x++)
 		for(y = 0; y < 8; y++)
-			if (board->types[pawn_start][y] == PAWN && board->colors[pawn_start][y] == player)
+			if (BOARD->types[pawn_start][y] == PAWN && BOARD->colors[pawn_start][y] == player)
 				value += x;
 			
 	pawn_end = !player * 7;
 	pawn_start = 6 - (!player * 5);
 	for(x = 1; pawn_start < pawn_end; pawn_start++, x++)
 		for(y = 0; y < 8; y++)
-			if (board->types[pawn_start][y] == PAWN && board->colors[pawn_start][y] == !player)
+			if (BOARD->types[pawn_start][y] == PAWN && BOARD->colors[pawn_start][y] == !player)
 				value -= x;
 	
 	
 	for(x = 2; x < 6; x++){
 		for(y = 2; y < 6; y++){
-			if (board->types[x][y] == KNIGHT){
-				if (board->colors[x][y] == player)
+			if (BOARD->types[x][y] == KNIGHT){
+				if (BOARD->colors[x][y] == player)
 					value += VALUE_CENTRAL_KNIGHT;
 				else
 					value -= VALUE_CENTRAL_KNIGHT;
@@ -331,8 +343,8 @@ int evaluatePosition(Board * board, int player){
 			
 	for(x = 3; x < 5; x++){
 		for(y = 3; y < 5; y++){
-			if (board->types[x][y] != EMPTY){
-				if(board->colors[x][y] == player)
+			if (BOARD->types[x][y] != EMPTY){
+				if(BOARD->colors[x][y] == player)
 					value += VALUE_CENTER_SQUARE_ATTACKED;
 				else
 					value -= VALUE_CENTER_SQUARE_ATTACKED;
@@ -342,6 +354,8 @@ int evaluatePosition(Board * board, int player){
 	
 	return value;
 }
+
+
 /*
  * Function : evaluateMaterial
  * ---------------------------
@@ -349,19 +363,18 @@ int evaluatePosition(Board * board, int player){
  * 		relative to the player 
  * 	
  * 	Arguments:
- * 		board : game board
- * 		player : palyer to evaluate for
+ * 		player : player to evaluate for
  */
-int evaluateMaterial(Board *board, int player){
+int evaluateMaterial(int player){
 	int value = 0;
 	int x,y;
 	for(x = 0; x < 8; x++){
 		for(y = 0; y < 8; y++){
-			if (board->types[x][y] != EMPTY){
-				if (board->colors[x][y] == player)
-					value += MATERIAL_VALUES[board->types[x][y]];
+			if (BOARD->types[x][y] != EMPTY){
+				if (BOARD->colors[x][y] == player)
+					value += MATERIAL_VALUES[BOARD->types[x][y]];
 				else
-					value -= MATERIAL_VALUES[board->types[x][y]];
+					value -= MATERIAL_VALUES[BOARD->types[x][y]];
 			}
 		}
 	}
@@ -377,20 +390,19 @@ int evaluateMaterial(Board *board, int player){
  * 		shallow way based off of values defined globally
  * 
  * 	Arguments:
- * 		board : game board
  * 		player: player to evaluate for
  * 		lastMove: move made to get here
  */
-int evaluateMoves(Board *board, int player, int * lastMove){
+int evaluateMoves(int player, int * lastMove){
 	int size = 0;
-	int * moves = findAllValidMoves(board,player,&size,lastMove);
+	int * moves = findAllValidMoves(BOARD,player,&size,lastMove);
 	int * moves_pointer = moves;
 	
 	int value = 0;
 
 	int i;
 
-	int * t = *(board->types);
+	int * t = *(BOARD->types);
 	for(i = 0; i < size; i++, moves+=7){
 		if (t[moves[1]] == KNIGHT)
 			value += VALUE_KNIGHT_RANGE;
@@ -414,15 +426,14 @@ int evaluateMoves(Board *board, int player, int * lastMove){
  * 		are ordered at the front, and the non-captures at the end
  * 	
  * 	Arguments:
- * 		board : game board
  * 		size : number of moves
  * 		moves : moves to be sorted
  */
-int * weakHeuristic(Board * board, int size, int * moves){	
+int * weakHeuristic(int size, int * moves){	
 	int * sorted = malloc(7 * sizeof(int) * size);
 	int * moves_pointer = moves;
 	int * sorted_pointer = sorted;
-	int * types = *(board->types);
+	int * types = *(BOARD->types);
 	
 	int i,j;
 	for(i = 0; i < size; i++){
