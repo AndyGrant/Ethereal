@@ -313,7 +313,8 @@ public class Chess implements GameState{
 			command += "4" + last_move.endX + "" + last_move.endY;
 		else
 			command += "000";
-			
+		
+		System.out.println(command);
 		return new String[]{core,command};	
 	}
 	
