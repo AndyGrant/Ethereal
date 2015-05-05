@@ -139,6 +139,58 @@ void insertElement(BinaryTable * table, int value, int * key){
  * 		key : key to search for 
  */
 Node * getElement(BinaryTable * table, int * key){
+	
+	__asm__(
+		"sub		$0x10,		%esp;"
+		
+		"mov 	0x8(%ebp),	%edx;"
+		"mov 	0x0(%edx),	%edx;"
+		"cmp		$0x0,		%edx;"
+		"je		notFound;"
+
+		
+		"mov		0xc(%ebp),	%ecx;"
+		"movl	%ecx,		0x0(%esp);"
+		"movl 	$0x24,		0x8(%esp);"
+
+
+		"mainloop: "
+		"movl 	%edx,		0x4(%esp);"
+		"call 	_memcmp;"
+		"cmp		$0xffffffff,	%eax;"
+		"je		leftBranch;"
+
+		"cmp		$0x1,		%eax;"
+		"je		rightBranch;"
+		"jmp		found;"
+
+
+		"leftBranch: "
+		"mov 	0x0(%edx),	%edx;"
+		"cmp		$0x0,		%edx;"
+		"je		notFound;"
+		"jmp		mainloop;"
+
+		"rightBranch: "
+		"mov 	0x4(%edx),	%edx;"
+		"cmp		$0x0,		%edx;"
+		"je		notFound;"
+		"jmp		mainloop;"
+
+		"notFound: "
+		"mov 	$0x0,		%eax;"
+		"add		$0x10,		%esp;"	
+		"leave;"
+		"ret;"
+
+		"found: "
+		"add		$0x10,		%esp;"
+		"leave;"
+		"ret;"
+	);
+	
+	
+	/*
 	Node * node = table->root;
 	
 	if (node == NULL)
@@ -159,7 +211,7 @@ Node * getElement(BinaryTable * table, int * key){
 		else
 			return node;
 		
-	}
+	}*/
 }
 
 

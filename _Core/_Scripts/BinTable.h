@@ -7,15 +7,17 @@ extern int KEY_SIZE;
 extern int LAST_KEY;
 
 typedef struct BinaryTable{
-	int elements;
 	struct Node * root;
+	int elements;
+	
 } BinaryTable;
 
 typedef struct Node{
-	int value;
-	int * key;
 	struct Node * left;
 	struct Node * right;
+	int value;
+	int * key;
+	
 } Node;
 
 
