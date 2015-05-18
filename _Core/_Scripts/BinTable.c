@@ -139,7 +139,7 @@ void insertElement(BinaryTable * table, int value, int * key){
  * 		key : key to search for 
  */
 Node * getElement(BinaryTable * table, int * key){
-	/*
+	
 	__asm__(
 		"sub		$0x28,		%esp;"	
 		"mov 		0x8(%ebp),	%eax;"
@@ -191,8 +191,8 @@ Node * getElement(BinaryTable * table, int * key){
 		"leave;"
 		"ret;"
 		
-	);*/
-	
+	);
+	/*
 	Node * node = table->root;
 	
 	if (node == NULL)
@@ -213,7 +213,7 @@ Node * getElement(BinaryTable * table, int * key){
 		else
 			return node;
 		
-	}
+	}*/
 }
 
 

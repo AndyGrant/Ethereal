@@ -26,7 +26,7 @@ int BOARDS_REUSED = 0;
 
 int MIN_DEPTH = 2;
 int MAX_DEPTH = 20;
-int MAX_SECONDS = 7;
+int MAX_SECONDS = 10;
 
 time_t START_TIME;
 
@@ -59,9 +59,6 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 	
 	if (size == 0)
 		return -1;
-	
-	
-	
 	
 	int values[size];
 	int alpha, beta, i, move, cur_depth;
