@@ -36,10 +36,10 @@ Board * createBoard(int board[8][8]);
 void printBoard(Board * board);
 
 int * findAllValidMoves(Board * b, int turn, int * moves_size_p, int * last_move);
-void findPawnMoves(Board * b, int * moves, int * moves_found, int turn, int x, int y, int * last_move, int eval_check);
-void findMappedIters(Board * b, int * moves, int *moves_found, int turn, int x, int y, int * map, int map_size, int eval_check);
-void findMappedNoIters(Board * b, int * moves, int * moves_found, int turn, int x, int y, int * map, int map_size, int eval_check);
-void findCastles(Board * b, int * moves, int * moves_found, int turn, int x, int y);
+void findPawnMoves(Board * b, int * moves_found, int turn, int x, int y, int * last_move, int eval_check);
+void findMappedIters(Board * b, int *moves_found, int turn, int x, int y, int * map, int map_size, int eval_check);
+void findMappedNoIters(Board * b, int * moves_found, int turn, int x, int y, int * map, int map_size, int eval_check);
+void findCastles(Board * b, int * moves_found, int turn, int x, int y);
 
 void determineCheckValidations(int eval_check[8][8], Board * board, int turn);
 void checkDirection(int eval_check[8][8], Board * board, int turn, int kx, int ky, int move);
