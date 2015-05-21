@@ -146,34 +146,25 @@ int * findAllValidMoves(Board * b, int turn, int * moves_found, int * last_move)
 			if (b->colors[row][col] == turn){
 				int type = b->types[row][col];
 				if (type == PAWN)
-					findPawnMoves(b,moves,moves_found,turn,row,col,last_move,*eval_check_p);
+					findPawnMoves(b,moves_found,turn,row,col,last_move,*eval_check_p);
 				else if (type == KNIGHT)
-					findMappedNoIters(b,moves,moves_found,turn,row,col,*move_map_knight, 8, *eval_check_p);
+					findMappedNoIters(b,moves_found,turn,row,col,*move_map_knight, 8, *eval_check_p);
 				else if (type == BISHOP)
-					findMappedIters(b,moves,moves_found,turn,row,col,*move_map_bishop, 4, *eval_check_p);
+					findMappedIters(b,moves_found,turn,row,col,*move_map_bishop, 4, *eval_check_p);
 				else if (type == ROOK)
-					findMappedIters(b,moves,moves_found,turn,row,col,*move_map_rook, 4, *eval_check_p);
+					findMappedIters(b,moves_found,turn,row,col,*move_map_rook, 4, *eval_check_p);
 				else if (type == QUEEN)
-					findMappedIters(b,moves,moves_found,turn,row,col,*move_map_queen, 8, *eval_check_p);
+					findMappedIters(b,moves_found,turn,row,col,*move_map_queen, 8, *eval_check_p);
 				else if (type == KING){
-					findMappedNoIters(b,moves,moves_found,turn,row,col,*move_map_king, 8, *eval_check_p);
-					findCastles(b,moves,moves_found,turn,row,col);
+					findMappedNoIters(b,moves_found,turn,row,col,*move_map_king, 8, *eval_check_p);
+					findCastles(b,moves_found,turn,row,col);
 				}
 			}
 		}
 	}
 	
-	int * moves_final = malloc(SIZE_OF_MOVE * sizeof(int) * *moves_found);
-	int * moves_final_p = moves_final;
-	int * moves_p = moves;
-	
-	for(i = 0; i < *moves_found * SIZE_OF_MOVE; i++){
-		*moves_final_p = *moves_p;
-		moves_p++;
-		moves_final_p++;
-	}
-
-	return moves_final;
+	int size = SIZE_OF_MOVE * sizeof(int) * *moves_found;
+	return memcpy(malloc(size),moves,size);
 }
 
 
@@ -192,7 +183,7 @@ int * findAllValidMoves(Board * b, int turn, int * moves_found, int * last_move)
  * 		last_move : integer array of last move made
  *		eval_check : integer determining need to validate move
  */
-void findPawnMoves(Board * b, int * moves, int * moves_found, int turn, int x, int y, int * last_move, int eval_check){
+void findPawnMoves(Board * b, int * moves_found, int turn, int x, int y, int * last_move, int eval_check){
 	int dir;
 	if (b->colors[x][y] == WHITE)
 		dir = -1;
@@ -277,7 +268,7 @@ void findPawnMoves(Board * b, int * moves, int * moves_found, int turn, int x, i
  * 		map_size : length of map
  *		eval_check : integer determining need to validate move
  */
-void findMappedIters(Board * b, int * moves, int *moves_found, int turn, int x, int y, int * map, int map_size, int eval_check){
+void findMappedIters(Board * b, int *moves_found, int turn, int x, int y, int * map, int map_size, int eval_check){
 	int mapiter, newX, newY;
 
 	for(mapiter = map_size; mapiter > 0; mapiter--){
@@ -322,7 +313,7 @@ void findMappedIters(Board * b, int * moves, int *moves_found, int turn, int x, 
  * 		map_size : length of map
  *		eval_check : integer determining need to validate move
  */
-void findMappedNoIters(Board * b, int * moves, int * moves_found, int turn, int x, int y, int * map, int map_size, int eval_check){
+void findMappedNoIters(Board * b, int * moves_found, int turn, int x, int y, int * map, int map_size, int eval_check){
 	int mapiter, newX, newY;
 	for(mapiter = map_size; mapiter > 0; mapiter--){
 		newX = x + *map; 
@@ -357,7 +348,7 @@ void findMappedNoIters(Board * b, int * moves, int * moves_found, int turn, int 
  * 		x : x location in board arrays
  * 		y : y location in board arrays
  */
-void findCastles(Board * b, int * moves, int * moves_found, int turn, int x, int y){
+void findCastles(Board * b, int * moves_found, int turn, int x, int y){
 	// Moved kings cannot castle
 	if (b->moved[x][y] == 0)
 		return;
