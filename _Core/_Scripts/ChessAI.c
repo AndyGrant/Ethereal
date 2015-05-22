@@ -33,17 +33,6 @@ time_t START_TIME;
 Board * BOARD;
 BinaryTable * TABLE;
 
-/*
- * Function : findBestMoveIndex
- * ----------------------------
- * 	Return the index corresponding to Java's Engine of the move
- * 		With the greatest value
- * 	
- * 	Arguments:
- * 		game_board : game board
- * 		last_move : boolean of last_move enables enpassant
- * 		turn : turn of player
- */
 int findBestMoveIndex(Board * board, int * last_move, int turn){
 
 	START_TIME = time(NULL);
@@ -88,18 +77,6 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 	
 }
 
-
-/*
- * Function : sortMoves
- * --------------------
- * 	Return a sorted version of passed in moves corresponding
- * 		to the array of value(s) given
- * 
- * 	Arguments:
- * 		values : value of each move 
- * 		moves : moves on the board
- * 		size : number of moves
- */
 int * sortMoves(int * values, int * moves, int size){	
 	int i, j;
 	
@@ -128,21 +105,6 @@ int * sortMoves(int * values, int * moves, int size){
 	return sorted;
 }
 
-
-/*
- * Function : endAISerach
- * ----------------------
- * 	Terminate search and return index of best move relative
- * 		to the original unsorted array of moves which pairs
- * 		with the ArrayList of moves that Java finds
- * 
- * 	Arguments:
- * 		reached : cut off for search
- * 		size : number of moves
- * 		values : value of each move
- * 		moves : sorted by depth N-2 of moves
- * 		unsorted : original array of moves
- */
 int endAISearch(int reached, int size, int * values, int * moves, int * unsorted){
 
 	printf("Moves Found: %d \n",TOTAL_BOARDS_SEARCHED);
@@ -181,21 +143,6 @@ int endAISearch(int reached, int size, int * values, int * moves, int * unsorted
 	return -1;
 }
 
-
-/*
- * Function : alphaBetaPrune
- * -------------------------
- * 	Perform an alpha beta prune search from depth N to zero with the
- * 		aid of a transposition tables
- * 
- * 	Arguments: 
- * 		turn : player of the current search depth
- * 		move : last move made
- * 		depth : counter to zero for cut-off
- * 		alpha : best found
- * 		beta: worst found
- * 		evauluating_player: original player to find move for
- */
 int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int evaluating_player){	
 	
 	if (START_TIME + MAX_SECONDS < time(NULL))
@@ -276,18 +223,6 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 	return value;
 }
 
-
-/*
- * Function : evaluateBoard
- * ------------------------
- * 	Take a given board and determine an integer value for the
- * 		material on the board, the placement of the pieces, and
- * 		child moves of that board
- * 	
- * 	Arguments:
- * 		player : player to evaluate relative to
- * 		lastMove: lastMove applied to get here
- */
 int evaluateBoard(int player, int * lastMove){
 	TOTAL_BOARDS_SEARCHED += 1;
 	int value = evaluateMaterial(player) + 
@@ -297,16 +232,6 @@ int evaluateBoard(int player, int * lastMove){
 	return value;
 }
 
-
-/*
- * Function : evaluatePosition
- * ---------------------------
- * 	Assign an integer value to the set-up of the pieces
- * 		on the game board.
- * 	
- * 	Arguments:
- * 		player : player to evaluate for
- */
 int evaluatePosition(int player){
 
 	int x, y, value = 0;
@@ -352,16 +277,6 @@ int evaluatePosition(int player){
 	return value;
 }
 
-
-/*
- * Function : evaluateMaterial
- * ---------------------------
- *	Sum up the material on the board as an integer
- * 		relative to the player 
- * 	
- * 	Arguments:
- * 		player : player to evaluate for
- */
 int evaluateMaterial(int player){
 	int value = 0;
 	int x,y;
@@ -379,17 +294,6 @@ int evaluateMaterial(int player){
 	return value;
 }
 
-
-/*
- * Function : evaluateMoves
- * ------------------------
- * 	Evaluate the moves each player has in a very
- * 		shallow way based off of values defined globally
- * 
- * 	Arguments:
- * 		player: player to evaluate for
- * 		lastMove: move made to get here
- */
 int evaluateMoves(int player, int * lastMove){
 	int size = 0;
 	int * moves = findAllValidMoves(BOARD,player,&size,lastMove);
@@ -415,17 +319,6 @@ int evaluateMoves(int player, int * lastMove){
 	return value;
 }
 
-
-/*
- * Function : weakHeuristic
- * ------------------------
- * 	Sort moves so that all moves involving a capture of a piece
- * 		are ordered at the front, and the non-captures at the end
- * 	
- * 	Arguments:
- * 		size : number of moves
- * 		moves : moves to be sorted
- */
 int * weakHeuristic(int size, int * moves){	
 	int * sorted = malloc(7 * sizeof(int) * size);
 	int * moves_pointer = moves;

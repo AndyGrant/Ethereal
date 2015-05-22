@@ -35,15 +35,6 @@ int SIZE_OF_MOVE = 7;
 int eval_check[8][8];
 int moves[2800];
 
-
-/*
- * Function : printBoard
- * ---------------------
- *	Print types, colours and moved of a Board structure
- *
- *	Arguments:
- *		board : Board structure pointer
- */
 void printBoard(Board * board){
 	int row,col;
 	for(row = 0; row < 8; row++){
@@ -68,18 +59,6 @@ void printBoard(Board * board){
 	printf("\n\n");
 }
 
-
-/*
- * Function : createBoard
- * ----------------------
- *	Create Board structure from 2d integer array
- * 
- * 	Arguments:
- *		board : encoded version for board, integer[8][8]
- *  
- * 	Return:
- * 		Board Structure Pointer
- */
 Board * createBoard(int board[8][8]){
 	
 	static Board b;
@@ -122,19 +101,6 @@ Board * createBoard(int board[8][8]){
 	return &b;
 }
 
-
-/*
- * Function : findAllValidMoves
- * ----------------------------
- * 	Return integer array of sets of 7 that define each move that  
- *		can currently be made on the board
- *
- * 	Arguments:
- * 		b : Board structure pointer
- *		turn : WHITE or BLACK
- * 		moves_found : integer pointer for moves found
- * 		last_move : integer array for last move
- */
 int * findAllValidMoves(Board * b, int turn, int * moves_found, int * last_move){
 	
 	int row,col,i;	
@@ -167,22 +133,6 @@ int * findAllValidMoves(Board * b, int turn, int * moves_found, int * last_move)
 	return memcpy(malloc(size),moves,size);
 }
 
-
-/*
- * Function : findPawnMoves
- * ------------------------
- * 	Fill integer array with moves from a pawn
- *
- *	Arguments: 
- * 		b : Board structure pointer
- * 		moves : integer array of moves
- * 		moves_found : integer pointer to moves size
- * 		turn : WHITE or BLACK
- * 		x : x location in board arrays
- * 		y : y location in board arrays
- * 		last_move : integer array of last move made
- *		eval_check : integer determining need to validate move
- */
 void findPawnMoves(Board * b, int * moves_found, int turn, int x, int y, int * last_move, int eval_check){
 	int dir;
 	if (b->colors[x][y] == WHITE)
@@ -249,25 +199,6 @@ void findPawnMoves(Board * b, int * moves_found, int turn, int x, int y, int * l
 	}
 }
 
-
-/*
- * Function : findMappedIters
- * ------------------------
- * 	Find moves for bishops, rooks and queens by 
- * 		iterating over an array of integers that define
- *		how the pieces are able to move
- *
- *	Arguments: 
- * 		b : Board structure pointer
- * 		moves : integer array of moves
- * 		moves_found : integer pointer to moves size
- * 		turn : WHITE or BLACK
- * 		x : x location in board arrays
- * 		y : y location in board arrays
- * 		map : integer array of move mappings
- * 		map_size : length of map
- *		eval_check : integer determining need to validate move
- */
 void findMappedIters(Board * b, int *moves_found, int turn, int x, int y, int * map, int map_size, int eval_check){
 	int mapiter, newX, newY;
 
@@ -296,23 +227,6 @@ void findMappedIters(Board * b, int *moves_found, int turn, int x, int y, int * 
 	}
 }
 
-
-/*
- * Function : findMappedNoIters
- * --------------------------	
- *	Find moves for knights and kings by using each move map
- *	
- *	Arguments: 
- * 		b : Board structure pointer
- * 		moves : integer array of moves
- * 		moves_found : integer pointer to moves size
- * 		turn : WHITE or BLACK
- * 		x : x location in board arrays
- * 		y : y location in board arrays
- * 		map : integer array of move mappings
- * 		map_size : length of map
- *		eval_check : integer determining need to validate move
- */
 void findMappedNoIters(Board * b, int * moves_found, int turn, int x, int y, int * map, int map_size, int eval_check){
 	int mapiter, newX, newY;
 	for(mapiter = map_size; mapiter > 0; mapiter--){
@@ -334,20 +248,6 @@ void findMappedNoIters(Board * b, int * moves_found, int turn, int x, int y, int
 	}
 }
 
-
-/*
- * Function : findCastles
- * ----------------------
- * 	Add castle moves to the moves integer array
- *	
- *	Arguments: 
- * 		b : Board structure pointer
- * 		moves : integer array of moves
- * 		moves_found : integer pointer to moves size
- * 		turn : WHITE or BLACK
- * 		x : x location in board arrays
- * 		y : y location in board arrays
- */
 void findCastles(Board * b, int * moves_found, int turn, int x, int y){
 	// Moved kings cannot castle
 	if (b->moved[x][y] == 0)
@@ -423,17 +323,6 @@ void findCastles(Board * b, int * moves_found, int turn, int x, int y){
 
 }
 
-
-/*
- * Function : checkMove
- * --------------------
- * 	If move is valid, increments the moves_found counter
- *
- *	Arguments: 
- *		b : Board structure pointer
- * 		moves_found : integer pointer to moves size
- * 		turn : WHITE or BLACK	
-*/
 void checkMove(Board * b, int * moves_found, int turn){
 	int x, y, kingX, kingY,i;
 	kingX = b->kingLocations[turn] / 8;
@@ -518,19 +407,6 @@ void checkMove(Board * b, int * moves_found, int turn){
 	return;
 }
 
-
-/*
- * Function : determineCheckValidations
- * ------------------------------------
- * 	Build a two dimensional integer array that can determine 
- * 		with no false positives when a piece does not need
- * 		to have it's moves validated for check. 
- *
- *	Arguments:
- *		eval_check : two dimensional array to fill with bits
- *		board : Board structure pointer
- *		turn : WHITE or BLACK
- */
 void determineCheckValidations(int eval_check[8][8], Board * board, int turn){
 	int not_in_check = 0;
 	checkMove(board, &not_in_check, turn);
@@ -562,22 +438,6 @@ void determineCheckValidations(int eval_check[8][8], Board * board, int turn){
 	
 }
 
-
-/*
- * Function : checkDirection
- * -------------------------
- * 	Build a two dimensional integer array that can determine 
- * 		with no false positives when a piece does not need
- * 		to have it's moves validated for check. 
- *
- *	Arguments:
- *		eval_check : two dimensional array to fill with bits
- *		board : Board structure pointer
- *		turn : WHITE or BLACK
- * 		kx : x location of king
- * 		ky : y location of king
- * 		move : move mapping int[2]
- */
 void checkDirection(int eval_check[8][8], Board * board, int turn, int kx, int ky, int move){
 	int x = kx;
 	int y = ky;
@@ -609,19 +469,6 @@ void checkDirection(int eval_check[8][8], Board * board, int turn, int kx, int k
 	}
 }
 
-
-/*
- * Function : fillDirection
- * ------------------------
- * 	Starting from x,y, fill every index in the direction of
- * 		move with a 1 to indicate a need to search for check
- * 
- * 	Arguments:
- * 		eval_check : two dimensional array to fill with bits
- * 		x : starting x location
- * 		y : starting y location
- * 		move : move mapping int[2]
- */
 void fillDirection(int eval_check[8][8], int x, int y, int move){
 	while(1){
 		x += move_map_king[move][0];;

@@ -3,19 +3,6 @@
 
 #include <stdio.h>
 
-/*
- * Function : createNormalMove
- * ---------------------------
- *	Create and add a Normal move to moves if valid
- *
- * 	Arguments:  
- * 		b : Board structure pointer
- *		moves : integer array of moves
- * 		moves_found : integer pointer to moves size
- * 		move : integer array defining the move
- * 		turn : WHITE or BLACK
- *		eval_check : integer determining need to validate move
- */
 void createNormalMove(Board * b, int * moves, int * moves_found, int * move, int turn, int eval_check){
 	int *types = *(b->types);
 	int *colors = *(b->colors);
@@ -42,19 +29,6 @@ void createNormalMove(Board * b, int * moves, int * moves_found, int * move, int
 		*moves_found += 1;
 }
 
-
-/*
- * Function : createCastleMove
- * ---------------------------
- *	Create and add a Castle move to moves if valid
- *
- * 	Arguments:  
- * 		b : Board structure pointer
- *		moves : integer array of moves
- * 		moves_found : integer pointer to moves size
- * 		move : integer array defining the move
- * 		turn : WHITE or BLACK
- */
 void createCastleMove(Board * b, int * moves, int * moves_found, int * move, int turn){
 	int start = (move[1] << 3) + move[2];
 	int end = (move[3] << 3) + move[4];
@@ -75,20 +49,6 @@ void createCastleMove(Board * b, int * moves, int * moves_found, int * move, int
 	revertCastleMove(b,moves + start_index);
 }
 
-
-/*
- * Function : createPromotionMove
- * ------------------------------
- *	Create and add a Promotion move to moves if valid
- *
- * 	Arguments:  
- * 		b : Board structure pointer
- *		moves : integer array of moves
- * 		moves_found : integer pointer to moves size
- * 		move : integer array defining the move
- * 		turn : WHITE or BLACK
- *		eval_check : integer determining need to validate move
- */
 void createPromotionMove(Board * b, int * moves, int * moves_found, int * move, int turn, int eval_check){
 	int *types = *(b->types);
 	int *colors = *(b->colors);
@@ -115,20 +75,6 @@ void createPromotionMove(Board * b, int * moves, int * moves_found, int * move, 
 		*moves_found += 1;
 }
 
-
-/*
- * Function : createEnpassMove
- * ---------------------------
- *	Create and add an Enpass move to moves if valid
- *
- * 	Arguments:  
- * 		b : Board structure pointer
- *		moves : integer array of moves
- * 		moves_found : integer pointer to moves size
- * 		move : integer array defining the move
- * 		turn : WHITE or BLACK
- *		eval_check : integer determining need to validate move
- */
 void createEnpassMove(Board * b, int * moves, int * moves_found, int * move, int turn, int eval_check){
 	
 	int start = (move[1] << 3) + move[2];
@@ -151,16 +97,6 @@ void createEnpassMove(Board * b, int * moves, int * moves_found, int * move, int
 	
 }
 
-
-/*
- * Function : applyNormalMove
- * --------------------------
- * 	Apply a normal move to a given Board
- *
- *	Arguments:
- *		b : Board structure pointer
- * 		move : integer array defining the move
- */
 void applyNormalMove(Board * b, int * move){
 	int * types = *(b->types);
 	int * colors = *(b->colors);
@@ -179,16 +115,6 @@ void applyNormalMove(Board * b, int * move){
 	
 }
 
-
-/*
- * Function : applyCastleMove
- * --------------------------
- * 	Apply a castle move to a given Board
- *
- *	Arguments:
- *		b : Board structure pointer
- * 		move : integer array defining the move
- */
 void applyCastleMove(Board * b, int * move){
 	int * types = *(b->types);
 	int * colors = *(b->colors);
@@ -213,16 +139,6 @@ void applyCastleMove(Board * b, int * move){
 	moved[move[3]] = 9;
 }
 
-
-/*
- * Function : applyPromotionMove
- * --------------------------
- * 	Apply a promotion move to a given Board
- *
- *	Arguments:
- *		b : Board structure pointer
- * 		move : integer array defining the move
- */
 void applyPromotionMove(Board * b, int * move){
 	int * types = *(b->types);
 	int * colors = *(b->colors);
@@ -237,16 +153,6 @@ void applyPromotionMove(Board * b, int * move){
 	moved[move[1]] = 9;
 }
 
-
-/*
- * Function : applyEnpassMove
- * --------------------------
- * 	Apply an en-passant move to a given Board
- *
- *	Arguments:
- *		b : Board structure pointer
- * 		move : integer array defining the move
- */
 void applyEnpassMove(Board * b, int * move){
 	int * types = *(b->types);
 	int * colors = *(b->colors);
@@ -265,16 +171,6 @@ void applyEnpassMove(Board * b, int * move){
 	moved[move[3]] = 9;
 }
 
-
-/*
- * Function : revertNormalMove
- * --------------------------
- * 	Revert a normal move from a given Board
- *
- *	Arguments:
- *		b : Board structure pointer
- * 		move : integer array defining the move
- */
 void revertNormalMove(Board * b, int * move){
 	int * types = *(b->types);
 	int * colors = *(b->colors);
@@ -295,16 +191,6 @@ void revertNormalMove(Board * b, int * move){
 		
 }
 
-
-/*
- * Function : revertCastleMove
- * --------------------------
- * 	Revert a castle from a given Board
- *
- *	Arguments:
- *		b : Board structure pointer
- * 		move : integer array defining the move
- */
 void revertCastleMove(Board * b, int * move){
 	int * types = *(b->types);
 	int * colors = *(b->colors);
@@ -329,16 +215,6 @@ void revertCastleMove(Board * b, int * move){
 	moved[move[4]] = 1;
 }
 
-
-/*
- * Function : revertPromotionMove
- * --------------------------
- * 	Revert a promotion from a given Board
- *
- *	Arguments:
- *		b : Board structure pointer
- * 		move : integer array defining the move
- */
 void revertPromotionMove(Board * b , int * move){
 	int * types = *(b->types);
 	int * colors = *(b->colors);
@@ -353,16 +229,6 @@ void revertPromotionMove(Board * b , int * move){
 	moved[move[2]] = move[5];
 }
 
-
-/*
- * Function : revertEnpassMove
- * --------------------------
- * 	Revert an en-passant from a given Board
- *
- *	Arguments:
- *		b : Board structure pointer
- * 		move : integer array defining the move
- */
 void revertEnpassMove(Board * b, int * move){
 	int * types = *(b->types);
 	int * colors = *(b->colors);
@@ -381,16 +247,6 @@ void revertEnpassMove(Board * b, int * move){
 	moved[move[3]] = 0;
 }
 
-
-/* 
- * Function : applyGenericMove
- * ---------------------------
- *	Invoke the appropriate apply function for a given move
- *
- * 	Arguments:
- *		b : Board structure pointer
- * 		move : integer array defining the move	
- */
 void applyGenericMove(Board * b, int * move){
 	int type = move[0];
 	if (type == 0 || type == 4)
@@ -403,16 +259,6 @@ void applyGenericMove(Board * b, int * move){
 		applyEnpassMove(b,move);
 }
 
-
-/* 
- * Function : revertGenericMove
- * ---------------------------
- *	Invoke the appropriate revert function for a given move
- *
- * 	Arguments:
- *		b : Board structure pointer
- * 		move : integer array defining the move	
- */
 void revertGenericMove(Board * b, int * move){
 	int type = move[0];
 	if (type == 0 || type == 4)
