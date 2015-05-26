@@ -235,39 +235,54 @@ public class Chess implements GameState{
 			EventQueue.invokeLater(
 				new Runnable() {
 					public void run() {
-						try{
-							Process engine = Runtime.getRuntime().exec(buildCommandLineExecuteString(lastMove));
-							engine.waitFor();
-							int AImoveIndex = engine.exitValue();
-							
-							String line;
-							BufferedReader input = new BufferedReader(new InputStreamReader(engine.getInputStream()));
-							while ((line = input.readLine()) != null) 
-								System.out.println(line);
-							input.close();
-							
-							if (AImoveIndex == -1){
-								activeGame = false;
-								System.out.println("Fatal Error");
-								while (true){
-									
+						while(true){	
+							try{
+								Process engine = Runtime.getRuntime().exec(buildCommandLineExecuteString(lastMove));
+								Thread.sleep(15000);
+								
+								boolean flag;
+								try {
+									engine.exitValue();
+									flag = false;
+								} catch (Exception e) {
+									flag = true;
 								}
+								
+								if (flag == true)
+									continue;
+								
+								int AImoveIndex = engine.exitValue();
+								
+								String line;
+								BufferedReader input = new BufferedReader(new InputStreamReader(engine.getInputStream()));
+								while ((line = input.readLine()) != null) 
+									System.out.println(line);
+								input.close();
+								
+								if (AImoveIndex == -1){
+									activeGame = false;
+									System.out.println("Fatal Error");
+									while (true){
+										
+									}
+								}
+								
+								
+								else{
+									JMove AIMove = JChessEngine.getAllValid(types,colors,moved,lastMove,!gameTurn).get(AImoveIndex);
+									AIMove.makeMove(types,colors,moved);
+									lastMove = AIMove;
+									validMoves = JChessEngine.getAllValid(types,colors,moved,lastMove,gameTurn);
+								}
+								
+								waitingOnComputer = false;
+								parent.repaint();
+							} catch(Exception e){
+								e.printStackTrace();
 							}
 							
-							
-							else{
-								JMove AIMove = JChessEngine.getAllValid(types,colors,moved,lastMove,!gameTurn).get(AImoveIndex);
-								AIMove.makeMove(types,colors,moved);
-								lastMove = AIMove;
-								validMoves = JChessEngine.getAllValid(types,colors,moved,lastMove,gameTurn);
-							}
-							
-							waitingOnComputer = false;
-							parent.repaint();
-						} catch(Exception e){
-							e.printStackTrace();
+							break;
 						}
-						
 					}
 				}
 			);
