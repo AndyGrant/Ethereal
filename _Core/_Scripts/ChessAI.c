@@ -8,6 +8,7 @@
 
 int MATE = 99999;
 int MATERIAL_VALUES[6] = {100,300,300,500,1000,10000};
+int CAPTURE_VALUES[6] = {1,3,3,6,9,1};
 
 int VALUE_KNIGHT_RANGE = 2;
 int VALUE_BISHOP_RANGE = 2;
@@ -300,6 +301,7 @@ int evaluateMoves(int player, int * lastMove){
 	int * moves_pointer = moves;
 	
 	int value = 0;
+	float nv = 0;
 
 	int i;
 
@@ -312,11 +314,14 @@ int evaluateMoves(int player, int * lastMove){
 		else if (t[moves[1]] == ROOK)
 			value += VALUE_ROOK_RANGE;
 		if (moves[2] / 8 > 2 && moves[2] / 8 < 5 && moves[2] % 8 > 2 && moves[2] % 8 < 5)
-			value += VALUE_CENTER_SQUARE_ATTACKED;		
+			value += VALUE_CENTER_SQUARE_ATTACKED;
+		if (moves[0] == 0 && moves[3] != 9){
+			nv += CAPTURE_VALUES[moves[3]] / CAPTURE_VALUES[t[moves[1]]];
+		}
 	}
 	
 	free(moves_pointer);
-	return value;
+	return value + nv;
 }
 
 int * weakHeuristic(int size, int * moves){	
