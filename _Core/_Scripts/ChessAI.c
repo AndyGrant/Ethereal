@@ -60,7 +60,7 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 		for(i = 0; i < size; i++, moves_p += 7){
 			int searched = TOTAL_BOARDS_SEARCHED;
 			values[i] = alphaBetaPrune(!turn,moves_p,cur_depth,alpha,beta,turn);
-			printf("#%d \t Value: %d \t Searched: %d \n",i,values[i],TOTAL_BOARDS_SEARCHED-searched);
+			//printf("#%d \t Value: %d \t Searched: %d \n",i,values[i],TOTAL_BOARDS_SEARCHED-searched);
 			if (values[i] > alpha)
 				alpha = values[i];
 			if (alpha == MATE || START_TIME + MAX_SECONDS < time(NULL))
