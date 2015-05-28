@@ -238,34 +238,19 @@ public class Chess implements GameState{
 						while(true){	
 							try{
 								Process engine = Runtime.getRuntime().exec(buildCommandLineExecuteString(lastMove));
-								/*long time=System.currentTimeMillis();
-								while (System.currentTimeMillis() - time < 15000){
-								  Thread.sleep(5000);
-								}*/
 								
-								engine.waitFor();
 								
-								boolean flag;
-								try {
-									engine.exitValue();
-									flag = false;
-								} catch (Exception e) {
-									e.printStackTrace();
-									flag = true;
-								}
+								InputStream stdout = engine.getInputStream();
+								InputStreamReader isr = new InputStreamReader(stdout);
+								BufferedReader br = new BufferedReader(isr);
 								
-								if (flag == true){
-									System.out.println("Failed to execute Engine");
-									continue;
-								}
-								
-								int AImoveIndex = engine.exitValue();
-								
-								String line;
-								BufferedReader input = new BufferedReader(new InputStreamReader(engine.getInputStream()));
-								while ((line = input.readLine()) != null) 
+								String line = null;
+								while ( (line = br.readLine()) != null)
 									System.out.println(line);
-								input.close();
+								
+								int AImoveIndex = engine.waitFor();
+								
+								
 								
 								if (AImoveIndex == -1){
 									activeGame = false;
