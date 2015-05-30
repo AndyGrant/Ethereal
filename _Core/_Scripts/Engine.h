@@ -7,22 +7,22 @@ extern int move_map_rook[4][2];
 extern int move_map_queen[8][2];
 extern int move_map_king[8][2];
 
-extern int DIRECTION_MAPPINGS[6][8];
+extern const int DIRECTION_MAPPINGS[6][8];
 
-extern int WHITE;
-extern int BLACK;
+extern const int WHITE;
+extern const int BLACK;
 
 
-extern int PAWN;
-extern int PAWN;
-extern int KNIGHT;
-extern int BISHOP;
-extern int ROOK;
-extern int QUEEN;
-extern int KING;
-extern int EMPTY;
+extern const int PAWN;
+extern const int PAWN;
+extern const int KNIGHT;
+extern const int BISHOP;
+extern const int ROOK;
+extern const int QUEEN;
+extern const int KING;
+extern const int EMPTY;
 
-extern int SIZE_OF_MOVE;
+extern const int SIZE_OF_MOVE;
 
 
 typedef struct Board{
