@@ -81,11 +81,11 @@ void insertElement(BinaryTable * table, int value, int * key){
 }
 
 Node * getElement(BinaryTable * table, int * key){
-	
+	/*
 	__asm__(
-		"sub		$0x28,		%esp;"	
+		"sub			$0x28,		%esp;"	
 		"mov 		0x8(%ebp),	%eax;"
-		"mov		(%eax),		%eax;"
+		"mov			(%eax),		%eax;"
 		"mov 		%eax,		-0xc(%ebp);"
 		"cmpl		$0x0,		-0xc(%ebp);"
 		"je			not_found;"
@@ -93,32 +93,32 @@ Node * getElement(BinaryTable * table, int * key){
 		
 		"main_loop:"
 		"movl		$0x24,		0x8(%esp);"
-		"mov		0xc(%ebp),	%eax;"
-		"mov		%eax,		0x0(%esp);"
+		"mov			0xc(%ebp),	%eax;"
+		"mov			%eax,		0x0(%esp);"
 		"mov 		-0xc(%ebp),	%eax;"
-		"mov		0xc(%eax),	%eax;"
+		"mov			0xc(%eax),	%eax;"
 		"mov 		%eax,		0x4(%esp);"
 		"call 		_memcmp;"
 		"cmpl		$0xffffffff,%eax;"
 		"je			left_branch;"
 		"cmpl		$0x1,		%eax;"
-		"je 		right_branch;"
-		"jmp		found;"
+		"je 			right_branch;"
+		"jmp			found;"
 		
 	
 		"left_branch:"
 		"mov 		-0xc(%ebp),	%eax;"
-		"mov		0x0(%eax),	%eax;"
+		"mov			0x0(%eax),	%eax;"
 		"test		%eax, 		%eax;"
-		"je 		not_found;"
+		"je 			not_found;"
 		"mov 		%eax,		-0xc(%ebp);"
 		"jmp 		main_loop;"
 		
 		"right_branch:"
 		"mov 		-0xc(%ebp),	%eax;"
-		"mov		0x4(%eax),	%eax;"
+		"mov			0x4(%eax),	%eax;"
 		"test		%eax, 		%eax;"
-		"je 		not_found;"
+		"je 			not_found;"
 		"mov 		%eax,		-0xc(%ebp);"
 		"jmp 		main_loop;"
 		
@@ -133,8 +133,8 @@ Node * getElement(BinaryTable * table, int * key){
 		"leave;"
 		"ret;"
 		
-	);
-	/*
+	);*/
+	
 	Node * node = table->root;
 	
 	if (node == NULL)
@@ -155,7 +155,7 @@ Node * getElement(BinaryTable * table, int * key){
 		else
 			return node;
 		
-	}*/
+	}
 }
 
 int * encodeBoard(Board * board, int enpass){

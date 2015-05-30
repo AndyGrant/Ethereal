@@ -35,30 +35,6 @@ const int SIZE_OF_MOVE = 7;
 int eval_check[8][8];
 int moves[2800];
 
-void printBoard(Board * board){
-	int row,col;
-	for(row = 0; row < 8; row++){
-		for(col = 0; col < 8; col++)
-			printf("%d ",board->types[row][col]);
-		printf("\n");
-	}
-	printf("\n\n");
-	
-	for(row = 0; row < 8; row++){
-		for(col = 0; col < 8; col++)
-			printf("%d ",board->colors[row][col]);
-		printf("\n");
-	}
-	printf("\n\n");
-	
-	for(row = 0; row < 8; row++){
-		for(col = 0; col < 8; col++)
-			printf("%d ",board->moved[row][col]);
-		printf("\n");
-	}
-	printf("\n\n");
-}
-
 Board * createBoard(int board[8][8]){
 	
 	static Board b;
