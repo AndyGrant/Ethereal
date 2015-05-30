@@ -32,9 +32,8 @@ int main(int argc, char *argv[]){
 	
 	time_t start = time(NULL);
 	
-	int best = -2;
+	int best = -1;
 	best = findBestMoveIndex(board,last_move,turn);
-	printf("Best is Index %d",best);
 	printf("Seconds Taken: %d \n\n",(int)(time(NULL)-start));
 	
 	
