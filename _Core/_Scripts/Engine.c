@@ -10,7 +10,7 @@ int move_map_rook[4][2] = {{1,0},{-1,0},{0,1},{0,-1}};
 int move_map_queen[8][2] = {{1,1},{-1,1},{-1,-1},{1,-1},{1,0},{-1,0},{0,1},{0,-1}};
 int move_map_king[8][2] = {{1,1},{-1,1},{-1,-1},{1,-1},{1,0},{-1,0},{0,1},{0,-1}};
 
-int DIRECTION_MAPPINGS[6][8] = {
+int const DIRECTION_MAPPINGS[6][8] = {
 	{0,0,0,0,0,0,0,0},
 	{0,0,0,0,0,0,0,0},
 	{1,1,1,1,0,0,0,0},
@@ -19,18 +19,18 @@ int DIRECTION_MAPPINGS[6][8] = {
 	{1,1,1,1,1,1,1,1},
 };
 
-int WHITE = 0;
-int BLACK = 1;
+const int WHITE = 0;
+const int BLACK = 1;
 
-int PAWN = 0;
-int KNIGHT = 1;
-int BISHOP = 2;
-int ROOK = 3;
-int QUEEN = 4;
-int KING = 5;
-int EMPTY = 9;
+const int PAWN = 0;
+const int KNIGHT = 1;
+const int BISHOP = 2;
+const int ROOK = 3;
+const int QUEEN = 4;
+const int KING = 5;
+const int EMPTY = 9;
 
-int SIZE_OF_MOVE = 7;
+const int SIZE_OF_MOVE = 7;
 
 int eval_check[8][8];
 int moves[2800];
@@ -134,13 +134,7 @@ int * findAllValidMoves(Board * b, int turn, int * moves_found, int * last_move)
 }
 
 void findPawnMoves(Board * b, int * moves_found, int turn, int x, int y, int * last_move, int eval_check){
-	int dir;
-	if (b->colors[x][y] == WHITE)
-		dir = -1;
-	else 
-		dir = 1;
-		
-	int pt;
+	int pt, dir = b->colors[x][y] == WHITE ? -1 : 1;
 	
 	// Forward One / Two
 	if (b->types[x+dir][y] == EMPTY){
@@ -160,7 +154,6 @@ void findPawnMoves(Board * b, int * moves_found, int turn, int x, int y, int * l
 			}		
 		}
 	}
-	
 	
 	// En Passant
 	if (last_move[0] == 4 && abs((y - last_move[2] % 8)) == 1 && x == 3 + b->colors[x][y]){
