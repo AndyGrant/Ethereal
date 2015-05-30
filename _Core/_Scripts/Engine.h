@@ -33,7 +33,6 @@ typedef struct Board{
 } Board;
 
 Board * createBoard(int board[8][8]);
-void printBoard(Board * board);
 
 int * findAllValidMoves(Board * b, int turn, int * moves_size_p, int * last_move);
 void findPawnMoves(Board * b, int * moves_found, int turn, int x, int y, int * last_move, int eval_check);
