@@ -175,9 +175,7 @@ void revertNormalMove(Board * b, int * move){
 	int * types = *(b->types);
 	int * colors = *(b->colors);
 	int * moved = *(b->moved);
-	
-	
-	
+
 	types[move[1]] = types[move[2]];
 	colors[move[1]] = colors[move[2]];
 	moved[move[1]] = move[6];
@@ -188,7 +186,6 @@ void revertNormalMove(Board * b, int * move){
 	
 	if (types[move[1]] == 5)
 		b->kingLocations[colors[move[1]]] = move[1];
-		
 }
 
 void revertCastleMove(Board * b, int * move){
