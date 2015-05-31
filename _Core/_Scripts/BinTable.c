@@ -159,7 +159,7 @@ Node * getElement(BinaryTable * table, int * key){
 }
 
 int * encodeBoard(Board * board, int enpass){
-	int * key = calloc(KEY_SIZE * sizeof(int));
+	int * key = malloc(KEY_SIZE * sizeof(int));
 	int x, y, i, j;
 	int t,c,m;	
 	
