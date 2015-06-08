@@ -15,8 +15,19 @@ int enc[6] = {1,1,2,2,3,3};
 int MOVED_MATTERS[6] = {0,1,1,0,1,0};
 
 
-BinaryTable * createTable(){
-	BinaryTable * tree = malloc(sizeof(BinaryTable));
+BinaryTable * createTable(int size){
+	BinaryTable * table = malloc(sizeof(BinaryTable));
+	table->trees = malloc(sizeof(BinaryTree *) * size);
+	table->elements = 0;
+	table->size = size;
+	int n;
+	for(n = 0; n < size; n++)
+		table->trees[n] = createTree();
+	return table;
+}
+
+BinaryTree * createTree(){
+	BinaryTree * tree = malloc(sizeof(BinaryTree));
 	tree->elements = 0;
 	tree->root = NULL;
 	return tree;
@@ -34,11 +45,18 @@ Node * createNode(int value, int * key, int depth, int type){
 }
 
 void destroyTable(BinaryTable * table){
-	if (table->root != NULL)
-		destroyNode(table->root);
-	else
-		free(table->root);
+	int n;
+	for(n = 0; n < table->size; n++)
+		destroyTree(table->trees[n]);
 	free(table);
+}
+
+void destroyTree(BinaryTree * tree){
+	if (tree->root != NULL)
+		destroyNode(tree->root);
+	else
+		free(tree->root);
+	free(tree);
 }
 
 void destroyNode(Node * node){
@@ -57,12 +75,12 @@ void destroyNode(Node * node){
 void insertElement(BinaryTable * table, int value, int * key, int depth, int type){
 	table->elements += 1;
 	
-	if (table->root == NULL){
-		table->root = createNode(value,key,depth,type);
+	if (table->trees[depth]->root == NULL){
+		table->trees[depth]->root = createNode(value,key,depth,type);
 		return;
 	}
 		
-	Node * node = table->root;
+	Node * node = table->trees[depth]->root;
 	while(1){
 		int comp = memcmp(key,node->key,KEY_BYTES);
 		if (comp == -1){
@@ -74,7 +92,7 @@ void insertElement(BinaryTable * table, int value, int * key, int depth, int typ
 				node = node->left;
 		}
 		
-		else{
+		else if(comp == 1){
 			if (node->right == NULL){
 				node->right = createNode(value,key,depth,type);
 				return;
@@ -82,10 +100,16 @@ void insertElement(BinaryTable * table, int value, int * key, int depth, int typ
 			else
 				node = node->right;
 		}
+		
+		else{
+			printf("Fatal Error");
+			free(key);
+			return;
+		}
 	}
 }
 
-Node * getElement(BinaryTable * table, int * key){
+Node * getElement(BinaryTable * table, int depth, int * key){
 	/*
 	__asm__(
 		"sub			$0x28,		%esp;"	
@@ -140,7 +164,7 @@ Node * getElement(BinaryTable * table, int * key){
 		
 	);*/
 	
-	Node * node = table->root;
+	Node * node = table->trees[depth]->root;
 	
 	if (node == NULL)
 		return NULL;
