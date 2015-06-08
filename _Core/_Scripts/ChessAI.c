@@ -163,7 +163,7 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 			return node->value;
 		}
 		
-		int value = evaluateBoard(evaluating_player,move);		
+		int value = evaluateBoard(evaluating_player,turn,move);		
 		revertGenericMove(BOARD,move);
 		insertElement(TABLE,value,key);
 		return value;
@@ -224,12 +224,12 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 	return value;
 }
 
-int evaluateBoard(int player, int * lastMove){
+int evaluateBoard(int eval_player, int turn, int * lastMove){
 	TOTAL_BOARDS_SEARCHED += 1;
-	int value = evaluateMaterial(player) + 
-				evaluatePosition(player) + 
-				evaluateMoves(player,lastMove) - 
-				evaluateMoves(!player,lastMove);
+	int value = evaluateMaterial(eval_player) + 
+				evaluatePosition(eval_player) + 
+				evaluateMoves(eval_player,lastMove,eval_player == turn) - 
+				evaluateMoves(!eval_player,lastMove,eval_player == turn);
 	return value;
 }
 
@@ -295,10 +295,15 @@ int evaluateMaterial(int player){
 	return value;
 }
 
-int evaluateMoves(int player, int * lastMove){
+int evaluateMoves(int player, int * lastMove, int flag){
 	int size = 0;
 	int * moves = findAllValidMoves(BOARD,player,&size,lastMove);
 	int * moves_pointer = moves;
+	
+	if (flag && size == 0){
+		free(moves);
+		return -MATE;
+	}
 	
 	int value = 0;
 	float nv = 0;
