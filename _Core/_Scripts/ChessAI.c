@@ -38,7 +38,7 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 
 	START_TIME = time(NULL);
 	BOARD = board;
-	TABLE = createTable(MIN_DEPTH+1);
+	TABLE = createTable(MAX_DEPTH+1);
 	
 	int size = 0;
 	int * moves = findAllValidMoves(BOARD,turn,&size,last_move);
