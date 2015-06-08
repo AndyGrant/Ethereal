@@ -48,6 +48,7 @@ void destroyTable(BinaryTable * table){
 	int n;
 	for(n = 0; n < table->size; n++)
 		destroyTree(table->trees[n]);
+	free(table->trees);
 	free(table);
 }
 
