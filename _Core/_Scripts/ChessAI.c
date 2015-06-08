@@ -38,7 +38,7 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 
 	START_TIME = time(NULL);
 	BOARD = board;
-	TABLE = createTable();
+	TABLE = createTable(MIN_DEPTH+1);
 	
 	int size = 0;
 	int * moves = findAllValidMoves(BOARD,turn,&size,last_move);
@@ -144,84 +144,155 @@ int endAISearch(int reached, int size, int * values, int * moves, int * unsorted
 	return -1;
 }
 
-int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int evaluating_player){	
+int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int evaluating_player){
 	
+	// Return worst value if time has expired
 	if (START_TIME + MAX_SECONDS < time(NULL))
 		return -MATE;
-	
-	applyGenericMove(BOARD,move);
-
-	if (depth == 0){
-		int enpass = move[0] == 4 ? move[1] : 0;
-		int * key = encodeBoard(BOARD,enpass);
-		Node * node = getElement(TABLE,key);
 		
-		if (node != NULL){
-			BOARDS_REUSED += 1;
+	// Create the new board
+	applyGenericMove(BOARD,move);
+	
+	// Needed Storage
+	int value, best, i, size = 0;
+	int * moves, * moves_pointer;
+	
+	// Search Transposition Table
+	int enpass = move[0] == 4 ? move[1] : 0;
+	int * key = encodeBoard(BOARD,enpass);
+	Node * node = getElement(TABLE,depth,key);
+	
+	if (node != NULL)
+		free(key);
+	
+	// Use the Node to speed up algorithm
+	if (node != NULL && node->depth >= depth){
+	
+		// If node is exact return it's value
+		if (node->type == EXACT){
 			revertGenericMove(BOARD,move);
-			free(key);
 			return node->value;
 		}
 		
-		int value = evaluateBoard(evaluating_player,move);		
+		// Adjust bounds based on node type and value
+		if (node->type == LOWERBOUND && node->value > alpha)
+			alpha = node->value;
+		else if (node->type == UPPERBOUND && node->value < beta)
+			beta = node->value;
+		
+		// Check new bounds for pruning
+		if (alpha >= beta){
+			revertGenericMove(BOARD,move);
+			return node->value;
+		}		
+	}
+	
+	// Storage for determining game state
+	int is_check = 0;
+	
+	// Determine if in check
+	checkMove(BOARD,&is_check,turn);
+	
+	// If in check determine if checkmate
+	if (is_check){
+	
+		// Find moves to see if any ways out of check
+		moves = findAllValidMoves(BOARD,turn,&size,move);
+		
+		// No moves indicates checkmate
+		if (size == 0){
+			
+			// Reset board state 
+			revertGenericMove(BOARD,move);
+			
+			// Free malloc'ed memory
+			free(moves);
+			
+			if (turn == evaluating_player)
+				value = -MATE;
+			else
+				value = MATE;
+				
+			if (node == NULL)
+				insertElement(TABLE,value,key,depth,EXACT);
+			
+			return value;
+		}
+	}
+	
+	// Max search depth has been reached
+	if (depth == 0){
+		// Determine board value
+		value = evaluateBoard(evaluating_player,move);
+		
+		// Reset board state
 		revertGenericMove(BOARD,move);
-		insertElement(TABLE,value,key,depth,EXACT);
+		
+		// Free malloc'ed memory
+		free(moves);
+		 
+		// Determine type of transposition
+		if (node == NULL){
+			if (value <= alpha)
+				insertElement(TABLE,value,key,depth,LOWERBOUND);
+			else if (value >= beta)
+				insertElement(TABLE,value,key,depth,UPPERBOUND);
+			else
+				insertElement(TABLE,value,key,depth,EXACT);
+		}
 		return value;
 	}
 	
+	// Find moves if not already found
+	if (!is_check)
+		moves = findAllValidMoves(BOARD,turn,&size,move);
 	
-	int size = 0;
-	int * moves = findAllValidMoves(BOARD,turn,&size,move);	
 	moves = weakHeuristic(size,moves);
-		
-	int * moves_pointer = moves;
-	TOTAL_MOVES_FOUND += size;
+	// Create pointer to start of moves
+	moves_pointer = moves;
 	
-	if (size == 0){
-		int is_Check_Mate = 0;
-		checkMove(BOARD,&is_Check_Mate,turn);
-		revertGenericMove(BOARD,move);
-		free(moves_pointer);
-		if (is_Check_Mate == 0){
-			if (turn == evaluating_player)
-				return -MATE;
-			else
-				return MATE;
-		}
-		else
-			return 0;
-		
-	}
-	
-	int i, v, value;
-	
+	// For the AI's turn
 	if (turn == evaluating_player){
-		value = -MATE - 1;
+		best = -MATE - 1;
 		for(i = 0; i < size; i++, moves += 7){
-			v = alphaBetaPrune(!turn,moves,depth-1,alpha,beta,evaluating_player);
-			value = value > v ? value : v;
-			alpha = alpha > value? alpha : value;
-			if (beta <= alpha)
+			value = alphaBetaPrune(!turn,moves,depth-1,alpha,beta,evaluating_player);
+			best = best > value ? best : value;
+			alpha = alpha > best ? alpha : best;
+			if(alpha >= beta)
 				break;
-			
 		}
 	}
 	
-	else {
-		value = MATE + 1;		
+	// For the AI's opponent's turn
+	else if (turn != evaluating_player){
+		best = MATE + 1;
 		for(i = 0; i < size; i++, moves += 7){
-			v = alphaBetaPrune(!turn,moves,depth-1,alpha,beta,evaluating_player);
-			value = value < v ? value : v;
-			beta = beta < value? beta : value;
-			if (beta <= alpha)
+			value = alphaBetaPrune(!turn,moves,depth-1,alpha,beta,evaluating_player);
+			best = best < value ? best : value;
+			beta = beta < best ? beta : best;
+			if(alpha >= beta)
 				break;
-			
 		}
 	}
 	
+	// Reset board state
 	revertGenericMove(BOARD,move);
-	free(moves_pointer);	
-	return value;
+	
+	// Free malloc'ed memory
+	free(moves_pointer);
+	
+	
+	// Determine type of transposition
+	if (node == NULL){
+		if (best <= alpha)
+			insertElement(TABLE,best,key,depth,LOWERBOUND);
+		else if (best >= beta)
+			insertElement(TABLE,best,key,depth,UPPERBOUND);
+		else
+			insertElement(TABLE,best,key,depth,EXACT);
+	}
+	
+	return best;
 }
 
 int evaluateBoard(int player, int * lastMove){
