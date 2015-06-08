@@ -165,7 +165,7 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 		
 		int value = evaluateBoard(evaluating_player,move);		
 		revertGenericMove(BOARD,move);
-		insertElement(TABLE,value,key);
+		insertElement(TABLE,value,key,depth,EXACT);
 		return value;
 	}
 	
