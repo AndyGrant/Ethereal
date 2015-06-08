@@ -7,6 +7,9 @@
 
 int KEY_SIZE = 9;
 int KEY_BYTES = 9 * sizeof(int);
+int LOWERBOUND = 0;
+int UPPERBOUND = 1;
+int EXACT = 2;
 
 int enc[6] = {1,1,2,2,3,3};
 int MOVED_MATTERS[6] = {0,1,1,0,1,0};
@@ -19,12 +22,14 @@ BinaryTable * createTable(){
 	return tree;
 }
 
-Node * createNode(int value, int * key){
+Node * createNode(int value, int * key, int depth, int type){
 	Node * node = malloc(sizeof(Node));
 	node->value = value;
 	node->key = key;
 	node->left = NULL;
 	node->right = NULL;
+	node->depth = depth;
+	node->type = type;
 	return node;
 }
 
@@ -49,11 +54,11 @@ void destroyNode(Node * node){
 	free(node);	
 }
 
-void insertElement(BinaryTable * table, int value, int * key){
+void insertElement(BinaryTable * table, int value, int * key, int depth, int type){
 	table->elements += 1;
 	
 	if (table->root == NULL){
-		table->root = createNode(value,key);
+		table->root = createNode(value,key,depth,type);
 		return;
 	}
 		
@@ -62,7 +67,7 @@ void insertElement(BinaryTable * table, int value, int * key){
 		int comp = memcmp(key,node->key,KEY_BYTES);
 		if (comp == -1){
 			if (node->left == NULL){
-				node->left = createNode(value,key);
+				node->left = createNode(value,key,depth,type);
 				return;
 			}
 			else
@@ -71,7 +76,7 @@ void insertElement(BinaryTable * table, int value, int * key){
 		
 		else{
 			if (node->right == NULL){
-				node->right = createNode(value,key);
+				node->right = createNode(value,key,depth,type);
 				return;
 			}
 			else
