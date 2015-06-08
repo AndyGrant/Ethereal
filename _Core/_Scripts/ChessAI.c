@@ -16,12 +16,9 @@ int VALUE_ROOK_RANGE = 2;
 
 int VALUE_CENTER_SQUARE_ATTACKED = 4;
 int VALUE_CENTRAL_KNIGHT = 5;
-
 int VALUE_KING_SURROUNDINGS_ATTACKED = 4;
 
 int TOTAL_BOARDS_SEARCHED = 0;
-
-
 int TOTAL_MOVES_FOUND = 0;
 int BOARDS_REUSED = 0;
 
@@ -304,7 +301,7 @@ int evaluateMoves(int player, int * lastMove, int flag){
 		free(moves);
 		return -MATE;
 	}
-	
+		
 	int value = 0;
 	float nv = 0;
 
@@ -326,7 +323,7 @@ int evaluateMoves(int player, int * lastMove, int flag){
 	}
 	
 	free(moves_pointer);
-	return value + nv;
+	return value + (int)(nv / 2);
 }
 
 int * weakHeuristic(int size, int * moves){	
