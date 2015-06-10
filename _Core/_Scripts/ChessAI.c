@@ -32,34 +32,51 @@ Board * BOARD;
 BinaryTable * TABLE;
 
 int findBestMoveIndex(Board * board, int * last_move, int turn){
-
+	
+	// Initalize globals to reduce argument passing
 	START_TIME = time(NULL);
 	BOARD = board;
 	TABLE = createTable();
 	
+	// Create array of all valid moves that may be manipulated
 	int size = 0;
 	int * moves = findAllValidMoves(BOARD,turn,&size,last_move);
 	int * moves_p = moves;
 	
+	// Create array of all valid moves to reference after sorting
 	int unsorted_size = 0;
 	int * unsorted = findAllValidMoves(BOARD,turn,&unsorted_size,last_move);
 	
+	// AI is in checkmate return -1 to indicate this
 	if (size == 0)
 		return -1;
 	
+	// Create array for moves values and all needed loop variables
+	// and updated alpha beta pruning value holders
 	int values[size];
 	int alpha, beta, i, move, cur_depth;
 	
+	
+	// Use iterative deepening with sorted moves until time expires
+	// or until a max depth has been reached
 	for(cur_depth = MIN_DEPTH; cur_depth < MAX_DEPTH; cur_depth += 2){
+		printf("SEARCHING DEPTH LEVEL %d \n", cur_depth);
+		
+		// Initalize alpha and beta to largest window range
 		int alpha = -MATE - 1;
 		int beta = MATE + 1;
-		printf("SEARCHING DEPTH LEVEL %d \n", cur_depth);
+		
+		// Evaluate all moves and fill the values array
 		for(i = 0; i < size; i++, moves_p += 7){
 			int searched = TOTAL_BOARDS_SEARCHED;
 			values[i] = alphaBetaPrune(!turn,moves_p,cur_depth,alpha,beta,turn);
 			printf("#%d \t Value: %d \t Searched: %d \n",i,values[i],TOTAL_BOARDS_SEARCHED-searched);
+			
+			// Update alpha value
 			if (values[i] > alpha)
 				alpha = values[i];
+			
+			// If checkmate has been found or time has expired, terminate
 			if (alpha == MATE || START_TIME + MAX_SECONDS < time(NULL))
 				return endAISearch(i+1,size,values,moves,unsorted);
 			
