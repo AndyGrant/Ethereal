@@ -80,6 +80,14 @@ public class JChess extends JFrame{
 		super.paint(buffer);
 		buffer.drawImage(assets.get("board"),0,25,null);
 		
+		if (promptingPromotion){
+			
+		}
+		else if(piece_is_selected)
+			for(JMove m : moves)
+				if (m.startX == selected_x && m.startY == selected_y)
+					buffer.drawImage(assets.get("option"),10+m.endY*50,35+m.endX*50,null);
+		
 		for(int x = 0; x < 8; x++){
 			for(int y = 0; y < 8; y++){
 				if (types[x][y] != null){
@@ -90,13 +98,7 @@ public class JChess extends JFrame{
 			}
 		}
 		
-		if (promptingPromotion){
-			
-		}
-		else if(piece_is_selected)
-			for(JMove m : moves)
-				if (m.startX == selected_x && m.startY == selected_y)
-					buffer.drawImage(assets.get("option"),10+m.endY*50,35+m.endX*50,null);
+		
 				
 		
 		
