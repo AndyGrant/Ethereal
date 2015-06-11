@@ -48,6 +48,17 @@ public class JChess extends JFrame{
 	
 	public JChess(){
 		setupJFrame();
+		
+    Scanner scanner = new Scanner( System.in );
+    String input = scanner.nextLine();
+    
+		if (input.equals("black")){
+			humanTurn = false;
+			waitingForComputer = true;
+			makeAIMove(null);
+			
+		}
+			
 	}
 	
 	public void run(){
