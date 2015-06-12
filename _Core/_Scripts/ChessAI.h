@@ -7,10 +7,10 @@
 int findBestMoveIndex(Board * board, int * last_move, int turn);
 int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int evaluatingPlayer);
 
-int evaluateBoard(int eval_player, int turn, int * lastMove);
+int evaluateBoard(int player, int * lastMove);
 int evaluatePosition(int player);
 int evaluateMaterial(int player);
-int evaluateMoves(int player, int * lastMove, int flag);
+int evaluateMoves(int player, int * lastMove);
 
 int * weakHeuristic(int size, int * moves);
 
