@@ -279,7 +279,8 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 	}
 	else if (depth > node->depth){
 		free(key);
-		node->value = node->turn == turn ? best : -best;
+		node->turn = turn;
+		node->value = best;
 		if (best <= alpha)
 			node->type = LOWERBOUND;
 		else if (best >= beta)
