@@ -20,7 +20,7 @@ int VALUE_KING_SURROUNDINGS_ATTACKED = 10;
 
 int TOTAL_BOARDS_SEARCHED = 0;
 int TOTAL_MOVES_FOUND = 0;
-int BOARDS_REUSED = 0;
+int EXACT_FOUND = 0;
 
 int MIN_DEPTH = 2;
 int MAX_DEPTH = 20;
@@ -125,6 +125,7 @@ int endAISearch(int reached, int size, int * values, int * moves, int * unsorted
 	printf("Moves Found: %d \n",TOTAL_MOVES_FOUND);
 	printf("Boards Evaluated: %d \n",TOTAL_BOARDS_SEARCHED);
 	printf("Table Size: %d \n",TABLE->elements);
+	printf("Exact Entrie Cutoffs: %d \n",EXACT_FOUND);
 	
 	destroyTable(TABLE);
 	
@@ -183,6 +184,7 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 		// If node is exact return it's value
 		if (node->type == EXACT){
 			revertGenericMove(BOARD,move);
+			EXACT_FOUND += 1;
 			return node_rel_value;
 		}
 		
@@ -197,6 +199,7 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 			revertGenericMove(BOARD,move);
 			// Free the key if it is not needed
 			free(key);
+			EXACT_FOUND += 1;
 			return node_rel_value;
 		}		
 	}
