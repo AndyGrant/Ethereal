@@ -30,6 +30,6 @@ void destroyNode(Node * node);
 void insertElement(BinaryTable * table, int value, int * key);
 Node * getElement(BinaryTable * table, int * key);
 
-int * encodeBoard(Board * b, int enpass);
+int * encodeBoard(Board * b, int enpass, int turn);
 
 #endif
