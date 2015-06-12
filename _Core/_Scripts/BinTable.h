@@ -22,19 +22,20 @@ typedef struct Node{
 	int * key;
 	int depth;
 	int type;
+	int turn;
 	
 } Node;
 
 
 BinaryTable * createTable();
-Node * createNode(int value, int * key, int depth, int type);
+Node * createNode(int value, int * key, int depth, int type, int turn);
 
 void destroyTable(BinaryTable * table);
 void destroyNode(Node * node);
 
-void insertElement(BinaryTable * table, int value, int * key, int depth, int type);
+void insertElement(BinaryTable * table, int value, int * key, int depth, int type, int turn);
 Node * getElement(BinaryTable * table, int * key);
 
-int * encodeBoard(Board * b, int enpass, int turn);
+int * encodeBoard(Board * b, int enpass);
 
 #endif
