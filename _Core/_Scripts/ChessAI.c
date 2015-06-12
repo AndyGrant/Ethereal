@@ -12,11 +12,11 @@ int CAPTURE_VALUES[6] = {1,3,3,6,9,1};
 
 int VALUE_KNIGHT_RANGE = 2;
 int VALUE_BISHOP_RANGE = 2;
-int VALUE_ROOK_RANGE = 2;
+int VALUE_ROOK_RANGE = 0;
 
 int VALUE_CENTER_SQUARE_ATTACKED = 4;
 int VALUE_CENTRAL_KNIGHT = 5;
-int VALUE_KING_SURROUNDINGS_ATTACKED = 4;
+int VALUE_KING_SURROUNDINGS_ATTACKED = 10;
 
 int TOTAL_BOARDS_SEARCHED = 0;
 int TOTAL_MOVES_FOUND = 0;
@@ -69,7 +69,7 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 		// Evaluate all moves and fill the values array
 		for(i = 0; i < size; i++, moves_p += 7){
 			int searched = TOTAL_BOARDS_SEARCHED;
-			values[i] = alphaBetaPrune(!turn,moves_p,cur_depth,alpha,beta,turn);
+			values[i] = -alphaBetaPrune(!turn,moves_p,cur_depth,-beta,-alpha,turn);
 			printf("#%d \t Value: %d \t Searched: %d \n",i,values[i],TOTAL_BOARDS_SEARCHED-searched);
 			
 			// Update alpha value
@@ -157,93 +157,140 @@ int endAISearch(int reached, int size, int * values, int * moves, int * unsorted
 	free(unsorted);
 	return -1;
 }
-
-int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int evaluating_player){	
+int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int evaluating_player){
 	
+	// Return worst value if time has expired
 	if (START_TIME + MAX_SECONDS < time(NULL))
 		return -MATE;
-	
-	applyGenericMove(BOARD,move);
-
-	if (depth == 0){
-		int enpass = move[0] == 4 ? move[1] : 0;
-		int * key = encodeBoard(BOARD,enpass,turn);
-		Node * node = getElement(TABLE,key);
 		
-		if (node != NULL){
-			BOARDS_REUSED += 1;
+	// Create the new board
+	applyGenericMove(BOARD,move);
+	
+	// Needed Storage
+	int value, best, i, size = 0;
+	int * moves, * moves_pointer;
+	
+	// Search Transposition Table
+	int enpass = move[0] == 4 ? move[1] : 0;
+	int * key = encodeBoard(BOARD,enpass,turn);
+	Node * node = getElement(TABLE,key);
+	
+	// Use the Node to speed up algorithm
+	if (node != NULL && node->depth >= depth){
+	
+		int node_rel_value = node->key[9] == turn ? node->value : -node->value;
+
+		// If node is exact return it's value
+		if (node->type == EXACT){
 			revertGenericMove(BOARD,move);
-			free(key);
-			return node->value;
+			return node_rel_value;
 		}
 		
-		int value = evaluateBoard(evaluating_player,turn,move);		
+		// Adjust bounds based on node type and value
+		if (node->type == LOWERBOUND && node->value > alpha)		
+			alpha = node_rel_value;
+		else if (node->type == UPPERBOUND && node->value < beta)
+			beta = node_rel_value;
+		
+		// Check new bounds for pruning
+		if (alpha >= beta){
+			revertGenericMove(BOARD,move);
+			// Free the key if it is not needed
+			free(key);
+			return node_rel_value;
+		}		
+	}
+	
+	// Max search depth has been reached
+	if (depth == 0){
+		
+		// Determine board value
+		value = evaluateBoard(turn,move);
+		
+		// Reset board state
 		revertGenericMove(BOARD,move);
-		insertElement(TABLE,value,key);
+		
+		// Determine type of transposition
+		if (node == NULL){
+			if (value <= alpha)
+				insertElement(TABLE,value,key,depth,LOWERBOUND);
+			else if (value >= beta)
+				insertElement(TABLE,value,key,depth,UPPERBOUND);
+			else
+				insertElement(TABLE,value,key,depth,EXACT);
+		}
+		else
+			free(key);
 		return value;
 	}
 	
-	
-	int size = 0;
-	int * moves = findAllValidMoves(BOARD,turn,&size,move);	
+	// Find moves if not already found
+	moves = findAllValidMoves(BOARD,turn,&size,move);
 	moves = weakHeuristic(size,moves);
-		
-	int * moves_pointer = moves;
-	TOTAL_MOVES_FOUND += size;
+	
+	// Create pointer to start of moves
+	moves_pointer = moves;
 	
 	if (size == 0){
-		int is_Check_Mate = 0;
-		checkMove(BOARD,&is_Check_Mate,turn);
-		revertGenericMove(BOARD,move);
-		free(moves_pointer);
-		if (is_Check_Mate == 0){
-			if (turn == evaluating_player)
-				return -MATE;
-			else
-				return MATE;
-		}
-		else
-			return 0;
+		int is_not_in_check = 0;
+		checkMove(BOARD,&is_not_in_check,turn);
 		
+		if(is_not_in_check)
+			best = 0;
+		else
+			best = -MATE;
 	}
 	
-	int i, v, value;
-	
-	if (turn == evaluating_player){
-		value = -MATE - 1;
+	// For the AI's turn
+	else{
+		best = -MATE - 1;
 		for(i = 0; i < size; i++, moves += 7){
-			v = alphaBetaPrune(!turn,moves,depth-1,alpha,beta,evaluating_player);
-			value = value > v ? value : v;
-			alpha = alpha > value? alpha : value;
-			if (beta <= alpha)
+			value = -alphaBetaPrune(!turn,moves,depth-1,-beta,-alpha,evaluating_player);
+			if(value > best)
+				best = value;
+			if(best > alpha)
+				alpha = best;
+			if(best >= beta)
 				break;
-			
+
 		}
 	}
 	
-	else {
-		value = MATE + 1;		
-		for(i = 0; i < size; i++, moves += 7){
-			v = alphaBetaPrune(!turn,moves,depth-1,alpha,beta,evaluating_player);
-			value = value < v ? value : v;
-			beta = beta < value? beta : value;
-			if (beta <= alpha)
-				break;
-			
-		}
-	}
 	
+	// Reset board state
 	revertGenericMove(BOARD,move);
-	free(moves_pointer);	
-	return value;
+	
+	// Free malloc'ed memory
+	free(moves_pointer);
+	
+	// Determine type of transposition
+	if (node == NULL){
+		if (best <= alpha)
+			insertElement(TABLE,best,key,depth,LOWERBOUND);
+		else if (best >= beta)
+			insertElement(TABLE,best,key,depth,UPPERBOUND);
+		else
+			insertElement(TABLE,best,key,depth,EXACT);
+	}
+	else if (depth > node->depth){
+		free(key);
+		node->value = node->key[9] == turn ? best : -best;
+		if (best <= alpha)
+			node->type = LOWERBOUND;
+		else if (best >= beta)
+			node->type = UPPERBOUND;
+		else
+			node->type = EXACT;
+	}
+	return best;
 }
 
-int evaluateBoard(int eval_player, int turn, int * lastMove){
+int evaluateBoard(int player, int * lastMove){
 	TOTAL_BOARDS_SEARCHED += 1;
-	int value = evaluateMaterial(eval_player) + 
-				evaluatePosition(eval_player) + 
-				evaluateMoves(eval_player,lastMove,eval_player == turn) - 
-				evaluateMoves(!eval_player,lastMove,eval_player == turn);
+	int value = evaluateMaterial(player) + 
+				evaluatePosition(player) + 
+				evaluateMoves(player,lastMove) - 
+				evaluateMoves(!player,lastMove);
 	return value;
 }
 
@@ -309,18 +356,17 @@ int evaluateMaterial(int player){
 	return value;
 }
 
-int evaluateMoves(int player, int * lastMove, int flag){
+int evaluateMoves(int player, int * lastMove){
 	int size = 0;
 	int * moves = findAllValidMoves(BOARD,player,&size,lastMove);
 	int * moves_pointer = moves;
-	
-	if (flag && size == 0){
-		free(moves);
-		return -MATE;
-	}
 		
 	int value = 0;
 	float nv = 0;
+	
+	int kcords = BOARD->kingLocations[!player + 1];
+	int kx = kcords / 8;
+	int ky = kcords % 8;
 
 	int i;
 
@@ -334,9 +380,12 @@ int evaluateMoves(int player, int * lastMove, int flag){
 			value += VALUE_ROOK_RANGE;
 		if (moves[2] / 8 > 2 && moves[2] / 8 < 5 && moves[2] % 8 > 2 && moves[2] % 8 < 5)
 			value += VALUE_CENTER_SQUARE_ATTACKED;
-		if (moves[0] == 0 && moves[3] != 9){
+		if (moves[0] == 0 && moves[3] != 9)
 			nv += CAPTURE_VALUES[moves[3]] / CAPTURE_VALUES[t[moves[1]]];
-		}
+		//if (abs((moves[2] / 8) - kx) <= 1 && abs((moves[2] % 8) - ky) <= 1)
+			//value += VALUE_KING_SURROUNDINGS_ATTACKED;
+			
+		
 	}
 	
 	free(moves_pointer);
