@@ -180,7 +180,7 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 	if (node != NULL && node->depth >= depth){
 	
 		int node_rel_value = node->turn == turn ? node->value : -node->value;
-
+		
 		// If node is exact return it's value
 		if (node->type == EXACT){
 			revertGenericMove(BOARD,move);
@@ -207,24 +207,28 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 	// Max search depth has been reached
 	if (depth == 0){
 		
-		// Determine board value
-		value = evaluateBoard(turn,move);
-		
-		// Reset board state
-		revertGenericMove(BOARD,move);
-		
-		// Determine type of transposition
-		if (node == NULL){
-			if (value <= alpha)
-				insertElement(TABLE,value,key,depth,LOWERBOUND,turn);
-			else if (value >= beta)
-				insertElement(TABLE,value,key,depth,UPPERBOUND,turn);
+		if (move[0] == 0 && move[3] != EMPTY)
+			depth += 1;
+		else{
+			// Determine board value
+			value = evaluateBoard(turn,move);
+			
+			// Reset board state
+			revertGenericMove(BOARD,move);
+			
+			// Determine type of transposition
+			if (node == NULL){
+				if (value <= alpha)
+					insertElement(TABLE,value,key,depth,LOWERBOUND,turn);
+				else if (value >= beta)
+					insertElement(TABLE,value,key,depth,UPPERBOUND,turn);
+				else
+					insertElement(TABLE,value,key,depth,EXACT,turn);
+			}
 			else
-				insertElement(TABLE,value,key,depth,EXACT,turn);
+				free(key);
+			return value;
 		}
-		else
-			free(key);
-		return value;
 	}
 	
 	// Find moves if not already found
