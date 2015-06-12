@@ -167,7 +167,7 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 
 	if (depth == 0){
 		int enpass = move[0] == 4 ? move[1] : 0;
-		int * key = encodeBoard(BOARD,enpass);
+		int * key = encodeBoard(BOARD,enpass,turn);
 		Node * node = getElement(TABLE,key);
 		
 		if (node != NULL){
