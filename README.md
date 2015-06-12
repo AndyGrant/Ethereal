@@ -1,30 +1,17 @@
 # JChess
 
-Windows:
 
-    with Javac, run JAVA_Compile.bat
-    
-    with GCC, run C_compile.bat, 
-    
-      if you do not have GCC, open the file and use your own compiler
-    
-    exectute Chess.bat
-      
-
-Linux:
-
-    with Javac, run Java_Compile
-    
-    With GCC, run C_compile
-    
-      if you do not have GCC, open the file and use your own compiler
-      
-    run Chess
-      
-      
-      
-Mac:
-    
-    
-
-  
+To Run:
+	cd into _Compilers
+	
+	for Linux or Bash Enviorment run the following:
+		Java_compile
+		C_compile
+		
+	for Windows run the following:
+		Windows_Java_compile.bat
+		Windows_C_compile
+		
+	if you do not have GCC:
+		open the C_compile you plan on running and use your own compiler. Run with
+		all optimizations and with a 32 bit flag
