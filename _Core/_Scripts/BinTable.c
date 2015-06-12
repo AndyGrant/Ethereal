@@ -5,8 +5,8 @@
 #include "Engine.h"
 
 
-int KEY_SIZE = 10;
-int KEY_BYTES = 10 * sizeof(int);
+int KEY_SIZE = 9;
+int KEY_BYTES = 9 * sizeof(int);
 
 int EXACT = 1;
 int LOWERBOUND = 2;
@@ -23,7 +23,7 @@ BinaryTable * createTable(){
 	return tree;
 }
 
-Node * createNode(int value, int * key, int depth, int type){
+Node * createNode(int value, int * key, int depth, int type, int turn){
 	Node * node = malloc(sizeof(Node));
 	node->value = value;
 	node->key = key;
@@ -31,6 +31,7 @@ Node * createNode(int value, int * key, int depth, int type){
 	node->right = NULL;
 	node->depth = depth;
 	node->type = type;
+	node->turn = turn;
 	return node;
 }
 
@@ -55,11 +56,11 @@ void destroyNode(Node * node){
 	free(node);	
 }
 
-void insertElement(BinaryTable * table, int value, int * key, int depth, int type){
+void insertElement(BinaryTable * table, int value, int * key, int depth, int type, int turn){
 	table->elements += 1;
 	
 	if (table->root == NULL){
-		table->root = createNode(value,key,depth,type);
+		table->root = createNode(value,key,depth,type,turn);
 		return;
 	}
 		
@@ -68,7 +69,7 @@ void insertElement(BinaryTable * table, int value, int * key, int depth, int typ
 		int comp = memcmp(key,node->key,KEY_BYTES);
 		if (comp == -1){
 			if (node->left == NULL){
-				node->left = createNode(value,key,depth,type);
+				node->left = createNode(value,key,depth,type,turn);
 				return;
 			}
 			else
@@ -77,7 +78,7 @@ void insertElement(BinaryTable * table, int value, int * key, int depth, int typ
 		
 		else{
 			if (node->right == NULL){
-				node->right = createNode(value,key,depth,type);
+				node->right = createNode(value,key,depth,type,turn);
 				return;
 			}
 			else
@@ -164,7 +165,7 @@ Node * getElement(BinaryTable * table, int * key){
 	}
 }
 
-int * encodeBoard(Board * board, int enpass, int turn){
+int * encodeBoard(Board * board, int enpass){
 	int * key = malloc(KEY_SIZE * sizeof(int));
 	int x, y, i, j;
 	int t,c,m;	
@@ -191,6 +192,5 @@ int * encodeBoard(Board * board, int enpass, int turn){
 	}
 	
 	key[8] = enpass;
-	key[9] = turn;
 	return key;			
 }

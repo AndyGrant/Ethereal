@@ -173,13 +173,13 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 	
 	// Search Transposition Table
 	int enpass = move[0] == 4 ? move[1] : 0;
-	int * key = encodeBoard(BOARD,enpass,turn);
+	int * key = encodeBoard(BOARD,enpass);
 	Node * node = getElement(TABLE,key);
 	
 	// Use the Node to speed up algorithm
 	if (node != NULL && node->depth >= depth){
 	
-		int node_rel_value = node->key[9] == turn ? node->value : -node->value;
+		int node_rel_value = node->turn == turn ? node->value : -node->value;
 
 		// If node is exact return it's value
 		if (node->type == EXACT){
@@ -216,11 +216,11 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 		// Determine type of transposition
 		if (node == NULL){
 			if (value <= alpha)
-				insertElement(TABLE,value,key,depth,LOWERBOUND);
+				insertElement(TABLE,value,key,depth,LOWERBOUND,turn);
 			else if (value >= beta)
-				insertElement(TABLE,value,key,depth,UPPERBOUND);
+				insertElement(TABLE,value,key,depth,UPPERBOUND,turn);
 			else
-				insertElement(TABLE,value,key,depth,EXACT);
+				insertElement(TABLE,value,key,depth,EXACT,turn);
 		}
 		else
 			free(key);
@@ -271,15 +271,15 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 	// Determine type of transposition
 	if (node == NULL){
 		if (best <= alpha)
-			insertElement(TABLE,best,key,depth,LOWERBOUND);
+			insertElement(TABLE,best,key,depth,LOWERBOUND,turn);
 		else if (best >= beta)
-			insertElement(TABLE,best,key,depth,UPPERBOUND);
+			insertElement(TABLE,best,key,depth,UPPERBOUND,turn);
 		else
-			insertElement(TABLE,best,key,depth,EXACT);
+			insertElement(TABLE,best,key,depth,EXACT,turn);
 	}
 	else if (depth > node->depth){
 		free(key);
-		node->value = node->key[9] == turn ? best : -best;
+		node->value = node->turn == turn ? best : -best;
 		if (best <= alpha)
 			node->type = LOWERBOUND;
 		else if (best >= beta)
