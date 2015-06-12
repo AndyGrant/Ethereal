@@ -122,9 +122,9 @@ int * sortMoves(int * values, int * moves, int size){
 
 int endAISearch(int reached, int size, int * values, int * moves, int * unsorted){
 
-	printf("Moves Found: %d \n",TOTAL_BOARDS_SEARCHED);
+	printf("Moves Found: %d \n",TOTAL_MOVES_FOUND);
+	printf("Boards Evaluated: %d \n",TOTAL_BOARDS_SEARCHED);
 	printf("Table Size: %d \n",TABLE->elements);
-	printf("Positions Reused: %d \n",BOARDS_REUSED);
 	
 	destroyTable(TABLE);
 	
@@ -230,6 +230,8 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 	
 	// Create pointer to start of moves
 	moves_pointer = moves;
+	
+	TOTAL_MOVES_FOUND += size;
 	
 	if (size == 0){
 		int is_not_in_check = 0;
@@ -360,6 +362,8 @@ int evaluateMoves(int player, int * lastMove){
 	int size = 0;
 	int * moves = findAllValidMoves(BOARD,player,&size,lastMove);
 	int * moves_pointer = moves;
+	
+	TOTAL_MOVES_FOUND += size;
 		
 	int value = 0;
 	float nv = 0;
