@@ -210,9 +210,6 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 	// Max search depth has been reached
 	if (depth == 0){
 		
-		if (INITIAL_DEPTH >= 6 && move[0] == 0 && move[3] != EMPTY)
-			depth += 1;
-		else{
 			// Determine board value
 			value = evaluateBoard(turn,move);
 			
@@ -231,7 +228,7 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 			else
 				free(key);
 			return value;
-		}
+		
 	}
 	
 	// Find moves if not already found
