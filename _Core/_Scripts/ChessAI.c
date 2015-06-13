@@ -27,6 +27,8 @@ int MAX_DEPTH = 20;
 int INITIAL_DEPTH;
 int MAX_SECONDS = 4;
 
+int BEST_VALUE_ACCEPTABLE_DIFFERENCE = 0;
+
 
 time_t START_TIME;
 
@@ -55,6 +57,7 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 	
 	// Create array for moves values and all needed loop variables
 	// and updated alpha beta pruning value holders
+	
 	int values[size];
 	int alpha, beta, i, move, cur_depth;
 	
@@ -80,6 +83,7 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 				alpha = values[i];
 			
 			// If checkmate has been found or time has expired, terminate
+			
 			if (alpha == MATE || START_TIME + MAX_SECONDS < time(NULL))
 				return endAISearch(i+1,size,values,moves,unsorted);
 			
@@ -137,6 +141,26 @@ int endAISearch(int reached, int size, int * values, int * moves, int * unsorted
 	for(i = 1; i < reached; i++)
 		if (values[i] > values[best_index])
 			best_index = i;
+			
+	int best_value = values[best_index];
+	
+	int num_options = 0;
+	int options[size];
+	
+	for(i = 0; i < size; i++){
+		if (abs(values[i] - best_value) <= BEST_VALUE_ACCEPTABLE_DIFFERENCE){
+			options[num_options] = i;
+			num_options += 1;
+		}
+	}
+	
+	srand(time(NULL));
+	int r = abs(rand()) % num_options;
+	
+	best_index = options[r];
+		
+	
+	
 	
 	int * best = malloc(28);
 	for(i = 0;  i < 7; i++)
