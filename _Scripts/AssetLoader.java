@@ -10,7 +10,8 @@ public class AssetLoader{
 		
 		String[][] toLoad = {
 			{"board","Board.png"},
-			{"option","Option.png"}
+			{"option","Option.png"},
+			{"bottombar","bottombar.png"}
 		};	
 		
 		try{

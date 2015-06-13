@@ -12,7 +12,9 @@ import java.util.concurrent.*;
 public class JChess extends JFrame{
 	
 	public int width = 420;
-	public int height = 445;
+	public int height = 495;
+	
+	public boolean view_as_white = true;
 	
 	public HashMap<String,BufferedImage> assets = AssetLoader.loadImages();
 	public Board tempBoard = new Board();
@@ -47,18 +49,7 @@ public class JChess extends JFrame{
 	}
 	
 	public JChess(){
-		setupJFrame();
-		
-    Scanner scanner = new Scanner( System.in );
-    String input = scanner.nextLine();
-    
-		if (input.equals("black")){
-			humanTurn = false;
-			waitingForComputer = true;
-			makeAIMove(null);
-			
-		}
-			
+		setupJFrame();		
 	}
 	
 	public void run(){
@@ -85,22 +76,27 @@ public class JChess extends JFrame{
 		}
 		else if(piece_is_selected)
 			for(JMove m : moves)
-				if (m.startX == selected_x && m.startY == selected_y)
-					buffer.drawImage(assets.get("option"),10+m.endY*50,35+m.endX*50,null);
+				if (m.startX == selected_x && m.startY == selected_y){
+					if(view_as_white)
+						buffer.drawImage(assets.get("option"),10+m.endY*50,35+m.endX*50,null);
+					else
+						buffer.drawImage(assets.get("option"),360-m.endY*50,385-m.endX*50,null);
+				}
 		
 		for(int x = 0; x < 8; x++){
 			for(int y = 0; y < 8; y++){
 				if (types[x][y] != null){
 					String color = colors[x][y] == true ? "White" : "Black";
 					String type = PIECE_TYPES[types[x][y]];
-					buffer.drawImage(assets.get(color+type),10+y*50,35+x*50,null);
+					if (view_as_white)
+						buffer.drawImage(assets.get(color+type),10+y*50,35+x*50,null);
+					else
+						buffer.drawImage(assets.get(color+type),360-y*50,385-x*50,null);
 				}
 			}
 		}
 		
-		
-				
-		
+		buffer.drawImage(assets.get("bottombar"),0,445,null);
 		
 		buffer.dispose();
 		g.drawImage(backBuffer,0,0, null);
@@ -112,6 +108,39 @@ public class JChess extends JFrame{
 		
 		// Buttons
 		
+		if (y > 435){
+			if (x > 10 && x < 140 && !waitingForComputer){
+				tempBoard = new Board();
+				types = tempBoard.types;
+				colors = tempBoard.colors;
+				moved = tempBoard.moved;
+				piece_is_selected = false;
+				promptingPromotion = false;
+				waitingForComputer = false;
+				humanTurn = true;
+				moves = JChessEngine.getAllValid(types,colors,moved,null,humanTurn);
+				repaint();
+			}
+			else if(x > 150 && x < 280){
+				view_as_white = !view_as_white;
+				repaint();
+			}
+			else if(x > 290 && x < 420 && !waitingForComputer){
+				repaint();
+				moves = new ArrayList<JMove>();
+				tempBoard = new Board();
+				types = tempBoard.types;
+				colors = tempBoard.colors;
+				moved = tempBoard.moved;
+				piece_is_selected = false;
+				promptingPromotion = false;
+				waitingForComputer = false;
+				humanTurn = false;
+				waitingForComputer = true;
+				makeAIMove(null);
+			}
+		}
+		
 		if (waitingForComputer)
 			return;
 			
@@ -121,11 +150,20 @@ public class JChess extends JFrame{
 		
 		// Click is on the chess board
 		if (x <= 410 && x >= 10 && y <= 425 && y >= 25){
-			x = (x - 10) / 50;
-			y = (y - 35) / 50;
+			
+			if(view_as_white){
+				x = (x - 10) / 50;
+				y = (y - 35) / 50;
+			}
+			else{
+				x = 7 - ((x - 10) / 50);
+				y = 7 - ((y - 35) / 50);
+			}
+			
 			int t = x;
 			x = y;
 			y = t;
+			
 			System.out.println("Clicked " + x + " " + y);
 			if (!piece_is_selected && types[x][y] != null && colors[x][y] == humanTurn){
 				selected_x = x;
