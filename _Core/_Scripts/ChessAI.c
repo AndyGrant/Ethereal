@@ -24,7 +24,9 @@ int EXACT_FOUND = 0;
 
 int MIN_DEPTH = 2;
 int MAX_DEPTH = 20;
+int INITAL_DEPTH;
 int MAX_SECONDS = 10;
+
 
 time_t START_TIME;
 
@@ -60,6 +62,7 @@ int findBestMoveIndex(Board * board, int * last_move, int turn){
 	// Use iterative deepening with sorted moves until time expires
 	// or until a max depth has been reached
 	for(cur_depth = MIN_DEPTH; cur_depth < MAX_DEPTH; cur_depth += 2){
+		INITAL_DEPTH = cur_depth;
 		printf("SEARCHING DEPTH LEVEL %d \n", cur_depth);
 		
 		// Initalize alpha and beta to largest window range
@@ -207,7 +210,7 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 	// Max search depth has been reached
 	if (depth == 0){
 		
-		if (move[0] == 0 && move[3] != EMPTY)
+		if (move[0] == 0 && move[3] != EMPTY && INITAL_DEPTH >= 6)
 			depth += 1;
 		else{
 			// Determine board value
