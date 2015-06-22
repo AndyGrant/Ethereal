@@ -207,7 +207,7 @@ public class JChess extends JFrame{
 		}
 	}
 	
-	public void makeAIMove(JMove lastMove){
+	public void makeAIMove(final JMove lastMove){
 		final JChess ref = this;
 		pool.submit(new Runnable(){
 			public void run(){
