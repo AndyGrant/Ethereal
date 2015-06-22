@@ -239,16 +239,17 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 	// Create pointer to start of moves
 	moves_pointer = moves;
 	
+	// Increment global counter
 	TOTAL_MOVES_FOUND += size;
 	
+	// Check for Checkmate and stalemate
 	if (size == 0){
-		int is_not_in_check = 0;
-		checkMove(BOARD,&is_not_in_check,turn);
 		
-		if(is_not_in_check)
-			best = 0;
-		else
-			best = -MATE;
+		// Re-use variable 'size' because value is zero
+		checkMove(BOARD,&size,turn);
+		
+		// size true indicates stalemate, else checkmate
+		best = size ? 0 : -MATE;
 	}
 	
 	// For the AI's turn
