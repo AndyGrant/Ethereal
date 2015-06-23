@@ -188,6 +188,7 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 		// If node is exact return it's value
 		if (node->type == EXACT){
 			revertGenericMove(BOARD,move);
+			free(key);
 			EXACT_FOUND += 1;
 			return node_rel_value;
 		}
@@ -201,7 +202,6 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 		// Check new bounds for pruning
 		if (alpha >= beta){
 			revertGenericMove(BOARD,move);
-			// Free the key if it is not needed
 			free(key);
 			EXACT_FOUND += 1;
 			return node_rel_value;
