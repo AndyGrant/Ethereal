@@ -252,18 +252,27 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 		best = size ? 0 : -MATE;
 	}
 	
-	// For the AI's turn
+	// Perform an alpha beta prune on Board's moves
 	else{
+		
+		// Set best to worst possible case
 		best = -MATE - 1;
+		
+		// Iterate over every move and perform alphaBetaPrune on the board
 		for(i = 0; i < size; i++, moves += 7){
 			value = -alphaBetaPrune(!turn,moves,depth-1,-beta,-alpha,evaluating_player);
+			
+			// Redetermine best value
 			if(value > best)
 				best = value;
+			
+			// Update alpha value
 			if(best > alpha)
 				alpha = best;
+				
+			// Check if pruning can be done
 			if(best >= beta)
 				break;
-
 		}
 	}
 	
@@ -274,8 +283,10 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 	// Free malloc'ed memory
 	free(moves_pointer);
 	
-	// Determine type of transposition
+	// Add information to TABLE if it is not already there
 	if (node == NULL){
+		
+		// Transposition type determinations
 		if (best <= alpha)
 			insertElement(TABLE,best,key,depth,LOWERBOUND,turn);
 		else if (best >= beta)
@@ -283,10 +294,16 @@ int alphaBetaPrune(int turn, int * move, int depth, int alpha, int beta, int eva
 		else
 			insertElement(TABLE,best,key,depth,EXACT,turn);
 	}
+	
+	// Update the used transposition if this has more value
 	else if (depth > node->depth){
+		
+		// Update node variables
 		free(key);
 		node->turn = turn;
 		node->value = best;
+		
+		// Transposition type determinations
 		if (best <= alpha)
 			node->type = LOWERBOUND;
 		else if (best >= beta)
