@@ -47,3 +47,27 @@ int getSquare(int sq, Board * board){
 	if (mask & board->Kings)
 		return KING;
 }
+
+int countSetBits(BitBoard b){
+	if (!b)
+		return 0;
+	int count = 0;
+	while(b){
+		int lsb = getLSB(b);
+		count += 1;
+		b ^= 1ull << lsb;
+	}
+	return count;
+}
+
+void getSetBits(BitBoard b, int * arr){
+	int count = 0;
+	while(b){
+		int lsb = getLSB(b);
+		arr[count] = lsb;
+		count += 1;
+		b ^= 1ull << lsb;
+	}
+	
+	arr[count] = -1;	
+}

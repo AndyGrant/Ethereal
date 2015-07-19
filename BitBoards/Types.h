@@ -22,10 +22,18 @@ typedef struct Board {
 	
 	BitBoard * KingMap;
 	BitBoard * KnightMap;
+	
 	BitBoard * OccupancyMaskRook;
-	BitBoard * OccupancyMaskBishop;
 	int * MagicShiftsRook;
+	BitBoard * MagicNumberRook;
+	BitBoard ** OccupancyVariationsRook;
+	BitBoard ** MoveDatabaseRook;
+	
+	BitBoard * OccupancyMaskBishop;
 	int * MagicShiftsBishop;
+	BitBoard * MagicNumberBishop;
+	BitBoard ** OccupancyVariationsBishop;
+	BitBoard ** MoveDatabaseBishop;
 	
 	
 } Board;

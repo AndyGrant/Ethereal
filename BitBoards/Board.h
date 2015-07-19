@@ -53,6 +53,10 @@ BitBoard * generateKingMap();
 BitBoard * generateKnightMap();
 BitBoard * generateOccupancyMaskRook();
 BitBoard * generateOccupancyMaskBishop();
+BitBoard ** generateOccupancyVariationRook(BitBoard * occupancyMaskRook);
+BitBoard ** generateOccupancyVariationBishop(BitBoard * occupancyMaskBishop);
+BitBoard ** generateMoveDatabaseRook(Board * board);
+BitBoard ** generateMoveDatabaseBishop(Board * board);
 
 
 
