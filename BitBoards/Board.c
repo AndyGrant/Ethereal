@@ -3,6 +3,7 @@
 #include <time.h>
 #include "Board.h"
 #include "Types.h"
+#include "Engine.h"
 
 int WHITE = 0;
 int BLACK = 1;
@@ -16,14 +17,14 @@ int KING = 5;
 int EMPTY = 6;
 
 
-BitBoard startingWhiteAll 	= 0x0000F0000000FFFF;
+BitBoard startingWhiteAll 	= 0x00000000000000FF;
 BitBoard startingBlackALL 	= 0xFFFF000000000000;
 BitBoard startingKings 		= 0x1000000000000010;
 BitBoard startingQueens		= 0x0800000000000008;
 BitBoard startingRooks 		= 0x8100000000000081;
 BitBoard startingKnights		= 0x4200000000000042;
 BitBoard startingBishops		= 0x2400000000000024;
-BitBoard startingPawns 		= 0x00FFF0000000FF00;
+BitBoard startingPawns 		= 0x00FF000000000000;
 
 BitBoard RANK_8 = 0xFF00000000000000;
 BitBoard RANK_7 = 0x00FF000000000000;
@@ -108,6 +109,13 @@ Board * BoardInit(){
 	b->Bishops				= startingBishops;
 	b->Pawns					= startingPawns;
 	
+	b->Pieces[0]				= &(b->Pawns);
+	b->Pieces[1]				= &(b->Bishops);
+	b->Pieces[2]				= &(b->Knights);
+	b->Pieces[3]				= &(b->Rooks);
+	b->Pieces[4]				= &(b->Queens);
+	b->Pieces[5]				= &(b->Kings);	
+
 	b->Turn					= 0;
 	b->Enpass					= 100;
 	b->FiftyMoveRule			= 50;
@@ -133,7 +141,6 @@ Board * BoardInit(){
 	b->MagicNumberBishop		= magicNumberBishop;
 	b->OccupancyVariationsBishop	= generateOccupancyVariationBishop(b->OccupancyMaskBishop);
 	b->MoveDatabaseBishop		= generateMoveDatabaseBishop(b);
-	
 	
 	return b;
 }
@@ -166,6 +173,7 @@ BitBoard * generateKnightMap(){
 	BitBoard * bb = calloc(64,sizeof(BitBoard));
 	int i; BitBoard z = 1;
 	for(i = 0; i < 64; i++){
+	
 		if (i + 17 < 64 && i % 8 != 7)
 			bb[i] |= z << ( i + 17);
 		if (i - 17 >= 0 && i % 8 != 0)
@@ -357,10 +365,21 @@ int main(){
 	Board * b = BoardInit();
 	time_t start = time(NULL);
 	
+	int index = 0;
+	Move ** moves;
+	moves = getAllMoves(b,&index,WHITE);
+	
+	int i;
+	for(i = 0; i < index; i++){
+		printf("Index %d ",i);
+		printf("Move found from %d to %d using %d taking %d\n",moves[i]->Start,moves[i]->End,moves[i]->MovedType,moves[i]->CapturedType);
+	}
+		
+	applyMove(b,moves[27],WHITE);
+	
+	printBitBoard(b->WhiteAll);
+	printBitBoard(b->BlackAll);
 	printBitBoard(b->Rooks);
-	int lsb = getLSB(b->Rooks);
-	printf("Rook at %d\n",lsb);
-	BitBoard bbBlockers = (b->WhiteAll | b->BlackAll) & b->OccupancyMaskRook[lsb];
-	int dbIndex = (int)((bbBlockers * b->MagicNumberRook[lsb]) >> b->MagicShiftsRook[lsb]);
-	printBitBoard(b->MoveDatabaseRook[lsb][dbIndex] & ~b->BlackAll);
+	printBitBoard(b->Pawns);
+	
 }
