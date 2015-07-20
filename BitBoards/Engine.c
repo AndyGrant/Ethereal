@@ -340,7 +340,7 @@ void applyMove(Board * board, Move * move, int turn){
 		enemy = &(board->WhiteAll);
 	}
 	
-	
+	// Regular Move which may or maynot invalidate castles
 	if (move->Flags <= 64 || (move->Flags >= 70 && move->Flags <= 72)){
 		*friendly ^= (1ull << move->Start);
 		*friendly |= (1ull << move->End);
@@ -370,7 +370,22 @@ void applyMove(Board * board, Move * move, int turn){
 	}
 	
 	if (move->Flags ==  80 || move->Flags == 81){
-		int start = turn == WHITE ? 4 : 60;
+		int kingStart = turn == WHITE ? 4 : 60;
+		int kingEnd = move->Flags == 80 ? kingStart - 2 : kingStart + 2;
+		int rookStart = move->Flags == 80 ? kingStart - 4 : kingStart + 3;
+		int rookEnd = move>Flags == 80 ? rookStart + 3 : rookStart - 2;
+		
+		friendly ^= (1ull << kingStart);
+		friendly ^= (1ull << rookStart);
+		board->Kings ^= (1ull << kingStart);
+		board->Rooks ^= (1ull << rookStart);
+		
+		friendly |= (1ull << kingEnd);
+		friendly |= (1ull << rookEnd);
+		board->Kings |= (1ull << kingEnd);
+		board->Rooks |= (1ull << rookEnd);
+		
+		board->Castled[turn] = 1;
 	}
 
 	
