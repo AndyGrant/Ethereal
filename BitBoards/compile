@@ -1,0 +1,3 @@
+#!/bin/sh
+
+gcc BitTools.c Baord.c Engine.c Moves.c -o foo.exe
