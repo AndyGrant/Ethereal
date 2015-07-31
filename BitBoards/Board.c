@@ -17,14 +17,14 @@ int KING = 5;
 int EMPTY = 6;
 
 
-BitBoard startingWhiteAll 	= 0x00000000000000FF;
+BitBoard startingWhiteAll 	= 0x000000000000FFFF;
 BitBoard startingBlackALL 	= 0xFFFF000000000000;
 BitBoard startingKings 		= 0x1000000000000010;
 BitBoard startingQueens		= 0x0800000000000008;
 BitBoard startingRooks 		= 0x8100000000000081;
 BitBoard startingKnights		= 0x4200000000000042;
 BitBoard startingBishops		= 0x2400000000000024;
-BitBoard startingPawns 		= 0x00FF000000000000;
+BitBoard startingPawns 		= 0x00FF00000000FF00;
 
 BitBoard RANK_8 = 0xFF00000000000000;
 BitBoard RANK_7 = 0x00FF000000000000;
@@ -108,6 +108,9 @@ Board * BoardInit(){
 	b->Knights				= startingKnights;
 	b->Bishops				= startingBishops;
 	b->Pawns					= startingPawns;
+	
+	b->Colors[0]				= &(b->WhiteAll);
+	b->Colors[1]				= &(b->BlackAll);
 	
 	b->Pieces[0]				= &(b->Pawns);
 	b->Pieces[1]				= &(b->Bishops);
@@ -372,10 +375,10 @@ int main(){
 	int i;
 	for(i = 0; i < index; i++){
 		printf("Index %d ",i);
-		printf("Move found from %d to %d using %d taking %d\n",moves[i]->Start,moves[i]->End,moves[i]->MovedType,moves[i]->CapturedType);
+		printf("Move found from %d to %d using %d type %d\n",moves[i]->Start,moves[i]->End,moves[i]->MovedType,moves[i]->Type);
 	}
 		
-	applyMove(b,moves[27],WHITE);
+	//applyMove(b,moves[27],WHITE);
 	
 	printBitBoard(b->WhiteAll);
 	printBitBoard(b->BlackAll);

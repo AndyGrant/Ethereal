@@ -12,6 +12,7 @@ typedef struct Board {
 	BitBoard Knights;
 	BitBoard Bishops;
 	BitBoard Pawns;
+	BitBoard * Colors[2];
 	BitBoard * Pieces[6];
 	
 	int Turn;
@@ -47,7 +48,7 @@ typedef struct Move {
 	BitBoard EnemyBefore;
 	int CapturedType;
 	int MovedType;
-	int Flags;
+	int Type;
 	
 	/* Flags
 	

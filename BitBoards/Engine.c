@@ -5,6 +5,7 @@
 #include "Board.h"
 #include "BitTools.h"
 #include "Engine.h"
+#include "Moves.h"
 
 Move ** getAllMoves(Board * board, int * index, int turn){
 	Move ** moves = malloc(sizeof(Move * ) * 256);
@@ -46,7 +47,7 @@ void getKnightMoves(Board * board, Move ** moves, int * index, int turn){
 			move->EnemyBefore = enemy;
 			move->CapturedType = getSquare(lsb,board);
 			move->MovedType = KNIGHT;
-			move->Flags = -1;
+			move->Type = NormalMove;
 			moves[(*index)++] = move;
 			attackable ^= 1ull << lsb;
 		}
@@ -83,11 +84,13 @@ void getKingMoves(Board * board, Move ** moves, int * index, int turn){
 		
 		if(board->ValidCastles[turn][0]){
 			if(board->ValidCastles[turn][1])
-				move->Flags = 72;
+				move->Type = BreaksBothCastlesMove;
 			else
-				move->Flags = 70;
+				move->Type = BreaksLeftCastleMove;
 		} else if(board->ValidCastles[turn][1]){
-			move->Flags = 71;
+			move->Type = BreaksRightCastleMove;
+		} else{
+			move->Type = NormalMove;
 		}
 		
 		moves[(*index)++] = move;
@@ -97,9 +100,10 @@ void getKingMoves(Board * board, Move ** moves, int * index, int turn){
 
 void getPawnMoves(Board * board, Move ** moves, int * index, int turn){
 
-	int forwardShift, leftShift, rightShift;
+	int i, forwardShift, leftShift, rightShift;
 	BitBoard friendly, enemy;
-	BitBoard pawns, oneMove, twoMove, leftMove, rightMove;
+	BitBoard pawns, oneMove, onePromote, twoMove;
+	BitBoard leftMove, leftPromote, rightMove, rightPromote;
 	
 	if (turn == WHITE){
 		friendly = board->WhiteAll;
@@ -107,7 +111,6 @@ void getPawnMoves(Board * board, Move ** moves, int * index, int turn){
 		forwardShift = 8;
 		leftShift = 7;
 		rightShift = 9;
-		
 	}
 	else if (turn == BLACK){
 		friendly = board->BlackAll;
@@ -118,18 +121,41 @@ void getPawnMoves(Board * board, Move ** moves, int * index, int turn){
 	}
 	
 	pawns = board->Pawns & friendly;
+	int types[4] = {
+		PromoteBishopMove, PromoteKnightMove,
+		PromoteRookMove, PromoteQueenMove
+	};
 	
 	if (turn == WHITE){
 		oneMove = (pawns << 8) & ~(friendly | enemy);
+		onePromote = oneMove & RANK_8;
+		oneMove &= ~RANK_8;
+		
 		twoMove = ((oneMove & RANK_3) << 8) & ~(friendly | enemy);
+		
 		leftMove = ((pawns << 7) & ~(FILE_A)) & enemy;
+		leftPromote = leftMove & RANK_8;
+		leftMove &= ~RANK_8;
+		
 		rightMove = ((pawns << 9) & ~(FILE_H)) & enemy;
+		rightPromote = rightMove & RANK_8;
+		rightMove &= ~RANK_8; 
 	}
+	
 	else if (turn == BLACK){
 		oneMove = (pawns >> 8) & ~(friendly | enemy);
+		onePromote = oneMove & RANK_1;
+		oneMove &= ~RANK_1;
+		
 		twoMove = ((oneMove & RANK_6) >> 8) & ~(friendly | enemy);
+		
 		leftMove = ((pawns >> 7) & ~(FILE_H)) & enemy;
+		leftPromote = leftMove & RANK_1;
+		leftMove &= ~RANK_1;
+		
 		rightMove = ((pawns >> 9) & ~(FILE_A)) & enemy;
+		rightPromote = rightMove & RANK_1;
+		rightMove &= ~RANK_1;
 	}
 	
 	while (oneMove != 0){
@@ -142,8 +168,26 @@ void getPawnMoves(Board * board, Move ** moves, int * index, int turn){
 		move->EnemyBefore = enemy;
 		move->CapturedType = EMPTY;
 		move->MovedType = PAWN;
+		move->Type = NormalMove;
 		moves[(*index)++] = move;
 		oneMove ^= 1ull << lsb;
+	}
+	
+	while (onePromote != 0){
+		int lsb = getLSB(onePromote);
+		for(i = 0; i < 4; i++){
+			Move * move = malloc(sizeof(Move));
+			move->Turn = turn;
+			move->Start = lsb - forwardShift;
+			move->End = lsb;
+			move->FriendlyBefore = friendly;
+			move->EnemyBefore = enemy;
+			move->CapturedType = EMPTY;
+			move->MovedType = PAWN;
+			move->Type = types[i];
+			moves[(*index)++] = move;
+		}
+		onePromote ^= 1ull << lsb;
 	}
 	
 	while (twoMove != 0){
@@ -156,6 +200,7 @@ void getPawnMoves(Board * board, Move ** moves, int * index, int turn){
 		move->EnemyBefore = enemy;
 		move->CapturedType = EMPTY;
 		move->MovedType = PAWN;
+		move->Type = PawnDoublePushMove;
 		moves[(*index)++] = move;
 		twoMove ^= 1ull << lsb;
 	}
@@ -170,8 +215,26 @@ void getPawnMoves(Board * board, Move ** moves, int * index, int turn){
 		move->EnemyBefore = enemy;
 		move->CapturedType = getSquare(lsb,board);
 		move->MovedType = PAWN;
+		move->Type = NormalMove;
 		moves[(*index)++] = move;
 		leftMove ^= 1ull << lsb;
+	}
+	
+	while (leftPromote != 0){
+		int lsb = getLSB(leftPromote);
+		for(i = 0; i < 4; i++){
+			Move * move = malloc(sizeof(Move));
+			move->Turn = turn;
+			move->Start = lsb - forwardShift;
+			move->End = lsb;
+			move->FriendlyBefore = friendly;
+			move->EnemyBefore = enemy;
+			move->CapturedType = EMPTY;
+			move->MovedType = PAWN;
+			move->Type = types[i];
+			moves[(*index)++] = move;
+		}
+		leftPromote ^= 1ull << lsb;
 	}
 	
 	while (rightMove != 0){
@@ -184,8 +247,26 @@ void getPawnMoves(Board * board, Move ** moves, int * index, int turn){
 		move->EnemyBefore = enemy;
 		move->CapturedType = getSquare(lsb,board);
 		move->MovedType = PAWN;
+		move->Type = NormalMove;
 		moves[(*index)++] = move;
 		rightMove ^= 1ull << lsb;
+	}
+	
+	while (rightPromote != 0){
+		int lsb = getLSB(rightPromote);
+		for(i = 0; i < 4; i++){
+			Move * move = malloc(sizeof(Move));
+			move->Turn = turn;
+			move->Start = lsb - forwardShift;
+			move->End = lsb;
+			move->FriendlyBefore = friendly;
+			move->EnemyBefore = enemy;
+			move->CapturedType = EMPTY;
+			move->MovedType = PAWN;
+			move->Type = types[i];
+			moves[(*index)++] = move;
+		}
+		rightPromote ^= 1ull << lsb;
 	}
 }
 
@@ -221,10 +302,11 @@ void getRookMoves(Board * board, Move ** moves, int * index, int turn){
 			move->MovedType = ROOK;
 			
 			if(board->ValidCastles[turn][0] && (bit ==  0 || bit == 56))
-				move->Flags = 70;
-				
+				move->Type = BreaksLeftCastleMove;
 			else if(board->ValidCastles[turn][1] && (bit == 7 || bit == 63))
-				move->Flags = 71;
+				move->Type = BreaksRightCastleMove;
+			else
+				move->Type = NormalMove;
 				
 			moves[(*index)++] = move;
 			attackable ^= 1ull << lsb;
@@ -264,6 +346,7 @@ void getBishopMoves(Board * board, Move ** moves, int * index, int turn){
 			move->EnemyBefore = enemy;
 			move->CapturedType = getSquare(lsb,board);
 			move->MovedType = BISHOP;
+			move->Type = NormalMove;
 			moves[(*index)++] = move;
 			attackable ^= 1ull << lsb;
 		}
@@ -301,6 +384,7 @@ void getQueenMoves(Board * board, Move ** moves, int * index, int turn){
 			move->EnemyBefore = enemy;
 			move->CapturedType = getSquare(lsb,board);
 			move->MovedType = QUEEN;
+			move->Type = NormalMove;
 			moves[(*index)++] = move;
 			attackable ^= 1ull << lsb;
 		}
@@ -319,84 +403,11 @@ void getQueenMoves(Board * board, Move ** moves, int * index, int turn){
 			move->EnemyBefore = enemy;
 			move->CapturedType = getSquare(lsb,board);
 			move->MovedType = QUEEN;
+			move->Type = NormalMove;
 			moves[(*index)++] = move;
 			attackable ^= 1ull << lsb;
 		}
 		
 		friendlyQueens ^= 1ull << bit;
-	}
-}
-
-void applyMove(Board * board, Move * move, int turn){
-	BitBoard * friendly;
-	BitBoard * enemy;
-	
-	if (turn == WHITE){
-		friendly = &(board->WhiteAll);
-		enemy = &(board->BlackAll);
-	}
-	else if (turn == BLACK){
-		friendly = &(board->BlackAll);
-		enemy = &(board->WhiteAll);
-	}
-	
-	// Regular Move which may or maynot invalidate castles
-	if (move->Flags <= 64 || (move->Flags >= 70 && move->Flags <= 72)){
-		*friendly ^= (1ull << move->Start);
-		*friendly |= (1ull << move->End);
-		
-		*(board->Pieces[move->MovedType]) ^= (1ull << move->Start);
-		*(board->Pieces[move->MovedType]) |= (1ull << move->End);
-		
-		if (move->CapturedType != EMPTY){
-			*enemy ^= (1ull << move->End);
-			if (move->CapturedType != move->MovedType)
-				*(board->Pieces[move->CapturedType]) ^= (1ull << move->End);
-		}
-	}
-	
-	if (move->Flags >= 65 && move->Flags <= 68){
-		*friendly ^= (1ull << move->Start);
-		*friendly |= (1ull << move->End);
-		
-		*(board->Pieces[PAWN]) ^= (1ull << move->Start);
-		*(board->Pieces[69 - move->Flags]) |= (1ull << move->End);
-		
-		if (move->CapturedType != EMPTY){
-			*enemy ^= (1ull << move->End);
-			if (move->CapturedType != move->MovedType)
-				*(board->Pieces[move->CapturedType]) ^= (1ull << move->End);
-		}
-	}
-	
-	if (move->Flags ==  80 || move->Flags == 81){
-		int kingStart = turn == WHITE ? 4 : 60;
-		int kingEnd = move->Flags == 80 ? kingStart - 2 : kingStart + 2;
-		int rookStart = move->Flags == 80 ? kingStart - 4 : kingStart + 3;
-		int rookEnd = move>Flags == 80 ? rookStart + 3 : rookStart - 2;
-		
-		friendly ^= (1ull << kingStart);
-		friendly ^= (1ull << rookStart);
-		board->Kings ^= (1ull << kingStart);
-		board->Rooks ^= (1ull << rookStart);
-		
-		friendly |= (1ull << kingEnd);
-		friendly |= (1ull << rookEnd);
-		board->Kings |= (1ull << kingEnd);
-		board->Rooks |= (1ull << rookEnd);
-		
-		board->Castled[turn] = 1;
-	}
-
-	
-	if (move->Flags == 70)
-		board->ValidCastles[turn][0] = 0;
-	
-	if (move->Flags == 71)
-		board->ValidCastles[turn][1] = 0;
-		
-	if (move->Flags == 72){
-		board->ValidCastles[turn][0] = 0;
-		board->ValidCastles[turn][1] = 0;
 	}
 }
