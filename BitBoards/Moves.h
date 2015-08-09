@@ -19,4 +19,10 @@ extern int PromoteQueenMove;
 extern int EnpassLeftMove;
 extern int EnpassRightMove;
 
+void ApplyNormalMove(Board * board, Move * move, int turn);
+void RevertNormalMove(Board * board, Move * move, int turn);
+
+void ApplyPawnDoublePushMove(Board * board, Move * move, int turn);
+void RevertPawnDoublePushMove(Board * board, Move * move, int turn);
+
 #endif
