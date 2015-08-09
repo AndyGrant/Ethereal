@@ -377,12 +377,6 @@ int main(){
 		printf("Index %d ",i);
 		printf("Move found from %d to %d using %d type %d\n",moves[i]->Start,moves[i]->End,moves[i]->MovedType,moves[i]->Type);
 	}
-		
-	//applyMove(b,moves[27],WHITE);
-	
-	printBitBoard(b->WhiteAll);
-	printBitBoard(b->BlackAll);
-	printBitBoard(b->Rooks);
-	printBitBoard(b->Pawns);
+
 	
 }
