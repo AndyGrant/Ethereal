@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
+#include "moves.h"
 #include "Board.h"
 #include "Types.h"
 #include "Engine.h"
@@ -365,18 +367,29 @@ BitBoard ** generateMoveDatabaseBishop(Board * board){
 
 
 int main(){
-	Board * b = BoardInit();
-	time_t start = time(NULL);
+	Board * board = BoardInit();
+
 	
 	int index = 0;
 	Move ** moves;
-	moves = getAllMoves(b,&index,WHITE);
+	moves = getAllMoves(board,&index,WHITE);
 	
-	int i;
-	for(i = 0; i < index; i++){
-		printf("Index %d ",i);
-		printf("Move found from %d to %d using %d type %d\n",moves[i]->Start,moves[i]->End,moves[i]->MovedType,moves[i]->Type);
+	time_t start = time(NULL);
+	
+
+	for(j = 0; j < index; j++){
+		ApplyMove(board,moves[j],WHITE);
+		RevertMove(board,moves[j],WHITE);
 	}
+	
+	
+	
+	printBitBoard(board->WhiteAll);
+	printBitBoard(board->BlackAll);
+	
+	printf("Seconds Taken: %d \n\n",(int)(time(NULL)-start));
+	
+	
 
 	
 }

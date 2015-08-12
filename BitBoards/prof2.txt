@@ -1,0 +1,307 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  ms/call  ms/call  name    
+ 26.27      2.23     2.23 120000000     0.00     0.00  ApplyNormalMove
+ 22.14      4.11     1.88 120000000     0.00     0.00  RevertNormalMove
+ 15.67      5.44     1.33 80000000     0.00     0.00  ApplyPawnDoublePushMove
+ 15.08      6.72     1.28 80000000     0.00     0.00  RevertPawnDoublePushMove
+ 11.31      7.68     0.96                             main
+  5.18      8.12     0.44 200000000     0.00     0.00  ApplyMove
+  4.24      8.48     0.36 200000000     0.00     0.00  RevertMove
+  0.12      8.49     0.01   574976     0.00     0.00  getLSB
+  0.00      8.49     0.00   107776     0.00     0.00  getSetBits
+  0.00      8.49     0.00      256     0.00     0.00  countSetBits
+  0.00      8.49     0.00        4     0.00     0.00  getSquare
+  0.00      8.49     0.00        2     0.00     0.00  printBitBoard
+  0.00      8.49     0.00        1     0.00    10.00  BoardInit
+  0.00      8.49     0.00        1     0.00     0.00  generateKingMap
+  0.00      8.49     0.00        1     0.00     0.00  generateKnightMap
+  0.00      8.49     0.00        1     0.00     0.01  generateMoveDatabaseBishop
+  0.00      8.49     0.00        1     0.00     0.01  generateMoveDatabaseRook
+  0.00      8.49     0.00        1     0.00     0.00  generateOccupancyMaskBishop
+  0.00      8.49     0.00        1     0.00     0.00  generateOccupancyMaskRook
+  0.00      8.49     0.00        1     0.00     0.50  generateOccupancyVariationBishop
+  0.00      8.49     0.00        1     0.00     9.48  generateOccupancyVariationRook
+  0.00      8.49     0.00        1     0.00     0.00  getAllMoves
+  0.00      8.49     0.00        1     0.00     0.00  getBishopMoves
+  0.00      8.49     0.00        1     0.00     0.00  getKingMoves
+  0.00      8.49     0.00        1     0.00     0.00  getKnightMoves
+  0.00      8.49     0.00        1     0.00     0.00  getPawnMoves
+  0.00      8.49     0.00        1     0.00     0.00  getQueenMoves
+  0.00      8.49     0.00        1     0.00     0.00  getRookMoves
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+ 
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this 
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 4 byte(s) for 0.12% of 8.49 seconds
+
+index % time    self  children    called     name
+                                                 <spontaneous>
+[1]    100.0    0.96    7.53                 main [1]
+                0.44    3.56 200000000/200000000     ApplyMove [2]
+                0.36    3.16 200000000/200000000     RevertMove [3]
+                0.00    0.01       1/1           BoardInit [9]
+                0.00    0.00       1/1           getAllMoves [16]
+                0.00    0.00       2/2           printBitBoard [25]
+-----------------------------------------------
+                0.44    3.56 200000000/200000000     main [1]
+[2]     47.1    0.44    3.56 200000000         ApplyMove [2]
+                2.23    0.00 120000000/120000000     ApplyNormalMove [4]
+                1.33    0.00 80000000/80000000     ApplyPawnDoublePushMove [6]
+-----------------------------------------------
+                0.36    3.16 200000000/200000000     main [1]
+[3]     41.5    0.36    3.16 200000000         RevertMove [3]
+                1.88    0.00 120000000/120000000     RevertNormalMove [5]
+                1.28    0.00 80000000/80000000     RevertPawnDoublePushMove [7]
+-----------------------------------------------
+                2.23    0.00 120000000/120000000     ApplyMove [2]
+[4]     26.3    2.23    0.00 120000000         ApplyNormalMove [4]
+-----------------------------------------------
+                1.88    0.00 120000000/120000000     RevertMove [3]
+[5]     22.1    1.88    0.00 120000000         RevertNormalMove [5]
+-----------------------------------------------
+                1.33    0.00 80000000/80000000     ApplyMove [2]
+[6]     15.7    1.33    0.00 80000000         ApplyPawnDoublePushMove [6]
+-----------------------------------------------
+                1.28    0.00 80000000/80000000     RevertMove [3]
+[7]     15.1    1.28    0.00 80000000         RevertPawnDoublePushMove [7]
+-----------------------------------------------
+                0.00    0.00       1/574976      getKingMoves [21]
+                0.00    0.00       1/574976      getQueenMoves [22]
+                0.00    0.00       2/574976      getRookMoves [20]
+                0.00    0.00       2/574976      getBishopMoves [19]
+                0.00    0.00       6/574976      getKnightMoves [18]
+                0.00    0.00      16/574976      getPawnMoves [17]
+                0.00    0.00    2072/574976      countSetBits [13]
+                0.01    0.00  572876/574976      getSetBits [10]
+[8]      0.1    0.01    0.00  574976         getLSB [8]
+-----------------------------------------------
+                0.00    0.01       1/1           main [1]
+[9]      0.1    0.00    0.01       1         BoardInit [9]
+                0.00    0.01       1/1           generateOccupancyVariationRook [11]
+                0.00    0.00       1/1           generateOccupancyVariationBishop [12]
+                0.00    0.00       1/1           generateMoveDatabaseRook [15]
+                0.00    0.00       1/1           generateMoveDatabaseBishop [14]
+                0.00    0.00       1/1           generateKingMap [26]
+                0.00    0.00       1/1           generateKnightMap [27]
+                0.00    0.00       1/1           generateOccupancyMaskRook [29]
+                0.00    0.00       1/1           generateOccupancyMaskBishop [28]
+-----------------------------------------------
+                0.00    0.00    5312/107776      generateOccupancyVariationBishop [12]
+                0.00    0.01  102464/107776      generateOccupancyVariationRook [11]
+[10]     0.1    0.00    0.01  107776         getSetBits [10]
+                0.01    0.00  572876/574976      getLSB [8]
+-----------------------------------------------
+                0.00    0.01       1/1           BoardInit [9]
+[11]     0.1    0.00    0.01       1         generateOccupancyVariationRook [11]
+                0.00    0.01  102464/107776      getSetBits [10]
+                0.00    0.00      64/256         countSetBits [13]
+-----------------------------------------------
+                0.00    0.00       1/1           BoardInit [9]
+[12]     0.0    0.00    0.00       1         generateOccupancyVariationBishop [12]
+                0.00    0.00    5312/107776      getSetBits [10]
+                0.00    0.00      64/256         countSetBits [13]
+-----------------------------------------------
+                0.00    0.00      64/256         generateOccupancyVariationRook [11]
+                0.00    0.00      64/256         generateOccupancyVariationBishop [12]
+                0.00    0.00      64/256         generateMoveDatabaseRook [15]
+                0.00    0.00      64/256         generateMoveDatabaseBishop [14]
+[13]     0.0    0.00    0.00     256         countSetBits [13]
+                0.00    0.00    2072/574976      getLSB [8]
+-----------------------------------------------
+                0.00    0.00       1/1           BoardInit [9]
+[14]     0.0    0.00    0.00       1         generateMoveDatabaseBishop [14]
+                0.00    0.00      64/256         countSetBits [13]
+-----------------------------------------------
+                0.00    0.00       1/1           BoardInit [9]
+[15]     0.0    0.00    0.00       1         generateMoveDatabaseRook [15]
+                0.00    0.00      64/256         countSetBits [13]
+-----------------------------------------------
+                0.00    0.00       1/1           main [1]
+[16]     0.0    0.00    0.00       1         getAllMoves [16]
+                0.00    0.00       1/1           getPawnMoves [17]
+                0.00    0.00       1/1           getKnightMoves [18]
+                0.00    0.00       1/1           getRookMoves [20]
+                0.00    0.00       1/1           getBishopMoves [19]
+                0.00    0.00       1/1           getKingMoves [21]
+                0.00    0.00       1/1           getQueenMoves [22]
+-----------------------------------------------
+                0.00    0.00       1/1           getAllMoves [16]
+[17]     0.0    0.00    0.00       1         getPawnMoves [17]
+                0.00    0.00      16/574976      getLSB [8]
+-----------------------------------------------
+                0.00    0.00       1/1           getAllMoves [16]
+[18]     0.0    0.00    0.00       1         getKnightMoves [18]
+                0.00    0.00       6/574976      getLSB [8]
+                0.00    0.00       4/4           getSquare [24]
+-----------------------------------------------
+                0.00    0.00       1/1           getAllMoves [16]
+[19]     0.0    0.00    0.00       1         getBishopMoves [19]
+                0.00    0.00       2/574976      getLSB [8]
+-----------------------------------------------
+                0.00    0.00       1/1           getAllMoves [16]
+[20]     0.0    0.00    0.00       1         getRookMoves [20]
+                0.00    0.00       2/574976      getLSB [8]
+-----------------------------------------------
+                0.00    0.00       1/1           getAllMoves [16]
+[21]     0.0    0.00    0.00       1         getKingMoves [21]
+                0.00    0.00       1/574976      getLSB [8]
+-----------------------------------------------
+                0.00    0.00       1/1           getAllMoves [16]
+[22]     0.0    0.00    0.00       1         getQueenMoves [22]
+                0.00    0.00       1/574976      getLSB [8]
+-----------------------------------------------
+                0.00    0.00       4/4           getKnightMoves [18]
+[24]     0.0    0.00    0.00       4         getSquare [24]
+-----------------------------------------------
+                0.00    0.00       2/2           main [1]
+[25]     0.0    0.00    0.00       2         printBitBoard [25]
+-----------------------------------------------
+                0.00    0.00       1/1           BoardInit [9]
+[26]     0.0    0.00    0.00       1         generateKingMap [26]
+-----------------------------------------------
+                0.00    0.00       1/1           BoardInit [9]
+[27]     0.0    0.00    0.00       1         generateKnightMap [27]
+-----------------------------------------------
+                0.00    0.00       1/1           BoardInit [9]
+[28]     0.0    0.00    0.00       1         generateOccupancyMaskBishop [28]
+-----------------------------------------------
+                0.00    0.00       1/1           BoardInit [9]
+[29]     0.0    0.00    0.00       1         generateOccupancyMaskRook [29]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function is in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+Copyright (C) 2012 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Index by function name
+
+   [2] ApplyMove              [14] generateMoveDatabaseBishop [8] getLSB
+   [4] ApplyNormalMove        [15] generateMoveDatabaseRook [17] getPawnMoves
+   [6] ApplyPawnDoublePushMove [28] generateOccupancyMaskBishop [22] getQueenMoves
+   [9] BoardInit              [29] generateOccupancyMaskRook [20] getRookMoves
+   [3] RevertMove             [12] generateOccupancyVariationBishop [10] getSetBits
+   [5] RevertNormalMove       [11] generateOccupancyVariationRook [24] getSquare
+   [7] RevertPawnDoublePushMove [16] getAllMoves           [1] main
+  [13] countSetBits           [19] getBishopMoves         [25] printBitBoard
+  [26] generateKingMap        [21] getKingMoves
+  [27] generateKnightMap      [18] getKnightMoves
