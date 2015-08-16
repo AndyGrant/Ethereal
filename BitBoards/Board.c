@@ -373,20 +373,11 @@ int main(){
 	
 	time_t start = time(NULL);
 	
+	Move ** moves = getAllMoves(board,&index,WHITE);
+	
 	int i;
-	for(i = 0; i < 50000000; i++){
-		BitBoard foo = board->WhiteAll | board->BlackAll;
-		while(foo != 0){
-			int lsb = getLSB(foo);
-			foo ^= (1ull << lsb);
-		}
-	}
-	
-
-	
-	printf("dsa");
-
-	printf("%d",getLSB((startingKings & startingWhiteAll)));
+	for(i = 0; i < index; i++)
+		printf("Move #%d: %d, %d\n",i,moves[i]->Start,moves[i]->End);
 	
 	printf("Seconds Taken: %d \n\n",(int)(time(NULL)-start));
 	
