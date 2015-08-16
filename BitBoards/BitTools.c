@@ -25,11 +25,6 @@ void printBitBoard(BitBoard b){
 	printf("\n");
 }
 
-int getLSB(BitBoard b){
-	BitBoard debruijn64 = 0x03f79d71b4cb0a89;
-	return index64[((b ^ (b-1)) * debruijn64) >> 58];
-}
-
 int getSquare(int sq, Board * board){
 	BitBoard mask = 1ull << sq;
 	if (!(mask & (board->WhiteAll | board->BlackAll)))

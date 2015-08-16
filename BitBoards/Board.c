@@ -368,24 +368,25 @@ BitBoard ** generateMoveDatabaseBishop(Board * board){
 
 int main(){
 	Board * board = BoardInit();
-
-	
 	int index = 0;
-	Move ** moves;
-	moves = getAllMoves(board,&index,WHITE);
+	
 	
 	time_t start = time(NULL);
 	
-
-	for(j = 0; j < index; j++){
-		ApplyMove(board,moves[j],WHITE);
-		RevertMove(board,moves[j],WHITE);
+	int i;
+	for(i = 0; i < 50000000; i++){
+		BitBoard foo = board->WhiteAll | board->BlackAll;
+		while(foo != 0){
+			int lsb = getLSB(foo);
+			foo ^= (1ull << lsb);
+		}
 	}
 	
+
 	
-	
-	printBitBoard(board->WhiteAll);
-	printBitBoard(board->BlackAll);
+	printf("dsa");
+
+	printf("%d",getLSB((startingKings & startingWhiteAll)));
 	
 	printf("Seconds Taken: %d \n\n",(int)(time(NULL)-start));
 	

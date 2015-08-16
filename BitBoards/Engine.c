@@ -68,7 +68,7 @@ void getKingMoves(Board * board, Move ** moves, int * index, int turn){
 		enemy = board->WhiteAll;
 	}
 	
-	int bit = getLSB(board->Kings & friendly);
+	int bit = getLSB((board->Kings & friendly));
 	BitBoard attackable = board->KingMap[bit] & ~friendly;
 	
 	while (attackable != 0){
