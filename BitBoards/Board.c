@@ -375,6 +375,9 @@ int main(){
 	
 	Move ** moves = getAllMoves(board,&index,WHITE);
 	
+	printf("%d",getLSB((board->BlackAll & board->Kings)));
+	return;
+	
 	int i;
 	for(i = 0; i < index; i++)
 		printf("Move #%d: %d, %d\n",i,moves[i]->Start,moves[i]->End);

@@ -20,20 +20,24 @@ int PromoteQueenMove = 10;
 int EnpassLeftMove = 11;
 int EnpassRightMove = 12;
 
-void (*ApplyTypes[5])(Board *, Move *, int) = {
+void (*ApplyTypes[7])(Board *, Move *, int) = {
 	&ApplyNormalMove,
 	&ApplyPawnDoublePushMove,
 	&ApplyBreaksLeftCastleMove,
 	&ApplyBreaksRightCastleMove,
-	&ApplyBreaksBothCastlesMove
+	&ApplyBreaksBothCastlesMove,
+	&ApplyLeftCastleMove,
+	&ApplyRightCastleMove
 };
 
-void (*RevertTypes[5])(Board *, Move *, int) = {
+void (*RevertTypes[7])(Board *, Move *, int) = {
 	&RevertNormalMove,
 	&RevertPawnDoublePushMove,
 	&RevertBreaksLeftCastleMove,
 	&RevertBreaksRightCastleMove,
-	&RevertBreaksBothCastlesMove
+	&RevertBreaksBothCastlesMove,
+	&RevertLeftCastleMove,
+	&RevertRightCastleMove
 };
 
 void ApplyNormalMove(Board * board, Move * move, int turn){
@@ -122,6 +126,94 @@ void RevertBreaksBothCastlesMove(Board * board, Move * move, int turn){
 	RevertNormalMove(board,move,turn);
 	board->ValidCastles[turn][0] = 1;
 	board->ValidCastles[turn][1] = 1;
+}
+
+void ApplyLeftCastleMove(Board * board, Move * move, int turn){
+	BitBoard * friendly = board->Colors[turn];
+	int kingStart = turn == WHITE ? 4 : 60;
+	int rookStart = turn == WHITE ? 0 : 56;
+	int kingEnd = kingStart - 2;
+	int rookEnd = kingStart - 1;
+	
+	*friendly ^= (1ull << kingStart);
+	*friendly ^= (1ull << rookStart);
+	
+	*friendly |= (1ull << kingEnd);
+	*friendly |= (1ull << rookEnd);
+	
+	*(board->Pieces[KING]) ^= (1ull << kingStart);
+	*(board->Pieces[ROOK]) ^= (1ull << rookStart);
+	
+	*(board->Pieces[KING]) |= (1ull << kingEnd);
+	*(board->Pieces[ROOK]) |= (1ull << rookEnd);
+	
+	board->Castled[turn] = 1;	
+}
+
+void RevertLeftCastleMove(Board * board, Move * move, int turn){
+	BitBoard * friendly = board->Colors[turn];
+	int kingStart = turn == WHITE ? 4 : 60;
+	int rookStart = turn == WHITE ? 0 : 56;
+	int kingEnd = kingStart - 2;
+	int rookEnd = kingStart - 1;
+	
+	*friendly |= (1ull << kingStart);
+	*friendly |= (1ull << rookStart);
+	
+	*friendly ^= (1ull << kingEnd);
+	*friendly ^= (1ull << rookEnd);
+	
+	*(board->Pieces[KING]) |= (1ull << kingStart);
+	*(board->Pieces[ROOK]) |= (1ull << rookStart);
+	
+	*(board->Pieces[KING]) ^= (1ull << kingEnd);
+	*(board->Pieces[ROOK]) ^= (1ull << rookEnd);
+	
+	board->Castled[turn] = 0;	
+}
+
+void ApplyRightCastleMove(Board * board, Move * move, int turn){
+	BitBoard * friendly = board->Colors[turn];
+	int kingStart = turn == WHITE ? 4 : 60;
+	int rookStart = turn == WHITE ? 7 : 63;
+	int kingEnd = kingStart + 2;
+	int rookEnd = kingStart + 1;
+	
+	*friendly ^= (1ull << kingStart);
+	*friendly ^= (1ull << rookStart);
+	
+	*friendly |= (1ull << kingEnd);
+	*friendly |= (1ull << rookEnd);
+	
+	*(board->Pieces[KING]) ^= (1ull << kingStart);
+	*(board->Pieces[ROOK]) ^= (1ull << rookStart);
+	
+	*(board->Pieces[KING]) |= (1ull << kingEnd);
+	*(board->Pieces[ROOK]) |= (1ull << rookEnd);
+	
+	board->Castled[turn] = 1;	
+}
+
+void RevertRightCastleMove(Board * board, Move * move, int turn){
+	BitBoard * friendly = board->Colors[turn];
+	int kingStart = turn == WHITE ? 4 : 60;
+	int rookStart = turn == WHITE ? 7 : 63;
+	int kingEnd = kingStart + 2;
+	int rookEnd = kingStart + 1;
+	
+	*friendly |= (1ull << kingStart);
+	*friendly |= (1ull << rookStart);
+	
+	*friendly ^= (1ull << kingEnd);
+	*friendly ^= (1ull << rookEnd);
+	
+	*(board->Pieces[KING]) |= (1ull << kingStart);
+	*(board->Pieces[ROOK]) |= (1ull << rookStart);
+	
+	*(board->Pieces[KING]) ^= (1ull << kingEnd);
+	*(board->Pieces[ROOK]) ^= (1ull << rookEnd);
+	
+	board->Castled[turn] = 0;	
 }
 
 	
