@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "moves.h"
+#include "Moves.h"
 #include "Board.h"
 #include "Types.h"
 #include "Engine.h"
