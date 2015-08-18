@@ -538,6 +538,7 @@ int main(){
 	free(board->OccupancyVariationsBishop);
 	free(board->MoveDatabaseRook);
 	free(board->MoveDatabaseBishop);
+	free(board);
 	
 	return;
 	
