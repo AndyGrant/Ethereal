@@ -528,6 +528,17 @@ int main(){
 	printf("%d %d",startingBlackALL == board->BlackAll, startingWhiteAll == board->WhiteAll);
 	
 	printf("\n\nSeconds Taken: %d \n\n",(int)(time(NULL)-start));
+	
+	
+	free(board->KnightMap);
+	free(board->KingMap);
+	free(board->OccupancyMaskRook);
+	free(board->OccupancyMaskBishop);
+	free(board->OccupancyVariationsRook);
+	free(board->OccupancyVariationsBishop);
+	free(board->MoveDatabaseRook);
+	free(board->MoveDatabaseBishop);
+	
 	return;
 	
 	
