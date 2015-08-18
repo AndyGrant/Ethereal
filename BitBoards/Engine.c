@@ -416,75 +416,50 @@ Move ** validateCheck(Board * board, int * index, Move ** moves, int turn){
 }
 
 int validateMove(Board * board, int turn){
-	
-	/*
-	Move ** moves = malloc(sizeof(Move * ) * 256);
-	int size = 0;
-	int * index = &size;
-	//getKingMoves(board, moves, index, !turn);
-	//getQueenMoves(board, moves, index, !turn);
-	//getRookMoves(board, moves, index, !turn);
-	//getKnightMoves(board, moves, index, !turn);
-	//getBishopMoves(board, moves, index, !turn);
-	//getPawnMoves(board, moves, index, !turn);
-	
-	int i,flag=1;
-	for(i = 0; i < size; i++){
-		if (moves[i]->CapturedType == KING)
-			flag = 0;
-		
-		free(moves[i]);
-	}
-	
-	free(moves);
-	
-	if (flag == 0)
-		return flag;*/
-	
-
 	BitBoard friendly = *(board->Colors[turn]);
 	BitBoard enemy = *(board->Colors[!turn]);
+	BitBoard all = friendly | enemy;
 	BitBoard king = friendly & board->Kings;
 	BitBoard bbBlockers, attackable;
 	
 	int dbIndex;
 	int kingSquare = getLSB(king);
 	
-	// Pawn Check
-	if (turn == WHITE){
-		if ((((king << 7) & ~FILE_A) & (enemy & board->Pawns)) != 0)
-			return 0;
-		if ((((king << 9) & ~FILE_H) & (enemy & board->Pawns)) != 0)
-			return 0;
-	}else if (turn == BLACK){
-		if ((((king >> 7) & ~FILE_H) & (enemy & board->Pawns)) != 0)
-			return 0;
-		if ((((king >> 9) & ~FILE_A) & (enemy & board->Pawns)) != 0)
-			return 0;
-	}
-	
 	//Bishop Check
-	bbBlockers = (board->WhiteAll | board->BlackAll) & board->OccupancyMaskBishop[kingSquare];
+	bbBlockers = all & board->OccupancyMaskBishop[kingSquare];
 	dbIndex = (int)((bbBlockers * board->MagicNumberBishop[kingSquare]) >> board->MagicShiftsBishop[kingSquare]);
 	attackable = board->MoveDatabaseBishop[kingSquare][dbIndex] & ~friendly;
 	if (((board->Bishops | board->Queens) & enemy & attackable) != 0)
 		return 0;
 	
-	// Knight Check
-	if (((board->KnightMap[kingSquare]) & (enemy & board->Knights)) != 0)
-		return 0;
-	
 	// Rook Check
-	bbBlockers = (board->WhiteAll | board->BlackAll) & board->OccupancyMaskRook[kingSquare];
+	bbBlockers = all & board->OccupancyMaskRook[kingSquare];
 	dbIndex = (int)((bbBlockers * board->MagicNumberRook[kingSquare]) >> board->MagicShiftsRook[kingSquare]);
 	attackable = board->MoveDatabaseRook[kingSquare][dbIndex];
 	if (((board->Rooks | board->Queens) & enemy & attackable) != 0)
 		return 0;
+		
+	// Knight Check
+	if (((board->KnightMap[kingSquare]) & (enemy & board->Knights)) != 0)
+		return 0;
+	
+	// Pawn Check
+	BitBoard enemyPawns = enemy & board->Pawns;
+	if (turn == WHITE){
+		if ((((king << 7) & ~FILE_A) & enemyPawns) != 0)
+			return 0;
+		if ((((king << 9) & ~FILE_H) & enemyPawns) != 0)
+			return 0;
+	}else if (turn == BLACK){
+		if ((((king >> 7) & ~FILE_H) & enemyPawns) != 0)
+			return 0;
+		if ((((king >> 9) & ~FILE_A) & enemyPawns) != 0)
+			return 0;
+	}
 	
 	// King Check
 	if (((board->KingMap[kingSquare]) & (enemy & board->Kings)) != 0)
 		return 0;
-	
 		
 	return 1;
 }
