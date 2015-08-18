@@ -43,37 +43,38 @@ void (*RevertTypes[7])(Board *, Move *, int) = {
 void ApplyNormalMove(Board * board, Move * move, int turn){
 	BitBoard * friendly = board->Colors[turn];
 	BitBoard * enemy = board->Colors[!turn];
+	BitBoard * moved = board->Pieces[move->MovedType];
+	BitBoard * captured = board->Pieces[move->CapturedType];
+	
 	
 	*friendly ^= (1ull << move->Start);
 	*friendly |= (1ull << move->End);
 	
-	*(board->Pieces[move->MovedType]) ^= (1ull << move->Start);
-	*(board->Pieces[move->MovedType]) |= (1ull << move->End);
-	
-	if (move->CapturedType != EMPTY){
+	if(move->CapturedType != EMPTY)
 		*enemy ^= (1ull << move->End);
-
-		if (move->CapturedType != move->MovedType)
-			*(board->Pieces[move->CapturedType]) ^= (1ull << move->End);
-	}
+		
+	*captured ^= (1ull << move->End);
+	*moved |= (1ull << move->End);
+	*moved ^= (1ull << move->Start);
+	
+	
 }
 
 void RevertNormalMove(Board * board, Move * move, int turn){
 	BitBoard * friendly = board->Colors[turn];
 	BitBoard * enemy = board->Colors[!turn];
+	BitBoard * moved = board->Pieces[move->MovedType];
+	BitBoard * captured = board->Pieces[move->CapturedType];
 	
-	*friendly ^= (1ull << move->End);
 	*friendly |= (1ull << move->Start);
+	*friendly ^= (1ull << move->End);
 	
-	*(board->Pieces[move->MovedType]) ^= (1ull << move->End);
-	*(board->Pieces[move->MovedType]) |= (1ull << move->Start);
-	
-	if (move->CapturedType != EMPTY){
+	if(move->CapturedType != EMPTY)
 		*enemy |= (1ull << move->End);
 		
-		if (move->CapturedType != move->MovedType)
-			*(board->Pieces[move->CapturedType]) |= (1ull << move->End);
-	}	
+	*moved |= (1ull << move->Start);
+	*moved ^= (1ull << move->End);
+	*captured |= (1ull << move->End);
 }
 
 void ApplyPawnDoublePushMove(Board * board, Move * move, int turn){

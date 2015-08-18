@@ -28,6 +28,23 @@ BitBoard startingKnights		= 0x4200000000000042;
 BitBoard startingBishops		= 0x2400000000000024;
 BitBoard startingPawns 		= 0x00FF00000000FF00;
 
+
+
+BitBoard LeftCastleBoards[2] = {
+	(1ull << 1) + (1ull << 2) + (1ull << 3),
+	(1ull << 57) + (1ull << 58) + (1ull << 59)
+};
+
+BitBoard RightCastleBoards[2] = {
+	(1ull << 5) + (1ull << 6),
+	(1ull << 61) + (1ull << 62)
+};
+
+BitBoard WhiteCastleLeft  = (1ull << 1) + (1ull << 2) + (1ull << 3);
+BitBoard WhiteCastleRight = (1ull << 5) + (1ull << 6);
+BitBoard BlackCastleLeft  = (1ull << 57) + (1ull << 58) + (1ull << 59);
+BitBoard BlackCastleRight = (1ull << 61) + (1ull << 62);
+
 BitBoard RANK_8 = 0xFF00000000000000;
 BitBoard RANK_7 = 0x00FF000000000000;
 BitBoard RANK_6 = 0x0000FF0000000000;
@@ -110,6 +127,7 @@ Board * BoardInit(){
 	b->Knights				= startingKnights;
 	b->Bishops				= startingBishops;
 	b->Pawns					= startingPawns;
+	b->Empty 					= 1ull;
 	
 	b->Colors[0]				= &(b->WhiteAll);
 	b->Colors[1]				= &(b->BlackAll);
@@ -120,6 +138,8 @@ Board * BoardInit(){
 	b->Pieces[3]				= &(b->Rooks);
 	b->Pieces[4]				= &(b->Queens);
 	b->Pieces[5]				= &(b->Kings);	
+	b->Pieces[6]				= &(b->Empty);
+
 
 	b->Turn					= 0;
 	b->Enpass					= 100;
@@ -366,25 +386,159 @@ BitBoard ** generateMoveDatabaseBishop(Board * board){
 }
 
 
+unsigned long long global_foo = 0;
+
+void foo(Board * board, int turn, int depth){
+	
+	if (depth == 0)
+		return;
+
+	int size = 0;
+	Move ** moves = getAllMoves(board,&size,turn);
+	
+	if (size == 0)
+		return;
+		
+	int i;
+	for(i = 0; i < size; i++){
+		ApplyMove(board,moves[i],turn);
+		
+		global_foo += 1;
+		if(global_foo % 1000000 == 0)
+			printf("\r#%llu",global_foo/1000000);
+			
+		foo(board,!turn,depth-1);
+		RevertMove(board,moves[i],turn);
+		free(moves[i]);
+	}
+	/*
+	int i;
+	for(i = 0; i < size; i++){
+		BitBoard white = board->WhiteAll;
+		BitBoard black = board->BlackAll;
+		BitBoard pawns = board->Pawns;
+		BitBoard bishops = board->Bishops;
+		BitBoard knights = board->Knights;
+		BitBoard rooks = board->Rooks;
+		BitBoard queens = board->Queens;
+		BitBoard kings = board->Kings;
+		
+		ApplyMove(board,moves[i],turn);
+		
+		global_foo += 1;
+		if(global_foo % 100000 == 0)
+			printf("\r#%llu",global_foo);
+			
+		int flag = countSetBits(board->Kings & board->WhiteAll) != 1 ||
+			countSetBits(board->Kings & board->BlackAll) != 1;
+		
+		if (flag){
+			printf("Flag hit\n");
+			printBitBoard(board->WhiteAll);
+			printBitBoard(board->Kings);
+		}
+		
+		foo(board,!turn,depth-1);
+		RevertMove(board,moves[i],turn);
+		
+		if (white != board->WhiteAll || black != board->BlackAll ||
+			pawns != board->Pawns || bishops != board->Bishops ||
+			knights != board->Knights || rooks != board->Rooks ||
+			queens != board->Queens || kings != board->Kings || flag){
+			
+			printf("Move info \n");
+			printf("Start = %d\n",moves[i]->Start);
+			printf("End = %d\n",moves[i]->End);
+			printf("MovedType = %d\n",moves[i]->MovedType);
+			printf("CapturedType = %d\n",moves[i]->CapturedType);
+			printf("Type = %d\n",moves[i]->Type);
+			
+			if (flag){
+			printf("Flag hit\n");
+			printBitBoard(board->WhiteAll);
+			printBitBoard(board->Kings);
+		}
+			
+			if(white != board->WhiteAll){
+				printf("WhiteAll is wrong\n");
+				printBitBoard(white);
+				printBitBoard(board->WhiteAll);
+			}
+			
+			if(black != board->BlackAll){
+				printf("BlackAll is wrong\n");
+				printBitBoard(black);
+				printBitBoard(board->BlackAll);
+			}
+			
+			if(pawns != board->Pawns){
+				printf("Pawns is wrong\n");
+				printBitBoard(pawns);
+				printBitBoard(board->Pawns);
+			}
+			
+			if(bishops != board->Bishops){
+				printf("Bishops is wrong\n");
+				printBitBoard(bishops);
+				printBitBoard(board->Bishops);
+			}
+			
+			if(knights != board->Knights){
+				printf("Knights is wrong\n");
+				printBitBoard(knights);
+				printBitBoard(board->Knights);
+			}
+			
+			if(rooks != board->Rooks){
+				printf("Rooks is wrong\n");
+				printBitBoard(rooks);
+				printBitBoard(board->Rooks);
+			}
+			
+			if(queens != board->Queens){
+				printf("Queens is wrong\n");
+				printBitBoard(queens);
+				printBitBoard(board->Queens);
+			}
+			
+			if(kings != board->Kings){
+				printf("Kings is wrong\n");
+				printBitBoard(kings);
+				printBitBoard(board->Kings);
+			}
+			
+			exit(1);
+		}
+		
+		free(moves[i]);
+	}*/
+	
+	free(moves);	
+}
+
 int main(){
 	Board * board = BoardInit();
 	int index = 0;
 	
-	
 	time_t start = time(NULL);
+	
+	foo(board,WHITE,7);
+	printf("\n#%llu",global_foo);
+	
+	printf("%d %d",startingBlackALL == board->BlackAll, startingWhiteAll == board->WhiteAll);
+	
+	printf("\n\nSeconds Taken: %d \n\n",(int)(time(NULL)-start));
+	return;
+	
 	
 	Move ** moves = getAllMoves(board,&index,WHITE);
 	
-	printf("%d",getLSB((board->BlackAll & board->Kings)));
-	return;
 	
 	int i;
 	for(i = 0; i < index; i++)
 		printf("Move #%d: %d, %d\n",i,moves[i]->Start,moves[i]->End);
 	
-	printf("Seconds Taken: %d \n\n",(int)(time(NULL)-start));
 	
-	
-
 	
 }
+

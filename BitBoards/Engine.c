@@ -17,11 +17,10 @@ Move ** getAllMoves(Board * board, int * index, int turn){
 	getBishopMoves(board, moves, index, turn);
 	getPawnMoves(board, moves, index, turn);
 	
-	return moves;
+	return validateCheck(board,index,moves,turn);
 }
 
 void getKnightMoves(Board * board, Move ** moves, int * index, int turn){
-
 	BitBoard friendly, enemy;
 	if (turn == WHITE){
 		friendly = board->WhiteAll;
@@ -40,11 +39,8 @@ void getKnightMoves(Board * board, Move ** moves, int * index, int turn){
 		while (attackable != 0){
 			int lsb = getLSB(attackable);
 			Move * move = malloc(sizeof(Move));
-			move->Turn = turn;
 			move->Start = bit;
 			move->End = lsb;
-			move->FriendlyBefore = friendly;
-			move->EnemyBefore = enemy;
 			move->CapturedType = getSquare(lsb,board);
 			move->MovedType = KNIGHT;
 			move->Type = NormalMove;
@@ -57,7 +53,6 @@ void getKnightMoves(Board * board, Move ** moves, int * index, int turn){
 }
 
 void getKingMoves(Board * board, Move ** moves, int * index, int turn){
-	
 	BitBoard friendly, enemy;
 	if (turn == WHITE){
 		friendly = board->WhiteAll;
@@ -68,17 +63,16 @@ void getKingMoves(Board * board, Move ** moves, int * index, int turn){
 		enemy = board->WhiteAll;
 	}
 	
+	if (board->Kings & friendly == 0)
+		return;
 	int bit = getLSB((board->Kings & friendly));
 	BitBoard attackable = board->KingMap[bit] & ~friendly;
 	
 	while (attackable != 0){
 		int lsb = getLSB(attackable);
 		Move * move = malloc(sizeof(Move));
-		move->Turn = turn;
 		move->Start = bit;
 		move->End = lsb;
-		move->FriendlyBefore = friendly;
-		move->EnemyBefore = enemy;
 		move->CapturedType = getSquare(lsb,board);
 		move->MovedType = KING;
 		
@@ -95,7 +89,25 @@ void getKingMoves(Board * board, Move ** moves, int * index, int turn){
 		
 		moves[(*index)++] = move;
 		attackable ^= 1ull << lsb;
-	}	
+	}
+	
+	
+	if (board->Castled[turn] == 0){
+		if (board->ValidCastles[turn][0] == 1){
+			if ((board->WhiteAll | board->BlackAll) & LeftCastleBoards[turn] == 0){
+				Move * move = malloc(sizeof(Move));				
+				move->Type = LeftCastleMove;
+				moves[(*index)++] = move;
+			}
+		}
+		if (board->ValidCastles[turn][1] == 1){
+			if ((board->WhiteAll | board->BlackAll) & RightCastleBoards[turn] == 0){
+				Move * move = malloc(sizeof(Move));				
+				move->Type = RightCastleMove;
+				moves[(*index)++] = move;
+			}
+		}
+	}
 }
 
 void getPawnMoves(Board * board, Move ** moves, int * index, int turn){
@@ -129,7 +141,7 @@ void getPawnMoves(Board * board, Move ** moves, int * index, int turn){
 	if (turn == WHITE){
 		oneMove = (pawns << 8) & ~(friendly | enemy);
 		onePromote = oneMove & RANK_8;
-		oneMove &= ~RANK_8;
+		oneMove &= (~RANK_8);
 		
 		twoMove = ((oneMove & RANK_3) << 8) & ~(friendly | enemy);
 		
@@ -145,7 +157,7 @@ void getPawnMoves(Board * board, Move ** moves, int * index, int turn){
 	else if (turn == BLACK){
 		oneMove = (pawns >> 8) & ~(friendly | enemy);
 		onePromote = oneMove & RANK_1;
-		oneMove &= ~RANK_1;
+		oneMove &= (~RANK_1);
 		
 		twoMove = ((oneMove & RANK_6) >> 8) & ~(friendly | enemy);
 		
@@ -161,43 +173,34 @@ void getPawnMoves(Board * board, Move ** moves, int * index, int turn){
 	while (oneMove != 0){
 		int lsb = getLSB(oneMove);
 		Move * move = malloc(sizeof(Move));
-		move->Turn = turn;
 		move->Start = lsb - forwardShift;
 		move->End = lsb;
-		move->FriendlyBefore = friendly;
-		move->EnemyBefore = enemy;
 		move->CapturedType = EMPTY;
 		move->MovedType = PAWN;
 		move->Type = NormalMove;
 		moves[(*index)++] = move;
 		oneMove ^= 1ull << lsb;
 	}
-	
+	/*
 	while (onePromote != 0){
 		int lsb = getLSB(onePromote);
 		for(i = 0; i < 4; i++){
 			Move * move = malloc(sizeof(Move));
-			move->Turn = turn;
 			move->Start = lsb - forwardShift;
 			move->End = lsb;
-			move->FriendlyBefore = friendly;
-			move->EnemyBefore = enemy;
 			move->CapturedType = EMPTY;
 			move->MovedType = PAWN;
 			move->Type = types[i];
 			moves[(*index)++] = move;
 		}
 		onePromote ^= 1ull << lsb;
-	}
+	}*/
 	
 	while (twoMove != 0){
 		int lsb = getLSB(twoMove);
 		Move * move = malloc(sizeof(Move));
-		move->Turn = turn;
 		move->Start = lsb - (2 * forwardShift);
 		move->End = lsb;
-		move->FriendlyBefore = friendly;
-		move->EnemyBefore = enemy;
 		move->CapturedType = EMPTY;
 		move->MovedType = PAWN;
 		move->Type = PawnDoublePushMove;
@@ -208,66 +211,54 @@ void getPawnMoves(Board * board, Move ** moves, int * index, int turn){
 	while (leftMove != 0){
 		int lsb = getLSB(leftMove);
 		Move * move = malloc(sizeof(Move));
-		move->Turn = turn;
 		move->Start = lsb - leftShift;
 		move->End = lsb;
-		move->FriendlyBefore = friendly;
-		move->EnemyBefore = enemy;
 		move->CapturedType = getSquare(lsb,board);
 		move->MovedType = PAWN;
 		move->Type = NormalMove;
 		moves[(*index)++] = move;
 		leftMove ^= 1ull << lsb;
 	}
-	
+	/*
 	while (leftPromote != 0){
 		int lsb = getLSB(leftPromote);
 		for(i = 0; i < 4; i++){
 			Move * move = malloc(sizeof(Move));
-			move->Turn = turn;
 			move->Start = lsb - forwardShift;
 			move->End = lsb;
-			move->FriendlyBefore = friendly;
-			move->EnemyBefore = enemy;
 			move->CapturedType = EMPTY;
 			move->MovedType = PAWN;
 			move->Type = types[i];
 			moves[(*index)++] = move;
 		}
 		leftPromote ^= 1ull << lsb;
-	}
+	}*/
 	
 	while (rightMove != 0){
 		int lsb = getLSB(rightMove);
 		Move * move = malloc(sizeof(Move));
-		move->Turn = turn;
 		move->Start = lsb - rightShift;
 		move->End = lsb;
-		move->FriendlyBefore = friendly;
-		move->EnemyBefore = enemy;
 		move->CapturedType = getSquare(lsb,board);
 		move->MovedType = PAWN;
 		move->Type = NormalMove;
 		moves[(*index)++] = move;
 		rightMove ^= 1ull << lsb;
 	}
-	
+	/*
 	while (rightPromote != 0){
 		int lsb = getLSB(rightPromote);
 		for(i = 0; i < 4; i++){
 			Move * move = malloc(sizeof(Move));
-			move->Turn = turn;
 			move->Start = lsb - forwardShift;
 			move->End = lsb;
-			move->FriendlyBefore = friendly;
-			move->EnemyBefore = enemy;
 			move->CapturedType = EMPTY;
 			move->MovedType = PAWN;
 			move->Type = types[i];
 			moves[(*index)++] = move;
 		}
 		rightPromote ^= 1ull << lsb;
-	}
+	}*/
 }
 
 void getRookMoves(Board * board, Move ** moves, int * index, int turn){
@@ -293,11 +284,8 @@ void getRookMoves(Board * board, Move ** moves, int * index, int turn){
 		while (attackable != 0){
 			int lsb = getLSB(attackable);
 			Move * move = malloc(sizeof(Move));
-			move->Turn = turn;
 			move->Start = bit;
 			move->End = lsb;
-			move->FriendlyBefore = friendly;
-			move->EnemyBefore = enemy;
 			move->CapturedType = getSquare(lsb,board);
 			move->MovedType = ROOK;
 			
@@ -339,11 +327,8 @@ void getBishopMoves(Board * board, Move ** moves, int * index, int turn){
 		while (attackable != 0){
 			int lsb = getLSB(attackable);
 			Move * move = malloc(sizeof(Move));
-			move->Turn = turn;
 			move->Start = bit;
 			move->End = lsb;
-			move->FriendlyBefore = friendly;
-			move->EnemyBefore = enemy;
 			move->CapturedType = getSquare(lsb,board);
 			move->MovedType = BISHOP;
 			move->Type = NormalMove;
@@ -377,11 +362,8 @@ void getQueenMoves(Board * board, Move ** moves, int * index, int turn){
 		while (attackable != 0){
 			int lsb = getLSB(attackable);
 			Move * move = malloc(sizeof(Move));
-			move->Turn = turn;
 			move->Start = bit;
 			move->End = lsb;
-			move->FriendlyBefore = friendly;
-			move->EnemyBefore = enemy;
 			move->CapturedType = getSquare(lsb,board);
 			move->MovedType = QUEEN;
 			move->Type = NormalMove;
@@ -396,11 +378,8 @@ void getQueenMoves(Board * board, Move ** moves, int * index, int turn){
 		while (attackable != 0){
 			int lsb = getLSB(attackable);
 			Move * move = malloc(sizeof(Move));
-			move->Turn = turn;
 			move->Start = bit;
 			move->End = lsb;
-			move->FriendlyBefore = friendly;
-			move->EnemyBefore = enemy;
 			move->CapturedType = getSquare(lsb,board);
 			move->MovedType = QUEEN;
 			move->Type = NormalMove;
@@ -411,3 +390,102 @@ void getQueenMoves(Board * board, Move ** moves, int * index, int turn){
 		friendlyQueens ^= 1ull << bit;
 	}
 }
+
+Move ** validateCheck(Board * board, int * index, Move ** moves, int turn){
+	
+	Move ** fixed = malloc(sizeof(Move *) * 256);
+	int size = *index;
+	
+	*index = 0;
+	
+	int i;
+	for(i = 0; i < size; i++){
+		ApplyMove(board,moves[i],turn);
+		int valid = validateMove(board,turn);
+		RevertMove(board,moves[i],turn);
+		
+		if(valid == 1)
+			fixed[(*index)++] = moves[i];
+		else
+			free(moves[i]);
+		
+	}
+	
+	free(moves);
+	return fixed;
+}
+
+int validateMove(Board * board, int turn){
+	
+	/*
+	Move ** moves = malloc(sizeof(Move * ) * 256);
+	int size = 0;
+	int * index = &size;
+	//getKingMoves(board, moves, index, !turn);
+	//getQueenMoves(board, moves, index, !turn);
+	//getRookMoves(board, moves, index, !turn);
+	//getKnightMoves(board, moves, index, !turn);
+	//getBishopMoves(board, moves, index, !turn);
+	//getPawnMoves(board, moves, index, !turn);
+	
+	int i,flag=1;
+	for(i = 0; i < size; i++){
+		if (moves[i]->CapturedType == KING)
+			flag = 0;
+		
+		free(moves[i]);
+	}
+	
+	free(moves);
+	
+	if (flag == 0)
+		return flag;*/
+	
+
+	BitBoard friendly = *(board->Colors[turn]);
+	BitBoard enemy = *(board->Colors[!turn]);
+	BitBoard king = friendly & board->Kings;
+	BitBoard bbBlockers, attackable;
+	
+	int dbIndex;
+	int kingSquare = getLSB(king);
+	
+	// Pawn Check
+	if (turn == WHITE){
+		if ((((king << 7) & ~FILE_A) & (enemy & board->Pawns)) != 0)
+			return 0;
+		if ((((king << 9) & ~FILE_H) & (enemy & board->Pawns)) != 0)
+			return 0;
+	}else if (turn == BLACK){
+		if ((((king >> 7) & ~FILE_H) & (enemy & board->Pawns)) != 0)
+			return 0;
+		if ((((king >> 9) & ~FILE_A) & (enemy & board->Pawns)) != 0)
+			return 0;
+	}
+	
+	//Bishop Check
+	bbBlockers = (board->WhiteAll | board->BlackAll) & board->OccupancyMaskBishop[kingSquare];
+	dbIndex = (int)((bbBlockers * board->MagicNumberBishop[kingSquare]) >> board->MagicShiftsBishop[kingSquare]);
+	attackable = board->MoveDatabaseBishop[kingSquare][dbIndex] & ~friendly;
+	if (((board->Bishops | board->Queens) & enemy & attackable) != 0)
+		return 0;
+	
+	// Knight Check
+	if (((board->KnightMap[kingSquare]) & (enemy & board->Knights)) != 0)
+		return 0;
+	
+	// Rook Check
+	bbBlockers = (board->WhiteAll | board->BlackAll) & board->OccupancyMaskRook[kingSquare];
+	dbIndex = (int)((bbBlockers * board->MagicNumberRook[kingSquare]) >> board->MagicShiftsRook[kingSquare]);
+	attackable = board->MoveDatabaseRook[kingSquare][dbIndex];
+	if (((board->Rooks | board->Queens) & enemy & attackable) != 0)
+		return 0;
+	
+	// King Check
+	if (((board->KingMap[kingSquare]) & (enemy & board->Kings)) != 0)
+		return 0;
+	
+		
+	return 1;
+}
+
