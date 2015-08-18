@@ -551,14 +551,7 @@ int main(){
 	free(board);
 	
 	return;
-	
-	
-	Move ** moves = getAllMoves(board,&index,WHITE);
-	
-	
-	int i;
-	for(i = 0; i < index; i++)
-		printf("Move #%d: %d, %d\n",i,moves[i]->Start,moves[i]->End);
+
 	
 	
 	
