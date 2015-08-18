@@ -418,20 +418,20 @@ void foo(Board * board, int turn, int depth){
 	
 	if (size == 0)
 		return;
-		
+	/*
 	int i;
 	for(i = 0; i < size; i++){
 		ApplyMove(board,moves[i],turn);
 		
 		global_foo += 1;
 		if(global_foo % 1000000 == 0)
-			printf("\r#%llu",global_foo/1000000);
+			printf("\r#%llu million",global_foo/1000000);
 			
 		foo(board,!turn,depth-1);
 		RevertMove(board,moves[i],turn);
 		free(moves[i]);
-	}
-	/*
+	}*/
+	
 	int i;
 	for(i = 0; i < size; i++){
 		BitBoard white = board->WhiteAll;
@@ -531,7 +531,7 @@ void foo(Board * board, int turn, int depth){
 		}
 		
 		free(moves[i]);
-	}*/
+	}
 	
 	free(moves);	
 }
@@ -543,7 +543,7 @@ int main(){
 	
 	time_t start = time(NULL);
 	
-	foo(board,WHITE,4);
+	foo(board,WHITE,10);
 	printf("\n#%llu",global_foo);
 	
 	printf("%d %d",startingBlackALL == board->BlackAll, startingWhiteAll == board->WhiteAll);

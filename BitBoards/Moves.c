@@ -56,8 +56,6 @@ void ApplyNormalMove(Board * board, Move * move, int turn){
 	*captured ^= (1ull << move->End);
 	*moved |= (1ull << move->End);
 	*moved ^= (1ull << move->Start);
-	
-	
 }
 
 void RevertNormalMove(Board * board, Move * move, int turn){
