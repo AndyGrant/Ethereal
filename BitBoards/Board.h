@@ -26,6 +26,9 @@ extern BitBoard startingKnights;
 extern BitBoard startingBishops;
 extern BitBoard startingPawns;
 
+extern BitBoard LeftCastleBoards[2];
+extern BitBoard RightCastleBoards[2];
+
 // BitBoards with set bits in Ranks
 extern BitBoard RANK_8;
 extern BitBoard RANK_7;

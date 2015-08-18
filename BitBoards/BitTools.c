@@ -27,7 +27,7 @@ void printBitBoard(BitBoard b){
 
 int getSquare(int sq, Board * board){
 	BitBoard mask = 1ull << sq;
-	if (!(mask & (board->WhiteAll | board->BlackAll)))
+	if ((mask & (board->WhiteAll | board->BlackAll)) == 0)
 		return EMPTY;
 	if (mask & board->Pawns)
 		return PAWN;
@@ -50,7 +50,7 @@ int countSetBits(BitBoard b){
 	while(b){
 		int lsb = getLSB(b);
 		count += 1;
-		b ^= 1ull << lsb;
+		b ^= (1ull << lsb);
 	}
 	return count;
 }
