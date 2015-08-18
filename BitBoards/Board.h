@@ -50,6 +50,7 @@ extern BitBoard FILE_H;
 
 // Functions of Board
 Board * BoardInit();
+void BoardDeInit(Board * board);
 
 // Build Maps
 BitBoard * generateKingMap();

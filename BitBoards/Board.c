@@ -170,6 +170,26 @@ Board * BoardInit(){
 	return b;
 }
 
+void BoardDeInit(Board * board){
+	int i;
+	free(board->KnightMap);
+	free(board->KingMap);
+	
+	for(i = 0; i < 64; i++){
+		free(board->MoveDatabaseRook[i]);
+		free(board->MoveDatabaseBishop[i]);
+		free(board->OccupancyVariationsRook[i]);
+		free(board->OccupancyVariationsBishop[i]);
+	}
+	free(board->OccupancyMaskRook);
+	free(board->OccupancyMaskBishop);
+	free(board->OccupancyVariationsRook);
+	free(board->OccupancyVariationsBishop);
+	free(board->MoveDatabaseRook);
+	free(board->MoveDatabaseBishop);
+	free(board);
+}
+
 BitBoard * generateKingMap(){
 	BitBoard * bb = calloc(64,sizeof(BitBoard));
 	int i; BitBoard z = 1;
@@ -518,6 +538,7 @@ void foo(Board * board, int turn, int depth){
 
 int main(){
 	Board * board = BoardInit();
+	
 	int index = 0;
 	
 	time_t start = time(NULL);
@@ -529,24 +550,7 @@ int main(){
 	
 	printf("\n\nSeconds Taken: %d \n\n",(int)(time(NULL)-start));
 	
-	
-	int i;
-	free(board->KnightMap);
-	free(board->KingMap);
-	
-	for(i = 0; i < 64; i++){
-		free(board->MoveDatabaseRook[i]);
-		free(board->MoveDatabaseBishop[i]);
-		free(board->OccupancyVariationsRook[i]);
-		free(board->OccupancyVariationsBishop[i]);
-	}
-	free(board->OccupancyMaskRook);
-	free(board->OccupancyMaskBishop);
-	free(board->OccupancyVariationsRook);
-	free(board->OccupancyVariationsBishop);
-	free(board->MoveDatabaseRook);
-	free(board->MoveDatabaseBishop);
-	free(board);
+	BoardDeInit(board);
 	
 	return;
 
