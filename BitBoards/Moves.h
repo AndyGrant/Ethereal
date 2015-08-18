@@ -1,9 +1,9 @@
 #ifndef Moves
 #define Moves
 
-#include "board.h"
-#include "types.h"
-#include "engine.h"
+#include "Board.h"
+#include "Types.h"
+#include "Engine.h"
 
 extern int NormalMove;
 extern int PawnDoublePushMove;
