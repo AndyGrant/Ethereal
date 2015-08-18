@@ -160,12 +160,14 @@ Board * BoardInit(){
 	b->MagicNumberRook			= magicNumberRook;
 	b->OccupancyVariationsRook	= generateOccupancyVariationRook(b->OccupancyMaskRook);
 	b->MoveDatabaseRook			= generateMoveDatabaseRook(b);
+	free(b->OccupancyVariationsRook);
 	
 	b->OccupancyMaskBishop 		= generateOccupancyMaskBishop();
 	b->MagicShiftsBishop 		= MagicNumberShiftsBishop;
 	b->MagicNumberBishop		= magicNumberBishop;
 	b->OccupancyVariationsBishop	= generateOccupancyVariationBishop(b->OccupancyMaskBishop);
 	b->MoveDatabaseBishop		= generateMoveDatabaseBishop(b);
+	free(b->OccupancyVariationsBishop);
 	
 	return b;
 }
@@ -530,12 +532,20 @@ int main(){
 	printf("\n\nSeconds Taken: %d \n\n",(int)(time(NULL)-start));
 	
 	
+	int i;
 	free(board->KnightMap);
 	free(board->KingMap);
+	
+	for(i = 0; i < 64; i++){
+		free(board->OccupancyMaskRook[i]);
+		free(board->OccupancyMaskBishop[i]);
+		free(board->MoveDatabaseRook[i]);
+		free(board->MoveDatabaseBishop[i]);
+	}
 	free(board->OccupancyMaskRook);
 	free(board->OccupancyMaskBishop);
-	free(board->OccupancyVariationsRook);
-	free(board->OccupancyVariationsBishop);
+	//free(board->OccupancyVariationsRook);
+	//free(board->OccupancyVariationsBishop);
 	free(board->MoveDatabaseRook);
 	free(board->MoveDatabaseBishop);
 	free(board);
