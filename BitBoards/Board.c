@@ -522,7 +522,7 @@ int main(){
 	
 	time_t start = time(NULL);
 	
-	foo(board,WHITE,7);
+	foo(board,WHITE,4);
 	printf("\n#%llu",global_foo);
 	
 	printf("%d %d",startingBlackALL == board->BlackAll, startingWhiteAll == board->WhiteAll);
