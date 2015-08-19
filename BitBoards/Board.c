@@ -119,26 +119,16 @@ Board * BoardInit(){
 
 	Board * b = malloc(sizeof(Board));
 	
-	b->WhiteAll 				= startingWhiteAll;
-	b->BlackAll				= startingBlackALL;
-	b->Kings 					= startingKings;
-	b->Queens					= startingQueens;
-	b->Rooks					= startingRooks;
-	b->Knights				= startingKnights;
-	b->Bishops				= startingBishops;
-	b->Pawns					= startingPawns;
-	b->Empty 					= 1ull;
+	b->Colors[0]				= (startingWhiteAll);
+	b->Colors[1]				= (startingBlackALL);
 	
-	b->Colors[0]				= &(b->WhiteAll);
-	b->Colors[1]				= &(b->BlackAll);
-	
-	b->Pieces[0]				= &(b->Pawns);
-	b->Pieces[1]				= &(b->Bishops);
-	b->Pieces[2]				= &(b->Knights);
-	b->Pieces[3]				= &(b->Rooks);
-	b->Pieces[4]				= &(b->Queens);
-	b->Pieces[5]				= &(b->Kings);	
-	b->Pieces[6]				= &(b->Empty);
+	b->Pieces[0]				= (startingPawns);
+	b->Pieces[1]				= (startingBishops);
+	b->Pieces[2]				= (startingKnights);
+	b->Pieces[3]				= (startingRooks);
+	b->Pieces[4]				= (startingQueens);
+	b->Pieces[5]				= (startingKings);	
+	b->Pieces[6]				= (1ull);
 
 
 	b->Turn					= 0;
@@ -418,7 +408,7 @@ void foo(Board * board, int turn, int depth){
 	
 	if (size == 0)
 		return;
-	/*
+	
 	int i;
 	for(i = 0; i < size; i++){
 		ApplyMove(board,moves[i],turn);
@@ -430,8 +420,8 @@ void foo(Board * board, int turn, int depth){
 		foo(board,!turn,depth-1);
 		RevertMove(board,moves[i],turn);
 		free(moves[i]);
-	}*/
-	
+	}
+	/*
 	int i;
 	for(i = 0; i < size; i++){
 		BitBoard white = board->WhiteAll;
@@ -531,7 +521,7 @@ void foo(Board * board, int turn, int depth){
 		}
 		
 		free(moves[i]);
-	}
+	}*/
 	
 	free(moves);	
 }
@@ -543,10 +533,10 @@ int main(){
 	
 	time_t start = time(NULL);
 	
-	foo(board,WHITE,10);
+	foo(board,WHITE,6);
 	printf("\n#%llu",global_foo);
 	
-	printf("%d %d",startingBlackALL == board->BlackAll, startingWhiteAll == board->WhiteAll);
+	//printf("%d %d",startingBlackALL == board->BlackAll, startingWhiteAll == board->WhiteAll);
 	
 	printf("\n\nSeconds Taken: %d \n\n",(int)(time(NULL)-start));
 	

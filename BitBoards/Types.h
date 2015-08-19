@@ -4,17 +4,9 @@
 typedef unsigned long long BitBoard;
 
 typedef struct Board {
-	BitBoard WhiteAll;
-	BitBoard BlackAll;
-	BitBoard Kings;
-	BitBoard Queens;
-	BitBoard Rooks;
-	BitBoard Knights;
-	BitBoard Bishops;
-	BitBoard Pawns;
-	BitBoard Empty;
-	BitBoard * Colors[2];
-	BitBoard * Pieces[7];
+
+	BitBoard Colors[2];
+	BitBoard Pieces[7];
 	
 	int Turn;
 	int Enpass;
