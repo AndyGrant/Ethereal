@@ -21,17 +21,10 @@ Move ** getAllMoves(Board * board, int * index, int turn){
 }
 
 void getKnightMoves(Board * board, Move ** moves, int * index, int turn){
-	BitBoard friendly, enemy;
-	if (turn == WHITE){
-		friendly = board->WhiteAll;
-		enemy = board->BlackAll;
-	}
-	else if (turn == BLACK){
-		friendly = board->BlackAll;
-		enemy = board->WhiteAll;
-	}
+	BitBoard friendly = board->Colors[turn];
+	BitBoard enemy = board->Colors[!turn];
 	
-	BitBoard friendlyKnights = board->Knights & friendly;
+	BitBoard friendlyKnights = board->Pieces[KNIGHT] & friendly;
 	while(friendlyKnights != 0){
 		int bit = getLSB(friendlyKnights);
 		BitBoard attackable = board->KnightMap[bit] & ~friendly;
@@ -53,19 +46,12 @@ void getKnightMoves(Board * board, Move ** moves, int * index, int turn){
 }
 
 void getKingMoves(Board * board, Move ** moves, int * index, int turn){
-	BitBoard friendly, enemy;
-	if (turn == WHITE){
-		friendly = board->WhiteAll;
-		enemy = board->BlackAll;
-	}
-	else if (turn == BLACK){
-		friendly = board->BlackAll;
-		enemy = board->WhiteAll;
-	}
+	BitBoard friendly = board->Colors[turn];
+	BitBoard enemy = board->Colors[!turn];
 	
-	if (board->Kings & friendly == 0)
+	if (board->Pieces[KING] & friendly == 0)
 		return;
-	int bit = getLSB((board->Kings & friendly));
+	int bit = getLSB((board->Pieces[KING] & friendly));
 	BitBoard attackable = board->KingMap[bit] & ~friendly;
 	
 	while (attackable != 0){
@@ -94,14 +80,14 @@ void getKingMoves(Board * board, Move ** moves, int * index, int turn){
 	
 	if (board->Castled[turn] == 0){
 		if (board->ValidCastles[turn][0] == 1){
-			if ((board->WhiteAll | board->BlackAll) & LeftCastleBoards[turn] == 0){
+			if ((board->Colors[0] | board->Colors[1]) & LeftCastleBoards[turn] == 0){
 				Move * move = malloc(sizeof(Move));				
 				move->Type = LeftCastleMove;
 				moves[(*index)++] = move;
 			}
 		}
 		if (board->ValidCastles[turn][1] == 1){
-			if ((board->WhiteAll | board->BlackAll) & RightCastleBoards[turn] == 0){
+			if ((board->Colors[0] | board->Colors[1]) & RightCastleBoards[turn] == 0){
 				Move * move = malloc(sizeof(Move));				
 				move->Type = RightCastleMove;
 				moves[(*index)++] = move;
@@ -113,26 +99,23 @@ void getKingMoves(Board * board, Move ** moves, int * index, int turn){
 void getPawnMoves(Board * board, Move ** moves, int * index, int turn){
 
 	int i, forwardShift, leftShift, rightShift;
-	BitBoard friendly, enemy;
+	BitBoard friendly = board->Colors[turn];
+	BitBoard enemy = board->Colors[!turn];
 	BitBoard pawns, oneMove, onePromote, twoMove;
 	BitBoard leftMove, leftPromote, rightMove, rightPromote;
 	
 	if (turn == WHITE){
-		friendly = board->WhiteAll;
-		enemy = board->BlackAll;
 		forwardShift = 8;
 		leftShift = 7;
 		rightShift = 9;
 	}
 	else if (turn == BLACK){
-		friendly = board->BlackAll;
-		enemy = board->WhiteAll;
 		forwardShift = -8;
 		leftShift = -7;
 		rightShift = -9;
 	}
 	
-	pawns = board->Pawns & friendly;
+	pawns = board->Pieces[PAWN] & friendly;
 	int types[4] = {
 		PromoteBishopMove, PromoteKnightMove,
 		PromoteRookMove, PromoteQueenMove
@@ -263,21 +246,14 @@ void getPawnMoves(Board * board, Move ** moves, int * index, int turn){
 
 void getRookMoves(Board * board, Move ** moves, int * index, int turn){
 
-	BitBoard friendly, enemy;
-	if (turn == WHITE){
-		friendly = board->WhiteAll;
-		enemy = board->BlackAll;
-	}
-	else if (turn == BLACK){
-		friendly = board->BlackAll;
-		enemy = board->WhiteAll;
-	}
+	BitBoard friendly = board->Colors[turn];
+	BitBoard enemy = board->Colors[!turn];
 	
-	BitBoard friendlyRooks = board->Rooks & friendly;
+	BitBoard friendlyRooks = board->Pieces[ROOK] & friendly;
 	while(friendlyRooks != 0){
 		int bit = getLSB(friendlyRooks);
 		
-		BitBoard bbBlockers = (board->WhiteAll | board->BlackAll) & board->OccupancyMaskRook[bit];
+		BitBoard bbBlockers = (board->Colors[0] | board->Colors[1]) & board->OccupancyMaskRook[bit];
 		int dbIndex = (int)((bbBlockers * board->MagicNumberRook[bit]) >> board->MagicShiftsRook[bit]);
 		BitBoard attackable = board->MoveDatabaseRook[bit][dbIndex] & ~friendly;
 		
@@ -306,21 +282,14 @@ void getRookMoves(Board * board, Move ** moves, int * index, int turn){
 
 void getBishopMoves(Board * board, Move ** moves, int * index, int turn){
 
-	BitBoard friendly, enemy;
-	if (turn == WHITE){
-		friendly = board->WhiteAll;
-		enemy = board->BlackAll;
-	}
-	else if (turn == BLACK){
-		friendly = board->BlackAll;
-		enemy = board->WhiteAll;
-	}
+	BitBoard friendly = board->Colors[turn];
+	BitBoard enemy = board->Colors[!turn];
 	
-	BitBoard friendlyBishops = board->Bishops & friendly;
+	BitBoard friendlyBishops = board->Pieces[BISHOP] & friendly;
 	while(friendlyBishops != 0){
 		int bit = getLSB(friendlyBishops);
 		
-		BitBoard bbBlockers = (board->WhiteAll | board->BlackAll) & board->OccupancyMaskBishop[bit];
+		BitBoard bbBlockers = (board->Colors[0] | board->Colors[1]) & board->OccupancyMaskBishop[bit];
 		int dbIndex = (int)((bbBlockers * board->MagicNumberBishop[bit]) >> board->MagicShiftsBishop[bit]);
 		BitBoard attackable = board->MoveDatabaseBishop[bit][dbIndex] & ~friendly;
 		
@@ -341,21 +310,15 @@ void getBishopMoves(Board * board, Move ** moves, int * index, int turn){
 }
 
 void getQueenMoves(Board * board, Move ** moves, int * index, int turn){
-	BitBoard friendly, enemy;
-	if (turn == WHITE){
-		friendly = board->WhiteAll;
-		enemy = board->BlackAll;
-	}
-	else if (turn == BLACK){
-		friendly = board->BlackAll;
-		enemy = board->WhiteAll;
-	}
+
+	BitBoard friendly = board->Colors[turn];
+	BitBoard enemy = board->Colors[!turn];
 	
-	BitBoard friendlyQueens = board->Queens & friendly;
+	BitBoard friendlyQueens = board->Pieces[QUEEN] & friendly;
 	while(friendlyQueens != 0){
 		int bit = getLSB(friendlyQueens);
 		
-		BitBoard bbBlockers = (board->WhiteAll | board->BlackAll) & board->OccupancyMaskRook[bit];
+		BitBoard bbBlockers = (board->Colors[0] | board->Colors[1]) & board->OccupancyMaskRook[bit];
 		int dbIndex = (int)((bbBlockers * board->MagicNumberRook[bit]) >> board->MagicShiftsRook[bit]);
 		BitBoard attackable = board->MoveDatabaseRook[bit][dbIndex] & ~friendly;
 		
@@ -371,7 +334,7 @@ void getQueenMoves(Board * board, Move ** moves, int * index, int turn){
 			attackable ^= 1ull << lsb;
 		}
 		
-		bbBlockers = (board->WhiteAll | board->BlackAll) & board->OccupancyMaskBishop[bit];
+		bbBlockers = (board->Colors[0] | board->Colors[1]) & board->OccupancyMaskBishop[bit];
 		dbIndex = (int)((bbBlockers * board->MagicNumberBishop[bit]) >> board->MagicShiftsBishop[bit]);
 		attackable = board->MoveDatabaseBishop[bit][dbIndex] & ~friendly;
 		
@@ -416,10 +379,10 @@ Move ** validateCheck(Board * board, int * index, Move ** moves, int turn){
 }
 
 int validateMove(Board * board, int turn){
-	BitBoard friendly = *(board->Colors[turn]);
-	BitBoard enemy = *(board->Colors[!turn]);
+	BitBoard friendly = board->Colors[turn];
+	BitBoard enemy = board->Colors[!turn];
 	BitBoard all = friendly | enemy;
-	BitBoard king = friendly & board->Kings;
+	BitBoard king = friendly & board->Pieces[KING];
 	BitBoard bbBlockers, attackable;
 	
 	int dbIndex;
@@ -429,22 +392,22 @@ int validateMove(Board * board, int turn){
 	bbBlockers = all & board->OccupancyMaskBishop[kingSquare];
 	dbIndex = (int)((bbBlockers * board->MagicNumberBishop[kingSquare]) >> board->MagicShiftsBishop[kingSquare]);
 	attackable = board->MoveDatabaseBishop[kingSquare][dbIndex] & ~friendly;
-	if (((board->Bishops | board->Queens) & enemy & attackable) != 0)
+	if (((board->Pieces[BISHOP] | board->Pieces[QUEEN]) & enemy & attackable) != 0)
 		return 0;
 	
 	// Rook Check
 	bbBlockers = all & board->OccupancyMaskRook[kingSquare];
 	dbIndex = (int)((bbBlockers * board->MagicNumberRook[kingSquare]) >> board->MagicShiftsRook[kingSquare]);
 	attackable = board->MoveDatabaseRook[kingSquare][dbIndex];
-	if (((board->Rooks | board->Queens) & enemy & attackable) != 0)
+	if (((board->Pieces[ROOK] | board->Pieces[QUEEN]) & enemy & attackable) != 0)
 		return 0;
 		
 	// Knight Check
-	if (((board->KnightMap[kingSquare]) & (enemy & board->Knights)) != 0)
+	if (((board->KnightMap[kingSquare]) & (enemy & board->Pieces[KNIGHT])) != 0)
 		return 0;
 	
 	// Pawn Check
-	BitBoard enemyPawns = enemy & board->Pawns;
+	BitBoard enemyPawns = enemy & board->Pieces[PAWN];
 	if (turn == WHITE){
 		if ((((king << 7) & ~FILE_A) & enemyPawns) != 0)
 			return 0;
@@ -458,7 +421,7 @@ int validateMove(Board * board, int turn){
 	}
 	
 	// King Check
-	if (((board->KingMap[kingSquare]) & (enemy & board->Kings)) != 0)
+	if (((board->KingMap[kingSquare]) & (enemy & board->Pieces[KING])) != 0)
 		return 0;
 		
 	return 1;

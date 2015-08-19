@@ -27,19 +27,19 @@ void printBitBoard(BitBoard b){
 
 int getSquare(int sq, Board * board){
 	BitBoard mask = 1ull << sq;
-	if ((mask & (board->WhiteAll | board->BlackAll)) == 0)
+	if ((mask & (board->Colors[0] | board->Colors[1])) == 0)
 		return EMPTY;
-	if (mask & board->Pawns)
+	if (mask & board->Pieces[PAWN])
 		return PAWN;
-	if (mask & board->Bishops)
+	if (mask & board->Pieces[BISHOP])
 		return BISHOP;
-	if (mask & board->Knights)
+	if (mask & board->Pieces[KNIGHT])
 		return KNIGHT;
-	if (mask & board->Rooks)
+	if (mask & board->Pieces[ROOK])
 		return ROOK;
-	if (mask & board->Queens)
+	if (mask & board->Pieces[QUEEN])
 		return QUEEN;
-	if (mask & board->Kings)
+	if (mask & board->Pieces[KING])
 		return KING;
 }
 
