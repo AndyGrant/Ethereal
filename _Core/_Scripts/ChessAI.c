@@ -412,11 +412,7 @@ int evaluateMoves(int player, int * lastMove){
 		if (moves[2] / 8 > 2 && moves[2] / 8 < 5 && moves[2] % 8 > 2 && moves[2] % 8 < 5)
 			value += VALUE_CENTER_SQUARE_ATTACKED;
 		if (moves[0] == 0 && moves[3] != 9)
-			nv += CAPTURE_VALUES[moves[3]] / CAPTURE_VALUES[t[moves[1]]];
-		//if (abs((moves[2] / 8) - kx) <= 1 && abs((moves[2] % 8) - ky) <= 1)
-			//value += VALUE_KING_SURROUNDINGS_ATTACKED;
-			
-		
+			nv += CAPTURE_VALUES[moves[3]] / CAPTURE_VALUES[t[moves[1]]];		
 	}
 	
 	free(moves_pointer);
