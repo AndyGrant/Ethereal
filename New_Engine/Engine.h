@@ -43,9 +43,11 @@ void getRookMoves(Board * board, int turn, int * size, int x, int y, int check);
 void getQueenMoves(Board * board, int turn, int * size, int x, int y, int check);
 void getKingMoves(Board * board, int turn, int * size, int x, int y, int check);
 
-#define boundsCheck(x,y) ((x >= 0 && x < 8 && y >= 0 && ny < 8))
+#define boundsCheck(x,y) ((x >= 0 && x < 8 && y >= 0 && y < 8))
 
 int validateMove(Board * board, int turn);
+void pruneCheckValidations(Board * board, int turn);
+void fillDirection(Board * board, int turn, int move);
 
 void createNormalMove(Board * board, int turn, int * size, int * move, int check);
 void createCastleMove(Board * board, int turn, int * size, int * move, int check);
