@@ -26,7 +26,15 @@ char base[135] = "31112141512111310101010101010101999999999999999999999999999999
   
 
 int MOVES_BUFFER[BUFFER_SIZE];
-int EVALUTE_CHECK[8][8];
+char CHECK_VALIDATIONS[8][8];
+int ATTACK_DIRECTION_MAP[6][8] = {
+	{0,0,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0},
+	{1,1,1,1,0,0,0,0},
+	{0,0,0,0,1,1,1,1},
+	{1,1,1,1,1,1,1,1},
+	{1,1,1,1,1,1,1,1},
+};
 
 int * TYPES;
 int * COLORS;
@@ -71,8 +79,8 @@ void foo(Board * board, int turn, int depth, int * last_move){
 		
 		
 		global_foo += 1;
-		if(global_foo % 1000000 == 0)
-			printf("\r#%llu million",global_foo/1000000);
+		if(global_foo % 10000000 == 0)
+			printf("\r#%llu0 million",global_foo/10000000);
 		
 		foo(board,!turn,depth-1,moves + i*5);
 		(*RevertTypes[moves[i*5]])(board,moves +i*5);
@@ -87,7 +95,8 @@ int main(){
 	board->LastMove = move;
 	
 	time_t start = time(NULL);
-	foo(board,WHITE,6,move);
+	foo(board,WHITE,7,move);
+	
 	printf("#%llu \n",global_foo);
 	printf("Seconds Taken: %d \n\n",(int)(time(NULL)-start));
 }
@@ -123,11 +132,13 @@ Board * createBoard(char setup[135]){
 }
 
 int * getAllMoves(Board * board, int turn, int * size){
+	pruneCheckValidations(board,turn);
+	
 	int x,y,i;
 	for(x = 0; x < 8; x++)
 		for(y = 0; y < 8; y++)
 			if (board->Colors[x][y] == turn)
-				(*GetPieceMoves[board->Types[x][y]])(board,turn,size,x,y,0);
+				(*GetPieceMoves[board->Types[x][y]])(board,turn,size,x,y,CHECK_VALIDATIONS[x][y]);
 				
 	return memcpy(malloc(sizeof(int) * MOVE_SIZE * *size),MOVES_BUFFER,sizeof(int) * MOVE_SIZE * *size);
 }
@@ -288,7 +299,134 @@ void getKingMoves(Board * board, int turn, int * size, int x, int y, int check){
 }
 
 int validateMove(Board * board, int turn){
+	int x, y, kingX, kingY,i;
+	kingX = board->KingLocations[turn] / 8;
+	kingY = board->KingLocations[turn] % 8;
+		
+	int dir = -1;
+	if (turn == 1)
+		dir = 1;
+	
+	if ((kingX != 0 && dir == -1) || (kingX != 7 && dir == 1)){
+		if (kingY != 7 && board->Types[kingX+dir][kingY + 1] == 0 && board->Colors[kingX+dir][kingY+1] != turn)
+			return 0;	
+		if (kingY != 0 && board->Types[kingX+dir][kingY - 1] == 0 && board->Colors[kingX+dir][kingY-1] != turn)
+			return 0;
+	}
+	
+	for(i = 0; i < 8; i += 1){
+		x = kingX + MOVE_MAP_KNIGHT[i][0];
+		y = kingY + MOVE_MAP_KNIGHT[i][1];
+		
+		if (x < 0 || y < 0 || x > 7 || y > 7)
+			continue;
+		if (board->Types[x][y] == 1 && board->Colors[x][y] != turn)
+			return 0;
+	}
+	
+	for(i = 0; i < 4; i++){
+		x = kingX;
+		y = kingY;
+		while(1){
+			x += MOVE_MAP_DIAGONAL[i][0];
+			y += MOVE_MAP_DIAGONAL[i][1];
+			
+			if (x < 0 || y < 0 || x > 7 || y > 7)
+				break;
+			else if (board->Types[x][y] == 9)
+				continue;
+			else if ((board->Types[x][y] == 2 || board->Types[x][y] == 4) && board->Colors[x][y] != turn)
+				return 0;
+			else
+				break;
+		}
+	}
+	
+	for(i = 0; i < 4; i++){
+		x = kingX;
+		y = kingY;
+		while(1){
+			x += MOVE_MAP_STRAIGHT[i][0];
+			y += MOVE_MAP_STRAIGHT[i][1];
+			
+			if (x < 0 || y < 0 || x > 7 || y > 7)
+				break;
+			else if (board->Types[x][y] == 9)
+				continue;
+			else if ((board->Types[x][y] >= 3 && board->Types[x][y] != 5) && board->Colors[x][y] != turn)
+				return 0;
+			else
+				break;
+		}
+	}
+	
+	for(i = 0; i < 8; i++){
+		x = kingX + MOVE_MAP_ALL[i][0];
+		y = kingY + MOVE_MAP_ALL[i][1];
+		
+		if (x < 0 || y < 0 || x > 7 || y > 7)
+			continue;
+		if (board->Types[x][y] == 5 && board->Colors[x][y] != turn)
+			return 0;
+	}
+	
 	return 1;
+}
+
+void pruneCheckValidations(Board * board, int turn){
+	if (validateMove(board,turn)){
+		memset(CHECK_VALIDATIONS,0,sizeof(CHECK_VALIDATIONS));
+		
+		int kx = board->KingLocations[turn]/8;
+		int ky = board->KingLocations[turn]%8;
+		
+		int i,x,y;
+		for(i = 0, x = kx, y = ky; i < 8; i++, x = kx, y = ky){
+		
+			int blockers = 0;
+			while(1){
+				x += MOVE_MAP_ALL[i][0];
+				y += MOVE_MAP_ALL[i][1];
+				
+				if (!boundsCheck(x,y))
+					break;
+					
+				else if (board->Colors[x][y] == turn){
+					if (blockers == 1)
+						break;
+					else
+						blockers = 1;
+				}
+				else if(board->Types[x][y] != EMPTY){
+					if (ATTACK_DIRECTION_MAP[board->Types[x][y]][i] == 0)
+						break;
+					else{
+						fillDirection(board,turn,i);
+						break;
+					}
+				}
+			}
+		}
+		
+		CHECK_VALIDATIONS[kx][ky] = 1;
+		
+	} else {
+		memset(CHECK_VALIDATIONS,1,sizeof(CHECK_VALIDATIONS));
+	}
+}
+
+void fillDirection(Board * board, int turn, int move){
+	int x = board->KingLocations[turn]/8;
+	int y = board->KingLocations[turn]%8;
+	
+	while(1){
+		x += MOVE_MAP_ALL[move][0];
+		y += MOVE_MAP_ALL[move][1];
+		
+		if (!boundsCheck(x,y))
+			return;
+		CHECK_VALIDATIONS[x][y] = 1;
+	}
 }
 
 void createNormalMove(Board * board, int turn, int * size, int * move, int check){
