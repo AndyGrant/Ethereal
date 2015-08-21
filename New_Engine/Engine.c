@@ -92,7 +92,6 @@ int main(){
 }
 
 Board * createBoard(char setup[135]){
-	// Setup Type|Color x64 Castlex2 ValidLRx2
 	int x,y,i;
 	Board * board = malloc(sizeof(Board));
 	
@@ -299,7 +298,6 @@ void createNormalMove(Board * board, int turn, int * size, int * move, int check
 		revertNormalMove(board,move);	
 	} else
 		memcpy(MOVES_BUFFER + (*size)++ * MOVE_SIZE, move, sizeof(int) * MOVE_SIZE);
-
 }
 
 void createCastleMove(Board * board, int turn, int * size, int * move, int check){
