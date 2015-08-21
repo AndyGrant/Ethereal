@@ -26,6 +26,7 @@ typedef struct Board {
 	int FiftyMoveRule;
 	int * PreviousMoves[500];
 	int PreviousMovesSize;
+	int * LastMove;
 } Board;
 
 extern void (*GetPieceMoves[6])(Board *, int, int *, int, int, int);
@@ -41,6 +42,8 @@ void getBishopMoves(Board * board, int turn, int * size, int x, int y, int check
 void getRookMoves(Board * board, int turn, int * size, int x, int y, int check);
 void getQueenMoves(Board * board, int turn, int * size, int x, int y, int check);
 void getKingMoves(Board * board, int turn, int * size, int x, int y, int check);
+
+#define boundsCheck(x,y) ((x >= 0 && x < 8 && y >= 0 && ny < 8))
 
 int validateMove(Board * board, int turn);
 
@@ -58,8 +61,6 @@ void revertNormalMove(Board * board, int * move);
 void revertCastleMove(Board * board, int * move);
 void revertPromotionMove(Board * board, int * move);
 void revertEnpassMove(Board * board, int * move);
-
-
 
 
 #endif
