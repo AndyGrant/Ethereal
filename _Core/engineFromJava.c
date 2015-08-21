@@ -22,8 +22,8 @@ void foo(Board * board, int turn, int depth, int * last_move){
 		
 		
 		global_foo += 1;
-		if(global_foo % 1000000 == 0)
-			printf("\r#%llu million",global_foo/1000000);
+		if(global_foo % 10000000 == 0)
+			printf("\r#%llu million",global_foo/10000000);
 		
 		foo(board,!turn,depth-1,moves + i*7);
 		revertGenericMove(board,moves + i*7);
@@ -57,6 +57,7 @@ int main(int argc, char *argv[]){
 	time_t start = time(NULL);
 	
 	//foo(board,WHITE,6,last_move);
+	//printf("\n#%llu",global_foo);
 	
 	int best = -1;
 	best = findBestMoveIndex(board,last_move,turn);
