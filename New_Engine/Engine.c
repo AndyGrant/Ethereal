@@ -88,6 +88,7 @@ int main(){
 	
 	time_t start = time(NULL);
 	foo(board,WHITE,6,move);
+	printf("#%llu \n",global_foo);
 	printf("Seconds Taken: %d \n\n",(int)(time(NULL)-start));
 }
 
@@ -149,17 +150,17 @@ void getPawnMoves(Board * board, int turn, int * size, int x, int y, int check){
 			createNormalMove(board,turn,size,move,check);
 			
 			if (((turn == WHITE && x == 6) || (turn == BLACK && x == 1)) && board->Types[x+dir+dir][y] == 9){
-				int move[5] = {0,start,start+16*dir,9,0};
+				int move[5] = {4,start,start+16*dir,9,0};
 				createNormalMove(board,turn,size,move,check);
 			}		
 		}
 	}
 	
 	// En Passant
-	if (lastMove[0] == 4 && abs((y - lastMove[2] % 8)) == 1 && x == 3 + board->Colors[x][y]){
-		if(board->Colors[lastMove[2]/8][lastMove[2]%8] != turn){
-			int move[5] = {3,start,(8 * ((lastMove[2]/8) + dir)) + lastMove[2]%8,lastMove[2],0};
-			createEnpassMove(board,turn,move,size,check);
+	if (lastMove[0] == 4 && abs(y - (lastMove[2]%8)) == 1){
+		if (3 + turn == x && COLORS[lastMove[2]] != turn){
+			int move[5] = {3,start,lastMove[2]+(8*dir),lastMove[2],0};
+			createEnpassMove(board,turn,size,move,check);
 		}
 	}
 	
