@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include <time.h>
 #include "Engine.h"
 
@@ -71,22 +72,23 @@ void foo(Board * board, int turn, int depth, int * last_move){
 		
 	board->LastMove = last_move;
 	int size = 0;
+	
 	int * moves = getAllMoves(board,turn,&size);
 	
 	int i;
-	for(i = 0; i < size; i++){
-		(*ApplyTypes[moves[i*5]])(board,moves +i*5);
+	for(i = 0; i < size; i++, moves+=5){
+		(*ApplyTypes[*moves])(board,moves);
 		
 		
 		global_foo += 1;
 		if(global_foo % 10000000 == 0)
 			printf("\r#%llu0 million",global_foo/10000000);
 		
-		foo(board,!turn,depth-1,moves + i*5);
-		(*RevertTypes[moves[i*5]])(board,moves +i*5);
+		foo(board,!turn,depth-1,moves);
+		(*RevertTypes[*moves])(board,moves);
 	}
 	
-	free(moves);
+	free(moves-5*size);
 }
 
 int main(){
@@ -95,7 +97,7 @@ int main(){
 	board->LastMove = move;
 	
 	time_t start = time(NULL);
-	foo(board,WHITE,7,move);
+	foo(board,WHITE,6,move);
 	
 	printf("#%llu \n",global_foo);
 	printf("Seconds Taken: %d \n\n",(int)(time(NULL)-start));
@@ -139,6 +141,7 @@ int * getAllMoves(Board * board, int turn, int * size){
 		for(y = 0; y < 8; y++)
 			if (board->Colors[x][y] == turn)
 				(*GetPieceMoves[board->Types[x][y]])(board,turn,size,x,y,CHECK_VALIDATIONS[x][y]);
+				
 				
 	return memcpy(malloc(sizeof(int) * MOVE_SIZE * *size),MOVES_BUFFER,sizeof(int) * MOVE_SIZE * *size);
 }
