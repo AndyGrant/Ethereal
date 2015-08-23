@@ -1,9 +1,6 @@
 #ifndef ENGINE_HEADER
 #define ENGINE_HEADER
 
-extern int KnightMap[64][9];
-extern int KingMap[64][9];
-
 #define WHITE 0
 #define BLACK 1
 #define PAWN 0
@@ -20,20 +17,34 @@ extern int KingMap[64][9];
 typedef struct Board {
 	int Types[8][8];
 	int Colors[8][8];
+	int * TYPES;
+	int * COLORS;
+	char CHECK_VALIDATIONS[8][8];
+	int MOVES_BUFFER[MOVE_SIZE * BUFFER_SIZE];
 	int KingLocations[2];
 	int Castled[2];
 	int ValidCastles[2][2];
 	int FiftyMoveRule;
-	int * PreviousMoves[500];
-	int PreviousMovesSize;
 	int * LastMove;
 } Board;
+
+typedef struct Thread{
+	Board * board;
+	int turn;
+	int depth;
+	int * lastMove;
+	int added;
+} Thread;
 
 extern void (*GetPieceMoves[6])(Board *, int, int *, int, int, int);
 extern void (*ApplyTypes[5])(Board *, int *);
 extern void (*RevertTypes[5])(Board *, int *);
 
 Board * createBoard(char setup[135]);
+Board * copyBoard(Board * old);
+
+void * createThread(void * ptr);
+int depthSearch(Board * board, int turn, int depth, int * lastMove);
 
 int * getAllMoves(Board * board, int turn, int * size);
 void getPawnMoves(Board * board, int turn, int * size, int x, int y, int check);

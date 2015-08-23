@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <time.h>
+#include <pthread.h>
 #include "Engine.h"
 
 /*
@@ -18,16 +19,13 @@
 
 */
 
-int MOVE_MAP_KNIGHT[8][2] = {{2,1},{2,-1},{-2,1},{-2,-1},{1,2},{1,-2},{-1,2},{-1,-2}};
-int MOVE_MAP_DIAGONAL[4][2] = {{1,1},{-1,1},{-1,-1},{1,-1}};
-int MOVE_MAP_STRAIGHT[4][2] = {{1,0},{-1,0},{0,1},{0,-1}};
-int MOVE_MAP_ALL[8][2] = {{1,1},{-1,1},{-1,-1},{1,-1},{1,0},{-1,0},{0,1},{0,-1}};
+const int MOVE_MAP_KNIGHT[8][2] = {{2,1},{2,-1},{-2,1},{-2,-1},{1,2},{1,-2},{-1,2},{-1,-2}};
+const int MOVE_MAP_DIAGONAL[4][2] = {{1,1},{-1,1},{-1,-1},{1,-1}};
+const int MOVE_MAP_STRAIGHT[4][2] = {{1,0},{-1,0},{0,1},{0,-1}};
+const int MOVE_MAP_ALL[8][2] = {{1,1},{-1,1},{-1,-1},{1,-1},{1,0},{-1,0},{0,1},{0,-1}};
 
 char base[135] = "31112141512111310101010101010101999999999999999999999999999999999999999999999999999999999999999900000000000000003010204050201030001111";
-  
 
-int MOVES_BUFFER[BUFFER_SIZE];
-char CHECK_VALIDATIONS[8][8];
 int ATTACK_DIRECTION_MAP[6][8] = {
 	{0,0,0,0,0,0,0,0},
 	{0,0,0,0,0,0,0,0},
@@ -36,9 +34,6 @@ int ATTACK_DIRECTION_MAP[6][8] = {
 	{1,1,1,1,1,1,1,1},
 	{1,1,1,1,1,1,1,1},
 };
-
-int * TYPES;
-int * COLORS;
 
 void (*GetPieceMoves[6])(Board *, int, int *, int, int, int) = {
 	&getPawnMoves,
@@ -65,42 +60,75 @@ void (*RevertTypes[5])(Board *, int *) = {
 	&revertNormalMove
 };
 
-unsigned long long global_foo = 0;
-void foo(Board * board, int turn, int depth, int * last_move){
+void * createThread(void * ptr){
+	Thread * data = (Thread *)(ptr);
+	Board * board = data->board;
+	int turn = data->turn;
+	int depth = data->depth;
+	int * lastMove = data->lastMove;
+	data->added = depthSearch(board,turn,depth,lastMove);
+	return NULL;
+}
+
+int MULTI_DEPTH = 4;
+int depthSearch(Board * board, int turn, int depth, int * lastMove){
 	if (depth == 0)
-		return;
-		
-	board->LastMove = last_move;
-	int size = 0;
+		return 0;
 	
-	int * moves = getAllMoves(board,turn,&size);
+	int size = 0, temp = 0;
 	
-	int i;
-	for(i = 0; i < size; i++, moves+=5){
-		(*ApplyTypes[*moves])(board,moves);
+	if (depth == MULTI_DEPTH){
+		int * moves = getAllMoves(board,turn,&size);
 		
+		pthread_t threads[size];
+		Thread data[size];
 		
-		global_foo += 1;
-		if(global_foo % 10000000 == 0)
-			printf("\r#%llu0 million",global_foo/10000000);
+		int i;
+		for(i = 0; i < size; i++){
+			data[i].board = copyBoard(board);
+			(*ApplyTypes[moves[i*5]])(data[i].board,moves + i*5);
+			data[i].turn = !turn;
+			data[i].depth = depth-1;
+			data[i].lastMove = moves + i * 5;
+		}
 		
-		foo(board,!turn,depth-1,moves);
-		(*RevertTypes[*moves])(board,moves);
+		for(i = 0; i < size; i++)
+			pthread_create(&(threads[i]),NULL,createThread,&(data[i]));
+			
+		for(i = 0; i < size; i++){
+			pthread_join(threads[i],NULL);
+			temp += data[i].added;
+			free(data[i].board);
+		}
+		
+		free(moves);
+		return size + temp;
+		
+	} else {
+		int * moves = getAllMoves(board,turn,&size);
+		
+		int i;
+		for(i = 0; i < size; i++){
+			(*ApplyTypes[moves[i*5]])(board,moves + i*5);
+			temp += depthSearch(board,!turn,depth-1,moves+i*5);
+			(*RevertTypes[moves[i*5]])(board,moves + i*5);
+		}
+		
+		free(moves);
+		
+		return size + temp;
 	}
-	
-	free(moves-5*size);
 }
 
 int main(){
-	Board * board = createBoard(base);
+	Board * b = createBoard(base);
+	Board * board = copyBoard(b);
 	int move[5] = {0,0,0,0,0};
 	board->LastMove = move;
 	
 	time_t start = time(NULL);
-	foo(board,WHITE,6,move);
-	
-	printf("#%llu \n",global_foo);
-	printf("Seconds Taken: %d \n\n",(int)(time(NULL)-start));
+	printf("Moves Searched %d\n",depthSearch(board,WHITE,6,move));
+	printf("Seconds Taken: %d\n",(int)(time(NULL)-start));
 }
 
 Board * createBoard(char setup[135]){
@@ -125,12 +153,38 @@ Board * createBoard(char setup[135]){
 	board->ValidCastles[1][1] = setup[i++] - '0';
 	
 	board->FiftyMoveRule = 50;
-	board->PreviousMovesSize = 0;
 	
-	TYPES = *(board->Types);
-	COLORS = *(board->Colors);
+	board->TYPES = *(board->Types);
+	board->COLORS = *(board->Colors);
 	
 	return board;
+}
+
+Board * copyBoard(Board * old){
+	Board * new = malloc(sizeof(Board));
+	
+	int x,y;
+	for(x = 0; x < 8; x++)
+		for(y = 0; y < 8; y++){
+			new->Types[x][y] = old->Types[x][y];
+			new->Colors[x][y] = old->Colors[x][y];
+		}
+	new->TYPES = *(new->Types);
+	new->COLORS = *(new->Colors);
+	
+	new->KingLocations[0] = old->KingLocations[0];
+	new->KingLocations[1] = old->KingLocations[1];
+	
+	new->ValidCastles[0][0] = old->ValidCastles[0][0];
+	new->ValidCastles[0][1] = old->ValidCastles[0][1];
+	new->ValidCastles[1][0] = old->ValidCastles[1][0];
+	new->ValidCastles[1][1] = old->ValidCastles[1][1];
+	
+	new->Castled[0] = old->Castled[0];
+	new->Castled[1] = old->Castled[1];
+	new->LastMove = old->LastMove;
+	
+	return new;
 }
 
 int * getAllMoves(Board * board, int turn, int * size){
@@ -140,10 +194,10 @@ int * getAllMoves(Board * board, int turn, int * size){
 	for(x = 0; x < 8; x++)
 		for(y = 0; y < 8; y++)
 			if (board->Colors[x][y] == turn)
-				(*GetPieceMoves[board->Types[x][y]])(board,turn,size,x,y,CHECK_VALIDATIONS[x][y]);
+				(*GetPieceMoves[board->Types[x][y]])(board,turn,size,x,y,board->CHECK_VALIDATIONS[x][y]);
 				
 				
-	return memcpy(malloc(sizeof(int) * MOVE_SIZE * *size),MOVES_BUFFER,sizeof(int) * MOVE_SIZE * *size);
+	return memcpy(malloc(sizeof(int) * MOVE_SIZE * *size),board->MOVES_BUFFER,sizeof(int) * MOVE_SIZE * *size);
 }
 
 void getPawnMoves(Board * board, int turn, int * size, int x, int y, int check){
@@ -172,7 +226,7 @@ void getPawnMoves(Board * board, int turn, int * size, int x, int y, int check){
 	
 	// En Passant
 	if (lastMove[0] == 4 && abs(y - (lastMove[2]%8)) == 1){
-		if (3 + turn == x && COLORS[lastMove[2]] != turn){
+		if (3 + turn == x && board->COLORS[lastMove[2]] != turn){
 			int move[5] = {3,start,lastMove[2]+(8*dir),lastMove[2],0};
 			createEnpassMove(board,turn,size,move,check);
 		}
@@ -287,13 +341,13 @@ void getKingMoves(Board * board, int turn, int * size, int x, int y, int check){
 	
 	if (!board->Castled[turn] && validateMove(board,turn)){
 		if (board->ValidCastles[turn][0] && moveWasValid[7]){
-			if (TYPES[start-3] == ROOK && TYPES[start-1] == EMPTY && TYPES[start-2] == EMPTY){
+			if (board->TYPES[start-3] == ROOK && board->TYPES[start-1] == EMPTY && board->TYPES[start-2] == EMPTY){
 				int move[5] = {1,start,start-2,start-3,start-1};
 				createCastleMove(board,turn,size,move,check);
 			}
 		}
 		if (board->ValidCastles[turn][1] && moveWasValid[6]){
-			if (TYPES[start+4] == ROOK && TYPES[start+1] == EMPTY && TYPES[start+2] == EMPTY && TYPES[start+3] == EMPTY){
+			if (board->TYPES[start+4] == ROOK && board->TYPES[start+1] == EMPTY && board->TYPES[start+2] == EMPTY && board->TYPES[start+3] == EMPTY){
 				int move[5] = {1,start,start+2,start+4,start+1};
 				createCastleMove(board,turn,size,move,check);
 			}
@@ -378,7 +432,7 @@ int validateMove(Board * board, int turn){
 
 void pruneCheckValidations(Board * board, int turn){
 	if (validateMove(board,turn)){
-		memset(CHECK_VALIDATIONS,0,sizeof(CHECK_VALIDATIONS));
+		memset(board->CHECK_VALIDATIONS,0,sizeof(board->CHECK_VALIDATIONS));
 		
 		int kx = board->KingLocations[turn]/8;
 		int ky = board->KingLocations[turn]%8;
@@ -411,10 +465,10 @@ void pruneCheckValidations(Board * board, int turn){
 			}
 		}
 		
-		CHECK_VALIDATIONS[kx][ky] = 1;
+		board->CHECK_VALIDATIONS[kx][ky] = 1;
 		
 	} else {
-		memset(CHECK_VALIDATIONS,1,sizeof(CHECK_VALIDATIONS));
+		memset(board->CHECK_VALIDATIONS,1,sizeof(board->CHECK_VALIDATIONS));
 	}
 }
 
@@ -428,7 +482,7 @@ void fillDirection(Board * board, int turn, int move){
 		
 		if (!boundsCheck(x,y))
 			return;
-		CHECK_VALIDATIONS[x][y] = 1;
+		board->CHECK_VALIDATIONS[x][y] = 1;
 	}
 }
 
@@ -436,43 +490,46 @@ void createNormalMove(Board * board, int turn, int * size, int * move, int check
 	if (check){
 		applyNormalMove(board,move);
 		if (validateMove(board,turn))
-			memcpy(MOVES_BUFFER + (*size)++ * MOVE_SIZE, move, sizeof(int) * MOVE_SIZE);
+			memcpy(board->MOVES_BUFFER + (*size)++ * MOVE_SIZE, move, sizeof(int) * MOVE_SIZE);
 		revertNormalMove(board,move);	
 	} else
-		memcpy(MOVES_BUFFER + (*size)++ * MOVE_SIZE, move, sizeof(int) * MOVE_SIZE);
+		memcpy(board->MOVES_BUFFER + (*size)++ * MOVE_SIZE, move, sizeof(int) * MOVE_SIZE);
 }
 
 void createCastleMove(Board * board, int turn, int * size, int * move, int check){
 	if (check){
 		applyCastleMove(board,move);
 		if (validateMove(board,turn))
-			memcpy(MOVES_BUFFER + (*size)++ * MOVE_SIZE, move, sizeof(int) * MOVE_SIZE);
+			memcpy(board->MOVES_BUFFER + (*size)++ * MOVE_SIZE, move, sizeof(int) * MOVE_SIZE);
 		revertCastleMove(board,move);	
 	} else
-		memcpy(MOVES_BUFFER + (*size)++ * MOVE_SIZE, move, sizeof(int) * MOVE_SIZE);
+		memcpy(board->MOVES_BUFFER + (*size)++ * MOVE_SIZE, move, sizeof(int) * MOVE_SIZE);
 }
 
 void createPromotionMove(Board * board, int turn, int * size, int * move, int check){
 	if (check){
 		applyPromotionMove(board,move);
 		if (validateMove(board,turn))
-			memcpy(MOVES_BUFFER + (*size)++ * MOVE_SIZE, move, sizeof(int) * MOVE_SIZE);
+			memcpy(board->MOVES_BUFFER + (*size)++ * MOVE_SIZE, move, sizeof(int) * MOVE_SIZE);
 		revertPromotionMove(board,move);	
 	} else
-		memcpy(MOVES_BUFFER + (*size)++ * MOVE_SIZE, move, sizeof(int) * MOVE_SIZE);
+		memcpy(board->MOVES_BUFFER + (*size)++ * MOVE_SIZE, move, sizeof(int) * MOVE_SIZE);
 }
 
 void createEnpassMove(Board * board, int turn, int * size, int * move, int check){
 	if (check){
 		applyEnpassMove(board,move);
 		if (validateMove(board,turn))
-			memcpy(MOVES_BUFFER + (*size)++ * MOVE_SIZE, move, sizeof(int) * MOVE_SIZE);
+			memcpy(board->MOVES_BUFFER + (*size)++ * MOVE_SIZE, move, sizeof(int) * MOVE_SIZE);
 		revertEnpassMove(board,move);	
 	} else
-		memcpy(MOVES_BUFFER + (*size)++ * MOVE_SIZE, move, sizeof(int) * MOVE_SIZE);
+		memcpy(board->MOVES_BUFFER + (*size)++ * MOVE_SIZE, move, sizeof(int) * MOVE_SIZE);
 }
 
 void applyNormalMove(Board * board, int * move){
+	int * TYPES = board->TYPES;
+	int * COLORS = board->COLORS;
+	
 	TYPES[move[2]] = TYPES[move[1]];
 	COLORS[move[2]] = COLORS[move[1]];
 	
@@ -491,6 +548,9 @@ void applyNormalMove(Board * board, int * move){
 }
 
 void applyCastleMove(Board * board, int * move){
+	int * TYPES = board->TYPES;
+	int * COLORS = board->COLORS;
+	
 	TYPES[move[2]] = KING;
 	COLORS[move[2]] = COLORS[move[1]];
 	
@@ -507,7 +567,10 @@ void applyCastleMove(Board * board, int * move){
 	board->Castled[COLORS[move[2]]] = 1;
 }
 
-void applyPromotionMove(Board * board, int * move){
+void applyPromotionMove(Board * board, int * move){	
+	int * TYPES = board->TYPES;
+	int * COLORS = board->COLORS;
+	
 	TYPES[move[2]] = move[4];
 	COLORS[move[2]] = COLORS[move[1]];
 	
@@ -516,6 +579,9 @@ void applyPromotionMove(Board * board, int * move){
 }
 
 void applyEnpassMove(Board * board, int * move){
+	int * TYPES = board->TYPES;
+	int * COLORS = board->COLORS;
+	
 	TYPES[move[2]] = PAWN;
 	COLORS[move[2]] = COLORS[move[1]];
 	
@@ -528,6 +594,9 @@ void applyEnpassMove(Board * board, int * move){
 }
 
 void revertNormalMove(Board * board, int * move){
+	int * TYPES = board->TYPES;
+	int * COLORS = board->COLORS;
+	
 	TYPES[move[1]] = TYPES[move[2]];
 	COLORS[move[1]] = COLORS[move[2]];
 	
@@ -546,6 +615,9 @@ void revertNormalMove(Board * board, int * move){
 }
 
 void revertCastleMove(Board * board, int * move){
+	int * TYPES = board->TYPES;
+	int * COLORS = board->COLORS;
+	
 	TYPES[move[1]] = KING;
 	COLORS[move[1]] = COLORS[move[2]];
 	
@@ -563,6 +635,9 @@ void revertCastleMove(Board * board, int * move){
 }
 
 void revertPromotionMove(Board * board, int * move){
+	int * TYPES = board->TYPES;
+	int * COLORS = board->COLORS;
+	
 	TYPES[move[1]] = PAWN;
 	COLORS[move[1]] = COLORS[move[2]];
 	
@@ -571,6 +646,9 @@ void revertPromotionMove(Board * board, int * move){
 }
 
 void revertEnpassMove(Board * board, int * move){
+	int * TYPES = board->TYPES;
+	int * COLORS = board->COLORS;
+	
 	TYPES[move[1]] = PAWN;
 	COLORS[move[1]] = COLORS[move[2]];
 	
