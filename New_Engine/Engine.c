@@ -60,75 +60,99 @@ void (*RevertTypes[5])(Board *, int *) = {
 	&revertNormalMove
 };
 
-void * createThread(void * ptr){
-	Thread * data = (Thread *)(ptr);
-	Board * board = data->board;
-	int turn = data->turn;
-	int depth = data->depth;
-	int * lastMove = data->lastMove;
-	data->added = depthSearch(board,turn,depth,lastMove);
+
+void * fooBar(void * ptr){
+	ThreadData * data = (ThreadData *)(ptr);
+	data->added = depthSearch(data->board,!(data->turn),data->depth - 1, data->lastMove);
 	return NULL;
 }
 
-int MULTI_DEPTH = 4;
-int depthSearch(Board * board, int turn, int depth, int * lastMove){
+int THREAD_DEPTH = 7;
+unsigned long long depthSearch(Board * board, int turn, int depth, int * lastMove){
 	if (depth == 0)
 		return 0;
 	
-	int size = 0, temp = 0;
+	int i, size = 0;
+	unsigned long long temp = 0;
+	board->LastMove = lastMove;
+	int * moves = getAllMoves(board,turn,&size);
 	
-	if (depth == MULTI_DEPTH){
-		int * moves = getAllMoves(board,turn,&size);
-		
+	if (size == 0){
+		free(moves);
+		return 0;
+	}
+	
+	int * moves_p = moves;
+	
+	if(THREAD_DEPTH == depth){
 		pthread_t threads[size];
-		Thread data[size];
+		ThreadData data[size];
 		
-		int i;
 		for(i = 0; i < size; i++){
 			data[i].board = copyBoard(board);
-			(*ApplyTypes[moves[i*5]])(data[i].board,moves + i*5);
-			data[i].turn = !turn;
-			data[i].depth = depth-1;
-			data[i].lastMove = moves + i * 5;
+			data[i].turn = turn;
+			data[i].depth = depth;
+			data[i].lastMove = moves + i*5;
 		}
 		
-		for(i = 0; i < size; i++)
-			pthread_create(&(threads[i]),NULL,createThread,&(data[i]));
-			
-		for(i = 0; i < size; i++){
+		for(i = 0; i < size; i++, moves += 5){
+			(*ApplyTypes[*moves])(data[i].board,moves);
+			pthread_create(&(threads[i]),NULL,fooBar,&(data[i]));
+		}
+		
+		moves = moves_p;
+		
+		for(i = 0; i < size; i++, moves += 5){
 			pthread_join(threads[i],NULL);
+			(*RevertTypes[*moves])(data[i].board,moves);
 			temp += data[i].added;
 			free(data[i].board);
 		}
 		
-		free(moves);
+		free(moves_p);
 		return size + temp;
-		
-	} else {
-		int * moves = getAllMoves(board,turn,&size);
-		
-		int i;
-		for(i = 0; i < size; i++){
-			(*ApplyTypes[moves[i*5]])(board,moves + i*5);
-			temp += depthSearch(board,!turn,depth-1,moves+i*5);
-			(*RevertTypes[moves[i*5]])(board,moves + i*5);
+	
+	} else{
+		for(i = 0; i < size; i++, moves += 5){
+			(*ApplyTypes[*moves])(board,moves);
+			temp += depthSearch(board,!turn,depth-1,moves);
+			(*RevertTypes[*moves])(board,moves);
 		}
 		
-		free(moves);
-		
-		return size + temp;
+		free(moves_p);
+		return (unsigned long long)(size + temp);
 	}
+	
 }
 
 int main(){
-	Board * b = createBoard(base);
-	Board * board = copyBoard(b);
+	Board * board = createBoard(base);
 	int move[5] = {0,0,0,0,0};
 	board->LastMove = move;
 	
 	time_t start = time(NULL);
-	printf("Moves Searched %d\n",depthSearch(board,WHITE,6,move));
-	printf("Seconds Taken: %d\n",(int)(time(NULL)-start));
+	printf("Moves Searched : %llu\n",depthSearch(copyBoard(board),WHITE,7,move));
+	
+
+	printf("Seconds Taken: %d \n\n",(int)(time(NULL)-start));
+}
+
+Board * copyBoard(Board * old){
+	Board * new = malloc(sizeof(Board));	
+	memcpy(new->Types,old->Types,sizeof(int) * 64);
+	memcpy(new->Colors,old->Colors,sizeof(int) * 64);
+	new->TYPES = *(new->Types);
+	new->COLORS = *(new->Colors);		
+	new->KingLocations[0] = old->KingLocations[0];
+	new->KingLocations[1] = old->KingLocations[1];
+	new->Castled[0] = old->Castled[0];
+	new->Castled[1] = old->Castled[1];
+	new->ValidCastles[0][0] = old->ValidCastles[0][0];
+	new->ValidCastles[0][1] = old->ValidCastles[0][1];
+	new->ValidCastles[1][0] = old->ValidCastles[1][0];
+	new->ValidCastles[1][1] = old->ValidCastles[1][1];
+	new->FiftyMoveRule = old->FiftyMoveRule;
+	return new;
 }
 
 Board * createBoard(char setup[135]){
@@ -158,33 +182,6 @@ Board * createBoard(char setup[135]){
 	board->COLORS = *(board->Colors);
 	
 	return board;
-}
-
-Board * copyBoard(Board * old){
-	Board * new = malloc(sizeof(Board));
-	
-	int x,y;
-	for(x = 0; x < 8; x++)
-		for(y = 0; y < 8; y++){
-			new->Types[x][y] = old->Types[x][y];
-			new->Colors[x][y] = old->Colors[x][y];
-		}
-	new->TYPES = *(new->Types);
-	new->COLORS = *(new->Colors);
-	
-	new->KingLocations[0] = old->KingLocations[0];
-	new->KingLocations[1] = old->KingLocations[1];
-	
-	new->ValidCastles[0][0] = old->ValidCastles[0][0];
-	new->ValidCastles[0][1] = old->ValidCastles[0][1];
-	new->ValidCastles[1][0] = old->ValidCastles[1][0];
-	new->ValidCastles[1][1] = old->ValidCastles[1][1];
-	
-	new->Castled[0] = old->Castled[0];
-	new->Castled[1] = old->Castled[1];
-	new->LastMove = old->LastMove;
-	
-	return new;
 }
 
 int * getAllMoves(Board * board, int turn, int * size){
