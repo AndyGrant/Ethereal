@@ -7,7 +7,7 @@
 #define KNIGHT 1
 #define BISHOP 2
 #define ROOK 3
-#define QUEEN 4
+#define QUEEN 44
 #define KING 5
 #define EMPTY 9
 
@@ -28,13 +28,13 @@ typedef struct Board {
 	int * LastMove;
 } Board;
 
-typedef struct Thread{
+typedef struct ThreadData{
 	Board * board;
 	int turn;
 	int depth;
 	int * lastMove;
-	int added;
-} Thread;
+	long long added;
+} ThreadData;
 
 extern void (*GetPieceMoves[6])(Board *, int, int *, int, int, int);
 extern void (*ApplyTypes[5])(Board *, int *);
@@ -43,8 +43,8 @@ extern void (*RevertTypes[5])(Board *, int *);
 Board * createBoard(char setup[135]);
 Board * copyBoard(Board * old);
 
-void * createThread(void * ptr);
-int depthSearch(Board * board, int turn, int depth, int * lastMove);
+void * fooBar(void * ptr);
+unsigned long long depthSearch(Board * board, int turn, int depth, int * lastMove);
 
 int * getAllMoves(Board * board, int turn, int * size);
 void getPawnMoves(Board * board, int turn, int * size, int x, int y, int check);
