@@ -67,7 +67,7 @@ void * fooBar(void * ptr){
 	return NULL;
 }
 
-int THREAD_DEPTH = 7;
+int THREAD_DEPTH = 6;
 unsigned long long depthSearch(Board * board, int turn, int depth, int * lastMove){
 	if (depth == 0)
 		return 0;
@@ -131,7 +131,9 @@ int main(){
 	board->LastMove = move;
 	
 	time_t start = time(NULL);
-	printf("Moves Searched : %llu\n",depthSearch(copyBoard(board),WHITE,7,move));
+	int i;
+	//for(i = 0; i < 5; i++)
+		printf("Moves Searched : %llu\n",depthSearch(copyBoard(board),WHITE,7,move));
 	
 
 	printf("Seconds Taken: %d \n\n",(int)(time(NULL)-start));
