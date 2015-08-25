@@ -296,6 +296,12 @@ void getBishopMoves(Board * board, int turn, int * size, int x, int y, int check
 }
 
 void getRookMoves(Board * board, int turn, int * size, int x, int y, int check){
+	int checkBreak;
+	if (board->Types[x][y] != ROOK)
+		checkBreak = 0;
+	else if(board->ValidCastles[turn][x != 0])
+		checkBreak = x != 0;
+		
 	int i, nx, ny, start = x * 8 + y;
 	for(i = 0; i < 4; i++){
 		nx = x;
@@ -305,7 +311,7 @@ void getRookMoves(Board * board, int turn, int * size, int x, int y, int check){
 			ny += MOVE_MAP_STRAIGHT[i][1];
 		
 			if(boundsCheck(nx,ny) && board->Colors[nx][ny] != turn){
-				int move[5] = {0,start,nx*8+ny,board->Types[nx][ny],0};
+				int move[5] = {0,start,nx*8+ny,board->Types[nx][ny],checkBreak};
 				createNormalMove(board,turn,size,move,check);
 				if(board->Types[nx][ny] != EMPTY)
 					break;
@@ -321,6 +327,18 @@ void getQueenMoves(Board * board, int turn, int * size, int x, int y, int check)
 }
 
 void getKingMoves(Board * board, int turn, int * size, int x, int y, int check){
+	int checkBreak;
+	if(board->ValidCastles[turn][0]){
+		if(board->ValidCastles[turn][1])
+			checkBreak = 2;
+		else
+			checkBreak = 1;
+	}
+	else if(board->ValidCastles[turn][1])
+		checkBreak = 3;
+	else 
+		checkBreak = 0;
+		
 	int moveWasValid[8] = {0,0,0,0,0,0,0,0};
 	int ls, i, nx, ny, start = x * 8 + y;
 	for(i = 0; i < 8; i++){
@@ -329,7 +347,7 @@ void getKingMoves(Board * board, int turn, int * size, int x, int y, int check){
 		
 		if(boundsCheck(nx,ny)){
 			if(board->Colors[nx][ny] != turn){
-				int move[5] = {0,start,nx*8+ny,board->Types[nx][ny],0};
+				int move[5] = {0,start,nx*8+ny,board->Types[nx][ny],checkBreak};
 				ls = *size;
 				createNormalMove(board,turn,size,move,check);
 				if (*size != ls)
@@ -539,9 +557,9 @@ void applyNormalMove(Board * board, int * move){
 		board->KingLocations[COLORS[move[2]]] = move[2];
 		
 	if(move[4]){
-		if(move[4] == 1)
+		if(move[4] <= 2)
 			board->ValidCastles[COLORS[move[2]]][0] = 0;
-		if(move[4] == 2)
+		if(move[4] >= 2)
 			board->ValidCastles[COLORS[move[2]]][1] = 0;
 	}
 }
@@ -606,9 +624,9 @@ void revertNormalMove(Board * board, int * move){
 		board->KingLocations[COLORS[move[1]]] = move[1];
 		
 	if(move[4]){
-		if(move[4] == 1)
+		if(move[4] <= 2)
 			board->ValidCastles[COLORS[move[1]]][0] = 1;
-		if(move[4] == 2)
+		if(move[4] >= 2)
 			board->ValidCastles[COLORS[move[1]]][1] = 1;
 	}
 }
