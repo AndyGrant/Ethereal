@@ -1,4 +1,6 @@
 *.exe
 *.class
+*.out
 _Scripts/gmon.out
 profiler_data.txt
+output.txt
