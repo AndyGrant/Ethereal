@@ -26,6 +26,7 @@ typedef struct Board {
 	int ValidCastles[2][2];
 	int FiftyMoveRule;
 	int * LastMove;
+	int KnightMap[64][9];
 } Board;
 
 typedef struct ThreadData{
@@ -40,8 +41,10 @@ extern void (*GetPieceMoves[6])(Board *, int, int *, int, int, int);
 extern void (*ApplyTypes[5])(Board *, int *);
 extern void (*RevertTypes[5])(Board *, int *);
 
-Board * createBoard(char setup[135]);
 Board * copyBoard(Board * old);
+Board * createBoard(char setup[135]);
+void buildKnightMap(Board * board);
+
 
 void * fooBar(void * ptr);
 unsigned long long depthSearch(Board * board, int turn, int depth, int * lastMove);

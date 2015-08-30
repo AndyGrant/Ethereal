@@ -25,6 +25,8 @@ const int MOVE_MAP_STRAIGHT[4][2] = {{1,0},{-1,0},{0,1},{0,-1}};
 const int MOVE_MAP_ALL[8][2] = {{1,1},{-1,1},{-1,-1},{1,-1},{1,0},{-1,0},{0,1},{0,-1}};
 
 char base[135] = "31112141512111310101010101010101999999999999999999999999999999999999999999999999999999999999999900000000000000003010204050201030001111";
+//char base[135] = "99999999519999999999010101999999999999999999999999999999999999999999999999999999999999999999999999999999990000009999999950999999000000";
+//char base[135]   = "11999999511111119999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999991099991050101010000000";
 
 int ATTACK_DIRECTION_MAP[6][8] = {
 	{0,0,0,0,0,0,0,0},
@@ -132,10 +134,7 @@ int main(){
 	
 	time_t start = time(NULL);
 	int i;
-
-	printf("Moves Searched : %llu\n",depthSearch(copyBoard(board),WHITE,6,move));
-	
-
+	printf("Moves Searched : %llu\n",depthSearch(board,WHITE,6,move));
 	printf("Seconds Taken: %d \n\n",(int)(time(NULL)-start));
 }
 
@@ -153,7 +152,7 @@ Board * copyBoard(Board * old){
 	new->ValidCastles[0][1] = old->ValidCastles[0][1];
 	new->ValidCastles[1][0] = old->ValidCastles[1][0];
 	new->ValidCastles[1][1] = old->ValidCastles[1][1];
-	new->FiftyMoveRule = old->FiftyMoveRule;
+	memcpy(new->KnightMap,old->KnightMap,sizeof(old->KnightMap));
 	return new;
 }
 
@@ -177,6 +176,7 @@ Board * createBoard(char setup[135]){
 	board->ValidCastles[0][1] = setup[i++] - '0';
 	board->ValidCastles[1][0] = setup[i++] - '0';
 	board->ValidCastles[1][1] = setup[i++] - '0';
+	buildKnightMap(board);
 	
 	board->FiftyMoveRule = 50;
 	
@@ -184,6 +184,23 @@ Board * createBoard(char setup[135]){
 	board->COLORS = *(board->Colors);
 	
 	return board;
+}
+
+void buildKnightMap(Board * board){
+	int x, y, a, b;
+	for(x = 0; x < 8; x++){
+		for(y = 0; y < 8; y++){
+			for(a = 0, b = 0; a < 8; a++){
+				int nx = x + MOVE_MAP_KNIGHT[a][0];
+				int ny = y + MOVE_MAP_KNIGHT[a][1];
+				if(boundsCheck(nx,ny)){
+					board->KnightMap[x*8+y][b] = nx * 8 + ny;
+					b += 1;
+				}
+			}
+			board->KnightMap[x*8+y][b] = -1;
+		}
+	}
 }
 
 int * getAllMoves(Board * board, int turn, int * size){
@@ -261,17 +278,16 @@ void getPawnMoves(Board * board, int turn, int * size, int x, int y, int check){
 }
 
 void getKnightMoves(Board * board, int turn, int * size, int x, int y, int check){
-	int i, nx, ny, start = x * 8 + y;
-	for(i = 0; i < 8; i++){
-		nx = x + MOVE_MAP_KNIGHT[i][0];
-		ny = y + MOVE_MAP_KNIGHT[i][1];
-		
-		if(boundsCheck(nx,ny)){
-			if(board->Colors[nx][ny] != turn){
-				int move[5] = {0,start,nx*8+ny,board->Types[nx][ny],0};
-				createNormalMove(board,turn,size,move,check);
-			}
+	int start = x * 8 + y;
+	int * map = board->KnightMap[start];
+	while(1){
+		if (*map == -1)
+			return;
+		if (board->COLORS[*map] != turn){
+			int move[5] = {0,start,*map,board->TYPES[*map],0};
+			createNormalMove(board,turn,size,move,check);
 		}
+		map++;
 	}
 }
 
@@ -388,14 +404,14 @@ int validateMove(Board * board, int turn){
 			return 0;
 	}
 	
-	for(i = 0; i < 8; i += 1){
-		x = kingX + MOVE_MAP_KNIGHT[i][0];
-		y = kingY + MOVE_MAP_KNIGHT[i][1];
-		
-		if (x < 0 || y < 0 || x > 7 || y > 7)
-			continue;
-		if (board->Types[x][y] == 1 && board->Colors[x][y] != turn)
+	
+	int * map = board->KnightMap[board->KingLocations[turn]];
+	while(1){
+		if (*map == -1)
+			break;
+		if (board->COLORS[*map] == !turn && board->TYPES[*map] == KNIGHT)
 			return 0;
+		map++;
 	}
 	
 	for(i = 0; i < 4; i++){
