@@ -41,6 +41,9 @@ extern void (*GetPieceMoves[6])(Board *, int, int *, int, int, int);
 extern void (*ApplyTypes[5])(Board *, int *);
 extern void (*RevertTypes[5])(Board *, int *);
 
+#define ApplyMove(b,m) ((*ApplyTypes[*m])(b,m))
+#define RevertMove(b,m) ((*RevertTypes[*m])(b,m))
+
 Board * copyBoard(Board * old);
 Board * createBoard(char setup[135]);
 void buildKnightMap(Board * board);

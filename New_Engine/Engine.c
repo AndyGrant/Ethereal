@@ -69,7 +69,7 @@ void * fooBar(void * ptr){
 	return NULL;
 }
 
-int THREAD_DEPTH = 7;
+int THREAD_DEPTH = 6;
 unsigned long long depthSearch(Board * board, int turn, int depth, int * lastMove){
 	if (depth == 0)
 		return 0;
@@ -98,7 +98,7 @@ unsigned long long depthSearch(Board * board, int turn, int depth, int * lastMov
 		}
 		
 		for(i = 0; i < size; i++, moves += 5){
-			(*ApplyTypes[*moves])(data[i].board,moves);
+			ApplyMove(data[i].board,moves);
 			pthread_create(&(threads[i]),NULL,fooBar,&(data[i]));
 		}
 		
@@ -106,7 +106,7 @@ unsigned long long depthSearch(Board * board, int turn, int depth, int * lastMov
 		
 		for(i = 0; i < size; i++, moves += 5){
 			pthread_join(threads[i],NULL);
-			(*RevertTypes[*moves])(data[i].board,moves);
+			RevertMove(data[i].board,moves);
 			temp += data[i].added;
 			free(data[i].board);
 		}
@@ -116,9 +116,9 @@ unsigned long long depthSearch(Board * board, int turn, int depth, int * lastMov
 	
 	} else{
 		for(i = 0; i < size; i++, moves += 5){
-			(*ApplyTypes[*moves])(board,moves);
+			ApplyMove(board,moves);
 			temp += depthSearch(board,!turn,depth-1,moves);
-			(*RevertTypes[*moves])(board,moves);
+			RevertMove(board,moves);
 		}
 		
 		free(moves_p);
