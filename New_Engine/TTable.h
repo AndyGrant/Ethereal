@@ -1,6 +1,8 @@
 #ifndef TTABLE_HEADER
 #define TTABLE_HEADER
 
+#include "Engine.c"
+
 #define EXACT = 1
 #define LOWERBOUND = 2
 #define UPPERBOUND = 3
@@ -30,12 +32,11 @@ Node * createNode(int * key, int depth, int type, int turn);
 Bucket * createBucket();
 TTable * createTTable();
 
-void getNodeType(Node * node, int alpha, int beta);
+void setNodeType(Node * node, int alpha, int beta, int value);
 Node * getNode(TTable * table, int hash, int * key);
 void storeNode(TTable * table, int hash, int * key, int depth, int type, int turn);
 
 int createKey(Board * board);
 int createHash(int * key);
  
-
 #endif
