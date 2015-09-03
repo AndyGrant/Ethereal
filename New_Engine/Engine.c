@@ -127,7 +127,7 @@ unsigned long long depthSearch(Board * board, int turn, int depth, int * lastMov
 	
 }
 
-int main(){
+int main_2(){
 	Board * board = createBoard(base);
 	int move[5] = {0,0,0,0,0};
 	board->LastMove = move;
