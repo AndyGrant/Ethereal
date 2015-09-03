@@ -17,6 +17,7 @@ Bucket * createBucket(){
 	Bucket * bucket = malloc(sizeof(Bucket));
 	bucket->max = BUCKET_SIZE;
 	bucket->size = 0;
+	bucket->nodes = malloc(sizeof(Node * ) * BUCKET_SIZE);
 	return bucket;
 }
 
@@ -36,7 +37,7 @@ Node * getNode(TTable * table, int hash, int * key){
 	
 	int i = 0;
 	while(i < bucket->size){
-		if (memcmp(key,bucket->nodes[i]->key,sizeof(int) * KEY_SIZE))
+		if (memcmp(key,bucket->nodes[i]->key,sizeof(int) * KEY_SIZE) == 0)
 			return bucket->nodes[i];
 		i += 1;
 	}
@@ -44,6 +45,7 @@ Node * getNode(TTable * table, int hash, int * key){
 }
 
 void storeNode(TTable * table, int hash, Node * node){
+	
 	Bucket * bucket = table->buckets[hash];
 	
 	if(bucket->size < bucket->max){
@@ -94,50 +96,6 @@ int createHash(int * key){
 	return abs(hash) % NUM_BUCKETS;
 }
 
-int main(){
-	char base[135] = "31112141512111310101010101010101999999999999999999999999999999999999999999999999999999999999999900000000000000003010204050201030001111";
-	
-	Board * board = createBoard(base);
-	int move[5] = {0,0,0,0,0};
-	board->LastMove= move;
-	printf("Created Board");
-	
-	TTable * table = createTTable();
-	printf("Created Table");
-	
-	int * key = createKey(board);
-	Node * node = createNode(key,2,1,WHITE);
-	int hash = createHash(key);
-	
-	printf("Created Node");
-	
-	storeNode(table,hash,node);
-	
-	printf("Stored Node");
-	return;
-	
-	Node * n = getNode(table,hash,key);
-	
-	printf("Depth=%d",n->depth);
-	
-	
-	/*
-	
-	int size = 0;
-	int * moves = getAllMoves(board,WHITE,&size);
-	int * moves_p = moves;
-	
-	int i;
-	for(i = 0; i < size; i++,moves+=5){
-		ApplyMove(board,moves);
-		printf("key=%d\n",createHash(createKey(board)));
-		RevertMove(board,moves);
-	}
-	
-	free(moves_p);
-	
-	*/
-}
 
 
 
