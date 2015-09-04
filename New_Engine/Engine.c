@@ -69,7 +69,7 @@ void * fooBar(void * ptr){
 	return NULL;
 }
 
-int THREAD_DEPTH = 5;
+int THREAD_DEPTH = 6;
 unsigned long long depthSearch(Board * board, int turn, int depth, int * lastMove){
 	if (depth == 0)
 		return 0;
