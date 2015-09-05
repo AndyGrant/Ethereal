@@ -7,7 +7,7 @@
 #define LOWERBOUND 2
 #define UPPERBOUND 3
 
-#define NUM_BUCKETS 33554432
+#define NUM_BUCKETS 524288
 #define BUCKET_SIZE 4
 
 #define KEY_SIZE 9
