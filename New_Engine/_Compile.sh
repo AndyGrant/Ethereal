@@ -1,3 +1,3 @@
 #!/bin/sh
 
-gcc -o3 Engine.c -o foo.exe -lpthread
+gcc -o3 Engine.c -o foo.exe -L. -lpthread
