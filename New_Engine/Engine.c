@@ -317,11 +317,11 @@ void getBishopMoves(Board * board, int turn, int * size, int x, int y, int check
 }
 
 void getRookMoves(Board * board, int turn, int * size, int x, int y, int check){
-	int checkBreak;
+	int checkBreak = 0;
 	if (board->Types[x][y] != ROOK)
 		checkBreak = 0;
 	else if(board->ValidCastles[turn][x != 0])
-		checkBreak = x != 0;
+		checkBreak = 1 + 2*x != 0;
 		
 	int i, nx, ny, start = x * 8 + y;
 	for(i = 0; i < 4; i++){
