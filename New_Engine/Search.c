@@ -112,7 +112,7 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 			if (best > alpha)
 				alpha = best;
 				
-			if (best >= alpha)
+			if (best >= beta)
 				break;
 		}
 	}
