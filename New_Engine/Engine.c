@@ -5,6 +5,7 @@
 #include <time.h>
 #include <pthread.h>
 #include "Engine.h"
+#include "Search.h"
 
 /*
 	Move Encodings
@@ -132,10 +133,13 @@ int main(){
 	int move[5] = {0,0,0,0,0};
 	board->LastMove = move;
 	
+	getBestMoveIndex(board, WHITE);
+	/*
 	time_t start = time(NULL);
 	int i;
 	printf("Moves Searched : %llu\n",depthSearch(board,WHITE,5,move));
 	printf("Seconds Taken: %d \n\n",(int)(time(NULL)-start));
+	*/
 }
 
 Board * copyBoard(Board * old){
