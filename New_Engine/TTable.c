@@ -5,9 +5,10 @@
 #include "TTable.h"
 
 
-Node * createNode(int * key, int depth, int type, int turn){
+Node * createNode(int * key, int value, int depth, int type, int turn){
 	Node * node = malloc(sizeof(Node));
 	node->key = key;
+	node->value = value;
 	node->depth = depth;
 	node->type = type;
 	node->turn = turn;

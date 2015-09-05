@@ -7,13 +7,14 @@
 #define LOWERBOUND 2
 #define UPPERBOUND 3
 
-#define NUM_BUCKETS 16000
-#define BUCKET_SIZE 32
+#define NUM_BUCKETS 33554432
+#define BUCKET_SIZE 4
 
 #define KEY_SIZE 9
 
 typedef struct Node{
 	int * key;
+	int value;
 	int depth;
 	int type;
 	int turn;
@@ -30,7 +31,7 @@ typedef struct TTable{
 	Bucket * buckets[NUM_BUCKETS];
 } TTable;
 
-Node * createNode(int * key, int depth, int type, int turn);
+Node * createNode(int * key, int value, int depth, int type, int turn);
 Bucket * createBucket();
 TTable * createTTable();
 
