@@ -95,7 +95,10 @@ void valueSort(int * values, int * moves, int size){
 			}
 		}
 	}
-	
+}
+
+int * hueristicSort(Board * board, int * moves, int size){
+
 }
 
 int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, int beta, int eval){
@@ -203,7 +206,9 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 int evaluateBoard(Board * board, int turn){
 	TOTAL_BOARDS_SEARCHED += 1;
 	return 	evaluateMaterial(board, turn) + 
-			evalutePosition(board, turn) ;
+			evaluatePosition(board, turn) +
+			evaluateMoves(board,turn)	-
+			evaluateMoves(board,!turn);
 }
 
 int evaluateMaterial(Board * board, int turn){
@@ -219,7 +224,7 @@ int evaluateMaterial(Board * board, int turn){
 	return value;
 }
 
-int evalutePosition(Board * board, int turn){
+int evaluatePosition(Board * board, int turn){
 	int x,y, value = 0;
 	for(x = 2; x < 6; x++)
 		for(y = 2; y < 6; y++)
@@ -232,5 +237,29 @@ int evalutePosition(Board * board, int turn){
 				value += board->Colors[x][y] == turn ? VALUE_CENTER_ATTACKED : -VALUE_CENTER_ATTACKED;
 
 	return value;
+}
+
+int evaluateMoves(Board * board, int turn){
+	int size = 0;
+	int * moves = getAllMoves(board,turn,&size);
+	int * moves_p = moves;
+	
+	TOTAL_MOVES_FOUND += size;
+	
+	float nv = 0;
+	int i, value=0;
+	for(i = 0; i < size; i++, moves += 5){
+		if (board->TYPES[moves[1]] == BISHOP)
+			value += VALUE_BISHOP_RANGE;
+		else if (board->TYPES[moves[1]] == KNIGHT)
+			value += VALUE_KNIGHT_RANGE;
+		if (moves[2] / 8 > 2 && moves[2] / 8 < 5 && moves[2] % 8 > 2 && moves[2] % 8 < 5)
+			value += VALUE_CENTER_ATTACKED;
+		if (moves[0] == 0 && moves[3] != 9)
+			nv += CAPTURE_VALUES[board->TYPES[moves[2]]] / CAPTURE_VALUES[board->TYPES[moves[1]]];	
+	}
+	
+	free(moves_p);
+	return value + (int)(nv/2);
 }
 
