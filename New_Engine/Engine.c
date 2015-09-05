@@ -140,6 +140,7 @@ int main(){
 	printf("Moves Searched : %llu\n",depthSearch(board,WHITE,5,move));
 	printf("Seconds Taken: %d \n\n",(int)(time(NULL)-start));
 	*/
+	return 0;
 }
 
 Board * copyBoard(Board * old){
@@ -210,7 +211,7 @@ void buildKnightMap(Board * board){
 int * getAllMoves(Board * board, int turn, int * size){
 	pruneCheckValidations(board,turn);
 	
-	int x,y,i;
+	int x,y;
 	for(x = 0; x < 8; x++)
 		for(y = 0; y < 8; y++)
 			if (board->Colors[x][y] == turn)
