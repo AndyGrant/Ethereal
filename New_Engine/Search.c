@@ -107,49 +107,10 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 		return eval == turn ? -MATE : MATE;
 	
 	ApplyMove(board,move);
-	int * lastMove = board->LastMove;
-	board->LastMove = move;
-	
-	int * key = createKey(board);
-	int hash = createHash(key);
-	Node * node = getNode(TABLE,hash,key);
-	
-	if (node != NULL && node->depth >= depth){
-		int value = node->turn == turn ?  node->value : -node->value;
-		
-		if (node->type == EXACT){
-			RevertMove(board,move);
-			free(key);
-			return value;
-		}
-		
-		if (node->type == LOWERBOUND && node->value > alpha)
-			alpha = value;
-		else if(node->type == UPPERBOUND && node->value < beta)
-			beta = value;
-			
-		if (alpha >= beta){
-			RevertMove(board,move);
-			free(key);
-			return value;
-		}
-	}
 	
 	if (depth == 0){
 		int value = evaluateBoard(board, turn);
 		RevertMove(board,move);
-		board->LastMove = lastMove;
-		
-		if (node == NULL){
-			if (value <= alpha)
-				storeNode(TABLE,hash,createNode(key,value,depth,LOWERBOUND,turn));
-			else if (value >= beta)
-				storeNode(TABLE,hash,createNode(key,value,depth,UPPERBOUND,turn));
-			else
-				storeNode(TABLE,hash,createNode(key,value,depth,EXACT,turn));
-		} else 
-			free(key);
-		
 		return value;
 	}
 	
@@ -163,11 +124,9 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 		best = validateMove(board,turn) == 1 ? 0 : -MATE;
 	} else {
 		best = -MATE - 1;
-		
 		int i;
 		for(i = 0; i < size; i++, moves += 5){
 			int value = -alphaBetaPrune(board,!turn,moves,depth-1,-beta,-alpha,eval);
-			
 			if (value > best)
 				best = value;	
 			if (best > alpha)
@@ -176,28 +135,7 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 				break;
 		}
 	}
-	
-	if (node == NULL){
-		if (best <= alpha)
-			storeNode(TABLE,hash,createNode(key,best,depth,LOWERBOUND,turn));
-		else if (best >= beta)
-			storeNode(TABLE,hash,createNode(key,best,depth,UPPERBOUND,turn));
-		else
-			storeNode(TABLE,hash,createNode(key,best,depth,EXACT,turn));
-	} else if (depth > node->depth){
-		free(key);
-		node->turn = turn;
-		node->value = best;
-		
-		if (best <= alpha)
-			node->type = LOWERBOUND;
-		else if (best >= beta)
-			node->type = UPPERBOUND;
-		else
-			node->type = EXACT;
-	}
-	
-	board->LastMove = lastMove;
+
 	RevertMove(board,move);
 	free(moves_p);
 	return best;
