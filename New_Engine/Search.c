@@ -26,7 +26,7 @@ int getBestMoveIndex(Board * board, int turn){
 	START_TIME = time(NULL);
 	END_TIME = START_TIME + 9;
 	
-	TABLE = createTTable();
+	//TABLE = createTTable();
 	
 	int size = 0;
 	int * moves = getAllMoves(board,turn,&size);
@@ -38,7 +38,6 @@ int getBestMoveIndex(Board * board, int turn){
 	if (size == 0)
 		return -1;
 		
-	int alpha, beta;
 	int values[size];
 	
 	int depth, i;
@@ -79,8 +78,8 @@ void valueSort(int * values, int * moves, int size){
 
 int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, int beta, int eval){
 	
-	if (END_TIME < time(NULL))
-		return eval == turn ? -MATE : MATE;
+	//if (END_TIME < time(NULL))
+	//	return eval == turn ? -MATE : MATE;
 	
 	ApplyMove(board,move);
 	int * lastMove = board->LastMove;
@@ -88,7 +87,7 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 	
 	
 	if (depth == 0){
-		int value = evaluteBoard(board, turn);
+		int value = evaluateBoard(board, turn);
 		RevertMove(board,move);
 		board->LastMove = lastMove;
 		return value;
@@ -124,11 +123,12 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 	return best;
 }
 
-int evaluteBoard(Board * board, int turn){
-	return evaluteMaterial(board, turn);
+int evaluateBoard(Board * board, int turn){
+	TOTAL_BOARDS_SEARCHED += 1;
+	return evaluateMaterial(board, turn);
 }
 
-int evaluteMaterial(Board * board, int turn){
+int evaluateMaterial(Board * board, int turn){
 	int i, value = 0;
 	
 	for(i = 0; i < 64; i++){
