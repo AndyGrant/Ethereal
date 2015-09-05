@@ -94,7 +94,7 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 		return value;
 	}
 	
-	int best, size = 0;
+	int best = 0, size = 0;
 	int * moves = getAllMoves(board,turn,&size);
 	int * moves_p = moves;
 	
