@@ -105,7 +105,7 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 		
 		int i;
 		for(i = 0; i < size; i++, moves += 5){
-			int value = -alphaBetaPrune(board,!turn,moves,depth,-beta,-alpha,turn);
+			int value = -alphaBetaPrune(board,!turn,moves,depth-1,-beta,-alpha,eval);
 			
 			if (value > best)
 				best = value;
