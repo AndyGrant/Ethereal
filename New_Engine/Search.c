@@ -140,8 +140,7 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 		int i;
 		for(i = 0; i < size; i++){
 			data[i].board = copyBoard(board);
-			ApplyMove((data[i].board),(moves+(i*5)));
-			data[i].board->LastMove = moves + (i*5);
+			data[i].board->LastMove = move;
 			data[i].turn = !turn;
 			data[i].move = moves + (i * 5);
 			data[i].depth = depth-1;
@@ -153,10 +152,8 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 		for(i = 0; i < size; i++)
 			pthread_create(&(threads[i]),NULL,spawnAlphaBetaPruneThread,&(data[i]));
 		
-		for(i = 0; i < size; i++){
-			printf("Ended Thread #%d\n",i);
+		for(i = 0; i < size; i++)
 			pthread_join(threads[i],NULL);
-		}
 		
 		for(i = 0; i < size; i++){
 			if (data[i].alpha > value)
