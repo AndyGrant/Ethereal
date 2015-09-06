@@ -234,7 +234,7 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 	else
 		free(key);
 	if (node != NULL && node->depth < depth){
-		free(key);
+		node->depth = depth;
 		node->turn = turn;
 		node->value = best;
 		node->type = getNodeType(alpha,beta,best);

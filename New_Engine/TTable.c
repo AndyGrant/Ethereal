@@ -61,6 +61,7 @@ void storeNode(TTable * table, int hash, Node * node){
 			nodes[i] = bucket->nodes[i];
 			
 		nodes[bucket->size] = node;
+		free(bucket->nodes);
 		bucket->nodes = nodes;
 		bucket->size += 1;
 		bucket->max *= 2;
