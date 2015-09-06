@@ -1,13 +1,14 @@
 #ifndef TTABLE_HEADER
 #define TTABLE_HEADER
 
+#include <pthread.h>
 #include "Engine.h"
 
 #define EXACT 1
 #define LOWERBOUND 2
 #define UPPERBOUND 3
 
-#define NUM_BUCKETS 250000
+#define NUM_BUCKETS 1000000
 #define BUCKET_SIZE 2
 
 #define KEY_SIZE 9
@@ -23,6 +24,7 @@ typedef struct Node{
 typedef struct Bucket{
 	int max;
 	int size;
+	pthread_mutex_t lock;
 	Node ** nodes;
 } Bucket;
 
