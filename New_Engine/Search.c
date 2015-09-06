@@ -231,7 +231,9 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 
 	if (node == NULL)
 		storeNode(TABLE,hash,createNode(key,best,depth,getNodeType(alpha,beta,best),turn));
-	else if (node->depth < depth){
+	else
+		free(key);
+	if (node != NULL && node->depth < depth){
 		free(key);
 		node->turn = turn;
 		node->value = best;
