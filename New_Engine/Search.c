@@ -15,7 +15,7 @@ TTable * TABLE;
 
 time_t START_TIME;
 time_t END_TIME;
-
+int MAX_TIME = 20;
 
 int START_DEPTH = 2;
 int MAX_DEPTH = 10;
@@ -25,10 +25,12 @@ int END_DEPTH = 10;
 int TOTAL_BOARDS_SEARCHED = 0;
 int TOTAL_MOVES_FOUND = 0;
 
+int SEARCH_THREAD_DEPTH = 5;
+
 int getBestMoveIndex(Board * board, int turn){
 
 	START_TIME = time(NULL);
-	END_TIME = START_TIME + 9;
+	END_TIME = START_TIME + MAX_TIME;
 	
 	TABLE = createTTable();
 	
@@ -76,6 +78,8 @@ int endSearch(int index, int size, int * values, int * sorted, int * unsorted){
 	printf("==========================================\n");
 	printf("Total Boards Searched \t: %d\n",TOTAL_BOARDS_SEARCHED);
 	printf("Total Moves Found \t: %d\n",TOTAL_MOVES_FOUND);
+	printf("Total Transpositions \t: %d\n",TABLE->size);
+	printf("Total Empty Buckets \t: %d\n",getNonEmptyBucketCount(TABLE));
 	return 0;
 }
 
@@ -97,25 +101,111 @@ void valueSort(int * values, int * moves, int size){
 	}
 }
 
-int * hueristicSort(Board * board, int * moves, int size){
+void hueristicSort(Board * board, int * moves, int size, int turn){
+	int values[size];	
+	int * moves_p = moves;
+	int i;
+	for(i = 0; i < size; i++,moves+=5){
+		ApplyMove(board,moves);
+		values[i] = evaluatePosition(board,turn);
+		RevertMove(board,moves);
+	}
+	
+	valueSort(values,moves_p,size);
+}
 
+void * spawnAlphaBetaPruneThread(void * ptr){
+	SearchThreadData * data = (SearchThreadData *)(ptr);
+	data->alpha = alphaBetaPrune(data->board,data->turn,data->move,data->depth,data->alpha,data->beta,data->eval);
+	return NULL;
 }
 
 int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, int beta, int eval){
+	
+	if (depth == SEARCH_THREAD_DEPTH){
+		printf("Creating threaded search\n");
+		int value = -MATE;
+		int size = 0;
+		int * moves = getAllMoves(board,turn,&size);
+		pthread_t threads[size];
+		SearchThreadData data[size];
+		
+		printf("Created storage for threads/data\n");
+		
+		int i;
+		for(i = 0; i < size; i++){
+			data[i].board = copyBoard(board);
+			ApplyMove(data[i].board,(moves+(i*5)));
+			data[i].turn = !turn;
+			data[i].move = moves + (i * 5);
+			data[i].depth = depth-1;
+			data[i].alpha = -beta;
+			data[i].alpha = -alpha;
+			data[i].eval = eval;
+		}
+		
+		printf("Created thread data\n");
+		
+		for(i = 0; i < size; i++)
+			pthread_create(&(threads[i]),NULL,spawnAlphaBetaPruneThread,&(data[i]));
+			
+		printf("Started all threads");
+		
+		for(i = 0; i < size; i++){
+			pthread_join(threads[i],NULL);
+			printf("finished thread");
+			if (data[i].alpha > value)
+				value = data[i].alpha;
+			free(data[i].board);
+		}
+		
+		free(moves);
+		return value;
+	}
 	
 	if (END_TIME < time(NULL))
 		return eval == turn ? -MATE : MATE;
 	
 	ApplyMove(board,move);
 	
-	if (depth == 0){
+	int * key = createKey(board);
+	int hash = createHash(key);
+	Node * node = getNode(TABLE,hash,key);
+	
+	if (node != NULL && node->depth >= depth){
+		int value = node->turn == turn ? node->value : -node->value;
+		
+		if (node->type == EXACT){
+			free(key);
+			RevertMove(board,move);
+			return value;
+		}
+		
+		if (node->type == LOWERBOUND && node->value > alpha)
+			alpha = value;
+		else if (node->type == UPPERBOUND && node->value < beta)
+			beta = value;
+			
+		if (alpha >= beta){
+			free(key);
+			RevertMove(board,move);
+			return value;
+		}
+	}
+	
+	if (depth == 0){		
 		int value = evaluateBoard(board, turn);
 		RevertMove(board,move);
+		if (node == NULL)
+			storeNode(TABLE,hash,createNode(key,value,depth,getNodeType(alpha,beta,value),turn));
+		else
+			free(key);
 		return value;
 	}
 	
 	int best = 0, size = 0;
 	int * moves = getAllMoves(board,turn,&size);
+	hueristicSort(board,moves,size,turn);
 	int * moves_p = moves;
 	
 	TOTAL_MOVES_FOUND += size;
@@ -136,6 +226,15 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 		}
 	}
 
+	if (node == NULL)
+		storeNode(TABLE,hash,createNode(key,best,depth,getNodeType(alpha,beta,best),turn));
+	else if (node->depth < depth){
+		free(key);
+		node->turn = turn;
+		node->value = best;
+		node->type = getNodeType(alpha,beta,best);
+	}
+	
 	RevertMove(board,move);
 	free(moves_p);
 	return best;

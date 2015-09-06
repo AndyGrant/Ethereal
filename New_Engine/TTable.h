@@ -7,8 +7,8 @@
 #define LOWERBOUND 2
 #define UPPERBOUND 3
 
-#define NUM_BUCKETS 524288
-#define BUCKET_SIZE 4
+#define NUM_BUCKETS 2097152
+#define BUCKET_SIZE 2
 
 #define KEY_SIZE 9
 
@@ -35,6 +35,9 @@ Node * createNode(int * key, int value, int depth, int type, int turn);
 Bucket * createBucket();
 TTable * createTTable();
 
+int getNonEmptyBucketCount(TTable * table);
+
+int getNodeType(int alpha, int beta, int value);
 void setNodeType(Node * node, int alpha, int beta, int value);
 Node * getNode(TTable * table, int hash, int * key);
 void storeNode(TTable * table, int hash, Node * node);

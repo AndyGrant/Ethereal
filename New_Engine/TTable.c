@@ -47,7 +47,7 @@ Node * getNode(TTable * table, int hash, int * key){
 }
 
 void storeNode(TTable * table, int hash, Node * node){
-	
+	table->size += 1;
 	Bucket * bucket = table->buckets[hash];
 	
 	if(bucket->size < bucket->max){
@@ -87,21 +87,39 @@ int * createKey(Board * board){
 }
 
 int createHash(int * key){
-	int hash = 0;
-	int i;
-	for(i = 0; i < 8;){
-		hash += key[i++];
-		hash += 2*key[i++];
-		hash += 3*key[i++];
-		hash += 4*key[i++];
+	int i, hash = 0;
+	
+	// Bob Jenkins - One-At-A-Time
+	for(i = 0; i < 8; i++){
+		hash += key[i];
+		hash += (hash << 10);
+		hash ^= (hash >> 6);
 	}
+	
+	hash += (hash << 3);
+	hash ^= (hash >> 11);
+	hash += (hash << 15);
+	
 	return abs(hash) % NUM_BUCKETS;
 }
 
+int getNodeType(int alpha, int beta, int value){
+	if (value <= alpha)
+		return LOWERBOUND;
+	else if (value >= beta)
+		return UPPERBOUND;
+	return EXACT;	
+}
 
-
-
-
+int getNonEmptyBucketCount(TTable * table){
+	int size = 0;
+	int i;
+	for(i = 0; i < NUM_BUCKETS; i++)
+		if (table->buckets[i]->size == 0)
+			size += 1;
+	
+	return size;
+}
 
 
 
