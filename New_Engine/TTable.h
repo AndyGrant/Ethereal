@@ -9,7 +9,7 @@
 #define UPPERBOUND 3
 
 #define NUM_BUCKETS 1000000
-#define BUCKET_SIZE 2
+#define BUCKET_SIZE 4
 
 #define KEY_SIZE 9
 
