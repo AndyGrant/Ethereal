@@ -157,6 +157,7 @@ Board * copyBoard(Board * old){
 	new->ValidCastles[0][1] = old->ValidCastles[0][1];
 	new->ValidCastles[1][0] = old->ValidCastles[1][0];
 	new->ValidCastles[1][1] = old->ValidCastles[1][1];
+	//memcpy(new->LastMove,old->LastMove,sizeof(int)*5);
 	memcpy(new->KnightMap,old->KnightMap,sizeof(old->KnightMap));
 	return new;
 }

@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 #include "Engine.h"
 #include "TTable.h"
+
 
 
 Node * createNode(int * key, int value, int depth, int type, int turn){
@@ -19,6 +21,7 @@ Bucket * createBucket(){
 	Bucket * bucket = malloc(sizeof(Bucket));
 	bucket->max = BUCKET_SIZE;
 	bucket->size = 0;
+	bucket->lock = PTHREAD_MUTEX_INITIALIZER;
 	bucket->nodes = malloc(sizeof(Node * ) * BUCKET_SIZE);
 	return bucket;
 }
@@ -35,18 +38,23 @@ TTable * createTTable(){
 }
 
 Node * getNode(TTable * table, int hash, int * key){
+	pthread_mutex_lock(&(table->buckets[hash]->lock));
 	Bucket * bucket = table->buckets[hash];
 	
 	int i = 0;
 	while(i < bucket->size){
-		if (memcmp(key,bucket->nodes[i]->key,sizeof(int) * KEY_SIZE) == 0)
+		if (memcmp(key,bucket->nodes[i]->key,sizeof(int) * KEY_SIZE) == 0){
+			pthread_mutex_unlock(&(table->buckets[hash]->lock));
 			return bucket->nodes[i];
+		}
 		i += 1;
 	}
+	pthread_mutex_unlock(&(table->buckets[hash]->lock));
 	return NULL;
 }
 
 void storeNode(TTable * table, int hash, Node * node){
+	pthread_mutex_lock(&(table->buckets[hash]->lock));
 	table->size += 1;
 	Bucket * bucket = table->buckets[hash];
 	
@@ -66,6 +74,7 @@ void storeNode(TTable * table, int hash, Node * node){
 		bucket->size += 1;
 		bucket->max *= 2;
 	}
+	pthread_mutex_unlock(&(table->buckets[hash]->lock));
 }
 
 int * createKey(Board * board){

@@ -15,17 +15,18 @@ TTable * TABLE;
 
 time_t START_TIME;
 time_t END_TIME;
-int MAX_TIME = 20;
+int MAX_TIME = 30;
 
 int START_DEPTH = 2;
-int MAX_DEPTH = 10;
+int MAX_DEPTH = 8;
 int DELTA_DEPTH = 2;
-int END_DEPTH = 10;
+int END_DEPTH = 8;
 
 int TOTAL_BOARDS_SEARCHED = 0;
 int TOTAL_MOVES_FOUND = 0;
 
 int SEARCH_THREAD_DEPTH = 5;
+int USE_TTABLE = 0;
 
 int getBestMoveIndex(Board * board, int turn){
 
@@ -116,7 +117,8 @@ void hueristicSort(Board * board, int * moves, int size, int turn){
 
 void * spawnAlphaBetaPruneThread(void * ptr){
 	SearchThreadData * data = (SearchThreadData *)(ptr);
-	data->alpha = -alphaBetaPrune(data->board,data->turn,data->move,data->depth,data->alpha,data->beta,data->eval);
+	int x = -alphaBetaPrune(data->board,data->turn,data->move,data->depth,data->alpha,data->beta,data->eval);
+	data->alpha = x;
 	return NULL;
 }
 
@@ -124,85 +126,115 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 	
 	if (depth == SEARCH_THREAD_DEPTH){
 		ApplyMove(board,move);
+		int * lastmove = board->LastMove;
+		board->LastMove = move;
 		
-		int value = -MATE;
+		int best = -MATE-1;
 		int size = 0;
 		int * moves = getAllMoves(board,turn,&size);
+		
+		TOTAL_MOVES_FOUND += size;
 		
 		if (size == 0){
 			RevertMove(board,move);
 			return validateMove(board,turn) == 1 ? 0 : -MATE;
 		}
 		
-		pthread_t threads[size];
-		SearchThreadData data[size];
+		pthread_t threads[1];
+		SearchThreadData data[1];
 		
-		int i;
-		for(i = 0; i < size; i++){
-			data[i].board = copyBoard(board);
-			data[i].board->LastMove = move;
-			data[i].turn = !turn;
-			data[i].move = moves + (i * 5);
-			data[i].depth = depth-1;
-			data[i].alpha = -beta;
-			data[i].beta = -alpha;
-			data[i].eval = eval;
-		}
+		int i,j;		
+		for(i = 0; i < size; i+=1){
 		
-		for(i = 0; i < size; i++)
-			pthread_create(&(threads[i]),NULL,spawnAlphaBetaPruneThread,&(data[i]));
+			for(j = 0; j < 1 && j + i < size; j++){
+				data[j].board = copyBoard(board);
+				data[j].board->LastMove = move;
+				data[j].turn = !turn;
+				data[j].depth = depth-1;				
+				data[j].move = moves + (i+j)*5;
+				data[j].alpha = -beta;
+				data[j].beta = -alpha;
+				data[j].eval = eval;
+			}			
+			
+			for(j = 0; j < 1 && j + i < size; j++){
+				pthread_create(&(threads[j]),NULL,spawnAlphaBetaPruneThread,&(data[j]));
+			}
+				
+			for(j = 0; j < 1 && j + i < size; j++){
+				pthread_join(threads[j],NULL);
+			}
 		
-		for(i = 0; i < size; i++)
-			pthread_join(threads[i],NULL);
-		
-		for(i = 0; i < size; i++){
-			if (data[i].alpha > value)
-				value = data[i].alpha;
-			free(data[i].board);
+			for(j = 0; j < 1 && j + i < size; j++){
+				if (data[j].alpha > best)
+					best = data[j].alpha;	
+				if (best > alpha)
+					alpha = best;	
+				if (best >= beta){	
+					free(moves);
+					free(data[0].board);
+					RevertMove(board,move);
+					board->LastMove = lastmove;
+					return best;
+				}
+			}
+			
+			free(data[0].board);
 		}
 		
 		free(moves);
 		RevertMove(board,move);
-		return value;
+		board->LastMove = lastmove;
+		return best;
 	}
 	
 	if (END_TIME < time(NULL))
 		return eval == turn ? -MATE : MATE;
 	
 	ApplyMove(board,move);
+	int * lastmove = board->LastMove;
+	board->LastMove = move;
 	
-	int * key = createKey(board);
-	int hash = createHash(key);
-	Node * node = getNode(TABLE,hash,key);
-	
-	if (node != NULL && node->depth >= depth){
-		int value = node->turn == turn ? node->value : -node->value;
+	int * key;
+	int hash;
+	Node * node;
+	if (USE_TTABLE){
+		key = createKey(board);
+		hash = createHash(key);
+		node = getNode(TABLE,hash,key);
 		
-		if (node->type == EXACT){
-			free(key);
-			RevertMove(board,move);
-			return value;
-		}
-		
-		if (node->type == LOWERBOUND && node->value > alpha)
-			alpha = value;
-		else if (node->type == UPPERBOUND && node->value < beta)
-			beta = value;
+		if (node != NULL && node->depth >= depth){
+			int value = node->turn == turn ? node->value : -node->value;
 			
-		if (alpha >= beta){
-			free(key);
-			RevertMove(board,move);
-			return value;
+			if (node->type == EXACT){
+				free(key);
+				RevertMove(board,move);
+				return value;
+			}
+			
+			if (node->type == LOWERBOUND && node->value > alpha)
+				alpha = value;
+			else if (node->type == UPPERBOUND && node->value < beta)
+				beta = value;
+				
+			if (alpha >= beta){
+				free(key);
+				RevertMove(board,move);
+				return value;
+			}
 		}
 	}
 	
 	if (depth == 0){		
 		int value = evaluateBoard(board, turn);
 		RevertMove(board,move);
-		if (node == NULL)
-			storeNode(TABLE,hash,createNode(key,value,depth,getNodeType(alpha,beta,value),turn));
-		else
-			free(key);
+		if (USE_TTABLE){
+			if (node == NULL)
+				storeNode(TABLE,hash,createNode(key,value,depth,getNodeType(alpha,beta,value),turn));
+			else
+				free(key);
+		}
+		board->LastMove = lastmove;
 		return value;
 	}
 	
@@ -224,23 +256,26 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 				best = value;	
 			if (best > alpha)
 				alpha = best;	
-			if (best >= beta)
+			if (alpha >= beta)
 				break;
 		}
 	}
-
-	if (node == NULL)
-		storeNode(TABLE,hash,createNode(key,best,depth,getNodeType(alpha,beta,best),turn));
-	else
-		free(key);
-	if (node != NULL && node->depth < depth){
-		node->depth = depth;
-		node->turn = turn;
-		node->value = best;
-		node->type = getNodeType(alpha,beta,best);
+	
+	if (USE_TTABLE){
+		if (node == NULL)
+			storeNode(TABLE,hash,createNode(key,best,depth,getNodeType(alpha,beta,best),turn));
+		else	
+			free(key);
+		if (node != NULL && node->depth < depth){
+			node->depth = depth;
+			node->turn = turn;
+			node->value = best;
+			node->type = getNodeType(alpha,beta,best);
+		}
 	}
 	
 	RevertMove(board,move);
+	board->LastMove = lastmove;
 	free(moves_p);
 	return best;
 }
