@@ -116,16 +116,24 @@ void hueristicSort(Board * board, int * moves, int size, int turn){
 
 void * spawnAlphaBetaPruneThread(void * ptr){
 	SearchThreadData * data = (SearchThreadData *)(ptr);
-	data->alpha = alphaBetaPrune(data->board,data->turn,data->move,data->depth,data->alpha,data->beta,data->eval);
+	data->alpha = -alphaBetaPrune(data->board,data->turn,data->move,data->depth,data->alpha,data->beta,data->eval);
 	return NULL;
 }
 
 int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, int beta, int eval){
 	
 	if (depth == SEARCH_THREAD_DEPTH){
+		ApplyMove(board,move);
+		
 		int value = -MATE;
 		int size = 0;
 		int * moves = getAllMoves(board,turn,&size);
+		
+		if (size == 0){
+			RevertMove(board,move);
+			return validateMove(board,turn) == 1 ? 0 : -MATE;
+		}
+		
 		pthread_t threads[size];
 		SearchThreadData data[size];
 		
@@ -138,7 +146,7 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 			data[i].move = moves + (i * 5);
 			data[i].depth = depth-1;
 			data[i].alpha = -beta;
-			data[i].alpha = -alpha;
+			data[i].beta = -alpha;
 			data[i].eval = eval;
 		}
 		
@@ -146,13 +154,18 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 			pthread_create(&(threads[i]),NULL,spawnAlphaBetaPruneThread,&(data[i]));
 		
 		for(i = 0; i < size; i++){
+			printf("Ended Thread #%d\n",i);
 			pthread_join(threads[i],NULL);
+		}
+		
+		for(i = 0; i < size; i++){
 			if (data[i].alpha > value)
 				value = data[i].alpha;
 			free(data[i].board);
 		}
 		
 		free(moves);
+		RevertMove(board,move);
 		return value;
 	}
 	
