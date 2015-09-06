@@ -123,19 +123,17 @@ void * spawnAlphaBetaPruneThread(void * ptr){
 int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, int beta, int eval){
 	
 	if (depth == SEARCH_THREAD_DEPTH){
-		printf("Creating threaded search\n");
 		int value = -MATE;
 		int size = 0;
 		int * moves = getAllMoves(board,turn,&size);
 		pthread_t threads[size];
 		SearchThreadData data[size];
 		
-		printf("Created storage for threads/data\n");
-		
 		int i;
 		for(i = 0; i < size; i++){
 			data[i].board = copyBoard(board);
-			ApplyMove(data[i].board,(moves+(i*5)));
+			ApplyMove((data[i].board),(moves+(i*5)));
+			data[i].board->LastMove = moves + (i*5);
 			data[i].turn = !turn;
 			data[i].move = moves + (i * 5);
 			data[i].depth = depth-1;
@@ -144,16 +142,11 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 			data[i].eval = eval;
 		}
 		
-		printf("Created thread data\n");
-		
 		for(i = 0; i < size; i++)
 			pthread_create(&(threads[i]),NULL,spawnAlphaBetaPruneThread,&(data[i]));
-			
-		printf("Started all threads");
 		
 		for(i = 0; i < size; i++){
 			pthread_join(threads[i],NULL);
-			printf("finished thread");
 			if (data[i].alpha > value)
 				value = data[i].alpha;
 			free(data[i].board);
