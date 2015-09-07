@@ -34,7 +34,7 @@ typedef struct TTable{
 } TTable;
 
 Node * createNode(int * key, int value, int depth, int type, int turn);
-Bucket * createBucket();
+Bucket * createBucket(int num);
 TTable * createTTable();
 
 int getNonEmptyBucketCount(TTable * table);
