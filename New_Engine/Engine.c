@@ -210,7 +210,7 @@ void buildKnightMap(Board * board){
 
 int * getAllMoves(Board * board, int turn, int * size){
 	pruneCheckValidations(board,turn);
-	
+	*size = 0;
 	int x,y;
 	for(x = 0; x < 8; x++)
 		for(y = 0; y < 8; y++)
