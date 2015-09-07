@@ -146,13 +146,17 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 		
 		pthread_t threads[4];
 		SearchThreadData data[4];
-		Board * boardcopys[4];
-		int i,j;		
-		for(i = 0; i < size; i += 4){
+		Board * boards[4];
 		
+
+		int i,j;		
+		
+		for(i = 0 ; i < 4; i++)
+			boards[i] = copyBoard(board);
+		
+		for(i = 0; i < size; i += 4){
 			for(j = 0; j < 4 && j + i < size; j++){
-				data[j].board = copyBoard(board);
-				boardcopys[j] = data[j].board;
+				data[j].board = boards[j];
 				data[j].board->LastMove = move;
 				data[j].turn = !turn;
 				data[j].depth = depth;				
@@ -179,10 +183,11 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 					i = size;
 				}
 			}
-			
-			for(j = 0; j < 4 && j + i < size; j++)
-				free(boardcopys[j]);
 		}
+		
+		for(i = 0 ; i < 4; i++)
+			free(boards[i]);
+		
 		
 		free(moves);
 		RevertMove(board,move);
