@@ -5,8 +5,6 @@
 #include "Engine.h"
 #include "TTable.h"
 
-
-
 Node * createNode(int * key, int value, int depth, int type, int turn){
 	Node * node = malloc(sizeof(Node));
 	node->key = key;
@@ -38,6 +36,7 @@ TTable * createTTable(){
 }
 
 Node * getNode(TTable * table, int hash, int * key){
+	return;
 	pthread_mutex_lock(&(table->buckets[hash]->lock));
 	Bucket * bucket = table->buckets[hash];
 	
@@ -54,6 +53,7 @@ Node * getNode(TTable * table, int hash, int * key){
 }
 
 void storeNode(TTable * table, int hash, Node * node){
+	return;
 	pthread_mutex_lock(&(table->buckets[hash]->lock));
 	if (table->size > 10000000){
 		free(node->key);
