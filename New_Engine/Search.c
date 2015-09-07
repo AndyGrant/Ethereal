@@ -148,7 +148,7 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 		SearchThreadData data[4];
 		
 		int i,j;		
-		for(i = 0; i < size; i++){
+		for(i = 0; i < size; i += 4){
 		
 			for(j = 0; j < 4 && j + i < size; j++){
 				data[j].board = copyBoard(board);
@@ -176,7 +176,6 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 					alpha = best;
 				if (best >= beta){
 					i = size;
-					break;
 				}
 			}
 			
