@@ -19,9 +19,8 @@ Bucket * createBucket(int num){
 	Bucket * bucket = malloc(sizeof(Bucket));
 	bucket->max = BUCKET_SIZE;
 	bucket->size = 0;
-	pthread_mutex_t * mutex = malloc(sizeof(pthread_mutex_t));
-	*mutex = PTHREAD_MUTEX_INITIALIZER;
-	bucket->lock = *mutex;
+	pthread_mutex_t a = PTHREAD_MUTEX_INITIALIZER;
+	bucket->lock = a;
 	bucket->nodes = malloc(sizeof(Node * ) * BUCKET_SIZE);
 	return bucket;
 }
