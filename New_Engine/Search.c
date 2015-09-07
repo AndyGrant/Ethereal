@@ -15,12 +15,12 @@ TTable * TABLE;
 
 time_t START_TIME;
 time_t END_TIME;
-int MAX_TIME = 18000;
+int MAX_TIME = 30;
 
 int START_DEPTH = 2;
-int MAX_DEPTH = 12;
+int MAX_DEPTH = 30;
 int DELTA_DEPTH = 2;
-int END_DEPTH = 12;
+int END_DEPTH = 30;
 
 int TOTAL_BOARDS_SEARCHED = 0;
 int TOTAL_MOVES_FOUND = 0;
@@ -54,7 +54,7 @@ int getBestMoveIndex(Board * board, int turn){
 		printf("Searching Depth Level : %d\n",depth);
 		
 		
-		SEARCH_THREAD_DEPTH = depth - 1;
+		SEARCH_THREAD_DEPTH = depth > 2 ? depth - 2 : 1;
 		
 		int alpha = -MATE;
 		int beta = MATE;
@@ -67,8 +67,8 @@ int getBestMoveIndex(Board * board, int turn){
 			if (values[i] > alpha)
 				alpha = values[i];
 				
-			//if (alpha == MATE)
-			//	return endSearch(i+1,size,values,moves_p,unsorted);
+			if (alpha == MATE)
+				return endSearch(i+1,size,values,moves_p,unsorted);
 		}
 		
 		valueSort(values,moves_p,size);
