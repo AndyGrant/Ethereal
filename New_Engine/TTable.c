@@ -15,11 +15,13 @@ Node * createNode(int * key, int value, int depth, int type, int turn){
 	return node;
 }
 
-Bucket * createBucket(){
+Bucket * createBucket(int num){
 	Bucket * bucket = malloc(sizeof(Bucket));
 	bucket->max = BUCKET_SIZE;
 	bucket->size = 0;
-	bucket->lock = PTHREAD_MUTEX_INITIALIZER;
+	pthread_mutex_t * mutex = malloc(sizeof(pthread_mutex_t));
+	*mutex = PTHREAD_MUTEX_INITIALIZER;
+	bucket->lock = *mutex;
 	bucket->nodes = malloc(sizeof(Node * ) * BUCKET_SIZE);
 	return bucket;
 }
@@ -27,16 +29,13 @@ Bucket * createBucket(){
 TTable * createTTable(){
 	TTable * table = malloc(sizeof(TTable));
 	table->size = 0;
-	
 	int i;
 	for(i = 0; i < NUM_BUCKETS; i++)
-		table->buckets[i] = createBucket();
-		
+		table->buckets[i] = createBucket(i);
 	return table;
 }
 
 Node * getNode(TTable * table, int hash, int * key){
-	return;
 	pthread_mutex_lock(&(table->buckets[hash]->lock));
 	Bucket * bucket = table->buckets[hash];
 	
@@ -53,7 +52,6 @@ Node * getNode(TTable * table, int hash, int * key){
 }
 
 void storeNode(TTable * table, int hash, Node * node){
-	return;
 	pthread_mutex_lock(&(table->buckets[hash]->lock));
 	if (table->size > 10000000){
 		free(node->key);
