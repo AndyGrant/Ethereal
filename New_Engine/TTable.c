@@ -52,12 +52,6 @@ Node * getNode(TTable * table, int hash, int * key){
 
 void storeNode(TTable * table, int hash, Node * node){
 	pthread_mutex_lock(&(table->buckets[hash]->lock));
-	if (table->size > 10000000){
-		free(node->key);
-		free(node);
-		pthread_mutex_unlock(&(table->buckets[hash]->lock));
-		return;
-	}
 	table->size += 1;
 	Bucket * bucket = table->buckets[hash];
 	
