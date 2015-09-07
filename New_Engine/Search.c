@@ -18,9 +18,9 @@ time_t END_TIME;
 int MAX_TIME = 30;
 
 int START_DEPTH = 2;
-int MAX_DEPTH = 30;
+int MAX_DEPTH = 8;
 int DELTA_DEPTH = 2;
-int END_DEPTH = 30;
+int END_DEPTH = 8;
 
 int TOTAL_BOARDS_SEARCHED = 0;
 int TOTAL_MOVES_FOUND = 0;
@@ -67,8 +67,9 @@ int getBestMoveIndex(Board * board, int turn){
 			if (values[i] > alpha)
 				alpha = values[i];
 				
-			if (alpha == MATE)
+			if (abs(alpha) == MATE)
 				return endSearch(i+1,size,values,moves_p,unsorted);
+				
 		}
 		
 		valueSort(values,moves_p,size);
@@ -84,6 +85,7 @@ int endSearch(int index, int size, int * values, int * sorted, int * unsorted){
 	printf("Total Moves Found \t: %d\n",TOTAL_MOVES_FOUND);
 	printf("Total Transpositions \t: %d\n",TABLE->size);
 	printf("Total Empty Buckets \t: %d\n",getNonEmptyBucketCount(TABLE));
+	printf("Total Time Taken \t: %d\n",time(NULL)-START_TIME);
 	return 0;
 }
 
