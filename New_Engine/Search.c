@@ -15,17 +15,17 @@ TTable * TABLE;
 
 time_t START_TIME;
 time_t END_TIME;
-int MAX_TIME = 30;
+int MAX_TIME = 300;
 
 int START_DEPTH = 2;
-int MAX_DEPTH = 8;
+int MAX_DEPTH = 10;
 int DELTA_DEPTH = 2;
-int END_DEPTH = 8;
+int END_DEPTH = 10;
 
 int TOTAL_BOARDS_SEARCHED = 0;
 int TOTAL_MOVES_FOUND = 0;
 
-int SEARCH_THREAD_DEPTH = 5;
+int SEARCH_THREAD_DEPTH = 4;
 int USE_TTABLE = 1;
 
 int getBestMoveIndex(Board * board, int turn){
@@ -54,7 +54,8 @@ int getBestMoveIndex(Board * board, int turn){
 		printf("Searching Depth Level : %d\n",depth);
 		
 		
-		SEARCH_THREAD_DEPTH = depth > 2 ? depth - 2 : 1;
+		SEARCH_THREAD_DEPTH = depth > 5 ? 5 : depth-1;
+		
 		
 		int alpha = -MATE;
 		int beta = MATE;
@@ -84,6 +85,7 @@ int endSearch(int index, int size, int * values, int * sorted, int * unsorted){
 	printf("Total Boards Searched \t: %d\n",TOTAL_BOARDS_SEARCHED);
 	printf("Total Moves Found \t: %d\n",TOTAL_MOVES_FOUND);
 	printf("Total Transpositions \t: %d\n",TABLE->size);
+	printf("Total Nodes In TTTable \t: %d\n",TABLE->totalNodes);
 	printf("Total Empty Buckets \t: %d\n",getNonEmptyBucketCount(TABLE));
 	printf("Total Time Taken \t: %d\n",time(NULL)-START_TIME);
 	return 0;
