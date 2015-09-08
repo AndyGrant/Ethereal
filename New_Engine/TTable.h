@@ -8,7 +8,8 @@
 #define LOWERBOUND 2
 #define UPPERBOUND 3
 
-#define NUM_BUCKETS 4194304
+#define MAX_NODES 16777216
+#define NUM_BUCKETS 2097152
 #define BUCKET_SIZE 2
 
 #define KEY_SIZE 9
@@ -30,6 +31,7 @@ typedef struct Bucket{
 
 typedef struct TTable{
 	int size;
+	int totalNodes;
 	Bucket * buckets[NUM_BUCKETS];
 } TTable;
 

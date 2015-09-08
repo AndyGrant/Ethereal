@@ -28,6 +28,7 @@ Bucket * createBucket(int num){
 TTable * createTTable(){
 	TTable * table = malloc(sizeof(TTable));
 	table->size = 0;
+	table->totalNodes = NUM_BUCKETS * BUCKET_SIZE;
 	int i;
 	for(i = 0; i < NUM_BUCKETS; i++)
 		table->buckets[i] = createBucket(i);
@@ -58,8 +59,10 @@ void storeNode(TTable * table, int hash, Node * node){
 	if(bucket->size < bucket->max){
 		bucket->nodes[bucket->size] = node;
 		bucket->size += 1;
-	} else {
+	} else if (table->totalNodes < MAX_NODES){
 		Node ** nodes = malloc(sizeof(Node *) * bucket->max * 2);
+		
+		table->totalNodes += bucket->max;
 		
 		int i;
 		for(i = 0; i < bucket->size; i++)
@@ -70,7 +73,11 @@ void storeNode(TTable * table, int hash, Node * node){
 		bucket->nodes = nodes;
 		bucket->size += 1;
 		bucket->max *= 2;
+	} else{
+		free(node->key);
+		free(node);
 	}
+	
 	pthread_mutex_unlock(&(table->buckets[hash]->lock));
 }
 
