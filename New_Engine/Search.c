@@ -15,12 +15,12 @@ TTable * TABLE;
 
 time_t START_TIME;
 time_t END_TIME;
-int MAX_TIME = 300;
+int MAX_TIME = 30;
 
 int START_DEPTH = 2;
-int MAX_DEPTH = 10;
+int MAX_DEPTH = 16;
 int DELTA_DEPTH = 2;
-int END_DEPTH = 10;
+int END_DEPTH = 16;
 
 int TOTAL_BOARDS_SEARCHED = 0;
 int TOTAL_MOVES_FOUND = 0;
@@ -87,7 +87,7 @@ int endSearch(int index, int size, int * values, int * sorted, int * unsorted){
 	printf("Total Transpositions \t: %d\n",TABLE->size);
 	printf("Total Nodes In TTTable \t: %d\n",TABLE->totalNodes);
 	printf("Total Empty Buckets \t: %d\n",getNonEmptyBucketCount(TABLE));
-	printf("Total Time Taken \t: %d\n",time(NULL)-START_TIME);
+	printf("Total Time Taken \t: %d\n",(int)(time(NULL)-START_TIME));
 	return 0;
 }
 
@@ -349,6 +349,6 @@ int evaluateMoves(Board * board, int turn){
 	}
 	
 	free(moves_p);
-	return value + (int)(nv/2);
+	return value + (int)(2*nv);
 }
 
