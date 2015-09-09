@@ -27,6 +27,7 @@ typedef struct Board {
 	int FiftyMoveRule;
 	int * LastMove;
 	int KnightMap[64][9];
+	int PieceCount[2][6];
 } Board;
 
 typedef struct ThreadData{
