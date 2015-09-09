@@ -157,6 +157,7 @@ Board * copyBoard(Board * old){
 	new->ValidCastles[0][1] = old->ValidCastles[0][1];
 	new->ValidCastles[1][0] = old->ValidCastles[1][0];
 	new->ValidCastles[1][1] = old->ValidCastles[1][1];
+	memcpy(new->PieceCount,old->PieceCount,sizeof(old->PieceCount));
 	memcpy(new->KnightMap,old->KnightMap,sizeof(old->KnightMap));
 	return new;
 }
@@ -168,12 +169,20 @@ Board * createBoard(char setup[135]){
 	for(x = 0, i = 0; x < 8; x++){
 		for(y = 0; y < 8; y++){
 			board->Types[x][y] = setup[i++] - '0';
-			board->Colors[x][y] = setup[i++] - '0';
-			
+			board->Colors[x][y] = setup[i++] - '0';				
 			if (board->Types[x][y] == KING)
 				board->KingLocations[board->Colors[x][y]] = x*8 + y;
 		}
 	}
+	
+	for(x = 0; x < 2; x++)
+		for(y = 0; y < 6; y++)
+			board->PieceCount[x][y] = 0;
+			
+	for(x = 0; x < 8; x++)
+		for(y = 0; y < 8; y++)
+			if (board->Types[x][y] != EMPTY)
+				board->PieceCount[board->Colors[x][y]][board->Types[x][y]] += 1;
 	
 	board->Castled[0] = setup[i++] - '0';
 	board->Castled[1] = setup[i++] - '0';
@@ -401,57 +410,66 @@ int validateMove(Board * board, int turn){
 	int dir = -1;
 	if (turn == 1)
 		dir = 1;
+		
 	
-	if ((kingX != 0 && dir == -1) || (kingX != 7 && dir == 1)){
-		if (kingY != 7 && board->Types[kingX+dir][kingY + 1] == 0 && board->Colors[kingX+dir][kingY+1] != turn)
-			return 0;	
-		if (kingY != 0 && board->Types[kingX+dir][kingY - 1] == 0 && board->Colors[kingX+dir][kingY-1] != turn)
-			return 0;
-	}
-	
-	
-	int * map = board->KnightMap[board->KingLocations[turn]];
-	while(1){
-		if (*map == -1)
-			break;
-		if (board->COLORS[*map] == !turn && board->TYPES[*map] == KNIGHT)
-			return 0;
-		map++;
-	}
-	
-	for(i = 0; i < 4; i++){
-		x = kingX;
-		y = kingY;
-		while(1){
-			x += MOVE_MAP_DIAGONAL[i][0];
-			y += MOVE_MAP_DIAGONAL[i][1];
-			
-			if (x < 0 || y < 0 || x > 7 || y > 7)
-				break;
-			else if (board->Types[x][y] == 9)
-				continue;
-			else if ((board->Types[x][y] == 2 || board->Types[x][y] == 4) && board->Colors[x][y] != turn)
+	if (board->PieceCount[!turn][PAWN]){
+		if ((kingX != 0 && dir == -1) || (kingX != 7 && dir == 1)){
+			if (kingY != 7 && board->Types[kingX+dir][kingY + 1] == 0 && board->Colors[kingX+dir][kingY+1] != turn)
+				return 0;	
+			if (kingY != 0 && board->Types[kingX+dir][kingY - 1] == 0 && board->Colors[kingX+dir][kingY-1] != turn)
 				return 0;
-			else
-				break;
 		}
 	}
 	
-	for(i = 0; i < 4; i++){
-		x = kingX;
-		y = kingY;
+	
+	if (board->PieceCount[!turn][KNIGHT]){
+		int * map = board->KnightMap[board->KingLocations[turn]];
 		while(1){
-			x += MOVE_MAP_STRAIGHT[i][0];
-			y += MOVE_MAP_STRAIGHT[i][1];
-			
-			if (x < 0 || y < 0 || x > 7 || y > 7)
+			if (*map == -1)
 				break;
-			else if (board->Types[x][y] == 9)
-				continue;
-			else if ((board->Types[x][y] >= 3 && board->Types[x][y] != 5) && board->Colors[x][y] != turn)
+			if (board->COLORS[*map] == !turn && board->TYPES[*map] == KNIGHT)
 				return 0;
-			else
-				break;
+			map++;
+		}
+	}
+	
+	if (board->PieceCount[!turn][BISHOP] || board->PieceCount[!turn][QUEEN]){
+		for(i = 0; i < 4; i++){
+			x = kingX;
+			y = kingY;
+			while(1){
+				x += MOVE_MAP_DIAGONAL[i][0];
+				y += MOVE_MAP_DIAGONAL[i][1];
+				
+				if (x < 0 || y < 0 || x > 7 || y > 7)
+					break;
+				else if (board->Types[x][y] == 9)
+					continue;
+				else if ((board->Types[x][y] == 2 || board->Types[x][y] == 4) && board->Colors[x][y] != turn)
+					return 0;
+				else
+					break;
+			}
+		}
+	}
+	
+	if (board->PieceCount[!turn][ROOK] || board->PieceCount[!turn][QUEEN]){
+		for(i = 0; i < 4; i++){
+			x = kingX;
+			y = kingY;
+			while(1){
+				x += MOVE_MAP_STRAIGHT[i][0];
+				y += MOVE_MAP_STRAIGHT[i][1];
+				
+				if (x < 0 || y < 0 || x > 7 || y > 7)
+					break;
+				else if (board->Types[x][y] == 9)
+					continue;
+				else if ((board->Types[x][y] >= 3 && board->Types[x][y] != 5) && board->Colors[x][y] != turn)
+					return 0;
+				else
+					break;
+			}
 		}
 	}
 	
@@ -568,6 +586,10 @@ void applyNormalMove(Board * board, int * move){
 	int * TYPES = board->TYPES;
 	int * COLORS = board->COLORS;
 	
+	
+	if (move[3] != EMPTY)
+		board->PieceCount[!(COLORS[move[1]])][move[3]] -= 1;
+	
 	TYPES[move[2]] = TYPES[move[1]];
 	COLORS[move[2]] = COLORS[move[1]];
 	
@@ -609,6 +631,11 @@ void applyPromotionMove(Board * board, int * move){
 	int * TYPES = board->TYPES;
 	int * COLORS = board->COLORS;
 	
+	if (move[3] != EMPTY)
+		board->PieceCount[!(COLORS[move[1]])][move[3]] -= 1;
+	board->PieceCount[COLORS[move[1]]][move[4]] += 1;
+	board->PieceCount[COLORS[move[1]]][PAWN] -= 1;
+	
 	TYPES[move[2]] = move[4];
 	COLORS[move[2]] = COLORS[move[1]];
 	
@@ -619,6 +646,8 @@ void applyPromotionMove(Board * board, int * move){
 void applyEnpassMove(Board * board, int * move){
 	int * TYPES = board->TYPES;
 	int * COLORS = board->COLORS;
+	
+	board->PieceCount[!(COLORS[move[1]])][PAWN] -= 1;
 	
 	TYPES[move[2]] = PAWN;
 	COLORS[move[2]] = COLORS[move[1]];
@@ -634,6 +663,9 @@ void applyEnpassMove(Board * board, int * move){
 void revertNormalMove(Board * board, int * move){
 	int * TYPES = board->TYPES;
 	int * COLORS = board->COLORS;
+	
+	if (move[3] != EMPTY)
+		board->PieceCount[!(COLORS[move[2]])][move[3]] += 1;
 	
 	TYPES[move[1]] = TYPES[move[2]];
 	COLORS[move[1]] = COLORS[move[2]];
@@ -676,6 +708,11 @@ void revertPromotionMove(Board * board, int * move){
 	int * TYPES = board->TYPES;
 	int * COLORS = board->COLORS;
 	
+	if (move[3] != EMPTY)
+		board->PieceCount[!(COLORS[move[2]])][move[3]] += 1;
+	board->PieceCount[(COLORS[move[2]])][move[4]] -= 1;
+	board->PieceCount[(COLORS[move[2]])][PAWN] += 1;
+	
 	TYPES[move[1]] = PAWN;
 	COLORS[move[1]] = COLORS[move[2]];
 	
@@ -686,6 +723,8 @@ void revertPromotionMove(Board * board, int * move){
 void revertEnpassMove(Board * board, int * move){
 	int * TYPES = board->TYPES;
 	int * COLORS = board->COLORS;
+	
+	board->PieceCount[!(COLORS[move[2]])][PAWN] += 1;
 	
 	TYPES[move[1]] = PAWN;
 	COLORS[move[1]] = COLORS[move[2]];
