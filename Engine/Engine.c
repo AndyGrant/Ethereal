@@ -24,7 +24,7 @@ const int MOVE_MAP_DIAGONAL[4][2] = {{1,1},{-1,1},{-1,-1},{1,-1}};
 const int MOVE_MAP_STRAIGHT[4][2] = {{1,0},{-1,0},{0,1},{0,-1}};
 const int MOVE_MAP_ALL[8][2] = {{1,1},{-1,1},{-1,-1},{1,-1},{1,0},{-1,0},{0,1},{0,-1}};
 
-char base[135] = "31112141512111310101010101010101999999999999999999999999999999999999999999999999999999999999999900000000000000003010204050201030001111";
+char base[137] = "3111214151211131010101010101010199999999999999999999999999999999999999999999999999999999999999990000000000000000301020405020103000111199";
 //char base[135] = "99999999519999999999010101999999999999999999999999999999999999999999999999999999999999999999999999999999990000009999999950999999000000";
 //char base[135]   = "11999999511111119999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999991099991050101010000000";
 
@@ -97,7 +97,7 @@ Board * copyBoard(Board * old){
 	return new;
 }
 
-Board * createBoard(char setup[135]){
+Board * createBoard(char setup[137]){
 	int x,y,i;
 	Board * board = malloc(sizeof(Board));
 	
@@ -125,6 +125,19 @@ Board * createBoard(char setup[135]){
 	board->ValidCastles[0][1] = setup[i++] - '0';
 	board->ValidCastles[1][0] = setup[i++] - '0';
 	board->ValidCastles[1][1] = setup[i++] - '0';
+	
+	int * move = malloc(sizeof(int) * 5);
+	int enpass = (10 * (setup[i++] - '0')) - (setup[i++] - '0');
+	if (enpass == 99){
+		move[0] = 0;
+		move[2] = 0;
+		board->LastMove = move;
+	} else {
+		move[0] = 4;
+		move[2] = enpass;
+		board->LastMove = move;
+	}
+	
 	buildKnightMap(board);
 	
 	board->FiftyMoveRule = 50;
