@@ -1,7 +1,9 @@
 from Tkinter import *
 from subprocess import PIPE, Popen
+import time
 
 GETMOVES_DIR = "..\\Engine\\getMoves.exe"
+GETENGINEMOVE_DIR = "..\\Engine\\getEngineMove.exe"
 
 
 WHITE = 0
@@ -23,6 +25,7 @@ IMAGES['21'] = PhotoImage(file="_Assets//BlackBishop.gif")
 IMAGES['31'] = PhotoImage(file="_Assets//BlackRook.gif")
 IMAGES['41'] = PhotoImage(file="_Assets//BlackQueen.gif")
 IMAGES['51'] = PhotoImage(file="_Assets//BlackKing.gif")
+IMAGES['OPTION'] = PhotoImage(file="_Assets//Option.gif")
 IMAGES["BOARD"] = PhotoImage(file="_Assets//Board.gif")
 
 class ChessGUI(Frame):
@@ -43,10 +46,12 @@ class ChessGame():
 	def __init__(self, board, turn, canvas):
 		self.canvas = canvas;
 		self.canvas.bind("<Button-1>", self.onClick)
+		self.selected = None
 		self.board = board
 		self.turn = turn
 		self.drawn = []
-		self.moves = self.getMoves()
+		self.moves = Moves(self.board,self.turn)
+		print self.board
 		self.drawBoard()
 		
 	def drawBoard(self):
@@ -54,18 +59,35 @@ class ChessGame():
 			self.canvas.delete(f)
 			
 		self.drawn.append(self.canvas.create_image((0,0),anchor=NW,image=IMAGES["BOARD"]))
+		
+		if self.selected != None:
+			for f in self.moves.getEnds(self.selected):
+				self.drawn.append(self.canvas.create_image((10+50*(f%8),10+50*(f/8)),anchor=NW,image=IMAGES['OPTION']))
+		
 		for f in range(0,128,2):
 			p = self.board[f] + self.board[f+1]
 			if p != "99":
-				z = f/2;
-				x = 10 + 50 * (z/8)
-				y = 10 + 50 * (z%8)
-				self.drawn.append(self.canvas.create_image((y,x),anchor=NW,image=IMAGES[p]))
-				
+				x,y = 10 + 50 * (f/2/8), 10 + 50 * (f/2%8)
+				self.drawn.append(self.canvas.create_image((y,x),anchor=NW,image=IMAGES[p]))		
+	
 	def onClick(self,event):
 		x = self.getClicked(event)
 		if x is -1: return
-		
+		if self.selected == None:
+			self.selected = x
+			self.drawBoard()
+		elif x in self.moves.getEnds(self.selected):
+			self.board = self.moves.getBoard(self.selected,x)
+			self.selected = None
+			self.drawBoard()
+			Tk.update(root)
+			self.makeEngineMove()
+			self.drawBoard()
+			print self.board
+		else:
+			self.selected = None
+			self.drawBoard()
+			
 		
 	def getClicked(self,event):
 		x,y = event.x-10, event.y-10
@@ -73,12 +95,50 @@ class ChessGame():
 			return -1
 		return (x/50)+(8*(y/50))
 		
-	def getMoves(self):
-		proc = Popen([GETMOVES_DIR,self.board,str(self.turn)], stdout=PIPE,shell=True)
+	def makeEngineMove(self):
+		
+		proc = Popen([GETENGINEMOVE_DIR,self.board,str((self.turn+1)%2)], stdout=PIPE,shell=True)
+		(out, err) = proc.communicate()
+		print out
+		self.board = out[out.find("NEWBOARD=") + len("NEWBOARD="):]
+		self.moves = Moves(self.board,self.turn)
+		
+		
+class Moves():
+	def __init__(self, board, turn):
+		proc = Popen([GETMOVES_DIR,board,str(turn)], stdout=PIPE,shell=True)
 		(out, err) = proc.communicate()
 		data = out.split("\r\n")
-		moves = [f.split(" ") for f in data]
-		for f in moves: print f
+		data = [f.split(" ") for f in data]
+		self.moves = [Move(f) for f in data]
+		
+	def __str__(self):
+		return "\n".join([f.__str__() for f in self.moves])
+		
+	def hasStart(self, start):
+		for f in self.moves:
+			if f[0] == str(start):
+				return True
+		return False
+		
+	def getEnds(self, start):
+		return [int(f[1]) for f in self.moves if f[0] == str(start)]
+		
+	def getBoard(self, start, end):
+		for f in self.moves:
+			if str(start) == f[0]:
+				if str(end) == f[1]:
+					return f[4]
+		print "Error"
+class Move():
+	def __init__(self, data):
+		self.data = data[0:5]
+		
+	def __str__(self):
+		return " ".join(self.data)
+	
+	def __getitem__(self, index):
+		return self.data[index]
 	
 root.geometry("420x420")
 root.resizable(0,0)
