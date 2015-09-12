@@ -127,7 +127,7 @@ Board * createBoard(char setup[137]){
 	board->ValidCastles[1][1] = setup[i++] - '0';
 	
 	int * move = malloc(sizeof(int) * 5);
-	int enpass = (10 * (setup[i++] - '0')) - (setup[i++] - '0');
+	int enpass = (10 * (setup[134] - '0')) + (setup[135] - '0');
 	if (enpass == 99){
 		move[0] = 0;
 		move[2] = 0;
@@ -179,7 +179,6 @@ int * getAllMoves(Board * board, int turn, int * size){
 }
 
 void getPawnMoves(Board * board, int turn, int * size, int x, int y, int check){
-	int * lastMove = board->LastMove;
 	int pt, dir = board->Colors[x][y] == WHITE ? -1 : 1;
 	int start = x * 8 + y;
 	
@@ -203,9 +202,9 @@ void getPawnMoves(Board * board, int turn, int * size, int x, int y, int check){
 	}
 	
 	// En Passant
-	if (lastMove[0] == 4 && abs(y - (lastMove[2]%8)) == 1){
-		if (3 + turn == x && board->COLORS[lastMove[2]] != turn){
-			int move[5] = {3,start,lastMove[2]+(8*dir),lastMove[2],0};
+	if (board->LastMove[0] == 4 && abs(y - (board->LastMove[2]%8)) == 1){
+		if (3 + turn == x && board->COLORS[board->LastMove[2]] != turn){
+			int move[5] = {3,start,board->LastMove[2]+(8*dir),board->LastMove[2],0};
 			createEnpassMove(board,turn,size,move,check);
 		}
 	}
@@ -334,16 +333,16 @@ void getKingMoves(Board * board, int turn, int * size, int x, int y, int check){
 		}
 	}
 	
-	if (!board->Castled[turn] && validateMove(board,turn)){
-		if (board->ValidCastles[turn][0] && moveWasValid[7]){
-			if (board->TYPES[start-3] == ROOK && board->TYPES[start-1] == EMPTY && board->TYPES[start-2] == EMPTY){
-				int move[5] = {1,start,start-2,start-3,start-1};
+	if (board->Castled[turn] == 0 && validateMove(board,turn)){
+		if (board->ValidCastles[turn][0] && moveWasValid[6]){
+			if (board->TYPES[start+3] == ROOK && board->TYPES[start+1] == EMPTY && board->TYPES[start+2] == EMPTY){
+				int move[5] = {1,start,start+2,start+3,start+1};
 				createCastleMove(board,turn,size,move,check);
 			}
 		}
-		if (board->ValidCastles[turn][1] && moveWasValid[6]){
-			if (board->TYPES[start+4] == ROOK && board->TYPES[start+1] == EMPTY && board->TYPES[start+2] == EMPTY && board->TYPES[start+3] == EMPTY){
-				int move[5] = {1,start,start+2,start+4,start+1};
+		if (board->ValidCastles[turn][1] && moveWasValid[7]){
+			if (board->TYPES[start-4] == ROOK && board->TYPES[start-1] == EMPTY && board->TYPES[start-2] == EMPTY && board->TYPES[start-3] == EMPTY){
+				int move[5] = {1,start,start-2,start-4,start-1};
 				createCastleMove(board,turn,size,move,check);
 			}
 		}
@@ -648,8 +647,8 @@ void revertCastleMove(Board * board, int * move){
 	TYPES[move[4]] = EMPTY;
 	COLORS[move[4]] = EMPTY;
 	
-	board->KingLocations[COLORS[move[2]]] = move[1];
-	board->Castled[COLORS[move[2]]] = 0;
+	board->KingLocations[COLORS[move[1]]] = move[1];
+	board->Castled[COLORS[move[1]]] = 0;
 }
 
 void revertPromotionMove(Board * board, int * move){

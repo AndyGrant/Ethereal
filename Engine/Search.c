@@ -15,7 +15,7 @@ TTable * TABLE;
 
 time_t START_TIME;
 time_t END_TIME;
-int MAX_TIME = 30;
+int MAX_TIME = 3;
 
 int START_DEPTH = 2;
 int MAX_DEPTH = 16;
@@ -88,6 +88,18 @@ int endSearch(int index, int size, int * values, int * sorted, int * unsorted){
 	printf("Total Nodes In TTTable \t: %d\n",TABLE->totalNodes);
 	printf("Total Empty Buckets \t: %d\n",getNonEmptyBucketCount(TABLE));
 	printf("Total Time Taken \t: %d\n",(int)(time(NULL)-START_TIME));
+	
+	int i,j;
+	int best_index = 0;
+	for(i = 0; i < index; i++)
+		if (values[i] > values[best_index])
+			best_index = i;
+			
+	int * best = sorted + (best_index * 5);
+	
+	for(i = 0; i < size; i++)
+		if( memcmp(best,unsorted+(i*5),sizeof(int)*5) == 0)
+			return i;
 	return 0;
 }
 
