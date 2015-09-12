@@ -3,7 +3,6 @@
 #include <string.h>
 #include <stdint.h>
 #include <time.h>
-#include <pthread.h>
 #include "Engine.h"
 #include "Search.h"
 
@@ -62,72 +61,7 @@ void (*RevertTypes[5])(Board *, int *) = {
 	&revertEnpassMove,
 	&revertNormalMove
 };
-
-
-void * fooBar(void * ptr){
-	ThreadData * data = (ThreadData *)(ptr);
-	data->added = depthSearch(data->board,!(data->turn),data->depth - 1, data->lastMove);
-	return NULL;
-}
-
-int THREAD_DEPTH = 6;
-unsigned long long depthSearch(Board * board, int turn, int depth, int * lastMove){
-	if (depth == 0)
-		return 0;
-	
-	int i, size = 0;
-	unsigned long long temp = 0;
-	board->LastMove = lastMove;
-	int * moves = getAllMoves(board,turn,&size);
-	
-	if (size == 0){
-		free(moves);
-		return 0;
-	}
-	
-	int * moves_p = moves;
-	
-	if(THREAD_DEPTH == depth){
-		pthread_t threads[size];
-		ThreadData data[size];
-		
-		for(i = 0; i < size; i++){
-			data[i].board = copyBoard(board);
-			data[i].turn = turn;
-			data[i].depth = depth;
-			data[i].lastMove = moves + i*5;
-		}
-		
-		for(i = 0; i < size; i++, moves += 5){
-			ApplyMove(data[i].board,moves);
-			pthread_create(&(threads[i]),NULL,fooBar,&(data[i]));
-		}
-		
-		moves = moves_p;
-		
-		for(i = 0; i < size; i++, moves += 5){
-			pthread_join(threads[i],NULL);
-			RevertMove(data[i].board,moves);
-			temp += data[i].added;
-			free(data[i].board);
-		}
-		
-		free(moves_p);
-		return size + temp;
-	
-	} else{
-		for(i = 0; i < size; i++, moves += 5){
-			ApplyMove(board,moves);
-			temp += depthSearch(board,!turn,depth-1,moves);
-			RevertMove(board,moves);
-		}
-		
-		free(moves_p);
-		return (unsigned long long)(size + temp);
-	}
-	
-}
-
+/*
 int main(){
 	Board * board = createBoard(base);
 	int move[5] = {0,0,0,0,0};
@@ -139,9 +73,10 @@ int main(){
 	int i;
 	printf("Moves Searched : %llu\n",depthSearch(board,WHITE,5,move));
 	printf("Seconds Taken: %d \n\n",(int)(time(NULL)-start));
-	*/
+
 	return 0;
-}
+}*/
+
 
 Board * copyBoard(Board * old){
 	Board * new = malloc(sizeof(Board));
