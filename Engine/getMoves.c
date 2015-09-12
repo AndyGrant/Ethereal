@@ -5,7 +5,7 @@
 #include "Engine.h"
 
 char * encodeBoard(Board * board){
-	char * str = malloc(sizeof(char) * 135);
+	char * str = malloc(sizeof(char) * 137);
 	
 	int i;
 	for(i = 0; i < 64; i++){
@@ -19,7 +19,15 @@ char * encodeBoard(Board * board){
 	str[131] = board->ValidCastles[0][1] + '0';
 	str[132] = board->ValidCastles[1][0] + '0';
 	str[133] = board->ValidCastles[1][1] + '0';
-	str[134] = 0;
+	
+	if (board->LastMove[0] != 4){
+		str[134] = '9';
+		str[135] = '9';
+	} else {
+		str[134] = (board->LastMove[2] / 10) + '0';
+		str[135] = (board->LastMove[2] % 10) + '0';
+	}
+	str[136] = 0;
 	return str;
 }
 
@@ -30,10 +38,11 @@ int main(int argc, char * argv[]){
 	int turn = argv[2][0] == '1' ? WHITE : BLACK;
 	int size = 0;
 	int * moves = getAllMoves(board,turn,&size);
-	char test[4] = "see\0";
+	
 	int i;
 	for (i = 0; i < size; i++, moves+=5){
 		ApplyMove(board,moves);
+		board->LastMove = moves;
 		printf("%d %d %d %d %s \n",moves[1],moves[2],moves[0],moves[4],encodeBoard(board));
 		RevertMove(board,moves);
 	}
