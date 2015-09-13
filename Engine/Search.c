@@ -11,11 +11,16 @@
 int MATERIAL_VALUES[6] = {200,700,650,1000,2000,10000};
 int CAPTURE_VALUES[6] = {1,3,3,6,9,1};
 
+int PAWN_SCORE_MAP[2][8] = {
+	{0,120,70,35,15,0,0,0},
+	{0,0,0,15,35,70,120,0}
+};
+
 TTable * TABLE;
 
 time_t START_TIME;
 time_t END_TIME;
-int MAX_TIME = 3;
+int MAX_TIME = 10;
 
 int START_DEPTH = 2;
 int MAX_DEPTH = 16;
@@ -54,7 +59,7 @@ int getBestMoveIndex(Board * board, int turn){
 		printf("Searching Depth Level : %d\n",depth);
 		
 		
-		SEARCH_THREAD_DEPTH = depth > 5 ? 5 : depth-1;
+		SEARCH_THREAD_DEPTH = depth > 5 ? 5 : 3;
 		
 		
 		int alpha = -MATE;
@@ -329,8 +334,8 @@ int evaluateMaterial(Board * board, int turn){
 
 int evaluatePosition(Board * board, int turn){
 	int x,y, value = 0;
-	for(x = 2; x < 6; x++)
-		for(y = 2; y < 6; y++)
+	for(x = 3; x < 5; x++)
+		for(y = 3; y < 5; y++)
 			if (board->Types[x][y] == KNIGHT)
 				value += board->Colors[x][y] == turn ? VALUE_CENTRAL_KNIGHT : -VALUE_CENTRAL_KNIGHT;
 	
@@ -338,6 +343,15 @@ int evaluatePosition(Board * board, int turn){
 		for(y = 3; y < 5; y++)
 			if (board->Types[x][y] != EMPTY)
 				value += board->Colors[x][y] == turn ? VALUE_CENTER_ATTACKED : -VALUE_CENTER_ATTACKED;
+				
+	int whitePawnStart = 6;
+	int blackPawnStart = 1;
+	
+	for(x = 1; x < 7; x++)
+		for(y = 0; y < 8; y++)
+			if (board->Types[x][y] == PAWN)
+				value += board->Colors[x][y] == turn ? PAWN_SCORE_MAP[turn][x] : -PAWN_SCORE_MAP[!turn][x];
+				//value += board->Colors[x][y] == turn ? (whitePawnStart - x) : -(x - blackPawnStart);
 				
 	if (board->Castled[turn])
 		value += VALUE_CASTLED;
