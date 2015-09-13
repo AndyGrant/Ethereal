@@ -70,7 +70,9 @@ int getBestMoveIndex(Board * board, int turn){
 				
 			if (abs(alpha) == MATE)
 				return endSearch(i+1,size,values,moves_p,unsorted);
-				
+			
+			if (END_TIME < time(NULL))
+				return endSearch(i+1,size,values,moves_p,unsorted);				
 		}
 		
 		valueSort(values,moves_p,size);
