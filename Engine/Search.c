@@ -73,12 +73,15 @@ int getBestMoveIndex(Board * board, int turn){
 			if (values[i] > alpha)
 				alpha = values[i];
 				
-			if (abs(alpha) == MATE)
+			if (alpha == MATE)
 				return endSearch(i+1,size,values,moves_p,unsorted);
 			
 			if (END_TIME < time(NULL))
 				return endSearch(i+1,size,values,moves_p,unsorted);				
 		}
+		
+		if (alpha == -MATE)
+			return endSearch(size,size,values,moves_p,unsorted);
 		
 		valueSort(values,moves_p,size);
 		moves = moves_p;
