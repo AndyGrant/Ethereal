@@ -51,7 +51,6 @@ class ChessGame():
 		self.turn = turn
 		self.drawn = []
 		self.moves = Moves(self.board,self.turn)
-		print self.board
 		self.drawBoard()
 		
 	def drawBoard(self):
@@ -83,7 +82,10 @@ class ChessGame():
 			Tk.update(root)
 			self.makeEngineMove()
 			self.drawBoard()
-			print self.board
+			print "=========================================="
+			print "=========================================="
+			print "=========================================="
+			print "=========================================="
 		else:
 			self.selected = None
 			self.drawBoard()
@@ -99,7 +101,7 @@ class ChessGame():
 		
 		proc = Popen([GETENGINEMOVE_DIR,self.board,str((self.turn+1)%2)], stdout=PIPE,shell=True)
 		(out, err) = proc.communicate()
-		print out
+		print out[0:out.find("NEWBOARD=")]
 		self.board = out[out.find("NEWBOARD=") + len("NEWBOARD="):]
 		self.moves = Moves(self.board,self.turn)
 		
