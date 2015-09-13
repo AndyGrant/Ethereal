@@ -8,7 +8,7 @@
 #include "Engine.h"
 #include "TTable.h"
 
-int MATERIAL_VALUES[6] = {100,300,300,500,1000,10000};
+int MATERIAL_VALUES[6] = {200,700,650,1000,2000,10000};
 int CAPTURE_VALUES[6] = {1,3,3,6,9,1};
 
 TTable * TABLE;
@@ -336,6 +336,15 @@ int evaluatePosition(Board * board, int turn){
 		for(y = 3; y < 5; y++)
 			if (board->Types[x][y] != EMPTY)
 				value += board->Colors[x][y] == turn ? VALUE_CENTER_ATTACKED : -VALUE_CENTER_ATTACKED;
+				
+	if (board->Castled[turn])
+		value += VALUE_CASTLED;
+	if (board->Castled[!turn])
+		value -= VALUE_CASTLED;
+	if (board->ValidCastles[turn][0] || board->ValidCastles[turn][1])
+		value += VALUE_ABLE_TO_CASTLE;
+	if (board->ValidCastles[!turn][0] || board->ValidCastles[!turn][1])
+		value -= VALUE_ABLE_TO_CASTLE;
 
 	return value;
 }
@@ -361,6 +370,6 @@ int evaluateMoves(Board * board, int turn){
 	}
 	
 	free(moves_p);
-	return value + (int)(2*nv);
+	return value + (int)(10*nv);
 }
 
