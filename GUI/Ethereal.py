@@ -2,8 +2,8 @@ from Tkinter import *
 from subprocess import PIPE, Popen
 import time
 
-GETMOVES_DIR = "..\\Engine\\getMoves.exe"
-GETENGINEMOVE_DIR = "..\\Engine\\getEngineMove.exe"
+GETMOVES_DIR = "../Engine/getMoves.exe"
+GETENGINEMOVE_DIR = "../Engine/getEngineMove.exe"
 
 
 WHITE = 0
@@ -13,20 +13,20 @@ STARTING_BOARD = "31112141512111310101010101010101999999999999999999999999999999
 root = Tk()
 
 IMAGES = {}
-IMAGES['00'] = PhotoImage(file="_Assets//WhitePawn.gif")
-IMAGES['10'] = PhotoImage(file="_Assets//WhiteKnight.gif")
-IMAGES['20'] = PhotoImage(file="_Assets//WhiteBishop.gif")
-IMAGES['30'] = PhotoImage(file="_Assets//WhiteRook.gif")
-IMAGES['40'] = PhotoImage(file="_Assets//WhiteQueen.gif")
-IMAGES['50'] = PhotoImage(file="_Assets//WhiteKing.gif")
-IMAGES['01'] = PhotoImage(file="_Assets//BlackPawn.gif")
-IMAGES['11'] = PhotoImage(file="_Assets//BlackKnight.gif")
-IMAGES['21'] = PhotoImage(file="_Assets//BlackBishop.gif")
-IMAGES['31'] = PhotoImage(file="_Assets//BlackRook.gif")
-IMAGES['41'] = PhotoImage(file="_Assets//BlackQueen.gif")
-IMAGES['51'] = PhotoImage(file="_Assets//BlackKing.gif")
-IMAGES['OPTION'] = PhotoImage(file="_Assets//Option.gif")
-IMAGES["BOARD"] = PhotoImage(file="_Assets//Board.gif")
+IMAGES['00'] = PhotoImage(file="_Assets/WhitePawn.gif")
+IMAGES['10'] = PhotoImage(file="_Assets/WhiteKnight.gif")
+IMAGES['20'] = PhotoImage(file="_Assets/WhiteBishop.gif")
+IMAGES['30'] = PhotoImage(file="_Assets/WhiteRook.gif")
+IMAGES['40'] = PhotoImage(file="_Assets/WhiteQueen.gif")
+IMAGES['50'] = PhotoImage(file="_Assets/WhiteKing.gif")
+IMAGES['01'] = PhotoImage(file="_Assets/BlackPawn.gif")
+IMAGES['11'] = PhotoImage(file="_Assets/BlackKnight.gif")
+IMAGES['21'] = PhotoImage(file="_Assets/BlackBishop.gif")
+IMAGES['31'] = PhotoImage(file="_Assets/BlackRook.gif")
+IMAGES['41'] = PhotoImage(file="_Assets/BlackQueen.gif")
+IMAGES['51'] = PhotoImage(file="_Assets/BlackKing.gif")
+IMAGES['OPTION'] = PhotoImage(file="_Assets/Option.gif")
+IMAGES["BOARD"] = PhotoImage(file="_Assets/Board.gif")
 
 class ChessGUI(Frame):
 	def __init__(self, parent):
@@ -98,7 +98,7 @@ class ChessGame():
 		return (x/50)+(8*(y/50))
 		
 	def makeEngineMove(self):
-		proc = Popen([GETENGINEMOVE_DIR,self.board,str((self.turn+1)%2)], stdout=PIPE,shell=True)
+		proc = Popen(" ".join([GETENGINEMOVE_DIR,self.board,str((self.turn+1)%2)]), stdout=PIPE,shell=True)
 		(out, err) = proc.communicate()
 		print out[0:out.find("NEWBOARD=")]
 		self.board = out[out.find("NEWBOARD=") + len("NEWBOARD="):]
@@ -107,7 +107,7 @@ class ChessGame():
 		
 class Moves():
 	def __init__(self, board, turn):
-		proc = Popen([GETMOVES_DIR,board,str(turn)], stdout=PIPE,shell=True)
+		proc = Popen(" ".join([GETMOVES_DIR,board,str(turn)]), stdout=PIPE,shell=True)
 		(out, err) = proc.communicate()
 		data = [f.strip() for f in out.split("\n")]
 		data = [f.split(" ") for f in data]
