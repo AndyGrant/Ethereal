@@ -98,7 +98,6 @@ class ChessGame():
 		return (x/50)+(8*(y/50))
 		
 	def makeEngineMove(self):
-		
 		proc = Popen([GETENGINEMOVE_DIR,self.board,str((self.turn+1)%2)], stdout=PIPE,shell=True)
 		(out, err) = proc.communicate()
 		print out[0:out.find("NEWBOARD=")]
@@ -110,7 +109,7 @@ class Moves():
 	def __init__(self, board, turn):
 		proc = Popen([GETMOVES_DIR,board,str(turn)], stdout=PIPE,shell=True)
 		(out, err) = proc.communicate()
-		data = out.split("\r\n")
+		data = [f.strip() for f in out.split("\n")]
 		data = [f.split(" ") for f in data]
 		self.moves = [Move(f) for f in data]
 		
