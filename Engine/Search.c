@@ -20,7 +20,7 @@ TTable * TABLE;
 
 time_t START_TIME;
 time_t END_TIME;
-int MAX_TIME = 10;
+int MAX_TIME = 3;
 
 int START_DEPTH = 2;
 int MAX_DEPTH = 16;
