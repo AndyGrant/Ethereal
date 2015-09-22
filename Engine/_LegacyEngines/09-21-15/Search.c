@@ -4,12 +4,17 @@
 #include <stdint.h>
 #include <time.h>
 #include <pthread.h>
-
 #include "Search.h"
-#include "Board.h"
-#include "MoveGen.h"
+#include "Engine.h"
 #include "TTable.h"
-#include "Evaluate.h"
+
+int MATERIAL_VALUES[6] = {200,700,650,1000,2000,10000};
+int CAPTURE_VALUES[6] = {1,3,3,6,9,1};
+
+int PAWN_SCORE_MAP[2][8] = {
+	{0,120,70,35,15,0,0,0},
+	{0,0,0,15,35,70,120,0}
+};
 
 TTable * TABLE;
 
@@ -22,11 +27,11 @@ int MAX_DEPTH = 16;
 int DELTA_DEPTH = 2;
 int END_DEPTH = 16;
 
-int SEARCH_THREAD_DEPTH = 4;
-int USE_TTABLE = 1;
-
 int TOTAL_BOARDS_SEARCHED = 0;
 int TOTAL_MOVES_FOUND = 0;
+
+int SEARCH_THREAD_DEPTH = 4;
+int USE_TTABLE = 1;
 
 int getBestMoveIndex(Board * board, int turn){
 
@@ -308,3 +313,82 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 	free(moves_p);
 	return best;
 }
+
+int evaluateBoard(Board * board, int turn){
+	TOTAL_BOARDS_SEARCHED += 1;
+	return 	evaluateMaterial(board, turn) + 
+			evaluatePosition(board, turn) +
+			evaluateMoves(board,turn)	-
+			evaluateMoves(board,!turn);
+}
+
+int evaluateMaterial(Board * board, int turn){
+	int i, value = 0;
+	for(i = 0; i < 64; i++){
+		if (board->TYPES[i] != EMPTY){
+			if (board->COLORS[i] == turn)
+				value += MATERIAL_VALUES[board->TYPES[i]];
+			else
+				value -= MATERIAL_VALUES[board->TYPES[i]];
+		}
+	}
+	return value;
+}
+
+int evaluatePosition(Board * board, int turn){
+	int x,y, value = 0;
+	for(x = 3; x < 5; x++)
+		for(y = 3; y < 5; y++)
+			if (board->Types[x][y] == KNIGHT)
+				value += board->Colors[x][y] == turn ? VALUE_CENTRAL_KNIGHT : -VALUE_CENTRAL_KNIGHT;
+	
+	for(x = 3; x < 5; x++)
+		for(y = 3; y < 5; y++)
+			if (board->Types[x][y] != EMPTY)
+				value += board->Colors[x][y] == turn ? VALUE_CENTER_ATTACKED : -VALUE_CENTER_ATTACKED;
+				
+	int whitePawnStart = 6;
+	int blackPawnStart = 1;
+	
+	for(x = 1; x < 7; x++)
+		for(y = 0; y < 8; y++)
+			if (board->Types[x][y] == PAWN)
+				value += board->Colors[x][y] == turn ? PAWN_SCORE_MAP[turn][x] : -PAWN_SCORE_MAP[!turn][x];
+				//value += board->Colors[x][y] == turn ? (whitePawnStart - x) : -(x - blackPawnStart);
+				
+	if (board->Castled[turn])
+		value += VALUE_CASTLED;
+	if (board->Castled[!turn])
+		value -= VALUE_CASTLED;
+	if (board->ValidCastles[turn][0] || board->ValidCastles[turn][1])
+		value += VALUE_ABLE_TO_CASTLE;
+	if (board->ValidCastles[!turn][0] || board->ValidCastles[!turn][1])
+		value -= VALUE_ABLE_TO_CASTLE;
+
+	return value;
+}
+
+int evaluateMoves(Board * board, int turn){
+	int size = 0;
+	int * moves = getAllMoves(board,turn,&size);
+	int * moves_p = moves;
+	
+	TOTAL_MOVES_FOUND += size;
+	
+	float nv = 0;
+	int i, value=0;
+	for(i = 0; i < size; i++, moves += 5){
+		if (board->TYPES[moves[1]] == BISHOP)
+			value += VALUE_BISHOP_RANGE;
+		else if (board->TYPES[moves[1]] == KNIGHT)
+			value += VALUE_KNIGHT_RANGE;
+		if (moves[2] / 8 > 2 && moves[2] / 8 < 5 && moves[2] % 8 > 2 && moves[2] % 8 < 5)
+			value += VALUE_CENTER_ATTACKED;
+		if (moves[0] == 0 && moves[3] != 9)
+			nv += CAPTURE_VALUES[board->TYPES[moves[2]]] / CAPTURE_VALUES[board->TYPES[moves[1]]];	
+	}
+	
+	free(moves_p);
+	return value + (int)(10*nv);
+}
+
