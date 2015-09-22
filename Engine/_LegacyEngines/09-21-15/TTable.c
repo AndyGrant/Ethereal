@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include "Engine.h"
 #include "TTable.h"
-#include "Board.h"
 
 Node * createNode(int * key, int value, int depth, int type, int turn){
 	Node * node = malloc(sizeof(Node));

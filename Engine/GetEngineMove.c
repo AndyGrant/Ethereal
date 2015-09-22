@@ -2,7 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "Engine.h"
+#include "Board.h"
+#include "MoveGen.h"
+#include "Move.h"
+#include "Search.h"
 
 char * encodeBoard(Board * board){
 	char * str = malloc(sizeof(char) * 137);

@@ -1,8 +1,8 @@
-#ifndef __TTABLE_H
-#define __TTABLE_H
+#ifndef TTABLE_HEADER
+#define TTABLE_HEADER
 
 #include <pthread.h>
-#include "Board.h"
+#include "Engine.h"
 
 #define EXACT 1
 #define LOWERBOUND 2
