@@ -1,3 +1,0 @@
-#!/bin/sh
-
-gcc -o3 BitTools.c Board.c Engine.c Moves.c -o foo.exe
