@@ -54,7 +54,7 @@ int getBestMoveIndex(Board * board, int turn){
 		printf("Searching Depth Level : %d\n",depth);
 		
 		
-		SEARCH_THREAD_DEPTH = depth > 5 ? 5 : 3;
+		SEARCH_THREAD_DEPTH = depth > 5 ? 5 : 5;
 		
 		
 		int alpha = -MATE;
@@ -139,82 +139,7 @@ void hueristicSort(Board * board, int * moves, int size, int turn){
 	valueSort(values,moves_p,size);
 }
 
-void * spawnAlphaBetaPruneThread(void * ptr){
-	SearchThreadData * data = (SearchThreadData *)(ptr);
-	int x = -alphaBetaPrune(data->board,data->turn,data->move,data->depth-1,-data->beta,-data->alpha,data->eval);
-	data->alpha = x;
-	return NULL;
-}
-
 int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, int beta, int eval){
-	
-	if (depth == SEARCH_THREAD_DEPTH){
-		ApplyMove(board,move);
-		int * lastmove = board->LastMove;
-		board->LastMove = move;
-		
-		int best = -MATE-1;
-		int size = 0;
-		int * moves = getAllMoves(board,turn,&size);
-		hueristicSort(board,moves,size,turn);
-		
-		TOTAL_MOVES_FOUND += size;
-		
-		if (size == 0){
-			RevertMove(board,move);
-			return validateMove(board,turn) == 1 ? 0 : -MATE;
-		}
-		
-		pthread_t threads[4];
-		SearchThreadData data[4];
-		Board * boards[4];
-		
-
-		int i,j;		
-		
-		for(i = 0 ; i < 4; i++)
-			boards[i] = copyBoard(board);
-		
-		for(i = 0; i < size; i += 4){
-			for(j = 0; j < 4 && j + i < size; j++){
-				data[j].board = boards[j];
-				data[j].board->LastMove = move;
-				data[j].turn = !turn;
-				data[j].depth = depth;				
-				data[j].move = moves + (i+j)*5;
-				data[j].alpha = alpha;
-				data[j].beta = beta;
-				data[j].eval = eval;
-			}			
-			
-			for(j = 0; j < 4 && j + i < size; j++){
-				pthread_create(&(threads[j]),NULL,spawnAlphaBetaPruneThread,&(data[j]));
-			}
-				
-			for(j = 0; j < 4 && j + i < size; j++){
-				pthread_join(threads[j],NULL);
-			}
-		
-			for(j = 0; j < 4 && j + i < size; j++){
-				if (data[j].alpha > best)
-					best = data[j].alpha;	
-				if (best > alpha)
-					alpha = best;
-				if (best >= beta){
-					i = size;
-				}
-			}
-		}
-		
-		for(i = 0 ; i < 4; i++)
-			free(boards[i]);
-		
-		
-		free(moves);
-		RevertMove(board,move);
-		board->LastMove = lastmove;
-		return best;
-	}
 	
 	if (END_TIME < time(NULL))
 		return eval == turn ? -MATE : MATE;
@@ -226,6 +151,7 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 	int * key;
 	int hash;
 	Node * node;
+  
 	if (USE_TTABLE){
 		key = createKey(board);
 		hash = createHash(key);
@@ -273,9 +199,11 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 	
 	TOTAL_MOVES_FOUND += size;
 	
-	if (size == 0){
+	if (size == 0)
 		best = validateMove(board,turn) == 1 ? 0 : -MATE;
-	} else {
+  else if (depth == SEARCH_THREAD_DEPTH)
+    best = threadedAlphaBetaPrune(board,turn,moves,size,depth,alpha,beta,eval);
+  else {
 		best = -MATE - 1;
 		int i;
 		for(i = 0; i < size; i++, moves += 5){
@@ -307,4 +235,60 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 	board->LastMove = lastmove;
 	free(moves_p);
 	return best;
+}
+
+int threadedAlphaBetaPrune(Board * board, int turn, int * moves, int size, int depth, int alpha, int beta, int eval){  
+
+  int best = -MATE-1;
+  
+  pthread_t threads[4];
+  SearchThreadData data[4];
+  Board * boards[4];
+  
+  int i,j;		
+  
+  for(i = 0 ; i < 4; i++)
+    boards[i] = copyBoard(board);
+  
+  for(i = 0; i < size; i += 4){
+    for(j = 0; j < 4 && j + i < size; j++){
+      data[j].board = boards[j];
+      data[j].board->LastMove = board->LastMove;
+      data[j].turn = !turn;
+      data[j].depth = depth;				
+      data[j].move = moves + (i+j)*5;
+      data[j].alpha = alpha;
+      data[j].beta = beta;
+      data[j].eval = eval;
+    }			
+    
+    for(j = 0; j < 4 && j + i < size; j++)
+      pthread_create(&(threads[j]),NULL,createAlphaBetaPruneThread,&(data[j]));
+      
+    for(j = 0; j < 4 && j + i < size; j++)
+      pthread_join(threads[j],NULL);
+    
+  
+    for(j = 0; j < 4 && j + i < size; j++){
+      if (data[j].alpha > best)
+        best = data[j].alpha;	
+      if (best > alpha)
+        alpha = best;
+      if (best >= beta){
+        i = size;
+      }
+    }
+  }
+  
+  for(i = 0 ; i < 4; i++)
+    free(boards[i]);
+    
+  return best;	
+}
+
+void * createAlphaBetaPruneThread(void * ptr){
+	SearchThreadData * data = (SearchThreadData *)(ptr);
+	int x = -alphaBetaPrune(data->board,data->turn,data->move,data->depth-1,-data->beta,-data->alpha,data->eval);
+	data->alpha = x;
+	return NULL;
 }
