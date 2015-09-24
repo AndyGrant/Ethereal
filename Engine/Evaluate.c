@@ -6,6 +6,14 @@
 #include "MoveGen.h"
 #include "Search.h"
 
+int VALUE_KNIGHT_RANGE = 2;
+int VALUE_BISHOP_RANGE = 2;
+int VALUE_CENTER_ATTACKED = 8;
+int VALUE_CENTRAL_KNIGHT = 10;
+int VALUE_KING_SURROUNDINGS_ATTACKED = 5;
+int VALUE_CASTLED = 100;
+int VALUE_ABLE_TO_CASTLE = 25;
+
 
 int evaluateBoard(Board * board, int turn){
 	TOTAL_BOARDS_SEARCHED += 1;
