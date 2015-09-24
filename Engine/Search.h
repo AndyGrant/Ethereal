@@ -21,7 +21,10 @@ typedef struct SearchThreadData{
 
 int getBestMoveIndex(Board * board, int turn);
 int endSearch(int index, int size, int * values, int * sorted, int * unsorted);
+
 int alphaBetaPrune(Board * board, int turn, int * moves , int depth, int alpha, int beta, int eval);
+int threadedAlphaBetaPrune(Board * board, int turn, int * moves, int size, int depth, int alpha, int beta, int eval);
+void * createAlphaBetaPruneThread(void * ptr);
 
 void valueSort(int * values, int * moves, int size);
 void hueristicSort(Board * board, int * moves, int size, int turn);
