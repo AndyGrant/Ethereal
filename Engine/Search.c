@@ -42,8 +42,12 @@ int getBestMoveIndex(Board * board, int turn){
 	size = 0;
 	int * unsorted = getAllMoves(board,turn,&size);
 	
-	if (size == 0)
-		return -1;
+	if (size == 0){
+    if (validateMove(board,turn) == 0)
+      return -1;
+    else
+      return -2;
+  }
 		
 	int values[size];
 	

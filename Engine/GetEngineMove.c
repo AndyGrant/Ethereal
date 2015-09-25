@@ -38,9 +38,17 @@ int main(int argc, char * argv[]){
 	Board * board = createBoard(argv[1]);
 	int turn = argv[2][0] == '0' ? WHITE : BLACK;
 	int bestIndex = getBestMoveIndex(board,turn);
-	int size = 0;
-	int * moves = getAllMoves(board,turn,&size);
-	ApplyMove(board,(moves + (5*bestIndex)));
-	printf("NEWBOARD=%s",encodeBoard(board));
+  
+  if( bestIndex == -1){
+    printf("CHECKMATE");
+  }
+  else if(bestIndex == -2)
+    printf("STALEMATE");
+  else{
+    int size = 0;
+    int * moves = getAllMoves(board,turn,&size);
+    ApplyMove(board,(moves + (5*bestIndex)));
+    printf("NEWBOARD=%s",encodeBoard(board));
+  }
 }
 	
