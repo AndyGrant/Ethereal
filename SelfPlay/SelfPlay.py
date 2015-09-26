@@ -9,7 +9,11 @@ ENGINE_DIRS = [ENGINE_A, ENGINE_B]
 
 WHITE = 0
 BLACK = 1
-STARTING_BOARD = "3111214151211131010101010101010199999999999999999999999999999999999999999999999999999999999999990000000000000000301020405020103000111199"
+
+STARTING_BOARD = "3111214151211131010101010101010199999999999999999999999999999999999999999999999999999999999999990000000000000000301020405020103000111199 1"
+
+# StaleMate Test
+# STARTING_BOARD =  "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999950999999999999999999995100000099 0"
 
 root = Tk()
 
@@ -34,7 +38,8 @@ class ChessGUI(Frame):
     self.parent = parent
     Frame.__init__(self,parent)
     self.initInterface(parent)
-    self.game = ChessGame(STARTING_BOARD,WHITE,self.canvas)
+    self.game = ChessGame(STARTING_BOARD,int (not int(STARTING_BOARD[-1])),self.canvas)
+    
     
   def initInterface(self, parent):
     self.parent.title("Ethereal Chess : Andrew Grant")
@@ -50,17 +55,40 @@ class ChessGame():
     self.board = board
     self.turn = turn
     self.drawn = []
+    self.pastBoards = []
     
     
     self.drawBoard()
     Tk.update(root)
     
     while True:
-      self.makeEngineMove()
+      status = self.makeEngineMove()
+      
+      if self.stalemate():
+        self.logGame(0)
+        break
+      elif status == -1:
+        self.logGame(1 if turn != WHITE else -1)
+        break
+      elif status == -2:
+        self.logGame(0)
+        break
+      
       self.drawBoard()
       Tk.update(root)
-      self.turn = (1+self.turn)%2
-    
+      self.turn = (1+self.turn)%2   
+
+  def stalemate(self):
+    for board in self.pastBoards:
+      if self.pastBoards.count(board) >= 4:
+        return True
+    return False
+      
+  
+  def logGame(self, result):
+    with open('output.txt','a') as file:
+      file.write(sys.argv[1] + " VS " + sys.argv[2] + " Result=" + str(result) + "\n")
+      
   def drawBoard(self):
     for f in self.drawn:
       self.canvas.delete(f)
@@ -80,8 +108,15 @@ class ChessGame():
   def makeEngineMove(self):
     proc = Popen([ENGINE_DIRS[self.turn],self.board,str((self.turn))], stdout=PIPE,shell=False)
     (out, err) = proc.communicate()
-    print out[0:out.find("NEWBOARD=")]
+    #print out[0:out.find("NEWBOARD=")]
+    if "CHECKMATE" in out:
+      return -1
+    if "STALEMATE" in out:
+      return -2
     self.board = out[out.find("NEWBOARD=") + len("NEWBOARD="):]
+    print self.board + " " + str(self.turn)
+    self.pastBoards.append(self.board+" "+str(self.turn))
+    return 1
     
 root.geometry("420x420")
 root.resizable(0,0)

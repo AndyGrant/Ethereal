@@ -5,7 +5,6 @@
 #include "Board.h"
 #include "MoveGen.h"
 #include "Move.h"
-#include "Search.h"
 
 char * encodeBoard(Board * board){
 	char * str = malloc(sizeof(char) * 137);
@@ -37,18 +36,13 @@ char * encodeBoard(Board * board){
 int main(int argc, char * argv[]){
 	Board * board = createBoard(argv[1]);
 	int turn = argv[2][0] == '0' ? WHITE : BLACK;
-	int bestIndex = getBestMoveIndex(board,turn);
-  
-  if( bestIndex == -1){
-    printf("CHECKMATE");
-  }
-  else if(bestIndex == -2)
-    printf("STALEMATE");
-  else{
-    int size = 0;
-    int * moves = getAllMoves(board,turn,&size);
-    ApplyMove(board,(moves + (5*bestIndex)));
-    printf("NEWBOARD=%s",encodeBoard(board));
-  }
+	int size = 0;
+	int * moves = getAllMoves(board,turn,&size);
+	int i;
+	for (i = 0; i < size; i++, moves+=5){
+		ApplyMove(board,moves);
+		board->LastMove = moves;
+		printf("%d %d %d %d %s \n",moves[1],moves[2],moves[0],moves[4],encodeBoard(board));
+		RevertMove(board,moves);
+	}
 }
-	
