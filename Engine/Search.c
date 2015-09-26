@@ -23,9 +23,7 @@ int DELTA_DEPTH = 2;
 int END_DEPTH = 16;
 
 int SEARCH_THREAD_DEPTH = 4;
-int USE_TTABLE = 0;
-
-int SEARCH_VALUE_VARIANCE = 25;
+int USE_TTABLE = 1;
 
 int TOTAL_BOARDS_SEARCHED = 0;
 int TOTAL_MOVES_FOUND = 0;
@@ -99,22 +97,14 @@ int endSearch(int index, int size, int * values, int * sorted, int * unsorted){
 	printf("Total Nodes In TTTable \t: %d\n",TABLE->totalNodes);
 	printf("Total Empty Buckets \t: %d\n",getNonEmptyBucketCount(TABLE));
 	printf("Total Time Taken \t: %d\n",(int)(time(NULL)-START_TIME));
-  
-  
-  int i, j, bestIndex = 0, numOpts = 0, opts[size+1];
-  
-  for(i = 1; i < index; i++)
-    if (values[i] > values[bestIndex])
-      bestIndex = i;
-      
-  for(i = 0; i < index; i++)
-    if (values[i] + SEARCH_VALUE_VARIANCE >= values[bestIndex])
-      opts[numOpts++] = i;
-  
-  srand(time(NULL));
-  bestIndex = opts[rand() % numOpts];
-  
-	int * best = sorted + (bestIndex * 5);
+	
+	int i,j;
+	int best_index = 0;
+	for(i = 0; i < index; i++)
+		if (values[i] > values[best_index])
+			best_index = i;
+			
+	int * best = sorted + (best_index * 5);
 	
 	for(i = 0; i < size; i++)
 		if( memcmp(best,unsorted+(i*5),sizeof(int)*5) == 0)
