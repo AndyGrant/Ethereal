@@ -26,6 +26,7 @@ int SEARCH_THREAD_DEPTH = 4;
 int USE_TTABLE = 0;
 
 int SEARCH_VALUE_VARIANCE = 25;
+int EXTRA_SEARCH_DEPTH = 6;
 
 int TOTAL_BOARDS_SEARCHED = 0;
 int TOTAL_MOVES_FOUND = 0;
@@ -60,7 +61,7 @@ int getBestMoveIndex(Board * board, int turn){
 		printf("Searching Depth Level : %d\n",depth);
 		
 		
-		SEARCH_THREAD_DEPTH = depth > 5 ? 5 : 5;
+		SEARCH_THREAD_DEPTH = depth > 5 ? 5 : 3;
 		
 		
 		int alpha = -MATE;
@@ -193,17 +194,19 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 		}
 	}
 	
-	if (depth == 0){		
-		int value = evaluateBoard(board, turn);
-		RevertMove(board,move);
-		if (USE_TTABLE){
-			if (node == NULL)
-				storeNode(TABLE,hash,createNode(key,value,depth,getNodeType(alpha,beta,value),turn));
-			else
-				free(key);
-		}
-		board->LastMove = lastmove;
-		return value;
+	if (depth <= 0){
+    if (depth <= -EXTRA_SEARCH_DEPTH || move[0] != 0 || move[3] == EMPTY || validateMove(board,turn) == 0){
+      int value = evaluateBoard(board, turn);
+      RevertMove(board,move);
+      if (USE_TTABLE){
+        if (node == NULL)
+          storeNode(TABLE,hash,createNode(key,value,depth,getNodeType(alpha,beta,value),turn));
+        else
+          free(key);
+      }
+      board->LastMove = lastmove;
+      return value;
+    }
 	}
 	
 	int best = 0, size = 0;

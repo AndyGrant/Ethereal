@@ -1,0 +1,15 @@
+A:  
+  Time = 4 Seconds
+  Depth = 2
+  Delta = 2
+  Max = INF
+  Extra = 0
+  EvalMoves = 1
+  
+B:  
+  Time = 4 Seconds
+  Depth = 2
+  Delta = 2
+  Max = INF
+  Extra = 6
+  EvalMoves = 0
