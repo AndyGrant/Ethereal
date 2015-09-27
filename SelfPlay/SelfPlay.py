@@ -7,6 +7,8 @@ ENGINE_B = sys.argv[2]+"/getEngineMove.exe";
 
 ENGINE_DIRS = [ENGINE_A, ENGINE_B]
 
+WINNER = [sys.argv[2],sys.argv[1]]
+
 EXIT_ON_COMPLETION = bool(sys.argv[3])
 
 WHITE = 0
@@ -66,11 +68,12 @@ class ChessGame():
     while True:
       status = self.makeEngineMove()
       
-      if self.stalemate():
-        self.logGame(.5)
+      
+      if status == -1:
+        self.logGame(WINNER[turn])
         break
-      elif status == -1:
-        self.logGame(0 if turn == WHITE else 1)
+      elif self.stalemate():
+        self.logGame(.5)
         break
       elif status == -2:
         self.logGame(.5)
