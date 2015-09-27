@@ -15,14 +15,16 @@ TTable * TABLE;
 
 time_t START_TIME;
 time_t END_TIME;
-int MAX_TIME = 3;
+int MAX_TIME = 1;
 
 int START_DEPTH = 2;
 int MAX_DEPTH = 16;
 int DELTA_DEPTH = 2;
 int END_DEPTH = 16;
 
-int SEARCH_THREAD_DEPTH = 4;
+int SEARCH_VALUE_VARIANCE = 25;
+
+int SEARCH_THREAD_DEPTH = 5;
 int USE_TTABLE = 1;
 
 int TOTAL_BOARDS_SEARCHED = 0;
@@ -50,23 +52,28 @@ int getBestMoveIndex(Board * board, int turn){
   }
 		
 	int values[size];
-	
+	int pastValues[size];
+  
 	int depth, i;
 	
-	for(depth = START_DEPTH; depth < MAX_DEPTH && depth != END_DEPTH; depth += DELTA_DEPTH){
+  
+	for(depth = START_DEPTH; depth <= MAX_DEPTH && depth != END_DEPTH; depth += DELTA_DEPTH){
 		printf("==========================================\n");
 		printf("Searching Depth Level : %d\n",depth);
 		
-		
-		SEARCH_THREAD_DEPTH = depth > 5 ? 5 : 5;
-		
+    memcpy(pastValues,values,sizeof(int) * size);		
 		
 		int alpha = -MATE;
 		int beta = MATE;
 		
 		for(i = 0; i < size; i++, moves += 5){
 			int preSearched = TOTAL_BOARDS_SEARCHED;
-			values[i] = -alphaBetaPrune(board,!turn,moves,depth,-beta,-alpha,turn);
+      
+      if (depth == 2)
+        values[i] = -alphaBetaPrune(board,!turn,moves,depth,-MATE,MATE,turn);
+      else
+        values[i] = -alphaBetaPrune(board,!turn,moves,depth,-beta,-alpha+SEARCH_VALUE_VARIANCE,turn);
+        
 			printf("#%d\tValue: %d\tSearched: %d\n",i,values[i],TOTAL_BOARDS_SEARCHED-preSearched);
 			
 			if (values[i] > alpha)
@@ -75,18 +82,23 @@ int getBestMoveIndex(Board * board, int turn){
 			if (alpha == MATE)
 				return endSearch(i+1,size,values,moves_p,unsorted);
 			
-			if (END_TIME < time(NULL))
-				return endSearch(i+1,size,values,moves_p,unsorted);				
+			if (END_TIME < time(NULL)){
+        if (i <= 1)
+          return endSearch(size,size,pastValues,moves_p,unsorted);			
+        else
+          return endSearch(i+1,size,values,moves_p,unsorted);				
+      }
 		}
 		
 		if (alpha == -MATE)
 			return endSearch(size,size,values,moves_p,unsorted);
 		
-		valueSort(values,moves_p,size);
+    if (depth == 2)
+      valueSort(values,moves_p,size);
 		moves = moves_p;
 	}
 	
-	return endSearch(i+1,size,values,moves_p,unsorted);
+	return endSearch(size,size,values,moves_p,unsorted);
 }
 
 int endSearch(int index, int size, int * values, int * sorted, int * unsorted){
@@ -103,7 +115,15 @@ int endSearch(int index, int size, int * values, int * sorted, int * unsorted){
 	for(i = 0; i < index; i++)
 		if (values[i] > values[best_index])
 			best_index = i;
-			
+      
+  int numOpts = 0, opts[size];
+  for(i = 0; i < index; i++)
+    if (values[i] + SEARCH_VALUE_VARIANCE > values[best_index] + 1)
+      opts[numOpts++] = i;
+  
+  srand(time(NULL));
+  best_index = opts[rand() % numOpts];
+  
 	int * best = sorted + (best_index * 5);
 	
 	for(i = 0; i < size; i++)
@@ -216,8 +236,9 @@ int alphaBetaPrune(Board * board, int turn, int * move, int depth, int alpha, in
 				best = value;	
 			if (best > alpha)
 				alpha = best;	
-			if (alpha >= beta)
+			if (best >= beta){
 				break;
+      }
 			
 		}
 	}
