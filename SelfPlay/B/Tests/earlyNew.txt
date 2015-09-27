@@ -1,0 +1,50 @@
+Starting Positions New Method -- Time 30 Seconds
+
+Final:
+Depth 8: #1 searched=2533866
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  ms/call  ms/call  name    
+ 16.63      4.18     4.18 19872316     0.00     0.00  validateMove
+ 13.49      7.58     3.40  4933416     0.00     0.00  evaluateMoves
+  9.06      9.86     2.28  5090287     0.00     0.00  getAllMoves
+  8.10     11.90     2.04  2691671     0.00     0.00  createKey
+  6.00     13.41     1.51  2655343     0.00     0.00  getNode
+  5.28     14.74     1.33 39546796     0.00     0.00  getPawnMoves
+  4.77     15.94     1.20 14807879     0.00     0.00  getBishopMoves
+  4.65     17.11     1.17  2510036     0.00     0.00  evaluateMaterial
+  4.55     18.25     1.15  5389545     0.00     0.00  pruneCheckValidations
+  4.19     19.31     1.05 10148716     0.00     0.00  evaluatePosition
+  3.97     20.31     1.00 14988564     0.00     0.00  getRookMoves
+  3.89     21.29     0.98   231628     0.00     0.00  valueSort
+  3.10     22.07     0.78 154327194     0.00     0.00  createNormalMove
+  3.10     22.85     0.78  9809806     0.00     0.00  getKnightMoves
+  2.40     23.45     0.60  4803904     0.00     0.00  getKingMoves
+  1.59     23.86     0.40 20116045     0.00     0.00  revertNormalMove
+  1.31     24.18     0.33  2939488     0.00     0.00  createHash
+  1.07     24.45     0.27 19242714     0.00     0.00  applyNormalMove
+  0.99     24.70     0.25     3274     0.08     7.65  alphaBetaPrune
+  0.36     24.80     0.09   244901     0.00     0.01  hueristicSort
+  0.34     24.88     0.09   278360     0.00     0.00  fillDirection
+  0.26     24.95     0.07                             createCastleMove
+  0.24     25.00     0.06  1738654     0.00     0.00  storeNode
+  0.22     25.06     0.06  4862883     0.00     0.00  getQueenMoves
+  0.12     25.09     0.03  1790159     0.00     0.00  createNode
+  0.08     25.11     0.02  2097152     0.00     0.00  createBucket
+  0.08     25.13     0.02        1    20.00    40.00  createTTable
+  0.04     25.14     0.01  2565146     0.00     0.01  evaluateBoard
+  0.04     25.15     0.01  1888311     0.00     0.00  getNodeType
+  0.04     25.16     0.01        1    10.00    10.00  getNonEmptyBucketCount
+  0.04     25.17     0.01                             revertCastleMove
+  0.00     25.17     0.00     3597     0.00     0.00  createEnpassMove
+  0.00     25.17     0.00     1084     0.00     0.00  copyBoard
+  0.00     25.17     0.00      521     0.00     0.00  revertEnpassMove
+  0.00     25.17     0.00      505     0.00     0.00  applyEnpassMove
+  0.00     25.17     0.00      324     0.00     0.00  createPromotionMove
+  0.00     25.17     0.00        7     0.00     0.00  revertPromotionMove
+  0.00     25.17     0.00        6     0.00     0.00  applyPromotionMove
+  0.00     25.17     0.00        1     0.00     0.00  buildKnightMap
+  0.00     25.17     0.00        1     0.00     0.00  createBoard
+  0.00     25.17     0.00        1     0.00    10.00  endSearch
+  0.00     25.17     0.00        1     0.00   516.65  getBestMoveIndex
