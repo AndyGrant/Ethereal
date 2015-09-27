@@ -7,6 +7,8 @@ ENGINE_B = sys.argv[2]+"/getEngineMove.exe";
 
 ENGINE_DIRS = [ENGINE_A, ENGINE_B]
 
+EXIT_ON_COMPLETION = bool(sys.argv[3])
+
 WHITE = 0
 BLACK = 1
 
@@ -65,13 +67,13 @@ class ChessGame():
       status = self.makeEngineMove()
       
       if self.stalemate():
-        self.logGame(0)
+        self.logGame(.5)
         break
       elif status == -1:
-        self.logGame(1 if turn != WHITE else -1)
+        self.logGame(0 if turn == WHITE else 1)
         break
       elif status == -2:
-        self.logGame(0)
+        self.logGame(.5)
         break
       
       self.drawBoard()
@@ -87,7 +89,9 @@ class ChessGame():
   
   def logGame(self, result):
     with open('output.txt','a') as file:
-      file.write(sys.argv[1] + " VS " + sys.argv[2] + " Result=" + str(result) + "\n")
+      file.write(" ".join([sys.argv[1],"VS",sys.argv[2],"Result=",str(result),"\n"]))
+    if EXIT_ON_COMPLETION:
+      sys.exit(1)
       
   def drawBoard(self):
     for f in self.drawn:
