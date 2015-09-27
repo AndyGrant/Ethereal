@@ -17,12 +17,12 @@ extern int VALUE_CASTLED;
 extern int VALUE_ABLE_TO_CASTLE;
 
 
-static int MATERIAL_VALUES[6] = {200,700,650,1000,2000,10000};
+static int MATERIAL_VALUES[6] = {200,600,600,1000,1800,2000};
 static int CAPTURE_VALUES[6] = {1,3,3,6,9,1};
 
 static int PAWN_SCORE_MAP[2][8] = {
-	{0,120,70,35,15,0,0,0},
-	{0,0,0,15,35,70,120,0}
+	{0,128,64,16,4,0,0,0},
+	{0,0,0,4,16,64,128,0}
 };
 
 int evaluateBoard(Board * board, int turn);
