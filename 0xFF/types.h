@@ -18,6 +18,7 @@
 #define		QueenFlag 		(1 << 6)
 #define		KingFlag 			(1 << 7)
 
+#define 	Wall					((1 << 24) + 30)
 #define 	NonePiece   	(NoneFlag  	| ColourNone)
 #define 	WhitePawn			(PawnFlag		| WhiteFlag)
 #define 	BlackPawn			(PawnFlag		| BlackFlag)
@@ -64,6 +65,8 @@ static	 	PromoteTypes[9]			= {0, KnightFlag, BishopFlag, 0,
 #define PIECE_IS_QUEEN(piece) 			(piece & QueenFlag)
 #define PIECE_IS_KING(piece) 				(piece & KingFlag)
 
+#define MAKE_PIEC(type, colour)			((1 << (type + 2) + colour))
+
 /* Move Type Macro Definitions */
 #define MOVE_IS_NORMAL(move) 				(move & NormalFlag)
 #define MOVE_IS_CASTLE(move) 				(move & CastleFlag)
@@ -104,6 +107,7 @@ typedef struct board_t {
 	int castle_rights;
 	int ep_square;
 	int turn;
+	
 } board_t;
 
 
