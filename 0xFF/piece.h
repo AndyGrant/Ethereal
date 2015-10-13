@@ -1,7 +1,7 @@
 #ifndef PIECE_H
 #define PIECE_H
 
-#include "color.h"
+#include "colour.h"
 
 /* Piece Flag Definitions */
 #define PawnFlag		(1 << 2)

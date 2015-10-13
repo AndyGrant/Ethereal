@@ -1,8 +1,8 @@
 #ifndef MOVE_H
 #define MOVE_H
 
-#include 'colour.h'
-#include 'piece.h'
+#include "colour.h"
+#include "piece.h"
 
 /* Move Type Definitions */
 #define NormalFlag			(1 << 24)

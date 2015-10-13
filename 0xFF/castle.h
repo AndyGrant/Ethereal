@@ -7,4 +7,7 @@
 #define BlackKingCastle		(1 << 2)
 #define BlackQueenCastle	(1 << 3)
 
+/* Castle Macro Definitions */
+#define CREATE_CASTLE_RIGHTS(a,b,c,d) ((a<<0)+(b<<1)+(c<<2)+(d<<3))
+
 #endif
