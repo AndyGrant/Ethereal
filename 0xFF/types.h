@@ -1,6 +1,10 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include <stdint.h>
+
+#include "move.h"
+#include "search.h"
 
 /* Structure Definitions */
 
@@ -17,8 +21,8 @@ typedef struct transposition_t {
 } transposition_t;
 
 typedef struct board_t {
-	int positions[0xFF];
-	int squares[0xFF];
+	int positions[256];
+	int squares[256];
 	
 	int piece_locations[2][32];
 	int piece_counts[2];

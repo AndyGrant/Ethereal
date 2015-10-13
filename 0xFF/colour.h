@@ -13,7 +13,7 @@
 #define NoneFlag		(1 << 1)
 
 /* Colour Macro Definitions */
-#define PIECE_COLOUR(piece)		(peice & 3)
+#define PIECE_COLOUR(piece)		(piece & 3)
 #define PIECE_IS_WHITE(piece)	(!PIECE_COLOUR(piece))
 #define PIECE_IS_BLACK(piece)	(PIECE_COLOUR(piece))
 
