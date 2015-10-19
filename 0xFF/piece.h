@@ -12,7 +12,7 @@
 #define KingFlag		(1 << 7)
 
 /* Piece Definitions */
-#define Wall			((1 << 6) + 3)
+#define Wall			((1 << 8))
 #define NonePiece		(NoneFlag	| ColourNone)
 #define WhitePawn		(PawnFlag	| WhiteFlag)
 #define BlackPawn		(PawnFlag	| BlackFlag)
@@ -35,6 +35,7 @@
 #define PIECE_IS_ROOK(piece)		(piece & RookFlag)
 #define PIECE_IS_QUEEN(piece)		(piece & QueenFlag)
 #define PIECE_IS_KING(piece)		(piece & KingFlag)
+#define PIECE_IS_WALL(piece)		(piece & Wall)
 #define MAKE_PIECE(type, colour)	((1 << (type + 2) + colour))
 
 #endif

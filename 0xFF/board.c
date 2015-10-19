@@ -1,19 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "board.h"
 #include "castle.h"
 #include "colour.h"
-#include "board.h"
 #include "move.h"
 #include "piece.h"
-#include "types.h" 
+#include "search.h"
+#include "types.h"
+#include "util.h"
 
-char BaseBoard[73] = "rbnqknbrppppppppeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRBNQKNBR11110000";
+char BaseBoard[73] = "rbnqknbrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRBNQKNBR11110000";
 
 void init_board_t(board_t * board, char setup[73]){
-	int i, sq;
+	int i, sq, flag;
 	
-	for(sq = 0; sq < 25; sq++){
+	for(sq = 0; sq < 256; sq++){
 		board->positions[sq] = -1;
 		board->squares[sq] = Wall;
 	}
@@ -38,29 +40,10 @@ void init_board_t(board_t * board, char setup[73]){
 	
 	for(i = 0; i < 64; i++){
 		sq = CONVERT_64_TO_256(i);
-		
-		int type;
-		switch(setup[i]){
-			case 'P': type = WhitePawn; break;
-			case 'p': type = BlackPawn; break;
-			case 'N': type = WhiteKnight; break;
-			case 'n': type = BlackKnight; break;
-			case 'B': type = WhiteBishop; break;
-			case 'b': type = BlackBishop; break;
-			case 'R': type = WhiteRook; break;
-			case 'r': type = BlackRook; break;
-			case 'Q': type = WhiteQueen; break;
-			case 'q': type = BlackQueen; break;
-			case 'K': type = WhiteKing; break;
-			case 'k': type = BlackKing; break;
-			case 'e': type = NonePiece; break;
-		}
-		
-		board->squares[sq] = type;
+		board->squares[sq] = char_to_piece(setup[i]);
 	}
 	
-	int flag;
-	for(flag = 1 << 7; flag >= 1 << 3; flag = flag >> 1){
+	for(flag = KingFlag; flag >= KnightFlag; flag = flag >> 1){
 		for(i = 0; i < 64; i++){
 			sq = CONVERT_64_TO_256(i);
 			if (board->squares[sq] & flag){
@@ -73,7 +56,7 @@ void init_board_t(board_t * board, char setup[73]){
 		}
 	}
 	
-	flag = 1 << 2;
+	flag = PawnFlag;
 	for(i = 0; i < 64; i++){
 		sq = CONVERT_64_TO_256(i);
 		if (board->squares[sq] & flag){
@@ -86,6 +69,6 @@ void init_board_t(board_t * board, char setup[73]){
 	}
 	
 	board->castle_rights = CREATE_CASTLE_RIGHTS(setup[64]-'0',setup[65]-'0',setup[66]-'0',setup[67]-'0');
-	board->ep_square = (100 * (setup[68]-'0')) + (10 * (setup[69]-'0')) + (setup[70]-'0');
+	board->ep_square = (100*(setup[68]-'0'))+(10 * (setup[69]-'0'))+(setup[70]-'0');
 	board->turn = (setup[71] - '0');
 }
