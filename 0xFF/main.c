@@ -11,10 +11,7 @@
 
 int main(){
 	struct board_t board;
-	init_board_t(&board,"rbnqknbrppppppppeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRBNQKNBR11110000");
+	init_board_t(&board,"rbnqknbrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRBNQKNBR11110000");
+	return 0;
 	
-	int i;
-	for(i = 0; i < board.pawn_counts[ColourBlack]; i++)
-		printf("Index %d Type %d\n",board.pawn_locations[ColourBlack][i],
-			board.squares[board.pawn_locations[ColourBlack][i]]);
 }

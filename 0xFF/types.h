@@ -16,7 +16,7 @@ typedef uint32_t move_t;
 //	bits	28-31: Castle Changes
 
 typedef struct transposition_t {
-	
+	int node_count;
 	
 } transposition_t;
 
