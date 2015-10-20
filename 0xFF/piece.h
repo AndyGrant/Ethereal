@@ -28,10 +28,10 @@
 /* Non Piece Flag Definitions */
 #define Empty			(1 << 7)
 #define Wall			(1 << 8)
-#define NonPiece		(EmptyFlag | WallFlag)
+#define NonPiece		(Empty | Wall)
 
 /* Non Piece Macro Definitions */
-#define IS_PIECE(square)			(piece & ~NonPiece)
+#define IS_PIECE(square)			(piece & (~NonPiece))
 #define IS_NOT_PIECE(square)		(piece & NonPiece)
 
 /* Piece Macro Definitions */
@@ -43,7 +43,7 @@
 #define PIECE_IS_KING(piece)		(piece & KingFlag)
 #define PIECE_TYPE(piece)			(piece & ~BlackFlag)
 
-#define IS_EMPTY_OR_ENEMY(s,t)		(s & (Empty & !t))
+#define IS_EMPTY_OR_ENEMY(s,t)		(s & (Empty | !t))
 
 #define MAKE_PIECE(type, colour)	((1 << (type + 1)) + colour)
 

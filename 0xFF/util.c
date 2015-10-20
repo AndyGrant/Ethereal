@@ -38,7 +38,7 @@ char piece_to_char(int p){
 		case BlackQueen: 	return 'q';
 		case WhiteKing: 	return 'K';
 		case BlackKing: 	return 'k';
-		case Empty:		return 'e';
+		case Empty:			return 'e';
 		default:			assert(0);
 	}
 }
