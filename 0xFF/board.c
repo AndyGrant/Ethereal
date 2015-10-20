@@ -10,7 +10,7 @@
 #include "types.h"
 #include "util.h"
 
-char BaseBoard[73] = "rbnqknbrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRBNQKNBR11110000";
+char BaseBoard[73] = "rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000";
 
 void init_board_t(board_t * board, char setup[73]){
 	int i, sq, flag;
@@ -71,4 +71,22 @@ void init_board_t(board_t * board, char setup[73]){
 	board->castle_rights = CREATE_CASTLE_RIGHTS(setup[64]-'0',setup[65]-'0',setup[66]-'0',setup[67]-'0');
 	board->ep_square = (100*(setup[68]-'0'))+(10 * (setup[69]-'0'))+(setup[70]-'0');
 	board->turn = (setup[71] - '0');
+}
+
+void print_board_t(board_t * board){
+	int x, y;
+	for(x = 0; x < 8; x++){
+		printf("\n|---|---|---|---|---|---|---|---|\n");
+		for(y = 0; y < 8; y++){
+			int piece = board->squares[CONVERT_64_TO_256((x*8+y))];
+			if (IS_PIECE(piece))
+				printf("| %c ",piece_to_char(piece));
+			else
+				printf("|   ");
+		}
+		
+		printf("|");
+	}
+	
+	printf("\n|---|---|---|---|---|---|---|---|\n");
 }

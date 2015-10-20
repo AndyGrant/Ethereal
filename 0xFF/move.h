@@ -22,7 +22,8 @@
 #define MOVE_IS_PROMOTION(move)		(move & PromoteFlags)
 
 /* Move Creation Macro Definitions */
-#define MAKE_NORMAL_MOVE(from,to,cap,cast)	(
+#define MAKE_NORMAL_MOVE(b,t,f,c)	((move_t)(f|(t<<8)|(b->squares[t]<<16)|NormalFlag|c))
+
 
 
 /* Needed for Macro Definition */
