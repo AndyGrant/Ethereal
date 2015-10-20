@@ -1,7 +1,7 @@
 #ifndef COLOUR_H
 #define COLOUR_H
 
-#include "piece.h"
+#include "colour.h"
 
 /* Color Definitions */
 #define ColourWhite		(0)

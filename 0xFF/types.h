@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-#include "move.h"
 #include "search.h"
 
 /* Structure Definitions */
@@ -35,7 +34,6 @@ typedef struct board_t {
 	int turn;
 	
 } board_t;
-
 
 typedef struct principle_variation_t {
 	int plys;

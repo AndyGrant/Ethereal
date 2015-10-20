@@ -1,6 +1,15 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include "board.h"
+#include "castle.h"
+#include "colour.h"
+#include "move.h"
+#include "piece.h"
+#include "search.h"
+#include "types.h"
+#include "util.h"
+
 static int table_256_to_64[256] = {
 	-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
 	-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
