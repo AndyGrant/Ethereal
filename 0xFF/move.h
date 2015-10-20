@@ -1,8 +1,8 @@
 #ifndef MOVE_H
 #define MOVE_H
 
-#include "colour.h"
 #include "piece.h"
+#include "types.h"
 
 /* Move Type Definitions */
 #define NormalFlag			(1 << 24)
@@ -20,6 +20,10 @@
 #define MOVE_IS_CASTLE(move)		(move & CastleFlag)
 #define MOVE_IS_ENPASS(move)		(move & EnpassFlag)
 #define MOVE_IS_PROMOTION(move)		(move & PromoteFlags)
+
+/* Move Creation Macro Definitions */
+#define MAKE_NORMAL_MOVE(from,to,cap,cast)	(
+
 
 /* Needed for Macro Definition */
 static int PromoteTypes[9] = {0, KnightFlag, BishopFlag, 0, RookFlag, 0, 0, 0, QueenFlag};

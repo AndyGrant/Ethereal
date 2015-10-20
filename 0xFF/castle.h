@@ -1,6 +1,15 @@
 #ifndef CASTLE_H
 #define CASTLE_H
 
+#include "board.h"
+#include "castle.h"
+#include "colour.h"
+#include "move.h"
+#include "piece.h"
+#include "search.h"
+#include "types.h"
+#include "util.h"
+
 /* Castle Right Definitions */
 #define WhiteKingCastle		(1 << 0)
 #define WhiteQueenCastle	(1 << 1)

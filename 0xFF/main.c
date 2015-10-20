@@ -10,7 +10,7 @@
 #include "search.h"
 
 int main(){
-	struct board_t board;
+	board_t board;
 	init_board_t(&board,"rbnqknbrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRBNQKNBR11110000");
 	return 0;
 	

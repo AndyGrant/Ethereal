@@ -1,3 +1,7 @@
+#include <assert.h>
+#include <stdlib.h>
+#include <stdint.h>
+
 #include "board.h"
 #include "castle.h"
 #include "colour.h"
@@ -14,37 +18,17 @@ void gen_all_moves(move_t * list, int * size, board_t * board){
 	assert(PIECE_IS_KING(board->piece_locations[board->turn][0]));
 	assert(list != NULL);
 	
+	int to, from, piece;
 	int turn = board->turn;
-	int location = board->piece_locations[turn];
+	int * location = board->piece_locations[turn];
 	
 	while(*location != -1){
-		int piece = board->squares[*location];
-		
-		if (PIECE_IS_KNIGHT(piece)){
-			
+		switch(PIECE_TYPE(board->squares[*location])){
+			case KnightFlag:
+				
+				to = from - 33;
+				if (IS_EMPTY_OR_ENEMY(board->squares[to]))
+					ADD_MOVE(list,size,MAKE_NORMAL_MOVE(from,to,0));
 		}
-		else if (PIECE_IS_BISHOP(piece)){
-			
-		}
-		else if (PIECE_IS_ROOK(piece)){
-			
-		}
-		else if (PIECE_IS_ROOK(piece)){
-			
-		}
-		else if (PIECE_IS_KING(piece)){
-			
-		}
-		else
-			assert(0);
 	}
-}
-
-void create_jumping_move(board_t * board, int from, int to){
-	move_t move = 0;
-	*move |= from;
-	*move |= to << 8;
-	*move |= capture << 16;
-	*move |= NormalFlag;
-	return move;
 }
