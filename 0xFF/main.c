@@ -15,15 +15,18 @@ int main(){
 	init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000");
 	print_board_t(&board);
 	
+	
+	
 	move_t moves[MaxMoves];
 	
 	int size = 0;
-	gen_all_moves(moves,&size,&board);
+	gen_all_moves(&moves[0],&size,&board);
 	
 	int i;
 	for(i = 0; i < size; i++){
-		printf("To %d, From %d \n",CONVERT_256_TO_64(MOVE_GET_TO(moves[i])),
-								   CONVERT_256_TO_64(MOVE_GET_FROM(moves[i])));
+		printf("To %d, From %d Cap %d\n",(MOVE_GET_TO(moves[i])),
+										 (MOVE_GET_FROM(moves[i])),
+										 (MOVE_GET_CAPTURE(moves[i])));
 		printf("%x\n\n",moves[i]);
 	}
 }
