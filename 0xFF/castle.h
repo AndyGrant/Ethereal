@@ -16,6 +16,9 @@
 #define BlackKingCastle		(1 << 2)
 #define BlackQueenCastle	(1 << 3)
 
+#define KING_HAS_RIGHTS(t,r)	(r & (1 << (t*2)))
+#define QUEEN_HAS_RIGHTS(t,r)	(r & (2 << (t*2)))
+
 /* Castle Macro Definitions */
 #define CREATE_CASTLE_RIGHTS(a,b,c,d) ((a<<0)+(b<<1)+(c<<2)+(d<<3))
 
