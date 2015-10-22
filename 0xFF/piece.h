@@ -33,6 +33,7 @@
 /* Non Piece Macro Definitions */
 #define IS_PIECE(square)			(piece & (~NonPiece))
 #define IS_NOT_PIECE(square)		(piece & NonPiece)
+#define IS_EMPTY(square)			(square & Empty)
 
 /* Piece Macro Definitions */
 #define PIECE_IS_PAWN(piece)		(piece & PawnFlag)

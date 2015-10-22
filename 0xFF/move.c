@@ -19,50 +19,82 @@ void gen_all_moves(move_t * list, int * size, board_t * board){
 	assert(PIECE_IS_KING(board->squares[board->piece_locations[board->turn][0]]));
 	assert(list != NULL);
 	
-	int to, from, piece;
+	int to, from, cap, piece;
 	int turn = board->turn;
-	int * location = &(board->piece_locations[turn][0]);
+	int * location = (board->piece_locations[turn]);
 	
-	while(*location != -1){
-		switch(PIECE_TYPE(board->squares[*location])){
-			from = *location;
-			
+	while (*location != -1){
+		from = *location;
+		switch(PIECE_TYPE(board->squares[from])){
 			
 			case KnightFlag:
-				printf("Finding moves of Knight at %d\n",CONVERT_256_TO_64(from));
-				to = from - 33;
-				if (IS_EMPTY_OR_ENEMY(board->squares[to],turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(board,to,from,0);
 				
-				to = from - 31;
-				if (IS_EMPTY_OR_ENEMY(board->squares[to],turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(board,to,from,0);
+				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from-33]),turn))
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				
-				to = from - 18;
-				if (IS_EMPTY_OR_ENEMY(board->squares[to],turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(board,to,from,0);
+				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from-31]),turn))
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				
-				to = from - 14;
-				if (IS_EMPTY_OR_ENEMY(board->squares[to],turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(board,to,from,0);
+				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from-18]),turn))
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				
-				to = from + 14;
-				if (IS_EMPTY_OR_ENEMY(board->squares[to],turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(board,to,from,0);
+				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from-14]),turn))
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				
-				to = from + 18;
-				if (IS_EMPTY_OR_ENEMY(board->squares[to],turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(board,to,from,0);
+				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from+14]),turn))
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				
-				to = from + 31;
-				if (IS_EMPTY_OR_ENEMY(board->squares[to],turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(board,to,from,0);
+				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from+18]),turn))
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				
-				to = from + 33;
-				if (IS_EMPTY_OR_ENEMY(board->squares[to],turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(board,to,from,0);
+				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from+31]),turn))
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
+				
+				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from+33]),turn))
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				
 				break;
+			
+			case BishopFlag:
+				
+				to = from;
+				cap = Empty;
+				while(cap == Empty){
+					if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=to-17]),turn))
+						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
+					else break;
+				}
+				
+				to = from;
+				cap = Empty;
+				while(cap == Empty){
+					if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=to-15]),turn))
+						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
+					else break;
+				}
+				
+				to = from;
+				cap = Empty;
+				while(cap == Empty){
+					if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=to+15]),turn))
+						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
+					else break;
+				}
+				
+				to = from;
+				cap = Empty;
+				while(cap == Empty){
+					if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=to+17]),turn))
+						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
+					else break;
+				}
+				
+				break;
+				
+			case RookFlag:
+				
+				
+			
 			default: break;
 		}
 		

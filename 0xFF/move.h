@@ -22,7 +22,8 @@
 #define MOVE_IS_PROMOTION(move)		(move & PromoteFlags)
 
 /* Move Creation Macro Definitions */
-#define MAKE_NORMAL_MOVE(b,t,f,c)	((move_t)(f|(t<<8)|(b->squares[t]<<16)|NormalFlag|c))
+//#define MAKE_NORMAL_MOVE(b,t,f,c)	(f|(t<<8)|(b->squares[t]<<16)|NormalFlag|c)
+#define MAKE_NORMAL_MOVE(f,t,c,p)	((f)|(t<<8)|(c<<16)|(NormalFlag)|(p))
 
 
 
@@ -32,7 +33,7 @@ static int PromoteTypes[9] = {0, KnightFlag, BishopFlag, 0, RookFlag, 0, 0, 0, Q
 /* Move Decode Macro Definitions */
 #define MOVE_GET_FROM(m)			((m & (0b11111111 <<  0)) >>  0)
 #define MOVE_GET_TO(m)				((m & (0b11111111 <<  8)) >>  8)
-#define MOVE_GET_CAPTURE_TYPE(m)	((m & (0b11111111 << 16)) >> 16)
+#define MOVE_GET_CAPTURE(m)			((m & (0b11111111 << 16)) >> 16)
 #define MOVE_GET_CASTLE_FLAGS(m)	((m & (0b00001111 << 28)) >> 25)
 #define MOVE_GET_PROMOTE_TYPE(m,c)	(PromoteTypes[((m&PromoteFlags)>>28)]+c)
 
