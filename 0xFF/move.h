@@ -10,7 +10,7 @@
 #define EnpassFlag			(1 << 26)
 #define PromotionFlag		(1 << 27)
 #define PromoteKnightFlag	(1 << 28)
-#define PromoteishopFlag	(1 << 29)
+#define PromoteBishopFlag	(1 << 29)
 #define PromoteRookFlag		(1 << 30)
 #define PromoteQueenFlag	(1 << 31) 
 #define PromoteFlags		(15<< 28)
@@ -24,6 +24,7 @@
 /* Move Creation Macro Definitions */
 #define MAKE_NORMAL_MOVE(f,t,c,p)	((f)|(t<<8)|(c<<16)|(NormalFlag)|(p))
 #define MAKE_ENPASS_MOVE(f,t,l)		((f)|(t<<8)|(l<<16)|(EnpassFlag))
+#define MAKE_PROMOTION_MOVE(f,t,c,p)((f)|(t<<8)|(c<<16)|(PromotionFlag)|(p))
 
 /* Needed for Macro Definition */
 static int PromoteTypes[9] = {0, KnightFlag, BishopFlag, 0, RookFlag, 0, 0, 0, QueenFlag};

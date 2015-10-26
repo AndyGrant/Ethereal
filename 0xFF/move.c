@@ -19,7 +19,7 @@ void gen_all_moves(move_t * list, int * size, board_t * board){
 	assert(PIECE_IS_KING(board->squares[board->piece_locations[board->turn][0]]));
 	assert(list != NULL);
 	
-	int to, from, cap, piece;
+	int to, from, cap, flag;
 	int turn = board->turn;
 	int direction = board->turn == ColourWhite ? -16 : 16;
 	int r, rights = board->castle_rights;
@@ -188,28 +188,46 @@ void gen_all_moves(move_t * list, int * size, board_t * board){
 	
 	while (*location != -1){
 		from = *location;
+		int promo = 0;
 		
-		assert(PIECE_IS_PAWN(board->squares[from]));
+		if (turn == ColourWhite && from / 16 == 5)
+			promo = 1;
+		else if(turn == ColourBlack && from / 16 == 10)
+			promo = 1;
 		
 		to = from + direction;
 		if (IS_EMPTY(board->squares[to])){
-			list[(*size)++] = MAKE_NORMAL_MOVE(from,to,Empty,0);
+			if (promo) 
+				for(flag = PromoteQueenFlag; flag >= PromoteKnightFlag; flag >> 1)
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,Empty,flag);
+			else
+				list[(*size)++] = MAKE_NORMAL_MOVE(from,to,Empty,0);
+			
 			to = to + direction;
 			if (IS_EMPTY(board->squares[to]) && ((from/16) - (5 * (turn)) == 10))
 				list[(*size)++] = MAKE_NORMAL_MOVE(from,to,Empty,0);
+			
 		}
 		
+		if (IS_PIECE(board->squares[to+1]) && PIECE_COLOUR(board->squares[to+1])){
+			if (promo)
+				for(flag = PromoteQueenFlag; flag >= PromoteKnightFlag; flag >> 1)
+					list[(*size)++] = MAKE_PROMOTION_MOVE(from,to,board->squares[to+1],flag);
+			else
+				list[(*size)++] = MAKE_NORMAL_MOVE(from,to,board->squares[to+1],0);
+		}
 		
-		if (IS_PIECE(board->squares[to+1]) && PIECE_COLOUR(board->squares[to+1]))
-			list[(*size)++] = MAKE_NORMAL_MOVE(from,to,board->squares[to+1],0);
+		if (IS_PIECE(board->squares[to-1]) && PIECE_COLOUR(board->squares[to-1])){
+			if (promo)
+				for(flag = PromoteQueenFlag; flag >= PromoteKnightFlag; flag >> 1)
+					list[(*size)++] = MAKE_PROMOTION_MOVE(from,to,board->squares[to-1],flag);
+			else
+				list[(*size)++] = MAKE_NORMAL_MOVE(from,to,board->squares[to-1],0);
+		}
 		
-		if (IS_PIECE(board->squares[to-1]) && PIECE_COLOUR(board->squares[to-1]))
-			list[(*size)++] = MAKE_NORMAL_MOVE(from,to,board->squares[to-1],0);
-		
-		if (board->ep_square == from-1 || board->ep_square == from+1){
-			assert(PIECE_TYPE(board->squares[board->ep_square]) == PawnFlag);
+		if (board->ep_square == from-1 || board->ep_square == from+1)
 			list[(*size)++] = MAKE_ENPASS_MOVE(from,board->ep_square+direction,board->ep_square);
-		}
+		
 		
 		location++;
 	}
