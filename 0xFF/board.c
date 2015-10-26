@@ -73,20 +73,3 @@ void init_board_t(board_t * board, char setup[73]){
 	board->turn = (setup[71] - '0');
 }
 
-void print_board_t(board_t * board){
-	int x, y;
-	for(x = 0; x < 8; x++){
-		printf("\n|---|---|---|---|---|---|---|---|\n");
-		for(y = 0; y < 8; y++){
-			int piece = board->squares[CONVERT_64_TO_256((x*8+y))];
-			if (IS_PIECE(piece))
-				printf("| %c ",piece_to_char(piece));
-			else
-				printf("|   ");
-		}
-		
-		printf("|");
-	}
-	
-	printf("\n|---|---|---|---|---|---|---|---|\n");
-}

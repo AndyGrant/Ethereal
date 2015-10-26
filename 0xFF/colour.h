@@ -15,6 +15,5 @@
 /* Colour Macro Definitions */
 #define PIECE_COLOUR(piece)		(piece & ColourBlack)
 #define PIECE_IS_WHITE(piece)	(!PIECE_COLOUR(piece))
-#define PIECE_IS_BLACK(piece)	(PIECE_COLOUR(piece))
-
+#define PIECE_IS_BLACK(piece)	( PIECE_COLOUR(piece))
 #endif

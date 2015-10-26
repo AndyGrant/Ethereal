@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "board.h"
 #include "piece.h"
 #include "util.h"
 
@@ -41,5 +42,27 @@ char piece_to_char(int p){
 		case Empty:			return 'e';
 		default:			assert(0);
 	}
+}
+
+void print_board_t(board_t * board){
+	int x, y;
+	for(x = 0; x < 8; x++){
+		printf("\n|----|----|----|----|----|----|----|----|\n");
+		for(y = 0; y < 8; y++){
+			int piece = board->squares[CONVERT_64_TO_256((x*8+y))];
+			if (IS_PIECE(piece)){
+				if (PIECE_IS_WHITE(piece))
+					printf("| w%c ",piece_to_char(piece));
+				else
+					printf("| b%c ",piece_to_char(piece));
+			}
+			else
+				printf("|    ");
+		}
+		
+		printf("|");
+	}
+	
+	printf("\n|----|----|----|----|----|----|----|----|\n");
 }
 
