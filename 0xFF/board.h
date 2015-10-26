@@ -8,7 +8,6 @@
 /* Board Macro Definitions */
 
 /* Function Protoypes */
-void init_board_t(board_t * board, char setup[73]);
 void print_board_t(board_t * board);
 
 #endif

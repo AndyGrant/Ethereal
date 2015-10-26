@@ -13,7 +13,11 @@
 int main(){
 	board_t board;
 	//init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000");
-	  init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPeeeRNBQKBNR11110000");
+	//init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPePeeeRNBQKBNR11110000");
+	
+	// Test Promotion
+	  init_board_t(&board,"eeeekeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePpPeeeeeeeeeeeeeeeeeeeeeeKeee00001371");
+	
 	print_board_t(&board);
 	
 	
@@ -25,9 +29,8 @@ int main(){
 	
 	int i;
 	for(i = 0; i < size; i++){
-		printf("To %d, From %d Cap %d\n",(MOVE_GET_TO(moves[i])),
+		printf("#%d To %d, From %d Cap %d\n",i, (MOVE_GET_TO(moves[i])),
 										 (MOVE_GET_FROM(moves[i])),
 										 (MOVE_GET_CAPTURE(moves[i])));
-		printf("%x\n\n",moves[i]);
 	}
 }

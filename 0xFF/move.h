@@ -22,10 +22,8 @@
 #define MOVE_IS_PROMOTION(move)		(move & PromoteFlags)
 
 /* Move Creation Macro Definitions */
-//#define MAKE_NORMAL_MOVE(b,t,f,c)	(f|(t<<8)|(b->squares[t]<<16)|NormalFlag|c)
 #define MAKE_NORMAL_MOVE(f,t,c,p)	((f)|(t<<8)|(c<<16)|(NormalFlag)|(p))
-
-
+#define MAKE_ENPASS_MOVE(f,t,l)		((f)|(t<<8)|(l<<16)|(EnpassFlag))
 
 /* Needed for Macro Definition */
 static int PromoteTypes[9] = {0, KnightFlag, BishopFlag, 0, RookFlag, 0, 0, 0, QueenFlag};
