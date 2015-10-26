@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <time.h>
 
 #include "types.h"
 #include "board.h"
@@ -12,11 +13,11 @@
 
 int main(){
 	board_t board;
-	//init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000");
+	init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000");
 	//init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPePeeeRNBQKBNR11110000");
 	
 	// Test Promotion
-	  init_board_t(&board,"eeeekeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePpPeeeeeeeeeeeeeeeeeeeeeeKeee00001371");
+	//init_board_t(&board,"eeeekeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePpPeeeeeeeeeeeeeeeeeeeeeeKeee00001371");
 	
 	print_board_t(&board);
 	
@@ -24,13 +25,18 @@ int main(){
 	
 	move_t moves[MaxMoves];
 	
-	int size = 0;
-	gen_all_moves(&moves[0],&size,&board);
+	clock_t start = clock();
+	
+	int a, size = 0;
+	for(a = 0; a < 20000000; a++, size=0)
+		gen_all_moves(&moves[0],&size,&board);
+	
+	clock_t end = clock();
+	
+	printf("Time in milli : %d",end-start);
 	
 	int i;
 	for(i = 0; i < size; i++){
-		printf("#%d To %d, From %d Cap %d\n",i, (MOVE_GET_TO(moves[i])),
-										 (MOVE_GET_FROM(moves[i])),
-										 (MOVE_GET_CAPTURE(moves[i])));
+		printf("#%d ",i);print_move_t(moves[i]);
 	}
 }

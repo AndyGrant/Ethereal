@@ -46,8 +46,12 @@ char piece_to_char(int p){
 
 void print_board_t(board_t * board){
 	int x, y;
+	
+	char files[8] = "87654321";
+	
 	for(x = 0; x < 8; x++){
-		printf("\n|----|----|----|----|----|----|----|----|\n");
+		printf("\n     |----|----|----|----|----|----|----|----|\n");
+		printf("    %c",files[x]);
 		for(y = 0; y < 8; y++){
 			int piece = board->squares[CONVERT_64_TO_256((x*8+y))];
 			if (IS_PIECE(piece)){
@@ -63,6 +67,24 @@ void print_board_t(board_t * board){
 		printf("|");
 	}
 	
-	printf("\n|----|----|----|----|----|----|----|----|\n");
+	printf("\n     |----|----|----|----|----|----|----|----|");
+	printf("\n        A    B    C    D    E    F    G    H\n");
+}
+
+void print_move_t(move_t move){
+	if (MOVE_IS_NORMAL(move)){
+		int from = MOVE_GET_FROM(move);
+		int to = MOVE_GET_TO(move);
+		printf("Normal : %c%c%c%c\n",CONVERT_TO_FILE(from),
+									 CONVERT_TO_RANK(from),
+									 CONVERT_TO_FILE(to),
+									 CONVERT_TO_RANK(to)
+		);
+	} else if (MOVE_IS_CASTLE(move)){
+	} else if (MOVE_IS_ENPASS(move)){
+	} else if (MOVE_IS_PROMOTION(move)){
+	} else {
+		assert("move_t has no move type" == 0);
+	}
 }
 

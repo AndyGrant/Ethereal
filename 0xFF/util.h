@@ -49,5 +49,7 @@ void init_board_t(board_t * board, char setup[73]);
 /* Macro Definitions */
 #define CONVERT_64_TO_256(n)		(table_64_to_256[n])
 #define CONVERT_256_TO_64(n)		(table_256_to_64[n])
+#define CONVERT_TO_FILE(n)			('a' + (n % 16) - 4)
+#define CONVERT_TO_RANK(n)			('8' - (n / 16) + 4)
 
 #endif
