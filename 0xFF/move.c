@@ -256,6 +256,15 @@ void apply_move(board_t * board, move_t move){
 		board->positions[from] = -1;
 		board->castle_rights ^= MOVE_GET_CASTLE_FLAGS(move);
 		board->turn = !board->turn;
+	} else if (MOVE_IS_ENPASS(move)){
+		board->squares[to] = board->squares[from];
+		board->positions[to] = board->positions[from];
+		board->squares[from] = Empty;
+		board->positions[from] = -1;
+		int enpass = MOVE_GET_ENPASS_SQUARE(move);
+		board->squares[enpass] = Empty;
+		remove_position(board,enpass);
+		board->turn = !board->turn;
 	}
 }
 
@@ -272,6 +281,15 @@ void revert_move(board_t * board, move_t move){
 		if (cap != Empty)
 			add_position(board,to);
 		board->castle_rights ^= MOVE_GET_CASTLE_FLAGS(move);
+		board->turn = !board->turn;
+	} else if (MOVE_IS_ENPASS(move)){
+		board->squares[from] = board->squares[to];
+		board->positions[from] = board->squares[to];
+		board->squares[to] = Empty;
+		board->positions[to] = -1;
+		int enpass = MOVE_GET_ENPASS_SQUARE(move);
+		board->squares[enpass] = PawnFlag | board->turn;
+		add_position(board,enpass);
 		board->turn = !board->turn;
 	}
 }

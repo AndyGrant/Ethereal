@@ -33,6 +33,7 @@ static int PromoteTypes[9] = {0, KnightFlag, BishopFlag, 0, RookFlag, 0, 0, 0, Q
 #define MOVE_GET_FROM(m)			((m & (0b11111111 <<  0)) >>  0)
 #define MOVE_GET_TO(m)				((m & (0b11111111 <<  8)) >>  8)
 #define MOVE_GET_CAPTURE(m)			((m & (0b11111111 << 16)) >> 16)
+#define MOVE_GET_ENPASS_SQUARE(m)	((m & (0b11111111 << 16)) >> 16)
 #define MOVE_GET_CASTLE_FLAGS(m)	((m & (0b00001111 << 28)) >> 25)
 #define MOVE_GET_PROMOTE_TYPE(m,c)	(PromoteTypes[((m&PromoteFlags)>>28)]+c)
 
