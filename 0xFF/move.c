@@ -37,15 +37,15 @@ void gen_all_moves(move_t * list, int * size, board_t * board){
 				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from-18]),turn))
 					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from-14]),turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);				
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from+14]),turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);				
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from+18]),turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);				
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from+31]),turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);				
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from+33]),turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);				
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				break;
 			
 			case BishopFlag:
@@ -240,3 +240,71 @@ void gen_all_moves(move_t * list, int * size, board_t * board){
 //	bits	16-23: Capture Type
 //	bits	24-27: Move Type
 //	bits	28-31: Castle Changes
+
+void apply_move(board_t * board, move_t move){
+	int turn = board->turn;
+	int from = MOVE_GET_FROM(move);
+	int to = MOVE_GET_TO(move);
+	int cap = MOVE_GET_CAPTURE(move);
+	
+	if (MOVE_IS_NORMAL(move)){
+		if (cap != Empty)
+			remove_position(board,to);
+		board->squares[to] = board->squares[from];
+		board->positions[to] = board->positions[from];
+		board->squares[from] = Empty;
+		board->positions[from] = -1;
+		board->castle_rights ^= MOVE_GET_CASTLE_FLAGS(move);
+		board->turn = !board->turn;
+	}
+}
+
+void revert_move(board_t * board, move_t move){
+	int from = MOVE_GET_FROM(move);
+	int to = MOVE_GET_TO(move);
+	int cap = MOVE_GET_CAPTURE(move);
+	
+	if (MOVE_IS_NORMAL(move)){
+		board->squares[from] = board->squares[to];
+		board->positions[from] = board->positions[to];
+		board->squares[to] = cap;
+		board->positions[to] = -1;
+		if (cap != Empty)
+			add_position(board,to);
+		board->castle_rights ^= MOVE_GET_CASTLE_FLAGS(move);
+		board->turn = !board->turn;
+	}
+}
+
+void add_position(board_t * board, int to){
+	int i, turn = board->turn;
+	int cap = board->squares[to];
+	
+	if (PIECE_IS_PAWN(cap)){
+		board->pawn_counts[turn] += 1;
+		board->pawn_locations[turn][board->pawn_counts[turn]] = to;
+		board->positions[to] = board->pawn_counts[turn];
+	} else {
+		board->piece_counts[turn] += 1;
+		board->piece_locations[turn][board->piece_counts[turn]] = to;
+		board->positions[to] = board->piece_counts[turn];
+	}
+}
+
+void remove_position(board_t * board, int to){
+	int i;
+	int turn = board->turn;
+	int cap = board->squares[to];
+	
+	if (PIECE_IS_PAWN(cap)){
+		for(i = board->positions[to]; i < board->pawn_counts[!turn]; i++){
+			board->positions[i] = board->positions[i+1];
+			board->pawn_locations[!turn][i] = board->pawn_locations[!turn][i+1];
+		}
+	} else {
+		for(i = board->positions[to]; i < board->piece_counts[!turn]; i++){
+			board->positions[i] = board->positions[i+1];
+			board->piece_locations[!turn][i] = board->piece_locations[!turn][i+1];
+		}
+	}
+}

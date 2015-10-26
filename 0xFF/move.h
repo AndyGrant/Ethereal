@@ -38,5 +38,9 @@ static int PromoteTypes[9] = {0, KnightFlag, BishopFlag, 0, RookFlag, 0, 0, 0, Q
 
 /* Function Prototypes */
 void gen_all_moves(move_t * list, int * size, board_t * board);
+void apply_move(board_t * board, move_t move);
+void revert_move(board_t * board, move_t move);
 
+void add_position(board_t * board, int to);
+void remove_position(board_t * board, int to);
 #endif
