@@ -17,7 +17,7 @@ int main(){
 	//init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPePeeeRNBQKBNR11110000");
 	
 	// Test enpass
-	//init_board_t(&board,"eeeekeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePpPeeeeeeeeeeeeeeeeeeeeeeKeee00001371");
+	init_board_t(&board,"eeeekeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePpPeeeeeeeeeeeeeeeeeeeeeeKeee00001351");
 	// Test Promotion
 	//init_board_t(&board,"eerekeeeePeeeeeeeeeeeeeeeePeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeKeee00000000");
 	
@@ -43,11 +43,11 @@ int main(){
 	
 	print_board_t(&board);
 	
-	apply_move(&board,moves[8]);
+	apply_move(&board,moves[6]);
 	
 	print_board_t(&board);
 	
-	revert_move(&board,moves[8]);
+	revert_move(&board,moves[6]);
 	
 	print_board_t(&board);
 }
