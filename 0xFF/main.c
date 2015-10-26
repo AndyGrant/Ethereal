@@ -13,27 +13,23 @@
 
 int main(){
 	board_t board;
-	init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000");
+	//init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000");
 	//init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPePeeeRNBQKBNR11110000");
 	
-	// Test Promotion
+	// Test enpass
 	//init_board_t(&board,"eeeekeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePpPeeeeeeeeeeeeeeeeeeeeeeKeee00001371");
+	// Test Promotion
+	init_board_t(&board,"eeeekeeeePeeeeeeeeeeeeeeeePeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeKeee00000000");
+	
 	
 	print_board_t(&board);
-	
-	
-	
 	move_t moves[MaxMoves];
 	
-	clock_t start = clock();
-	
 	int a, size = 0;
-	for(a = 0; a < 20000000; a++, size=0)
-		gen_all_moves(&moves[0],&size,&board);
-	
-	clock_t end = clock();
-	
-	printf("Time in milli : %d",end-start);
+	for(a = 0; a < 1; a++){
+		size = 0;
+		gen_all_moves(&moves[0],&(size),&board);
+	}
 	
 	int i;
 	for(i = 0; i < size; i++){

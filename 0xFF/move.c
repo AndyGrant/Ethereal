@@ -19,7 +19,7 @@ void gen_all_moves(move_t * list, int * size, board_t * board){
 	assert(PIECE_IS_KING(board->squares[board->piece_locations[board->turn][0]]));
 	assert(list != NULL);
 	
-	int to, from, cap, flag;
+	unsigned int to, from, cap, flag;
 	int turn = board->turn;
 	int direction = board->turn == ColourWhite ? -16 : 16;
 	int r, rights = board->castle_rights;
@@ -197,9 +197,11 @@ void gen_all_moves(move_t * list, int * size, board_t * board){
 		
 		to = from + direction;
 		if (IS_EMPTY(board->squares[to])){
+			
 			if (promo) 
-				for(flag = PromoteQueenFlag; flag >= PromoteKnightFlag; flag >> 1)
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,Empty,flag);
+				for(flag = PromoteQueenFlag; flag >= PromoteKnightFlag; flag = flag >> 1)
+					list[(*size)++] = MAKE_PROMOTION_MOVE(from,to,Empty,flag);
+				
 			else
 				list[(*size)++] = MAKE_NORMAL_MOVE(from,to,Empty,0);
 			
@@ -211,7 +213,7 @@ void gen_all_moves(move_t * list, int * size, board_t * board){
 		
 		if (IS_PIECE(board->squares[to+1]) && PIECE_COLOUR(board->squares[to+1])){
 			if (promo)
-				for(flag = PromoteQueenFlag; flag >= PromoteKnightFlag; flag >> 1)
+				for(flag = PromoteQueenFlag; flag >= PromoteKnightFlag; flag = flag >> 1)
 					list[(*size)++] = MAKE_PROMOTION_MOVE(from,to,board->squares[to+1],flag);
 			else
 				list[(*size)++] = MAKE_NORMAL_MOVE(from,to,board->squares[to+1],0);
@@ -219,7 +221,7 @@ void gen_all_moves(move_t * list, int * size, board_t * board){
 		
 		if (IS_PIECE(board->squares[to-1]) && PIECE_COLOUR(board->squares[to-1])){
 			if (promo)
-				for(flag = PromoteQueenFlag; flag >= PromoteKnightFlag; flag >> 1)
+				for(flag = PromoteQueenFlag; flag >= PromoteKnightFlag; flag = flag >> 1)
 					list[(*size)++] = MAKE_PROMOTION_MOVE(from,to,board->squares[to-1],flag);
 			else
 				list[(*size)++] = MAKE_NORMAL_MOVE(from,to,board->squares[to-1],0);
