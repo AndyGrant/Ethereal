@@ -72,9 +72,10 @@ void print_board_t(board_t * board){
 }
 
 void print_move_t(move_t move){
+	int from = MOVE_GET_FROM(move);
+	int to = MOVE_GET_TO(move);
+	
 	if (MOVE_IS_NORMAL(move)){
-		int from = MOVE_GET_FROM(move);
-		int to = MOVE_GET_TO(move);
 		printf("Normal : %c%c%c%c\n",CONVERT_TO_FILE(from),
 									 CONVERT_TO_RANK(from),
 									 CONVERT_TO_FILE(to),
@@ -83,6 +84,12 @@ void print_move_t(move_t move){
 	} else if (MOVE_IS_CASTLE(move)){
 	} else if (MOVE_IS_ENPASS(move)){
 	} else if (MOVE_IS_PROMOTION(move)){
+		int promoType = MOVE_GET_PROMOTE_TYPE(move, ColourWhite);
+		printf("Promo : %c%c=%c\n",CONVERT_TO_FILE(to),
+								 CONVERT_TO_RANK(to),
+								 piece_to_char(promoType)
+								 
+	);
 	} else {
 		assert("move_t has no move type" == 0);
 	}
