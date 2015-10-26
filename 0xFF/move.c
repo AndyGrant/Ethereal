@@ -210,21 +210,21 @@ void gen_all_moves(move_t * list, int * size, board_t * board){
 				list[(*size)++] = MAKE_NORMAL_MOVE(from,to,Empty,0);
 			
 		}
-		
+		to = from + direction;
 		if (IS_PIECE(board->squares[to+1]) && PIECE_COLOUR(board->squares[to+1])){
 			if (promo)
 				for(flag = PromoteQueenFlag; flag >= PromoteKnightFlag; flag = flag >> 1)
-					list[(*size)++] = MAKE_PROMOTION_MOVE(from,to,board->squares[to+1],flag);
+					list[(*size)++] = MAKE_PROMOTION_MOVE(from,to+1,board->squares[to+1],flag);
 			else
-				list[(*size)++] = MAKE_NORMAL_MOVE(from,to,board->squares[to+1],0);
+				list[(*size)++] = MAKE_NORMAL_MOVE(from,to+1,board->squares[to+1],0);
 		}
 		
 		if (IS_PIECE(board->squares[to-1]) && PIECE_COLOUR(board->squares[to-1])){
 			if (promo)
 				for(flag = PromoteQueenFlag; flag >= PromoteKnightFlag; flag = flag >> 1)
-					list[(*size)++] = MAKE_PROMOTION_MOVE(from,to,board->squares[to-1],flag);
+					list[(*size)++] = MAKE_PROMOTION_MOVE(from,to-1,board->squares[to-1],flag);
 			else
-				list[(*size)++] = MAKE_NORMAL_MOVE(from,to,board->squares[to-1],0);
+				list[(*size)++] = MAKE_NORMAL_MOVE(from,to-1,board->squares[to-1],0);
 		}
 		
 		if (board->ep_square == from-1 || board->ep_square == from+1)

@@ -19,7 +19,7 @@ int main(){
 	// Test enpass
 	//init_board_t(&board,"eeeekeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePpPeeeeeeeeeeeeeeeeeeeeeeKeee00001371");
 	// Test Promotion
-	init_board_t(&board,"eeeekeeeePeeeeeeeeeeeeeeeePeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeKeee00000000");
+	init_board_t(&board,"eerekeeeePeeeeeeeeeeeeeeeePeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeKeee00000000");
 	
 	
 	print_board_t(&board);
