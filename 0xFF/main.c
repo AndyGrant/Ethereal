@@ -13,20 +13,20 @@
 
 int main(){
 	board_t board;
-	//init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000");
+	init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000");
 	//init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPePeeeRNBQKBNR11110000");
 	
 	// Test enpass
 	//init_board_t(&board,"eeeekeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePpPeeeeeeeeeeeeeeeeeeeeeeKeee00001371");
 	// Test Promotion
-	init_board_t(&board,"eerekeeeePeeeeeeeeeeeeeeeePeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeKeee00000000");
+	//init_board_t(&board,"eerekeeeePeeeeeeeeeeeeeeeePeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeKeee00000000");
 	
 	
-	print_board_t(&board);
+	/*print_board_t(&board);
 	move_t moves[MaxMoves];
 	
 	int a, size = 0;
-	for(a = 0; a < 1; a++){
+	for(a = 0; a < 20000000; a++){
 		size = 0;
 		gen_all_moves(&moves[0],&(size),&board);
 	}
@@ -34,5 +34,20 @@ int main(){
 	int i;
 	for(i = 0; i < size; i++){
 		printf("#%d ",i);print_move_t(moves[i]);
-	}
+	}*/
+	
+	move_t moves[MaxMoves];
+	
+	int size = 0;
+	gen_all_moves(&(moves[0]),&size,&board);
+	
+	print_board_t(&board);
+	
+	apply_move(&board,moves[8]);
+	
+	print_board_t(&board);
+	
+	revert_move(&board,moves[8]);
+	
+	print_board_t(&board);
 }
