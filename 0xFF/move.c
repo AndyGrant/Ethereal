@@ -12,7 +12,7 @@
 #include "types.h"
 #include "util.h"
 
-void gen_all_moves(move_t * list, int * size, board_t * board){
+void gen_all_moves(board_t * board, move_t * list, int * size){
 	assert(*size == 0);
 	assert(board->turn == 0 || board->turn == 1);
 	assert(board->piece_counts[board->turn] != 0);
@@ -206,7 +206,7 @@ void gen_all_moves(move_t * list, int * size, board_t * board){
 				list[(*size)++] = MAKE_NORMAL_MOVE(from,to,Empty,0);
 			
 			to = to + direction;
-			if (IS_EMPTY(board->squares[to]) && ((from/16) - (5 * (turn)) == 10))
+			if (IS_EMPTY(board->squares[to]) && ((from/16) + (5 * (turn)) == 10))
 				list[(*size)++] = MAKE_NORMAL_MOVE(from,to,Empty,0);
 			
 		}
