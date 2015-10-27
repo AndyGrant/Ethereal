@@ -38,7 +38,7 @@ static int PromoteTypes[9] = {0, KnightFlag, BishopFlag, 0, RookFlag, 0, 0, 0, Q
 #define MOVE_GET_PROMOTE_TYPE(m,c)	(PromoteTypes[((m&PromoteFlags)>>28)]+c)
 
 /* Function Prototypes */
-void gen_all_moves(move_t * list, int * size, board_t * board);
+void gen_all_moves(board_t * board, move_t * list, int * size);
 void apply_move(board_t * board, move_t move);
 void revert_move(board_t * board, move_t move);
 
