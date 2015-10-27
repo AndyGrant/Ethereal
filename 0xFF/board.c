@@ -73,3 +73,23 @@ void init_board_t(board_t * board, char setup[73]){
 	board->turn = (setup[71] - '0');
 }
 
+void encode_board_t(board_t * board, char str[73]){
+	int i;
+	for (i = 0; i < 64; i++)
+		str[i] = piece_to_char(board->squares[CONVERT_64_TO_256(i)]);
+	
+	int rights = board->castle_rights;
+	str[64] = '0' + (KING_HAS_RIGHTS(ColourWhite,rights) != 0);
+	str[65] = '0' + (QUEEN_HAS_RIGHTS(ColourWhite,rights) != 0);
+	str[66] = '0' + (KING_HAS_RIGHTS(ColourBlack,rights) != 0);
+	str[67] = '0' + (QUEEN_HAS_RIGHTS(ColourBlack,rights) != 0);
+	
+	int ep = board->ep_square;
+	str[68] = '0' + (ep /= 100);
+	str[69] = '0' + (ep /= 10);
+	str[70] = '0' + (ep /= 1);
+	
+	str[71] = '0' + board->turn;
+	str[72] = '\0';
+}
+

@@ -9,5 +9,6 @@
 
 /* Function Protoypes */
 void print_board_t(board_t * board);
+void encode_board_t(board_t * board, char str[73]);
 
 #endif
