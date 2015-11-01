@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<style>
+
+	p {
+		font-family: "Courier New", Courier, monospace;
+	}
+	
+	table {
+		border-collapse:collapse;
+		border:1px solid #0000FF;
+	}
+
+	table td, th {
+		border:1px solid #0000FF;
+		padding: 4px;
+	}
+	
+	table th {
+		width: 125px;
+	}
+
+	</style>
+
+</head>
+
+<body>
+	<h1> Ethereal Chess </h1>
+
+	<p> Ethereal Chess is an chess engine developed during my highschool years and first year of university. This project aims to explore the various methods of game-tree search and evaluation, as well as a variety of topics such as; effective bit fields, cache friendly programming, multi-processing. Like any personal project, this project will never be completly finished, and I hope to continue to develop Ethereal Chess as I progress through University </p>
+
+
+	<h3> Board Representation </h3>
+
+	<p> Ethereal Boards are represented as a single integer array of length 256, while being visualized as a 16x16 array. The increased size allows an 8x8 standard chess board to be embedded inside the 16x16 array, and allows for bounds checkout with a single comparision, destination != WALL. The non embedded 8x8 portion of the array is all set to a value WALL. </p>
+	
+	<h3> Move Representation </h3>
+	
+	<p> All Moves are stored in a 32 bit unsigned integer, and are defined as follows </p>
+	<table>
+		<tr>
+			<th> Move Type </th>
+			<th> Bits 00-07 </th>
+			<th> Bits 08-15 </th>
+			<th> Bits 16-23 </th>
+			<th> Bits 24-27 </th>
+			<th> Bits 28-29 </th>
+			<th> Bit 30 </th>
+			<th> Bit 31 </th>
+			
+		</tr>
+		
+		<tr>
+			<td> Normal </td>
+			<td> From Sq </td>
+			<td> To Sq </td>
+			<td> Captured Type </td>
+			<td> Move Type </td>
+			<td> Castle Changes </td>
+			<td> Turn </td>
+			<td> Validated </td>
+		</tr>	
+		
+		<tr>
+			<td> Enpass </td>
+			<td> From Sq </td>
+			<td> To Sq </td>
+			<td> Enpass Location </td>
+			<td> Move Type </td>
+			<td> None </td>
+			<td> Turn </td>
+			<td> Validated </td>
+		</tr>
+		
+		<tr>
+			<td> Castle </td>
+			<td> From Sq </td>
+			<td> To Sq </td>
+			<td> None </td>
+			<td> Move Type </td>
+			<td> Castle Changes </td>
+			<td> Turn </td>
+			<td> Validated </td>
+		</tr>
+		
+		<tr>
+			<td> Promote </td>
+			<td> From Sq </td>
+			<td> To Sq </td>
+			<td> Captured Type </td>
+			<td> Move Type </td>
+			<td> Promo Type (Flag)</td>
+			<td> Turn </td>
+			<td> Validated </td>
+		<tr>
+		
+	</table>
+	
+</body>
+</html>
