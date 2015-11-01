@@ -11,43 +11,33 @@
 #include "search.h"
 #include "util.h"
 
+int foo(board_t * board, int depth){
+	if (depth == 0)
+		return 0;
+	
+	move_t moves[MaxMoves];
+	int size = 0;
+	gen_all_moves(board,&(moves[0]),&size);
+	
+	int found = size;
+	
+	for (size = size - 1; size >= 0; size--){
+		apply_move(board,moves[size]);
+		found += foo(board,depth-1);
+		revert_move(board,moves[size]);
+	}
+	
+	return found;
+}
+
 int main(){
 	board_t board;
 	init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000");
-	//init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPePeeeRNBQKBNR11110000");
-	
-	// Test enpass
-	init_board_t(&board,"eeeekeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePpPeeeeeeeeeeeeeeeeeeeeeeKeee00001351");
-	// Test Promotion
-	//init_board_t(&board,"eerekeeeePeeeeeeeeeeeeeeeePeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeKeee00000000");
-	
-	
-	/*print_board_t(&board);
-	move_t moves[MaxMoves];
-	
-	int a, size = 0;
-	for(a = 0; a < 20000000; a++){
-		size = 0;
-		gen_all_moves(&moves[0],&(size),&board);
-	}
 	
 	int i;
-	for(i = 0; i < size; i++){
-		printf("#%d ",i);print_move_t(moves[i]);
-	}*/
+	for(i = 1; i < 6; i++){
+		printf("Depth %d : %d\n",i,foo(&board,i));
+	}
 	
-	move_t moves[MaxMoves];
 	
-	int size = 0;
-	gen_all_moves(&(moves[0]),&size,&board);
-	
-	print_board_t(&board);
-	
-	apply_move(&board,moves[6]);
-	
-	print_board_t(&board);
-	
-	revert_move(&board,moves[6]);
-	
-	print_board_t(&board);
 }
