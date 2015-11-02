@@ -22,7 +22,7 @@
 #define MOVE_IS_PROMOTION(move)		(move & PromoteFlags)
 
 /* Move Creation Macro Definitions */
-#define MAKE_NORMAL_MOVE(f,t,c,p)	((f)|(t<<8)|(c<<16)|(NormalFlag)|(p))
+#define MAKE_NORMAL_MOVE(f,t,c,p)	((f)|(t<<8)|(c<<16)|(NormalFlag)|(p<<28))
 #define MAKE_ENPASS_MOVE(f,t,l)		((f)|(t<<8)|(l<<16)|(EnpassFlag))
 #define MAKE_PROMOTION_MOVE(f,t,c,p)((f)|(t<<8)|(c<<16)|(PromotionFlag)|(p))
 
@@ -42,6 +42,4 @@ void gen_all_moves(board_t * board, move_t * list, int * size);
 void apply_move(board_t * board, move_t move);
 void revert_move(board_t * board, move_t move);
 
-void add_position(board_t * board, int to);
-void remove_position(board_t * board, int to);
 #endif
