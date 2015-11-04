@@ -23,7 +23,7 @@ void gen_all_moves(board_t * board, move_t * list, int * size){
 	int turn = board->turn;
 	int direction = board->turn == ColourWhite ? -16 : 16;
 	unsigned int r, rights = board->castle_rights;
-	int * location = (board->piece_locations[turn]);
+	int * location = &(board->piece_locations[turn][0]);
 	
 	while (*location != -1){
 		from = *location;
@@ -180,6 +180,13 @@ void gen_all_moves(board_t * board, move_t * list, int * size){
 			
 			default: 
 				print_board_t(board);
+				int z;
+				for(z = 0; z < 16; z++)
+					printf("%d ", board->piece_locations[turn][z]);
+				printf("\n");
+				for(z = 0; z < 16; z++)
+					printf("%d ", board->pawn_locations[turn][z]);
+				printf("\n");
 				assert("Error in board_locations[][]" == 0);
 		}
 		
@@ -244,7 +251,18 @@ void apply_move(board_t * board, move_t move){
 	int to = MOVE_GET_TO(move);
 	int cap = MOVE_GET_CAPTURE(move);
 	
-	if (MOVE_IS_NORMAL(move)){		
+	if (PIECE_IS_KING(cap)){
+		board->turn = !board->turn;
+		return;
+	}
+	
+	assert(PIECE_IS_KING(cap) == 0);
+	
+	if (MOVE_IS_NORMAL(move)){
+		
+		if (cap != Empty)
+			remove_position(board,to);
+		
 		board->squares[to] = board->squares[from];
 		board->squares[from] = Empty;
 		
@@ -263,10 +281,49 @@ void apply_move(board_t * board, move_t move){
 }
 
 void revert_move(board_t * board, move_t move){
+	int turn = board->turn;
+	int from = MOVE_GET_FROM(move);
+	int to = MOVE_GET_TO(move);
+	int cap = MOVE_GET_CAPTURE(move);
 	
+	if (PIECE_IS_KING(cap)){
+		board->turn = !board->turn;
+		return;
+	}
+	
+	assert(PIECE_IS_KING(cap) == 0);
+	
+	if (MOVE_IS_NORMAL(move)){
+		board->squares[from] = board->squares[to];
+		board->squares[to] = cap;
+		
+		board->positions[from] = board->positions[to];
+		board->positions[to] = -1;
+		
+		if (PIECE_IS_PAWN(board->squares[from]))
+			board->pawn_locations[!turn][board->positions[from]] = from;
+		else
+			board->piece_locations[!turn][board->positions[from]] = from;
+		
+		if (cap != Empty)
+			insert_position(board,to);
+		
+		board->castle_rights ^= MOVE_GET_CASTLE_FLAGS(move);
+		board->turn = !board->turn;
+	}
 }
 
 void insert_position(board_t * board, int to){
+	int i, turn = board->turn;
+	if (PIECE_IS_PAWN(board->squares[to])){
+		board->pawn_locations[turn][board->pawn_counts[turn]] = to;
+		board->positions[to] = board->pawn_counts[turn];
+		board->pawn_counts[turn] += 1;
+	} else {
+		board->piece_locations[turn][board->piece_counts[turn]] = to;
+		board->positions[to] = board->piece_counts[turn];
+		board->piece_counts[turn] += 1;
+	}
 	
 }
 
@@ -274,10 +331,16 @@ void remove_position(board_t * board, int to){
 	int i, turn = board->turn;
 	
 	if (PIECE_IS_PAWN(board->squares[to])){
-		for(i = board->positions[to]; i < board->pawn_counts[!turn]; i++){
-			
+		for(i = board->positions[to]; i <= board->pawn_counts[!turn]; i++){
+			board->positions[board->pawn_locations[!turn][i]] = board->positions[board->pawn_locations[!turn][i+1]];
+			board->pawn_locations[!turn][i] = board->pawn_locations[!turn][i+1];
 		}
+		board->pawn_counts[!turn] -= 1;
 	} else {
-		
+		for(i = board->positions[to]; i < board->piece_counts[!turn]; i++){
+			board->positions[board->piece_locations[!turn][i]] = board->positions[board->piece_locations[!turn][i+1]];
+			board->piece_locations[!turn][i] = board->piece_locations[!turn][i+1];
+		}
+		board->piece_counts[!turn] -= 1;
 	}
 }
