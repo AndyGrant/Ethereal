@@ -207,9 +207,10 @@ void gen_all_moves(board_t * board, move_t * list, int * size){
 		to = from + direction;
 		if (IS_EMPTY(board->squares[to])){
 			
-			if (promo) 
+			if (promo){
 				for(flag = PromoteQueenFlag; flag >= PromoteKnightFlag; flag = flag >> 1)
 					list[(*size)++] = MAKE_PROMOTION_MOVE(from,to,Empty,flag);
+			}
 				
 			else
 				list[(*size)++] = MAKE_NORMAL_MOVE(from,to,Empty,0);
@@ -219,22 +220,28 @@ void gen_all_moves(board_t * board, move_t * list, int * size){
 				list[(*size)++] = MAKE_NORMAL_MOVE(from,to,Empty,0);
 			
 		}
+		
 		to = from + direction;
-		if (IS_PIECE(board->squares[to+1]) && PIECE_COLOUR(board->squares[to+1])){
-			if (promo)
+		if (IS_PIECE(board->squares[to+1]) && PIECE_COLOUR(board->squares[to+1]) == !turn){
+			
+			if (promo){
 				for(flag = PromoteQueenFlag; flag >= PromoteKnightFlag; flag = flag >> 1)
 					list[(*size)++] = MAKE_PROMOTION_MOVE(from,to+1,board->squares[to+1],flag);
+			}
 			else
 				list[(*size)++] = MAKE_NORMAL_MOVE(from,to+1,board->squares[to+1],0);
 		}
 		
-		if (IS_PIECE(board->squares[to-1]) && PIECE_COLOUR(board->squares[to-1])){
-			if (promo)
+		if (IS_PIECE(board->squares[to-1]) && PIECE_COLOUR(board->squares[to-1]) == !turn){
+				
+			if (promo){
 				for(flag = PromoteQueenFlag; flag >= PromoteKnightFlag; flag = flag >> 1)
 					list[(*size)++] = MAKE_PROMOTION_MOVE(from,to-1,board->squares[to-1],flag);
+			}
 			else
 				list[(*size)++] = MAKE_NORMAL_MOVE(from,to-1,board->squares[to-1],0);
 		}
+		
 		
 		if (board->ep_square == from-1 || board->ep_square == from+1)
 			list[(*size)++] = MAKE_ENPASS_MOVE(from,board->ep_square+direction,board->ep_square);
@@ -278,6 +285,20 @@ void apply_move(board_t * board, move_t move){
 		board->turn = !board->turn;
 	}
 	
+	else if (MOVE_IS_CASTLE(move)){
+		
+	} 
+	
+	else if (MOVE_IS_PROMOTION(move)){
+		
+	}
+	
+	else if (MOVE_IS_ENPASS(move)){
+	}
+	
+	else 
+		assert("No Move Type Detected" == 0);
+	
 }
 
 void revert_move(board_t * board, move_t move){
@@ -311,6 +332,21 @@ void revert_move(board_t * board, move_t move){
 		board->castle_rights ^= MOVE_GET_CASTLE_FLAGS(move);
 		board->turn = !board->turn;
 	}
+	
+	else if (MOVE_IS_CASTLE(move)){
+		
+	} 
+	
+	else if (MOVE_IS_PROMOTION(move)){
+		
+	}
+	
+	else if (MOVE_IS_ENPASS(move)){
+		
+	}
+	
+	else 
+		assert("No Move Type Detected" == 0);
 }
 
 void insert_position(board_t * board, int to){
@@ -331,16 +367,43 @@ void remove_position(board_t * board, int to){
 	int i, turn = board->turn;
 	
 	if (PIECE_IS_PAWN(board->squares[to])){
-		for(i = board->positions[to]; i <= board->pawn_counts[!turn]; i++){
-			board->positions[board->pawn_locations[!turn][i]] = board->positions[board->pawn_locations[!turn][i+1]];
+		for(i = board->positions[to]; i < board->pawn_counts[!turn]; i++){
+			board->positions[board->pawn_locations[!turn][i]] -= 1;
 			board->pawn_locations[!turn][i] = board->pawn_locations[!turn][i+1];
 		}
 		board->pawn_counts[!turn] -= 1;
 	} else {
 		for(i = board->positions[to]; i < board->piece_counts[!turn]; i++){
-			board->positions[board->piece_locations[!turn][i]] = board->positions[board->piece_locations[!turn][i+1]];
+			board->positions[board->piece_locations[!turn][i]] -= 1;
 			board->piece_locations[!turn][i] = board->piece_locations[!turn][i+1];
 		}
 		board->piece_counts[!turn] -= 1;
 	}
 }
+
+int is_in_check(board_t * board, int turn){
+	int king_location = board->piece_locations[turn][0];
+	int pawn_inc = turn == ColourWhite ? -16 : 16;
+	int * squares = board->squares;
+	int tile;
+	
+	tile = squares[king_location+pawn_inc+1];
+	if (PIECE_IS_PAWN(tile) && PIECE_COLOUR(tile) == !turn)
+		return 0;
+	
+	tile = squares[king_location+pawn_inc-1];
+	if (PIECE_IS_PAWN(tile) && PIECE_COLOUR(tile) == !turn)
+		return 0;
+	
+	
+	
+	int i;
+	int knight_movements[8] = {33,31,18,14,-14,-18,-31,-33};
+	for(i = 0; i < 8; i++){
+		tile = squares[king_location+knight_movements[i]];
+		if (PIECE_IS_KNIGHT(tile) && PIECE_COLOUR(tile) == !turn)
+			return 0;
+	}
+	
+}
+

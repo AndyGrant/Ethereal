@@ -1,3 +1,3 @@
 all:
-	gcc -p -pg *.c -o foo
+	gcc -g -p -pg *.c -o foo
 

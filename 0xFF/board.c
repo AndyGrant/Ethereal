@@ -93,22 +93,3 @@ void encode_board_t(board_t * board, char str[73]){
 	str[71] = '0' + board->turn;
 	str[72] = '\0';
 }
-
-void validate_board_t(board_t * board){
-	int turn, i;
-	
-	for(turn = 0; turn <= 1; turn++){
-		for(i = 0; i < board->pawn_counts[turn]; i++){
-			
-			assert(PIECE_IS_PAWN(board->squares[board->pawn_locations[turn][i]]));
-			
-		}
-		
-		for(i = 0; i < board->piece_counts[turn]; i++){
-			assert(IS_PIECE(board->squares[board->piece_locations[turn][i]]) && !PIECE_IS_PAWN(board->squares[board->piece_locations[turn][i]]));
-			
-		}
-	}	
-
-	printf("Validated Board\n");
-}

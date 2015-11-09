@@ -86,8 +86,8 @@ void print_move_t(move_t move){
 	} else if (MOVE_IS_PROMOTION(move)){
 		int promoType = MOVE_GET_PROMOTE_TYPE(move, ColourWhite);
 		printf("Promo : %c%c=%c\n",CONVERT_TO_FILE(to),
-								 CONVERT_TO_RANK(to),
-								 piece_to_char(promoType)
+								   CONVERT_TO_RANK(to),
+								   piece_to_char(promoType)
 								 
 	);
 	} else {
