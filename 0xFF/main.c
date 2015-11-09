@@ -11,7 +11,7 @@
 #include "search.h"
 #include "util.h"
 
-int foo(board_t * board, int depth){
+unsigned long long foo(board_t * board, int depth){
 	if (depth == 0)
 		return 0;
 	
@@ -19,7 +19,7 @@ int foo(board_t * board, int depth){
 	int size = 0;
 	gen_all_moves(board,&(moves[0]),&size);
 	
-	int found = size;
+	unsigned long long found = size;
 	
 	for (size = size - 1; size >= 0; size--){
 		apply_move(board,moves[size]);
@@ -30,17 +30,15 @@ int foo(board_t * board, int depth){
 	return found;
 }
 
-
-
 int main(){
+	clock_t start = clock();
+	
 	board_t board;
 	init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000");
 	
 	int i;
-	for(i = 0; i < 5; i++)
-		printf("Depth=%d Found=%d\n",i,foo(&board,i));
+	for(i = 0; i < 8; i++)
+		printf("Depth=%d Found=%llu\n",i,foo(&board,i));
 	
-	
-	
-	
+	printf("Time Taken=%d\n",(int)(clock()-start));	
 }
