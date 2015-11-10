@@ -19,11 +19,12 @@ unsigned long long foo(board_t * board, int depth){
 	int size = 0;
 	gen_all_moves(board,&(moves[0]),&size);
 	
-	unsigned long long found = size;
+	unsigned long long found = 0;
 	
 	for (size = size - 1; size >= 0; size--){
 		apply_move(board,moves[size]);
-		found += foo(board,depth-1);
+		if (is_not_in_check(board,!board->turn))
+			found += 1 + foo(board,depth-1);
 		revert_move(board,moves[size]);
 	}
 	
@@ -37,8 +38,8 @@ int main(){
 	init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000");
 	
 	int i;
-	for(i = 0; i < 8; i++)
+	for(i = 0; i <= 6; i++)
 		printf("Depth=%d Found=%llu\n",i,foo(&board,i));
 	
-	printf("Time Taken=%d\n",(int)(clock()-start));	
+	printf("Time Taken=%d\n",(int)((clock()-start)/CLOCKS_PER_SEC));
 }
