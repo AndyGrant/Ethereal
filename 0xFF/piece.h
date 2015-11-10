@@ -34,6 +34,7 @@
 #define IS_PIECE(square)			(square & (~NonPiece))
 #define IS_NOT_PIECE(square)		(piece & NonPiece)
 #define IS_EMPTY(square)			(square & Empty)
+#define IS_WALL(square)				((square) & Wall)
 
 /* Piece Macro Definitions */
 #define PIECE_IS_PAWN(piece)		(piece & PawnFlag)
