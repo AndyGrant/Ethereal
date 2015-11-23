@@ -166,9 +166,9 @@ void gen_all_moves(board_t * board, move_t * list, int * size){
 					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from-15]),turn))
 					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
-				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from-1]),turn))
+				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from- 1]),turn))
 					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
-				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from+1]),turn))
+				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from+ 1]),turn))
 					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from+15]),turn))
 					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
@@ -258,12 +258,10 @@ void apply_move(board_t * board, move_t move){
 	int to = MOVE_GET_TO(move);
 	int cap = MOVE_GET_CAPTURE(move);
 	
-	if (PIECE_IS_KING(cap)){
-		board->turn = !board->turn;
-		return;
-	}
-	
 	assert(PIECE_IS_KING(cap) == 0);
+	
+	if (PIECE_IS_ROOK(cap))
+		printf("Captured Rook \n");
 	
 	if (MOVE_IS_NORMAL(move)){
 		
@@ -306,11 +304,6 @@ void revert_move(board_t * board, move_t move){
 	int from = MOVE_GET_FROM(move);
 	int to = MOVE_GET_TO(move);
 	int cap = MOVE_GET_CAPTURE(move);
-	
-	if (PIECE_IS_KING(cap)){
-		board->turn = !board->turn;
-		return;
-	}
 	
 	assert(PIECE_IS_KING(cap) == 0);
 	
@@ -360,7 +353,6 @@ void insert_position(board_t * board, int to){
 		board->positions[to] = board->piece_counts[turn];
 		board->piece_counts[turn] += 1;
 	}
-	
 }
 
 void remove_position(board_t * board, int to){
@@ -382,9 +374,9 @@ void remove_position(board_t * board, int to){
 }
 
 int is_not_in_check(board_t * board, int turn){
-	register int king_location = board->piece_locations[turn][0];
+	int king_location = board->piece_locations[turn][0];
 	int pawn_inc = turn == ColourWhite ? -16 : 16;
-	register int * squares = board->squares;
+	int * squares = board->squares;
 	int tile, loc;
 	
 	tile = squares[king_location+pawn_inc+1];
