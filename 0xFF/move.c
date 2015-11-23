@@ -165,8 +165,8 @@ void gen_all_moves(board_t * board, move_t * list, int * size){
 				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from-16]),turn))
 					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from-15]),turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
-				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from- 1]),turn))
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);				
+				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from-1]),turn))
 					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				if (IS_EMPTY_OR_ENEMY((cap = board->squares[to=from+ 1]),turn))
 					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
@@ -280,7 +280,7 @@ void apply_move(board_t * board, move_t move){
 			board->piece_locations[turn][board->positions[to]] = to;
 		
 		board->castle_rights ^= MOVE_GET_CASTLE_FLAGS(move);
-		board->turn = !board->turn;
+		board->turn = !(board->turn);
 	}
 	
 	else if (MOVE_IS_CASTLE(move)){
@@ -323,7 +323,7 @@ void revert_move(board_t * board, move_t move){
 			insert_position(board,to);
 		
 		board->castle_rights ^= MOVE_GET_CASTLE_FLAGS(move);
-		board->turn = !board->turn;
+		board->turn = !(board->turn);
 	}
 	
 	else if (MOVE_IS_CASTLE(move)){
