@@ -35,11 +35,36 @@ int main(){
 	clock_t start = clock();
 	
 	board_t board;
-	init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000");
+	//init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000");
+	  init_board_t(&board,"eeeekeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeRKeee11110000");
+	
+	/*int i;
+	for(i = 0; i <= 2; i++)
+		printf("Depth=%d Found=%llu\n",i,foo(&board,i));
+	*/
+	
+	move_t moves[MaxMoves];
+	int size = 0;
+	gen_all_moves(&board,&(moves[0]),&size);
+	apply_move(&board,moves[10]);
+	
+	
+	size = 0;
+	gen_all_moves(&board,&(moves[0]),&size);
+	
+	print_board_t(&board);
 	
 	int i;
-	for(i = 0; i <= 6; i++)
-		printf("Depth=%d Found=%llu\n",i,foo(&board,i));
+	for(i = 0; i < size; i++){
+		printf("\n#%d",i);
+		print_move_t(moves[i]);
+	}
 	
 	printf("Time Taken=%d\n",(int)((clock()-start)/CLOCKS_PER_SEC));
 }
+
+/*
+
+53335553333323
+
+*/
