@@ -45,10 +45,7 @@
 #define PIECE_IS_KING(piece)		(piece & KingFlag)
 #define PIECE_TYPE(piece)			(piece & ~BlackFlag)
 
-//#define IS_EMPTY_OR_ENEMY(s,t) 		((s) != Wall && ((s) == Empty || ((s)%2) != (t)))
-
-
-int IS_EMPTY_OR_ENEMY(int s, int t);
+#define IS_EMPTY_OR_ENEMY(s,t) 		((s) != Wall && ((s) == Empty || ((s)%2) != (t)))
 
 #define MAKE_PIECE(type, colour)	((1 << (type + 1)) + colour)
 
