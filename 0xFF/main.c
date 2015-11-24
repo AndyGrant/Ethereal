@@ -44,9 +44,3 @@ int main(){
 	
 	printf("Time Taken=%d\n",(int)((clock()-start)/CLOCKS_PER_SEC));
 }
-
-/*
-
-53335553333323
-
-*/
