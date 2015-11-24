@@ -1,0 +1,243 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+ 43.90      8.38     8.38 130341309     0.00     0.00  remove_position
+ 14.30     11.11     2.73       64     0.04     0.04  is_not_in_check
+ 13.78     13.74     2.63 260682618     0.00     0.00  apply_move
+  7.07     15.09     1.35                             gen_all_moves
+  4.40     15.93     0.84                             VirtualProtect@16
+  4.40     16.77     0.84                             foo
+  3.14     17.37     0.60                             __umoddi3
+  1.78     17.71     0.34                             mbstowcs
+  1.57     18.01     0.30                             GetProcAddress@8
+  1.41     18.28     0.27                             FindClose@4
+  0.79     18.43     0.15                             _fullpath
+  0.68     18.56     0.13 129408721     0.00     0.00  encode_board_t
+  0.58     18.67     0.11                             VirtualQuery@12
+  0.47     18.76     0.09  5976356     0.00     0.00  revert_move
+  0.47     18.85     0.09                             fputc
+  0.31     18.91     0.06                             GetCommandLineA@0
+  0.26     18.96     0.05                             strchr
+  0.21     19.00     0.04                             localeconv
+  0.16     19.03     0.03                             atoi
+  0.16     19.06     0.03                             getenv
+  0.10     19.08     0.02                             wcslen
+  0.05     19.09     0.01                             SetUnhandledExceptionFilter@4
+  0.00     19.09     0.00        1     0.00     2.73  init_board_t
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+ 
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this 
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 4 byte(s) for 0.05% of 19.09 seconds
+
+index % time    self  children    called     name
+                             5288325             foo [1]
+[1]     77.5    0.84   13.96       0+5288325 foo [1]
+                8.38    0.00 130341309/130341309     remove_position [2]
+                0.00    2.73       1/1           init_board_t [4]
+                2.63    0.09 260682618/260682618     apply_move [5]
+                0.13    0.00 129408721/129408721     encode_board_t [13]
+                             5288325             foo [1]
+-----------------------------------------------
+                8.38    0.00 130341309/130341309     foo [1]
+[2]     43.9    8.38    0.00 130341309         remove_position [2]
+-----------------------------------------------
+                2.73    0.00      64/64          init_board_t [4]
+[3]     14.3    2.73    0.00      64         is_not_in_check [3]
+-----------------------------------------------
+                0.00    2.73       1/1           foo [1]
+[4]     14.3    0.00    2.73       1         init_board_t [4]
+                2.73    0.00      64/64          is_not_in_check [3]
+-----------------------------------------------
+                2.63    0.09 260682618/260682618     foo [1]
+[5]     14.2    2.63    0.09 260682618         apply_move [5]
+                0.09    0.00 5976356/5976356     revert_move [15]
+-----------------------------------------------
+                                                 <spontaneous>
+[6]      7.1    1.35    0.00                 gen_all_moves [6]
+-----------------------------------------------
+                                                 <spontaneous>
+[7]      4.4    0.84    0.00                 VirtualProtect@16 [7]
+-----------------------------------------------
+                                                 <spontaneous>
+[8]      3.1    0.60    0.00                 __umoddi3 [8]
+-----------------------------------------------
+                                                 <spontaneous>
+[9]      1.8    0.34    0.00                 mbstowcs [9]
+-----------------------------------------------
+                                                 <spontaneous>
+[10]     1.6    0.30    0.00                 GetProcAddress@8 [10]
+-----------------------------------------------
+                                                 <spontaneous>
+[11]     1.4    0.27    0.00                 FindClose@4 [11]
+-----------------------------------------------
+                                                 <spontaneous>
+[12]     0.8    0.15    0.00                 _fullpath [12]
+-----------------------------------------------
+                0.13    0.00 129408721/129408721     foo [1]
+[13]     0.7    0.13    0.00 129408721         encode_board_t [13]
+-----------------------------------------------
+                                                 <spontaneous>
+[14]     0.6    0.11    0.00                 VirtualQuery@12 [14]
+-----------------------------------------------
+                0.09    0.00 5976356/5976356     apply_move [5]
+[15]     0.5    0.09    0.00 5976356         revert_move [15]
+-----------------------------------------------
+                                                 <spontaneous>
+[16]     0.5    0.09    0.00                 fputc [16]
+-----------------------------------------------
+                                                 <spontaneous>
+[17]     0.3    0.06    0.00                 GetCommandLineA@0 [17]
+-----------------------------------------------
+                                                 <spontaneous>
+[18]     0.3    0.05    0.00                 strchr [18]
+-----------------------------------------------
+                                                 <spontaneous>
+[19]     0.2    0.04    0.00                 localeconv [19]
+-----------------------------------------------
+                                                 <spontaneous>
+[20]     0.2    0.03    0.00                 atoi [20]
+-----------------------------------------------
+                                                 <spontaneous>
+[21]     0.2    0.03    0.00                 getenv [21]
+-----------------------------------------------
+                                                 <spontaneous>
+[22]     0.1    0.02    0.00                 wcslen [22]
+-----------------------------------------------
+                                                 <spontaneous>
+[23]     0.1    0.01    0.00                 SetUnhandledExceptionFilter@4 [23]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function is in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+Copyright (C) 2012 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Index by function name
+
+  [11] FindClose@4             [5] apply_move              [3] is_not_in_check
+  [17] GetCommandLineA@0      [20] atoi                   [19] localeconv
+  [10] GetProcAddress@8       [13] encode_board_t          [9] mbstowcs
+  [23] SetUnhandledExceptionFilter@4 [1] foo               [2] remove_position
+   [7] VirtualProtect@16      [16] fputc                  [15] revert_move
+  [14] VirtualQuery@12         [6] gen_all_moves          [18] strchr
+   [8] __umoddi3              [21] getenv                 [22] wcslen
+  [12] _fullpath               [4] init_board_t
