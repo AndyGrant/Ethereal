@@ -82,7 +82,16 @@ void print_move_t(move_t move){
 									 CONVERT_TO_RANK(to)
 		);
 	} else if (MOVE_IS_CASTLE(move)){
+		if (from-to > 0)
+			printf("Castle : O-O-O\n");
+		else
+			printf("Castle : O-O\n");
 	} else if (MOVE_IS_ENPASS(move)){
+		printf("Enpass : %c%c%c%cep\n",CONVERT_TO_FILE(from),
+									   CONVERT_TO_RANK(from),
+									   CONVERT_TO_FILE(to),
+									   CONVERT_TO_RANK(to)
+		);
 	} else if (MOVE_IS_PROMOTION(move)){
 		int promoType = MOVE_GET_PROMOTE_TYPE(move, ColourWhite);
 		printf("Promo : %c%c=%c\n",CONVERT_TO_FILE(to),
