@@ -53,6 +53,6 @@ int main(){
 	move_gen_test("rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000",5,5071954);
 	move_gen_test("rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000",6,124120395);
 	
-	printf("\nCompleted Tests with %d failures",failed_tests);
+	printf("\nCompleted Tests with %d failures\n",failed_tests);
 }
 
