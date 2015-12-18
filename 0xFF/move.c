@@ -23,6 +23,11 @@ void gen_all_moves(board_t * board, move_t * list, int * size){
 	int turn = board->turn;
 	int direction = board->turn == ColourWhite ? -16 : 16;
 	unsigned int r, rights = board->castle_rights;
+	unsigned int my_rights = 0;
+	if (KING_HAS_RIGHTS(turn,rights))
+		my_rights |= CREATE_KING_RIGHTS(turn);
+	if (QUEEN_HAS_RIGHTS(turn,rights))
+		my_rights |= CREATE_QUEEN_RIGHTS(turn);
 	int * location = &(board->piece_locations[turn][0]);
 	
 	while (*location != -1){
@@ -70,21 +75,24 @@ void gen_all_moves(board_t * board, move_t * list, int * size){
 					if (IS_EMPTY_OR_ENEMY(cap,turn))
 						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 					else break;
-				}				
+				}
+				
 				to = from; cap = Empty;
 				while(cap == Empty){
 					to += -15; cap = board->squares[to];
 					if (IS_EMPTY_OR_ENEMY(cap,turn))
 						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 					else break;
-				}				
+				}	
+				
 				to = from; cap = Empty;
 				while(cap == Empty){
 					to += 15; cap = board->squares[to];
 					if (IS_EMPTY_OR_ENEMY(cap,turn))
 						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 					else break;
-				}				
+				}	
+				
 				to = from; cap = Empty;
 				while(cap == Empty){
 					to += 17; cap = board->squares[to];
@@ -108,13 +116,15 @@ void gen_all_moves(board_t * board, move_t * list, int * size){
 						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,r);
 					else break;
 				}	
+				
 				to = from; cap = Empty;
 				while(cap == Empty){
 					to += -1; cap = board->squares[to];
 					if (IS_EMPTY_OR_ENEMY(cap,turn))
 						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,r);
 					else break;
-				}				
+				}		
+				
 				to = from; cap = Empty;
 				while(cap == Empty){
 					to += 1; cap = board->squares[to];
@@ -122,6 +132,7 @@ void gen_all_moves(board_t * board, move_t * list, int * size){
 						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,r);
 					else break;
 				}				
+				
 				to = from; cap = Empty;
 				while(cap == Empty){
 					to += 16; cap = board->squares[to];
@@ -138,49 +149,56 @@ void gen_all_moves(board_t * board, move_t * list, int * size){
 					if (IS_EMPTY_OR_ENEMY(cap,turn))
 						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 					else break;
-				}				
+				}
+				
 				to = from; cap = Empty;
 				while(cap == Empty){
 					to += -15; cap = board->squares[to];
 					if (IS_EMPTY_OR_ENEMY(cap,turn))
 						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 					else break;
-				}				
+				}
+				
 				to = from; cap = Empty;
 				while(cap == Empty){
 					to += 15; cap = board->squares[to];
 					if (IS_EMPTY_OR_ENEMY(cap,turn))
 						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 					else break;
-				}				
+				}
+				
 				to = from; cap = Empty;
 				while(cap == Empty){
 					to += 17; cap = board->squares[to];
 					if (IS_EMPTY_OR_ENEMY(cap,turn))
 						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 					else break;
-				}				
+				}
+				
 				to = from; cap = Empty;
 				while(cap == Empty){
 					to += -16; cap = board->squares[to];
 					if (IS_EMPTY_OR_ENEMY(cap,turn))
 						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 					else break;
-				}				
+				}	
+				
 				to = from; cap = Empty;
 				while(cap == Empty){
 					to += -1; cap = board->squares[to];
 					if (IS_EMPTY_OR_ENEMY(cap,turn))
 						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 					else break;
-				}				
+				}	
+				
 				to = from; cap = Empty;
 				while(cap == Empty){
 					to += 1; cap = board->squares[to];
 					if (IS_EMPTY_OR_ENEMY(cap,turn))
 						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 					else break;
-				}				
+				}
+				
 				to = from; cap = Empty;
 				while(cap == Empty){
 					to += 16; cap = board->squares[to];
@@ -191,37 +209,76 @@ void gen_all_moves(board_t * board, move_t * list, int * size){
 				break;
 				
 			case KingFlag:
+				;
+				int psuedo_valid_king = 0;
+				int psuedo_valid_queen = 0;
+				int one_step_valid_king = 0;
+				int one_step_valid_queen = 0;
+			
+				if (is_not_in_check(board,turn)){
+					if (KING_HAS_RIGHTS(turn,board->castle_rights))
+						if (IS_EMPTY(board->squares[from+1]))
+							if (IS_EMPTY(board->squares[from+2]))
+								if (PIECE_IS_ROOK(board->squares[from+3]))
+									psuedo_valid_king = 1;	
+								
+					if (QUEEN_HAS_RIGHTS(turn,board->castle_rights))
+						if (IS_EMPTY(board->squares[from-1]))
+							if (IS_EMPTY(board->squares[from-2]))
+								if (IS_EMPTY(board->squares[from-3]))
+									if (PIECE_IS_ROOK(board->squares[from-4]))
+										psuedo_valid_queen = 1;
+				}
+				
 				to = from - 17; cap = board->squares[to];
 				if (IS_EMPTY_OR_ENEMY(cap,turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,my_rights);
 				
 				to = from - 16; cap = board->squares[to];
 				if (IS_EMPTY_OR_ENEMY(cap,turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,my_rights);
 				
 				to = from - 15; cap = board->squares[to];
 				if (IS_EMPTY_OR_ENEMY(cap,turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,my_rights);
 				
 				to = from - 1; cap = board->squares[to];
-				if (IS_EMPTY_OR_ENEMY(cap,turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
+				if (IS_EMPTY_OR_ENEMY(cap,turn)){
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,my_rights);
+					if (psuedo_valid_queen){
+						apply_move(board,list[(*size)-1]);
+						one_step_valid_queen = is_not_in_check(board,!(board->turn));
+						revert_move(board,list[(*size)-1]);
+						
+						if (one_step_valid_queen)
+							list[(*size)++] = MAKE_CASTLE_MOVE(from,from-2,my_rights);
+					}
+				}
 				
 				to = from + 1; cap = board->squares[to];
-				if (IS_EMPTY_OR_ENEMY(cap,turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
+				if (IS_EMPTY_OR_ENEMY(cap,turn)){
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,my_rights);
+					if (psuedo_valid_king){
+						apply_move(board,list[(*size)-1]);
+						one_step_valid_king = is_not_in_check(board,!(board->turn));
+						revert_move(board,list[(*size)-1]);
+						
+						if (one_step_valid_king)
+							list[(*size)++] = MAKE_CASTLE_MOVE(from,from+2,my_rights);
+					}
+				}
 				
 				to = from + 15; cap = board->squares[to];
 				if (IS_EMPTY_OR_ENEMY(cap,turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,my_rights);
 				
 				to = from + 16; cap = board->squares[to];
 				if (IS_EMPTY_OR_ENEMY(cap,turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,my_rights);
 				
 				to = from + 17; cap = board->squares[to];
 				if (IS_EMPTY_OR_ENEMY(cap,turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,my_rights);
 				break;
 			
 			default: 
@@ -327,7 +384,27 @@ void apply_move(board_t * board, move_t move){
 	}
 	
 	else if (MOVE_IS_CASTLE(move)){
+		board->squares[to] = board->squares[from];
+		board->squares[from] = Empty;
 		
+		board->positions[to] = board->positions[from];
+		board->positions[from] = -1;
+		
+		board->piece_locations[turn][board->positions[to]] = to;
+		
+		int rfrom = from + ((to-from) == 2 ? 3 : -4);
+		int rto = from + ((to-from) == 2 ? 1 : -1);
+		
+		board->squares[rto] = board->squares[rfrom];
+		board->squares[rfrom] = Empty;
+		
+		board->positions[rto] = board->positions[rfrom];
+		board->positions[rfrom] = -1;
+		
+		board->piece_locations[turn][board->positions[rto]] = rto;
+		
+		board->castle_rights ^= MOVE_GET_CASTLE_FLAGS(move);
+		board->turn = !(board->turn);
 	} 
 	
 	else if (MOVE_IS_PROMOTION(move)){
@@ -370,7 +447,27 @@ void revert_move(board_t * board, move_t move){
 	}
 	
 	else if (MOVE_IS_CASTLE(move)){
+		board->squares[from] = board->squares[to];
+		board->squares[to] = Empty;
 		
+		board->positions[from] = board->positions[to];
+		board->positions[to] = -1;
+		
+		board->piece_locations[!turn][board->positions[from]] = from;
+		
+		int rfrom = from + ((to-from) == 2 ? 3 : -4);
+		int rto = from + ((to-from) == 2 ? 1 : -1);
+		
+		board->squares[rfrom] = board->squares[rto];
+		board->squares[rto] = Empty;
+		
+		board->positions[rfrom] = board->positions[rto];
+		board->positions[rto] = -1;
+		
+		board->piece_locations[!turn][board->positions[rfrom]] = rfrom;
+		
+		board->castle_rights ^= MOVE_GET_CASTLE_FLAGS(move);
+		board->turn = !(board->turn);
 	} 
 	
 	else if (MOVE_IS_PROMOTION(move)){
@@ -431,14 +528,12 @@ int is_not_in_check(board_t * board, int turn){
 		return 0;
 	
 	
-	
 	int i;
 	for(i = 0; i < 8; i++){
 		tile = squares[king_location+knight_movements[i]];
 		if (PIECE_IS_KNIGHT(tile) && PIECE_COLOUR(tile) == !turn)
 			return 0;
 	}
-	
 	
 	for(i = 0; i < 4; i++){
 		loc = king_location;
@@ -450,7 +545,6 @@ int is_not_in_check(board_t * board, int turn){
 			break;
 		}
 	}
-	
 	
 	for(i = 4; i < 8; i++){
 		loc = king_location;
@@ -470,5 +564,57 @@ int is_not_in_check(board_t * board, int turn){
 	}
 	
 	return 1;
+}
+
+int square_is_attacked(board_t * board, int turn, int square){
+	int pawn_inc = turn == ColourWhite ? -16 : 16;
+	int * squares = board->squares;
+	int tile, loc;
+	
+	tile = squares[square+pawn_inc+1];
+	if (PIECE_IS_PAWN(tile) && PIECE_COLOUR(tile) == !turn)
+		return 1;
+	
+	tile = squares[square+pawn_inc-1];
+	if (PIECE_IS_PAWN(tile) && PIECE_COLOUR(tile) == !turn)
+		return 1;
+	
+	
+	int i;
+	for(i = 0; i < 8; i++){
+		tile = squares[square+knight_movements[i]];
+		if (PIECE_IS_KNIGHT(tile) && PIECE_COLOUR(tile) == !turn)
+			return 1;
+	}
+	
+	for(i = 0; i < 4; i++){
+		loc = square;
+		while(!IS_WALL(tile = squares[loc = loc + king_movements[i]])){
+			if (IS_EMPTY(tile))
+				continue;
+			if (PIECE_COLOUR(tile) == !turn && (PIECE_IS_BISHOP(tile) || PIECE_IS_QUEEN(tile)))
+				return 1;
+			break;
+		}
+	}
+	
+	for(i = 4; i < 8; i++){
+		loc = square;
+		while(!IS_WALL(tile = squares[loc = loc + king_movements[i]])){
+			if (IS_EMPTY(tile))
+				continue;
+			if (PIECE_COLOUR(tile) == !turn && (PIECE_IS_ROOK(tile) || PIECE_IS_QUEEN(tile)))
+				return 1;
+			break;
+		}
+	}
+	
+	for(i = 0; i < 8; i++){
+		tile = squares[square + king_movements[i]];
+		if (PIECE_IS_KING(tile))
+			return 1;
+	}
+	
+	return 0;
 }
 
