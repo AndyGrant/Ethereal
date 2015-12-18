@@ -44,6 +44,7 @@ static int table_64_to_256[64] = {
 int char_to_piece(char c);
 char piece_to_char(int p);
 void init_board_t(board_t * board, char setup[73]);
+unsigned long long perft(board_t * board, int depth);
 
 
 /* Macro Definitions */
