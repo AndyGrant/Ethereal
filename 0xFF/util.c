@@ -82,7 +82,7 @@ void print_move_t(move_t move){
 									 CONVERT_TO_RANK(to)
 		);
 	} else if (MOVE_IS_CASTLE(move)){
-		if (from-to > 0)
+		if (to-from < 0)
 			printf("Castle : O-O-O\n");
 		else
 			printf("Castle : O-O\n");
@@ -106,3 +106,22 @@ void print_move_t(move_t move){
 	}
 }
 
+unsigned long long perft(board_t * board, int depth){
+	if (depth == 0)
+		return 0;
+	
+	move_t moves[MaxMoves];
+	int size = 0;
+	gen_all_moves(board,&(moves[0]),&size);
+	
+	unsigned long long found = 0;
+	
+	for (size = size - 1; size >= 0; size--){
+		apply_move(board,moves[size]);
+		if (is_not_in_check(board,!board->turn))
+			found += 1 + perft(board,depth-1);
+		revert_move(board,moves[size]);
+	}
+	
+	return found;
+}
