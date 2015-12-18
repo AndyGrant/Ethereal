@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include <time.h>
 
 #include "types.h"
@@ -11,36 +12,20 @@
 #include "search.h"
 #include "util.h"
 
-unsigned long long foo(board_t * board, int depth){
-	if (depth == 0)
-		return 0;
-	
-	move_t moves[MaxMoves];
-	int size = 0;
-	gen_all_moves(board,&(moves[0]),&size);
-	
-	unsigned long long found = 0;
-	
-	for (size = size - 1; size >= 0; size--){
-		apply_move(board,moves[size]);
-		if (is_not_in_check(board,!board->turn))
-			found += 1 + foo(board,depth-1);
-		revert_move(board,moves[size]);
-	}
-	
-	return found;
-}
 
 int main(){
 	clock_t start = clock();
 	
 	board_t board;
-	init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000");
-
+	//init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000");
+	//init_board_t(&board,"reeekeereeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeKeee11110000");
+	  init_board_t(&board,"reeekeereeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeReeQKeeR11110000");
+	
+	print_board_t(&board);
 	
 	int i;
-	for(i = 0; i <= 6; i++)
-		printf("Depth=%d Found=%llu\n",i,foo(&board,i));
+	for (i = 0; i < 6; i++)
+		printf("PERFT Depth %d : Nodes %d\n",i,perft(&board,i));
 	
 	printf("Time Taken=%d\n",(int)((clock()-start)/CLOCKS_PER_SEC));
 }
