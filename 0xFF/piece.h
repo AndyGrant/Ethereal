@@ -31,19 +31,22 @@
 #define NonPiece		(Empty | Wall)
 
 /* Non Piece Macro Definitions */
-#define IS_PIECE(square)			(square & (~NonPiece))
-#define IS_NOT_PIECE(square)		(piece & NonPiece)
-#define IS_EMPTY(square)			((square) & Empty)
-#define IS_WALL(square)				((square) & Wall)
+#define IS_PIECE(square)		((square) & (~NonPiece))
+#define IS_NOT_PIECE(square)	((piece) & NonPiece)
+#define IS_EMPTY(square)		((square) & Empty)
+#define IS_WALL(square)			((square) & Wall)
 
 /* Piece Macro Definitions */
-#define PIECE_IS_PAWN(piece)		(piece & PawnFlag)
-#define PIECE_IS_KNIGHT(piece)		(piece & KnightFlag)
-#define PIECE_IS_BISHOP(piece)		(piece & BishopFlag)
-#define PIECE_IS_ROOK(piece)		(piece & RookFlag)
-#define PIECE_IS_QUEEN(piece)		(piece & QueenFlag)
-#define PIECE_IS_KING(piece)		(piece & KingFlag)
-#define PIECE_TYPE(piece)			(piece & ~BlackFlag)
+#define PIECE_IS_PAWN(piece)	((piece) & PawnFlag)
+#define PIECE_IS_KNIGHT(piece)	((piece) & KnightFlag)
+#define PIECE_IS_BISHOP(piece)	((piece) & BishopFlag)
+#define PIECE_IS_ROOK(piece)	((piece) & RookFlag)
+#define PIECE_IS_QUEEN(piece)	((piece) & QueenFlag)
+#define PIECE_IS_KING(piece)	((piece) & KingFlag)
+#define PIECE_TYPE(piece)		((piece) & ~BlackFlag)
+
+#define PIECE_IS_BISHOP_OR_QUEEN(piece)	((piece) & (BishopFlag	| QueenFlag))
+#define PIECE_IS_ROOK_OR_QUEEN(piece)	((piece) & (RookFlag	| QueenFlag))
 
 #define IS_EMPTY_OR_ENEMY(s,t) 		((s) != Wall && ((s) == Empty || ((s)%2) != (t)))
 

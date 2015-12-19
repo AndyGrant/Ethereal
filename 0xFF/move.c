@@ -585,53 +585,72 @@ int is_not_in_check(board_t * board, int turn){
 
 int square_is_attacked(board_t * board, int turn, int square){
 	int pawn_inc = turn == ColourWhite ? -16 : 16;
+	int *curr, * sq = &(board->squares[square]);
+	
 	int * squares = board->squares;
-	int tile, loc;
+	int i, tile, inc;
+	int * kincptr = &(king_movements[0]);
+	int * nincptr = &(knight_movements[0]);
 	
-	tile = squares[square+pawn_inc+1];
+	tile = *(sq+pawn_inc+1);
 	if (PIECE_IS_PAWN(tile) && PIECE_COLOUR(tile) == !turn)
 		return 1;
 	
-	tile = squares[square+pawn_inc-1];
+	tile = *(sq+pawn_inc-1);
 	if (PIECE_IS_PAWN(tile) && PIECE_COLOUR(tile) == !turn)
 		return 1;
 	
-	
-	int i;
 	for(i = 0; i < 8; i++){
-		tile = squares[square+knight_movements[i]];
+		tile = *(sq+*nincptr);
 		if (PIECE_IS_KNIGHT(tile) && PIECE_COLOUR(tile) == !turn)
 			return 1;
+		nincptr++;
 	}
+	
 	
 	for(i = 0; i < 4; i++){
-		loc = square;
-		while(!IS_WALL(tile = squares[loc = loc + king_movements[i]])){
-			if (IS_EMPTY(tile))
-				continue;
-			if (PIECE_COLOUR(tile) == !turn && (PIECE_IS_BISHOP(tile) || PIECE_IS_QUEEN(tile)))
-				return 1;
-			break;
-		}
-	}
-	
-	for(i = 4; i < 8; i++){
-		loc = square;
-		while(!IS_WALL(tile = squares[loc = loc + king_movements[i]])){
-			if (IS_EMPTY(tile))
-				continue;
-			if (PIECE_COLOUR(tile) == !turn && (PIECE_IS_ROOK(tile) || PIECE_IS_QUEEN(tile)))
-				return 1;
-			break;
-		}
-	}
-	
-	for(i = 0; i < 8; i++){
-		tile = squares[square + king_movements[i]];
-		if (PIECE_IS_KING(tile))
+		inc = *kincptr;
+		curr = sq + inc;
+		
+		if (PIECE_IS_KING(*curr))
 			return 1;
+		
+		while (1){
+			tile = *curr;
+			curr += inc;
+			if (IS_EMPTY(tile))
+				continue;
+			if (IS_WALL(tile))
+				break;
+			if (PIECE_IS_BISHOP_OR_QUEEN(tile) && PIECE_COLOUR(tile) == !turn)
+				return 1;
+			break;
+		}
+		
+		kincptr++;
+	}
+	
+	for(; i < 8; i++){
+		inc = *kincptr;
+		curr = sq + inc;
+		
+		if (PIECE_IS_KING(*curr))
+			return 1;
+		
+		while (1){
+			tile = *curr;
+			curr += inc;
+			if (IS_EMPTY(tile))
+				continue;
+			if (IS_WALL(tile))
+				break;
+			if (PIECE_IS_ROOK_OR_QUEEN(tile) && PIECE_COLOUR(tile) == !turn)
+				return 1;
+			break;
+		}
+		
+		kincptr++;
 	}
 	
 	return 0;
 }
-
