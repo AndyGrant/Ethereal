@@ -601,7 +601,6 @@ int square_is_attacked(board_t * board, int turn, int square){
 		nincptr++;
 	}
 	
-	
 	for(i = 0; i < 4; i++){
 		inc = *kincptr;
 		curr = sq + inc;
