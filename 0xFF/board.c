@@ -38,6 +38,7 @@ void init_board_t(board_t * board, char setup[73]){
 	board->pawn_counts[ColourBlack] = 0;
 	
 	board->castle_rights = 0;
+	board->depth = 0;
 	
 	for(i = 0; i < 64; i++){
 		sq = CONVERT_64_TO_256(i);
@@ -70,7 +71,7 @@ void init_board_t(board_t * board, char setup[73]){
 	}
 	
 	board->castle_rights = CREATE_CASTLE_RIGHTS(setup[64]-'0',setup[65]-'0',setup[66]-'0',setup[67]-'0');
-	board->ep_square = (100*(setup[68]-'0'))+(10 * (setup[69]-'0'))+(setup[70]-'0');
+	board->ep_history[0] = (100*(setup[68]-'0'))+(10 * (setup[69]-'0'))+(setup[70]-'0');
 	board->turn = (setup[71] - '0');
 }
 
@@ -85,7 +86,7 @@ void encode_board_t(board_t * board, char str[73]){
 	str[66] = '0' + (KING_HAS_RIGHTS(ColourBlack,rights) != 0);
 	str[67] = '0' + (QUEEN_HAS_RIGHTS(ColourBlack,rights) != 0);
 	
-	int ep = board->ep_square;
+	int ep = board->ep_history[board->depth];
 	str[68] = '0' + (ep /= 100);
 	str[69] = '0' + (ep /= 10);
 	str[70] = '0' + (ep /= 1);

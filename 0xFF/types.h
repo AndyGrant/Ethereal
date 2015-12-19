@@ -30,7 +30,10 @@ typedef struct board_t {
 	int pawn_counts[2];
 	
 	int castle_rights;
-	int ep_square;
+	
+	int depth;
+	move_t ep_history[MaxDepth];
+	
 	int turn;
 	
 } board_t;

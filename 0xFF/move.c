@@ -108,7 +108,7 @@ void gen_all_moves(board_t * board, move_t * list, int * size){
 					r |= CREATE_KING_RIGHTS(turn);
 				if (QUEEN_HAS_RIGHTS(turn,rights) && IS_LEFT_ROOK(turn,from))
 					r |= CREATE_QUEEN_RIGHTS(turn);
-				assert(r == 0);
+				
 				to = from; cap = Empty;
 				while(cap == Empty){
 					to += -16; cap = board->squares[to];
@@ -347,9 +347,13 @@ void gen_all_moves(board_t * board, move_t * list, int * size){
 				list[(*size)++] = MAKE_NORMAL_MOVE(from,to-1,board->squares[to-1],0);
 		}
 		
-		
-		if (board->ep_square == from-1 || board->ep_square == from+1)
-			list[(*size)++] = MAKE_ENPASS_MOVE(from,board->ep_square+direction,board->ep_square);
+		int ep = board->ep_history[board->depth];
+		if (PIECE_COLOUR(board->squares[ep]) == !turn){
+			if (ep == from-1)
+				list[(*size)++] = MAKE_ENPASS_MOVE(from,ep+direction,ep);
+			if (ep == from+1)
+				list[(*size)++] = MAKE_ENPASS_MOVE(from,ep+direction,ep);
+		}
 		
 		
 		location++;
@@ -362,11 +366,14 @@ void apply_move(board_t * board, move_t move){
 	int from = MOVE_GET_FROM(move);
 	int to = MOVE_GET_TO(move);
 	int cap = MOVE_GET_CAPTURE(move);
+
+	board->depth++;
+	if (PIECE_IS_PAWN(board->squares[from]) && abs(from-to) == 32)
+		board->ep_history[board->depth] = to;
+	else
+		board->ep_history[board->depth] = 0;
 	
-	assert(PIECE_IS_KING(cap) == 0);		
-	
-	if (MOVE_IS_NORMAL(move)){
-		
+	if (MOVE_IS_NORMAL(move)){		
 		if (cap != Empty)
 			remove_position(board,to,!turn);
 		
@@ -386,8 +393,7 @@ void apply_move(board_t * board, move_t move){
 	}
 	
 	else if (MOVE_IS_CASTLE(move)){
-		printf("turn of castle = %d",turn);
-		assert(0);
+		
 		board->squares[to] = board->squares[from];
 		board->squares[from] = Empty;
 		
@@ -430,6 +436,23 @@ void apply_move(board_t * board, move_t move){
 	}
 	
 	else if (MOVE_IS_ENPASS(move)){
+	
+		
+		board->squares[to] = board->squares[from];
+		board->squares[from] = Empty;
+		
+		board->positions[to] = board->positions[from];
+		board->positions[from] = -1;
+		
+		board->pawn_locations[turn][board->positions[to]] = to;
+		
+		int enpass = MOVE_GET_ENPASS_SQUARE(move);
+		
+		remove_position(board,enpass,!turn);
+		board->squares[enpass] = Empty;
+		board->positions[enpass] = -1;
+		
+		board->turn = !(board->turn);
 	}
 	
 	else 
@@ -443,7 +466,8 @@ void revert_move(board_t * board, move_t move){
 	int to = MOVE_GET_TO(move);
 	int cap = MOVE_GET_CAPTURE(move);
 	
-	assert(PIECE_IS_KING(cap) == 0);
+	board->ep_history[board->depth] = 0;
+	board->depth--;
 	
 	if (MOVE_IS_NORMAL(move)){
 		board->squares[from] = board->squares[to];
@@ -504,7 +528,21 @@ void revert_move(board_t * board, move_t move){
 	}
 	
 	else if (MOVE_IS_ENPASS(move)){
+		board->squares[from] = board->squares[to];
+		board->squares[to] = Empty;
 		
+		board->positions[from] = board->positions[to];
+		board->positions[to] = -1;
+		
+		board->pawn_locations[!turn][board->positions[from]] = from;
+		
+		int enpass = MOVE_GET_ENPASS_SQUARE(move);
+		
+		board->squares[enpass] = PawnFlag + turn;
+		board->positions[enpass] = -1;
+		insert_position(board,enpass,turn);
+		
+		board->turn = !(board->turn);
 	}
 	
 	else 
@@ -526,7 +564,6 @@ void insert_position(board_t * board, int to, int turn){
 
 void remove_position(board_t * board, int to, int turn){
 	int i;
-	
 	if (PIECE_IS_PAWN(board->squares[to])){
 		for(i = board->positions[to]; i < board->pawn_counts[turn]; i++){
 			board->positions[board->pawn_locations[turn][i]] -= 1;
