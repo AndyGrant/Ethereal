@@ -579,14 +579,12 @@ void remove_position(board_t * board, int to, int turn){
 	}
 }
 
-int square_is_attacked(board_t * board, int turn, int square){
-	int pawn_inc = turn == ColourWhite ? -16 : 16;
-	int *curr, * sq = &(board->squares[square]);
-	
-	int * squares = board->squares;
-	int i, tile, inc;
+int square_is_attacked(board_t * board, int turn, int square){	
+	int i, tile, inc, *curr;
+	int * sq = &(board->squares[square]);
 	int * kincptr = &(king_movements[0]);
 	int * nincptr = &(knight_movements[0]);
+	int pawn_inc = -16 + (turn<<5);
 	
 	tile = *(sq+pawn_inc+1);
 	if (PIECE_IS_PAWN(tile) && PIECE_COLOUR(tile) == !turn)
