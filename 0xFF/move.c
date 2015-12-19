@@ -108,7 +108,7 @@ void gen_all_moves(board_t * board, move_t * list, int * size){
 					r |= CREATE_KING_RIGHTS(turn);
 				if (QUEEN_HAS_RIGHTS(turn,rights) && IS_LEFT_ROOK(turn,from))
 					r |= CREATE_QUEEN_RIGHTS(turn);
-				
+				assert(r == 0);
 				to = from; cap = Empty;
 				while(cap == Empty){
 					to += -16; cap = board->squares[to];
@@ -215,19 +215,21 @@ void gen_all_moves(board_t * board, move_t * list, int * size){
 				int one_step_valid_king = 0;
 				int one_step_valid_queen = 0;
 			
-				if (is_not_in_check(board,turn)){
-					if (KING_HAS_RIGHTS(turn,board->castle_rights))
-						if (IS_EMPTY(board->squares[from+1]))
-							if (IS_EMPTY(board->squares[from+2]))
-								if (PIECE_IS_ROOK(board->squares[from+3]))
-									psuedo_valid_king = 1;	
-								
-					if (QUEEN_HAS_RIGHTS(turn,board->castle_rights))
-						if (IS_EMPTY(board->squares[from-1]))
-							if (IS_EMPTY(board->squares[from-2]))
-								if (IS_EMPTY(board->squares[from-3]))
-									if (PIECE_IS_ROOK(board->squares[from-4]))
-										psuedo_valid_queen = 1;
+				if (is_not_in_check(board,turn)){					
+					if (from == 184 - (turn * (184-72))){
+						if (KING_HAS_RIGHTS(turn,board->castle_rights))
+							if (IS_EMPTY(board->squares[from+1]))
+								if (IS_EMPTY(board->squares[from+2]))
+									if (PIECE_IS_ROOK(board->squares[from+3]))
+										psuedo_valid_king = 1;	
+									
+						if (QUEEN_HAS_RIGHTS(turn,board->castle_rights))
+							if (IS_EMPTY(board->squares[from-1]))
+								if (IS_EMPTY(board->squares[from-2]))
+									if (IS_EMPTY(board->squares[from-3]))
+										if (PIECE_IS_ROOK(board->squares[from-4]))
+											psuedo_valid_queen = 1;
+					}
 				}
 				
 				to = from - 17; cap = board->squares[to];
@@ -366,7 +368,7 @@ void apply_move(board_t * board, move_t move){
 	if (MOVE_IS_NORMAL(move)){
 		
 		if (cap != Empty)
-			remove_position(board,to);
+			remove_position(board,to,!turn);
 		
 		board->squares[to] = board->squares[from];
 		board->squares[from] = Empty;
@@ -384,6 +386,8 @@ void apply_move(board_t * board, move_t move){
 	}
 	
 	else if (MOVE_IS_CASTLE(move)){
+		printf("turn of castle = %d",turn);
+		assert(0);
 		board->squares[to] = board->squares[from];
 		board->squares[from] = Empty;
 		
@@ -409,6 +413,20 @@ void apply_move(board_t * board, move_t move){
 	
 	else if (MOVE_IS_PROMOTION(move)){
 		
+		int promo = MOVE_GET_PROMOTE_TYPE(move,turn);
+		if (cap != Empty)
+			remove_position(board,to,!turn);
+		
+		board->positions[to] = -1;
+		
+		board->squares[to] = promo;
+		insert_position(board,to,turn);
+		
+		remove_position(board,from,turn);
+		board->squares[from] = Empty;
+		board->positions[from] = -1;
+		
+		board->turn = !(board->turn);		
 	}
 	
 	else if (MOVE_IS_ENPASS(move)){
@@ -440,7 +458,7 @@ void revert_move(board_t * board, move_t move){
 			board->piece_locations[!turn][board->positions[from]] = from;
 		
 		if (cap != Empty)
-			insert_position(board,to);
+			insert_position(board,to,turn);
 		
 		board->castle_rights ^= MOVE_GET_CASTLE_FLAGS(move);
 		board->turn = !(board->turn);
@@ -472,6 +490,17 @@ void revert_move(board_t * board, move_t move){
 	
 	else if (MOVE_IS_PROMOTION(move)){
 		
+		board->squares[from] = PawnFlag + !turn;
+		insert_position(board,from,!turn);
+		
+		remove_position(board,to,!turn);
+		board->squares[to] = cap;		
+		board->positions[to] = -1;
+		if (cap != Empty)
+			insert_position(board,to,turn);
+		
+		board->turn = !(board->turn);
+		
 	}
 	
 	else if (MOVE_IS_ENPASS(move)){
@@ -482,8 +511,8 @@ void revert_move(board_t * board, move_t move){
 		assert("No Move Type Detected" == 0);
 }
 
-void insert_position(board_t * board, int to){
-	int i, turn = board->turn;
+void insert_position(board_t * board, int to, int turn){
+	int i;
 	if (PIECE_IS_PAWN(board->squares[to])){
 		board->pawn_locations[turn][board->pawn_counts[turn]] = to;
 		board->positions[to] = board->pawn_counts[turn];
@@ -495,75 +524,26 @@ void insert_position(board_t * board, int to){
 	}
 }
 
-void remove_position(board_t * board, int to){
-	int i, turn = board->turn;
+void remove_position(board_t * board, int to, int turn){
+	int i;
 	
 	if (PIECE_IS_PAWN(board->squares[to])){
-		for(i = board->positions[to]; i < board->pawn_counts[!turn]; i++){
-			board->positions[board->pawn_locations[!turn][i]] -= 1;
-			board->pawn_locations[!turn][i] = board->pawn_locations[!turn][i+1];
+		for(i = board->positions[to]; i < board->pawn_counts[turn]; i++){
+			board->positions[board->pawn_locations[turn][i]] -= 1;
+			board->pawn_locations[turn][i] = board->pawn_locations[turn][i+1];
 		}
-		board->pawn_counts[!turn] -= 1;
+		board->pawn_counts[turn] -= 1;
 	} else {
-		for(i = board->positions[to]; i < board->piece_counts[!turn]; i++){
-			board->positions[board->piece_locations[!turn][i]] -= 1;
-			board->piece_locations[!turn][i] = board->piece_locations[!turn][i+1];
+		for(i = board->positions[to]; i < board->piece_counts[turn]; i++){
+			board->positions[board->piece_locations[turn][i]] -= 1;
+			board->piece_locations[turn][i] = board->piece_locations[turn][i+1];
 		}
-		board->piece_counts[!turn] -= 1;
+		board->piece_counts[turn] -= 1;
 	}
 }
 
 int is_not_in_check(board_t * board, int turn){
-	int king_location = board->piece_locations[turn][0];
-	int pawn_inc = turn == ColourWhite ? -16 : 16;
-	int * squares = board->squares;
-	int tile, loc;
-	
-	tile = squares[king_location+pawn_inc+1];
-	if (PIECE_IS_PAWN(tile) && PIECE_COLOUR(tile) == !turn)
-		return 0;
-	
-	tile = squares[king_location+pawn_inc-1];
-	if (PIECE_IS_PAWN(tile) && PIECE_COLOUR(tile) == !turn)
-		return 0;
-	
-	
-	int i;
-	for(i = 0; i < 8; i++){
-		tile = squares[king_location+knight_movements[i]];
-		if (PIECE_IS_KNIGHT(tile) && PIECE_COLOUR(tile) == !turn)
-			return 0;
-	}
-	
-	for(i = 0; i < 4; i++){
-		loc = king_location;
-		while(!IS_WALL(tile = squares[loc = loc + king_movements[i]])){
-			if (IS_EMPTY(tile))
-				continue;
-			if (PIECE_COLOUR(tile) == !turn && (PIECE_IS_BISHOP(tile) || PIECE_IS_QUEEN(tile)))
-				return 0;
-			break;
-		}
-	}
-	
-	for(i = 4; i < 8; i++){
-		loc = king_location;
-		while(!IS_WALL(tile = squares[loc = loc + king_movements[i]])){
-			if (IS_EMPTY(tile))
-				continue;
-			if (PIECE_COLOUR(tile) == !turn && (PIECE_IS_ROOK(tile) || PIECE_IS_QUEEN(tile)))
-				return 0;
-			break;
-		}
-	}
-	
-	for(i = 0; i < 8; i++){
-		tile = squares[king_location + king_movements[i]];
-		if (PIECE_IS_KING(tile))
-			return 0;
-	}
-	
-	return 1;
+	return !square_is_attacked(board,turn,board->piece_locations[turn][0]);
 }
 
 int square_is_attacked(board_t * board, int turn, int square){
