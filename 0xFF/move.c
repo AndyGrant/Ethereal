@@ -578,10 +578,10 @@ void remove_position(board_t * board, int to, int turn){
 		board->piece_counts[turn] -= 1;
 	}
 }
-
+/*
 int is_not_in_check(board_t * board, int turn){
 	return !square_is_attacked(board,turn,board->piece_locations[turn][0]);
-}
+}*/
 
 int square_is_attacked(board_t * board, int turn, int square){
 	int pawn_inc = turn == ColourWhite ? -16 : 16;
