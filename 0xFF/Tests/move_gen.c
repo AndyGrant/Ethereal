@@ -1,37 +1,69 @@
 #include <stdio.h>
-#include <assert.h>
+#include <time.h>
 
 #include "../board.h"
 #include "../util.h"
 
-int failed_tests = 0;
-int total_tests = 0;
-
-void move_gen_test(char str[73], int depth, int nodes){
-	total_tests++;
+int main(){
 	
+	int i, depth;
+	int passed = 0, failed = 0;
+	unsigned long long total = 0, found, nodes[128];
+	char c, str[73];
 	board_t board;
-	init_board_t(&board,str);
+	clock_t start = clock(), end;
+	FILE * input = fopen("PerftTests.txt","r");
 	
-	if(perft(&board,depth) != nodes){
-		printf("FAILED TEST : DEPTH %d : %s\n",depth,str);
-		failed_tests++;
+	while(1){
+		
+		// Copy the Encoded Board
+		if (fgets(str, 73, input) == NULL)
+			break;
+		
+		// Initialze Board
+		init_board_t(&board,str);
+		
+		// Throw away extra space
+		fgetc(input);
+		
+		// Reset node 0
+		nodes[0] = 0;
+		
+		// Fill nodes until newline char is reached
+		// Skip to next node on space character
+		// Zero node++ before writing to it
+		// Update Current node on numerical character
+		for (i = 0;;){
+			c = (char)fgetc(input);
+			if (c == '\n')			break;
+			else if (c == ' ')		nodes[++i] = 0;
+			else					nodes[i] = (nodes[i]*10) + (c - '0');
+		}
+		
+		// Perft on range depth -> i+2
+		// Output success or failure
+		// Update passed,failed counters
+		for(depth = 1; depth <= i+1; depth++){
+			found = perft(&board,depth);
+			total += found;
+			
+			if (found == nodes[depth-1]){
+				printf("PASSED %s %llu of %llu\n",str,found,nodes[depth-1]);
+				passed++;
+			} else {
+				printf("FAILED %s %llu of %llu\n",str,found,nodes[depth-1]);
+				failed++;
+			}
+		}
 	}
-	else 
-		printf("PASSED TEST : DEPTH %d : %s\n",depth,str);
-}
-
-int main(){	
-	printf("Beginning Tests\n");
 	
-	/* Standard board setups */
-	move_gen_test("rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000",1,20);
-	move_gen_test("rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000",2,420);
-	move_gen_test("rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000",3,9322);
-	move_gen_test("rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000",4,206603);
-	move_gen_test("rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000",5,5071954);
-	move_gen_test("rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000",6,124120395);
+	end = clock();
 	
-	printf("\nCompleted Tests with %d failures\n",failed_tests);
+	printf("\n\n");
+	printf("Passed : %d\n",passed);
+	printf("Failed : %d\n",failed);
+	printf("Nodes  : %llu\n",total);
+	printf("Seconds: %d\n",(end - start) / CLOCKS_PER_SEC);
+	printf("MNPS   : %.3f",(total/(float)(1000000 * ((end-start)/CLOCKS_PER_SEC))));
+	
 }
-

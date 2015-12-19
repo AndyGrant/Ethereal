@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 
 #include "board.h"
@@ -14,6 +15,9 @@
 char BaseBoard[73] = "rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000";
 
 void init_board_t(board_t * board, char setup[73]){
+		
+	memset(board,0,sizeof(board));
+	
 	int i, sq, flag;
 	
 	for(sq = 0; sq < 256; sq++){
