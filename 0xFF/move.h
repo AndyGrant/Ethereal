@@ -51,8 +51,8 @@ void gen_all_moves(board_t * board, move_t * list, int * size);
 void apply_move(board_t * board, move_t move);
 void revert_move(board_t * board, move_t move);
 
-void insert_position(board_t * board, int to);
-void remove_position(board_t * board, int to);
+void insert_position(board_t * board, int to, int turn);
+void remove_position(board_t * board, int to, int turn);
 
 int is_not_in_check(board_t * board, int turn);
 int square_is_attacked(board_t * board, int turn, int square);
