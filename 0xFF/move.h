@@ -56,5 +56,8 @@ void remove_position(board_t * board, int to, int turn);
 
 int is_not_in_check(board_t * board, int turn);
 int square_is_attacked(board_t * board, int turn, int square);
+
+/* Function Macros */
+#define is_not_in_check(b,t)	(!(square_is_attacked(b,t,b->piece_locations[t][0])))
 	
 #endif
