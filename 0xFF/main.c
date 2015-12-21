@@ -13,7 +13,7 @@
 #include "search.h"
 #include "util.h"
 
-int main(){
+int main2(){
 	int i, milli;
 	unsigned long long nodes;
 	board_t board;
