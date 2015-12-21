@@ -6,9 +6,7 @@
 #define MaxMoves	(256)
 
 /* Function Protoypes */
-void print_board_t(board_t * board);
-void print_board_t_locations(board_t * board);
+void init_board_t(board_t * board, char setup[73]);
 void encode_board_t(board_t * board, char str[73]);
-void validate_board_t(board_t * board);
 
 #endif
