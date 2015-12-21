@@ -45,6 +45,7 @@ static int king_movements[8] = {-17,-15,15,17,-16,-1,1,16};
 /* Function Prototypes */
 void gen_all_legal_moves(board_t * board, move_t * list, int * size);
 void gen_all_moves(board_t * board, move_t * list, int * size);
+void gen_all_captures(board_t * board, move_t * list, int * size);
 void apply_move(board_t * board, move_t move);
 void revert_move(board_t * board, move_t move);
 
