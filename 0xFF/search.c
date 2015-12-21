@@ -12,16 +12,23 @@
 #include "types.h"
 #include "util.h"
 
+time_t StartTime, EndTime;
+int EvaluatingPlayer;
+
 int main2(){
 	board_t board;
 	init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000");
 	get_best_move(&board,1000);
 }
 
-move_t get_best_move(board_t * board, int time){
+move_t get_best_move(board_t * board, int t){
 	
 	int depth, i, size = 0; 
 	int alpha, beta;
+	
+	StartTime = time(NULL);
+	EndTime = StartTime + 5;
+	EvaluatingPlayer = board->turn;
 	
 	clock_t start = clock();
 	
@@ -108,6 +115,10 @@ int alpha_beta_prune(search_tree_t * tree, int depth, int alpha, int beta){
 }
 
 int quiescence_search(search_tree_t * tree, int alpha, int beta){
+	
+	if (EndTime < time(NULL))
+		return tree->board.turn == EvaluatingPlayer ? -CheckMate : CheckMate;
+	
 	tree->quiescence_nodes++;
 	board_t * board = &(tree->board);
 	
