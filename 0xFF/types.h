@@ -49,6 +49,7 @@ typedef struct principle_variation_t {
 typedef struct search_tree_t {
 	int ply;
 	int nodes_searched;
+	int quiescence_nodes;
 	
 	board_t board;
 	
