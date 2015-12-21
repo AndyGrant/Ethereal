@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <assert.h>
 
 #include "board.h"
 #include "colour.h"
@@ -40,7 +41,7 @@ move_t get_best_move(board_t * board, int t){
 	search_tree_t tree;
 	init_search_tree_t(&tree,board);
 	
-	for(depth = 2; depth <= 4; depth++){
+	for(depth = 2; depth <= 5; depth++){
 		alpha = -99999; 
 		beta = 99999;
 		int last_depth_alpha = tree.nodes_searched;
@@ -70,9 +71,11 @@ move_t get_best_move(board_t * board, int t){
 		printf("ALPHABETA NODES %d QUIESCENCE NODES %d \n\n",tree.nodes_searched-last_depth_alpha,tree.quiescence_nodes-last_depth_quiescence);
 	}
 	
+	printf("TIME TAKEN %d\n",((int)clock()-(int)start)/CLOCKS_PER_SEC);
+	
 	return moves[0];
 	
-	printf("TIME TAKEN %d\n",((int)clock()-(int)start)/CLOCKS_PER_SEC);
+	
 }
 
 void init_search_tree_t(search_tree_t * tree, board_t * board){
@@ -83,6 +86,10 @@ void init_search_tree_t(search_tree_t * tree, board_t * board){
 }
 
 int alpha_beta_prune(search_tree_t * tree, int depth, int alpha, int beta){
+	
+	if (EndTime < time(NULL))
+		return tree->board.turn == EvaluatingPlayer ? -CheckMate : CheckMate;
+		
 	tree->nodes_searched++;
 	board_t * board = &(tree->board);
 	
@@ -126,25 +133,25 @@ int quiescence_search(search_tree_t * tree, int alpha, int beta){
 	
 	int size = 0;
 	move_t moves[MaxMoves];
-	gen_all_moves(&(tree->board),&(moves[0]),&size);
+	gen_all_captures(&(tree->board),&(moves[0]),&size);
 	
-	int value = -100000, best = -99999;
+	basic_heuristic(board,&(moves[0]),size);
+	
+	int value = -100000, best = evaluate_board(board);
 	for(size -= 1; size >= 0; size--){
-		if (MOVE_IS_NORMAL(moves[size]) && !IS_EMPTY(MOVE_GET_CAPTURE(moves[size]))){
-			apply_move(board,moves[size]);
-			if (is_not_in_check(board,!board->turn)){
-				value = -quiescence_search(tree,-beta,-alpha);
-				
-				if (value > best)	best = value;
-				if (best > alpha)	alpha = best;
-				if (alpha > beta)	{revert_move(board,moves[size]); break;}
-			}
-			revert_move(board,moves[size]);
+		apply_move(board,moves[size]);
+		if (is_not_in_check(board,!board->turn)){
+			value = -quiescence_search(tree,-beta,-alpha);
+			
+			if (value > best)	best = value;
+			if (best > alpha)	alpha = best;
+			if (alpha > beta)	{revert_move(board,moves[size]); break;}
 		}
+		revert_move(board,moves[size]);
 	}
 	
 	tree->ply--;
-	return value == -100000 ? evaluate_board(board) : best;
+	return best;
 }
 
 int evaluate_board(board_t * board){
