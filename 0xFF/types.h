@@ -3,7 +3,8 @@
 
 #include <stdint.h>
 
-#include "search.h"
+//#include "search.h"
+#define MaxDepth	(128)
 
 /* Structure Definitions */
 

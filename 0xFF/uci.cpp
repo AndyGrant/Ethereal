@@ -136,10 +136,7 @@ int main(){
 		}
 
 		if (contains(line,"go")){
-			int size = 0;
-			move_t moves[MaxMoves];
-			gen_all_legal_moves(&board,&(moves[0]),&size);
-			std::cout << "bestmove " << convert_move_to_string(&board,moves[0]) << "\n";
+			std::cout << "bestmove " << convert_move_to_string(&board,get_best_move(&board,1000)) << "\n";
 		}
 
 		if (line == "quit")
