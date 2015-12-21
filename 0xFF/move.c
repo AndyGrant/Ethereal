@@ -12,6 +12,20 @@
 #include "types.h"
 #include "util.h"
 
+void gen_all_legal_moves(board_t * board, move_t * list, int * size){
+	int raw_size = 0;
+	move_t raw_moves[MaxMoves];
+	gen_all_moves(board,&(raw_moves[0]),&raw_size);
+	
+	int i;
+	for(i = 0; i < raw_size; i++){
+		apply_move(board,raw_moves[i]);
+		if (is_not_in_check(board,!board->turn))
+			list[(*size)++] = raw_moves[i];
+		revert_move(board,raw_moves[i]);
+	}
+}
+
 void gen_all_moves(board_t * board, move_t * list, int * size){
 	assert(*size == 0);
 	assert(board->turn == 0 || board->turn == 1);
