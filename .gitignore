@@ -1,4 +1,5 @@
 *.exe
+!Ethereal.exe
 *.class
 *.out
 _Scripts/gmon.out
