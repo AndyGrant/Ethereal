@@ -34,10 +34,6 @@ static int PromoteTypes[9] = {0, KnightFlag, BishopFlag, 0, RookFlag, 0, 0, 0, Q
 static int knight_movements[8] = {33,31,18,14,-14,-18,-31,-33};
 static int king_movements[8] = {-17,-15,15,17,-16,-1,1,16};
 
-
-
-
-
 /* Move Decode Macro Definitions */
 #define MOVE_GET_FROM(m)			((m & (0b11111111 <<  0)) >>  0)
 #define MOVE_GET_TO(m)				((m & (0b11111111 <<  8)) >>  8)
@@ -47,6 +43,7 @@ static int king_movements[8] = {-17,-15,15,17,-16,-1,1,16};
 #define MOVE_GET_PROMOTE_TYPE(m,c)	(PromoteTypes[((m&PromoteFlags)>>28)]+c)
 
 /* Function Prototypes */
+void gen_all_legal_moves(board_t * board, move_t * list, int * size);
 void gen_all_moves(board_t * board, move_t * list, int * size);
 void apply_move(board_t * board, move_t move);
 void revert_move(board_t * board, move_t move);
