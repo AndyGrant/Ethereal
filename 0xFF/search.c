@@ -59,14 +59,23 @@ move_t get_best_move(board_t * board, int t){
 			last_move_alpha_nodes = tree.nodes_searched;
 			last_move_quiescence_nodes = tree.quiescence_nodes;
 			
-			if (values[i] > alpha)
+			if (values[i] > alpha){
 				alpha = values[i];
+				tree.principle_variation.line[0] = moves[i];
+			}
 			
 			if (alpha == CheckMate)
 				return moves[i];
 		}
 		
 		order_by_value(&(moves[0]),&(values[0]),size);
+		
+		printf("PRINCIPLE VARIATION : ");
+		for(i = 0; i < depth; i++){
+			print_move_t(tree.principle_variation.line[i]);
+			printf(" -> ");
+		}
+		printf("\n");
 		
 		printf("ALPHABETA NODES %d QUIESCENCE NODES %d \n\n",tree.nodes_searched-last_depth_alpha,tree.quiescence_nodes-last_depth_quiescence);
 	}
@@ -83,6 +92,7 @@ void init_search_tree_t(search_tree_t * tree, board_t * board){
 	tree->nodes_searched = 0;
 	tree->quiescence_nodes = 0;
 	memcpy(&(tree->board),board,sizeof(*board));
+	tree->principle_variation.plys = 0;
 }
 
 int alpha_beta_prune(search_tree_t * tree, int depth, int alpha, int beta){
@@ -111,7 +121,7 @@ int alpha_beta_prune(search_tree_t * tree, int depth, int alpha, int beta){
 			value = -alpha_beta_prune(tree,depth-1,-beta,-alpha);
 			
 			if (value > best)	best = value;
-			if (best > alpha)	alpha = best;
+			if (best > alpha)	{alpha = best; tree->principle_variation.line[tree->ply] = moves[size];}
 			if (alpha > beta)	{revert_move(board,moves[size]); break;}
 		}
 		revert_move(board,moves[size]);
@@ -161,23 +171,48 @@ int evaluate_board(board_t * board){
 	
 	for(location = &(board->piece_locations[turn][1]); *location != -1; location++){
 		switch(PIECE_TYPE(board->squares[*location])){
-			case QueenFlag: 	value += (QueenValue 	+ QUEEN_POSITION_VALUE(*location)); 	break;
-			case RookFlag: 		value += (RookValue 	+ ROOK_POSITION_VALUE(*location)); 		break;
-			case BishopFlag: 	value += (BishopValue 	+ BISHOP_POSITION_VALUE(*location)); 	break;
-			case KnightFlag: 	value += (KnightValue 	+ KNIGHT_POSITION_VALUE(*location)); 	break;
+			case QueenFlag: 	value += (QueenValue 	+ 3 * QUEEN_POSITION_VALUE(*location)); 	break;
+			case RookFlag: 		value += (RookValue 	+ 3 * ROOK_POSITION_VALUE(*location)); 		break;
+			case BishopFlag: 	value += (BishopValue 	+ 3 * BISHOP_POSITION_VALUE(*location)); 	break;
+			case KnightFlag: 	value += (KnightValue 	+ 3 * KNIGHT_POSITION_VALUE(*location)); 	break;
 		}
 	}
 	
 	for(location = &(board->piece_locations[!turn][1]); *location != -1; location++){
 		switch(PIECE_TYPE(board->squares[*location])){
-			case QueenFlag: 	value -= (QueenValue 	+ QUEEN_POSITION_VALUE(*location)); 	break;
-			case RookFlag: 		value -= (RookValue 	+ ROOK_POSITION_VALUE(*location)); 		break;
-			case BishopFlag: 	value -= (BishopValue 	+ BISHOP_POSITION_VALUE(*location)); 	break;
-			case KnightFlag: 	value -= (KnightValue 	+ KNIGHT_POSITION_VALUE(*location)); 	break;
+			case QueenFlag: 	value -= (QueenValue 	+ 3 * QUEEN_POSITION_VALUE(*location)); 	break;
+			case RookFlag: 		value -= (RookValue 	+ 3 * ROOK_POSITION_VALUE(*location)); 		break;
+			case BishopFlag: 	value -= (BishopValue 	+ 3 * BISHOP_POSITION_VALUE(*location)); 	break;
+			case KnightFlag: 	value -= (KnightValue 	+ 3 * KNIGHT_POSITION_VALUE(*location)); 	break;
 		}
 	}
 	
 	value += PawnValue * (board->pawn_counts[turn] - board->pawn_counts[!turn]);
+	
+	int temp[3] = {0, 3, 7};
+	for(location = &(board->pawn_locations[turn][0]); *location != -1; location++){
+		if (turn == ColourWhite){
+			int supports = board->squares[*location+17] == WhitePawn; 
+				supports += board->squares[*location+15] == WhitePawn;
+			value += temp[supports];
+		} else if (turn == ColourBlack){
+			int supports = board->squares[*location-17] == BlackPawn; 
+				supports += board->squares[*location-15] == BlackPawn;
+			value += temp[supports];
+		}
+	}
+	
+	for(location = &(board->pawn_locations[!turn][0]); *location != -1; location++){
+		if (turn == ColourWhite){
+			int supports = board->squares[*location+17] == WhitePawn; 
+				supports += board->squares[*location+15] == WhitePawn;
+			value -= temp[supports];
+		} else if (turn == ColourBlack){
+			int supports = board->squares[*location-17] == BlackPawn; 
+				supports += board->squares[*location-15] == BlackPawn;
+			value -= temp[supports];
+		}
+	}
 	
 	return value;
 }
