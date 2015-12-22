@@ -49,6 +49,11 @@ std::string convert_move_to_string(board_t * board, move_t move){
 	assert(0);
 }
 
+void print_move_standard_notation(move_t move){
+	std::string str = convert_move_to_string(NULL,move);
+	std::cout << str;
+}
+
 void make_move_from_string(board_t * board, std::string move){
 	int size = 0;
 	move_t moves[MaxMoves];
