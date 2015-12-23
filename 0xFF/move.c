@@ -360,6 +360,10 @@ void gen_all_moves(board_t * board, move_t * list, int * size){
 	int direction = board->turn == ColourWhite ? -16 : 16;
 	unsigned int r, rights = board->castle_rights;
 	unsigned int my_rights = 0;
+	int psuedo_valid_king = 0;
+	int psuedo_valid_queen = 0;
+	int one_step_valid_king = 0;
+	int one_step_valid_queen = 0;
 	if (KING_HAS_RIGHTS(turn,rights))
 		my_rights |= CREATE_KING_RIGHTS(turn);
 	if (QUEEN_HAS_RIGHTS(turn,rights))
@@ -545,11 +549,10 @@ void gen_all_moves(board_t * board, move_t * list, int * size){
 				break;
 				
 			case KingFlag:
-				;
-				int psuedo_valid_king = 0;
-				int psuedo_valid_queen = 0;
-				int one_step_valid_king = 0;
-				int one_step_valid_queen = 0;
+				psuedo_valid_king = 0;
+				psuedo_valid_queen = 0;
+				one_step_valid_king = 0;
+				one_step_valid_queen = 0;
 			
 				if (is_not_in_check(board,turn)){					
 					if (from == 184 - (turn * (184-72))){

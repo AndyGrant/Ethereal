@@ -3,7 +3,10 @@
 #include <vector>
 #include <cassert>
 
+#ifdef _cplusplus
 extern "C" {
+#endif
+	
 	#include "types.h"
 	#include "board.h"
 	#include "colour.h"
@@ -11,7 +14,10 @@ extern "C" {
 	#include "piece.h"
 	#include "search.h"
 	#include "util.h"
+	
+#ifdef _cpluspls
 };
+#endif
 
 char starting_position[73] = "rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000";
 
