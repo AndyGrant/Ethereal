@@ -47,7 +47,7 @@ char piece_to_char(int p){
 void print_board_t(board_t * board){
 	int x, y;
 	
-	char files[8] = "87654321";
+	char files[9] = "87654321";
 	
 	for(x = 0; x < 8; x++){
 		printf("\n     |----|----|----|----|----|----|----|----|\n");
