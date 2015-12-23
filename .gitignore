@@ -1,5 +1,6 @@
 *.exe
 !Ethereal.exe
+!Ethereal-android.exe
 *.class
 *.out
 _Scripts/gmon.out
