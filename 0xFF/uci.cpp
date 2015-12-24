@@ -148,7 +148,7 @@ int main(){
 		}
 
 		if (contains(line,"go")){
-			std::cout << "best move e7e5\n";
+			std::cout << "bestmove e7e5\n";
 			//std::cout << "bestmove " << convert_move_to_string(&board,get_best_move(&board,1000)) << "\n";
 		}
 
