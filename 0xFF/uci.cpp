@@ -78,6 +78,7 @@ bool contains(std::string a, std::string b){
 }
 
 std::vector<std::string> parse_moves(std::string line){
+	std::cout << "Given : " << line << std::endl;
 	int start = line.find("moves")+6;
 	std::vector<std::string> moves;
 	std::string buff = "";
