@@ -137,14 +137,14 @@ int main(){
 		}
 
 		if (contains(line,"position")){
-			if (contains(line,"startpos")){
+			//if (contains(line,"startpos")){
 				init_board_t(&board,starting_position);
 				std::vector<std::string> moves = parse_moves(line);
 				for(int i = 0; i < moves.size(); i++)
 					make_move_from_string(&board,moves[i]);
-			} else {
-				std::cout << "ERROR : GIVEN FEN POSITION\n";
-			}
+			//} else {
+			//	std::cout << "ERROR : GIVEN FEN POSITION\n";
+			//}
 		}
 
 		if (contains(line,"go")){
