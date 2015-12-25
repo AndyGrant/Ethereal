@@ -28,7 +28,7 @@ move_t get_best_move(board_t * board, int t){
 	int alpha, beta;
 	
 	StartTime = time(NULL);
-	EndTime = StartTime + 5;
+	EndTime = StartTime + 100;
 	EvaluatingPlayer = board->turn;
 	
 	clock_t start = clock();
@@ -42,89 +42,90 @@ move_t get_best_move(board_t * board, int t){
 	init_search_tree_t(&tree,board);
 	
 	for(depth = 2; depth <= 5; depth++){
-		alpha = -99999; 
-		beta = 99999;
-		int last_depth_alpha = tree.nodes_searched;
-		int last_depth_quiescence = tree.quiescence_nodes;
-		int last_move_alpha_nodes = tree.nodes_searched;
-		int last_move_quiescence_nodes = tree.quiescence_nodes;
 		
-		printf("SEARCHING DEPTH %d \n",depth);
-		for(i = 0; i < size; i++){			
-			apply_move(&(tree.board),moves[i]);
-			values[i] = -alpha_beta_prune(&tree, depth, -beta, -alpha);
-			revert_move(&(tree.board),moves[i]);			
-			
-			printf("  Move #%d\t Value=%d\t AlphaN=%d\t QuiescenceN=%d\n",i,values[i],tree.nodes_searched-last_move_alpha_nodes,tree.quiescence_nodes-last_move_quiescence_nodes);
-			last_move_alpha_nodes = tree.nodes_searched;
-			last_move_quiescence_nodes = tree.quiescence_nodes;
-			
-			if (values[i] > alpha){
-				alpha = values[i];
-				tree.principle_variation.line[0] = moves[i];
-			}
-			
-			if (alpha == CheckMate)
-				return moves[i];
-		}
+		int rnodes = tree.raw_nodes;
+		int anodes = tree.alpha_beta_nodes;
+		int qnodes = tree.quiescence_nodes;
 		
-		order_by_value(&(moves[0]),&(values[0]),size);
+		int value = alpha_beta_prune(&tree,&(tree.principle_variation),depth,-CheckMate,CheckMate);
 		
-		printf("PRINCIPLE VARIATION : ");
-		for(i = 0; i < depth; i++){
+		printf("Search Depth : %d\n",depth);
+		printf("Raw Nodes : %d\n",tree.raw_nodes - rnodes);
+		printf("Alpha Nodes : %d\n",tree.alpha_beta_nodes - anodes);
+		printf("Quiescence Nodes : %d\n",tree.quiescence_nodes - qnodes);
+		
+		printf("Principle Variatoin : ");
+		for(i = 0; i < tree.principle_variation.length; i++){
 			print_move_t(tree.principle_variation.line[i]);
 			printf(" -> ");
 		}
-		printf("\n");
-		
-		printf("ALPHABETA NODES %d QUIESCENCE NODES %d \n\n",tree.nodes_searched-last_depth_alpha,tree.quiescence_nodes-last_depth_quiescence);
+		printf("\n\n");
 	}
 	
 	printf("TIME TAKEN %d\n",((int)clock()-(int)start)/CLOCKS_PER_SEC);
 	
-	return moves[0];
+	return tree.principle_variation.line[0];
 	
 	
 }
 
 void init_search_tree_t(search_tree_t * tree, board_t * board){
 	tree->ply = 0;
-	tree->nodes_searched = 0;
+	tree->raw_nodes = 0;
+	tree->alpha_beta_nodes = 0;
 	tree->quiescence_nodes = 0;
 	memcpy(&(tree->board),board,sizeof(*board));
-	tree->principle_variation.plys = 0;
+	tree->principle_variation.length = 0;
 }
 
-int alpha_beta_prune(search_tree_t * tree, int depth, int alpha, int beta){
+int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth, int alpha, int beta){
 	
-	if (EndTime < time(NULL))
-		return tree->board.turn == EvaluatingPlayer ? -CheckMate : CheckMate;
-		
-	tree->nodes_searched++;
+	tree->raw_nodes++;
+	tree->alpha_beta_nodes++;
+	
+	principle_variation_t lpv;
 	board_t * board = &(tree->board);
 	
-	if (depth == 0)
+	if (EndTime < time(NULL)){
+		pv->length = -1;
+		return tree->board.turn == EvaluatingPlayer ? -CheckMate : CheckMate;
+	}
+	
+	if (depth == 0){
+		pv->length = 0;
 		return quiescence_search(tree,alpha,beta);
+	}
 	
 	tree->ply++;
 	
 	int size = 0;
 	move_t moves[MaxMoves];
 	gen_all_moves(&(tree->board),&(moves[0]),&size);
-	
 	basic_heuristic(board,&(moves[0]),size);
 	
-	int value, best = -99999;
-	for(size -= 1; size >= 0; size--){
-		apply_move(board,moves[size]);
+	int i, value, best = -99999;
+	for (i = 0; i < size; i++){
+		apply_move(board,moves[i]);
 		if (is_not_in_check(board,!board->turn)){
-			value = -alpha_beta_prune(tree,depth-1,-beta,-alpha);
 			
-			if (value > best)	best = value;
-			if (best > alpha)	{alpha = best; tree->principle_variation.line[tree->ply] = moves[size];}
-			if (alpha > beta)	{revert_move(board,moves[size]); break;}
+			value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
+
+			if (value > best)	
+				best = value;
+			
+			if (best > alpha){
+				alpha = best;
+				
+				if (lpv.length != -1){
+					pv->line[0] = moves[i];
+					memcpy(pv->line + 1, lpv.line, sizeof(move_t) * lpv.length);
+					pv->length = lpv.length + 1;
+				}
+			}
+			
+			if (alpha > beta)	{revert_move(board,moves[i]); break;}
 		}
-		revert_move(board,moves[size]);
+		revert_move(board,moves[i]);
 	}
 	
 	tree->ply--;
@@ -133,10 +134,12 @@ int alpha_beta_prune(search_tree_t * tree, int depth, int alpha, int beta){
 
 int quiescence_search(search_tree_t * tree, int alpha, int beta){
 	
+	tree->raw_nodes++;
+	tree->quiescence_nodes++;
+	
 	if (EndTime < time(NULL))
 		return tree->board.turn == EvaluatingPlayer ? -CheckMate : CheckMate;
 	
-	tree->quiescence_nodes++;
 	board_t * board = &(tree->board);
 	
 	tree->ply++;
@@ -147,17 +150,17 @@ int quiescence_search(search_tree_t * tree, int alpha, int beta){
 	
 	basic_heuristic(board,&(moves[0]),size);
 	
-	int value = -100000, best = evaluate_board(board);
-	for(size -= 1; size >= 0; size--){
-		apply_move(board,moves[size]);
+	int i, value = -100000, best = evaluate_board(board);
+	for (i = size-1; i >= 0; i--){
+		apply_move(board,moves[i]);
 		if (is_not_in_check(board,!board->turn)){
 			value = -quiescence_search(tree,-beta,-alpha);
 			
 			if (value > best)	best = value;
 			if (best > alpha)	alpha = best;
-			if (alpha > beta)	{revert_move(board,moves[size]); break;}
+			if (alpha > beta)	{revert_move(board,moves[i]); break;}
 		}
-		revert_move(board,moves[size]);
+		revert_move(board,moves[i]);
 	}
 	
 	tree->ply--;
