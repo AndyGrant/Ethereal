@@ -28,7 +28,7 @@ move_t get_best_move(board_t * board, int t){
 	int alpha, beta;
 	
 	StartTime = time(NULL);
-	EndTime = StartTime + 100;
+	EndTime = StartTime + 5;
 	EvaluatingPlayer = board->turn;
 	
 	clock_t start = clock();
@@ -49,12 +49,12 @@ move_t get_best_move(board_t * board, int t){
 		
 		int value = alpha_beta_prune(&tree,&(tree.principle_variation),depth,-CheckMate,CheckMate);
 		
-		printf("Search Depth : %d\n",depth);
-		printf("Raw Nodes : %d\n",tree.raw_nodes - rnodes);
-		printf("Alpha Nodes : %d\n",tree.alpha_beta_nodes - anodes);
-		printf("Quiescence Nodes : %d\n",tree.quiescence_nodes - qnodes);
+		printf("Search Depth        : %d\n",depth);
+		printf("Raw Nodes           : %d\n",tree.raw_nodes - rnodes);
+		printf("Alpha Nodes         : %d\n",tree.alpha_beta_nodes - anodes);
+		printf("Quiescence Nodes    : %d\n",tree.quiescence_nodes - qnodes);
 		
-		printf("Principle Variatoin : ");
+		printf("Principle Variation : ");
 		for(i = 0; i < tree.principle_variation.length; i++){
 			print_move_t(tree.principle_variation.line[i]);
 			printf(" -> ");
