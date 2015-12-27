@@ -92,9 +92,13 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 	int size = 0;
 	move_t moves[MaxMoves];
 	gen_all_moves(&(tree->board),&(moves[0]),&size);
+	
+	if (size == 0)
+		return is_not_in_check(board,board->turn) ? 0 : -CheckMate;
+	
 	basic_heuristic(board,&(moves[0]),size);
 	
-	int i, value, best = -99999;
+	int i, value, best = -CheckMate;
 	for (i = 0; i < size; i++){
 		apply_move(board,moves[i]);
 		if (is_not_in_check(board,!board->turn)){
