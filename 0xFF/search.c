@@ -16,16 +16,8 @@
 time_t StartTime, EndTime;
 int EvaluatingPlayer;
 
-int main2(){
-	board_t board;
-	init_board_t(&board,"rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000");
-	get_best_move(&board,1000);
-}
-
 move_t get_best_move(board_t * board, int t){
-	
-	int depth, i, size = 0; 
-	int alpha, beta;
+	int depth, i, size = 0; 	
 	
 	StartTime = time(NULL);
 	EndTime = StartTime + 5;
@@ -35,8 +27,6 @@ move_t get_best_move(board_t * board, int t){
 	
 	move_t moves[MaxMoves];
 	gen_all_legal_moves(board,moves,&size);
-	
-	int values[size];
 	
 	search_tree_t tree;
 	init_search_tree_t(&tree,board);
@@ -50,6 +40,7 @@ move_t get_best_move(board_t * board, int t){
 		int value = alpha_beta_prune(&tree,&(tree.principle_variation),depth,-CheckMate,CheckMate);
 		
 		printf("Search Depth        : %d\n",depth);
+		printf("MicroPawns          : %c%.2f",value >= 0, value/100.0);
 		printf("Raw Nodes           : %d\n",tree.raw_nodes - rnodes);
 		printf("Alpha Nodes         : %d\n",tree.alpha_beta_nodes - anodes);
 		printf("Quiescence Nodes    : %d\n",tree.quiescence_nodes - qnodes);
