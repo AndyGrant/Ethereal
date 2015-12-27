@@ -18,7 +18,7 @@
 
 #define KING_HAS_RIGHTS(t,r)	((r) & (1 << ((t)*2)))
 #define QUEEN_HAS_RIGHTS(t,r)	((r) & (2 << ((t)*2)))
-#define GET_RIGHTS(t,r)			((0b11 << ((t)*2)) & r)
+#define GET_RIGHTS(t,b)			((b)->castle_rights & (3 << (t*2)))
 
 #define CREATE_KING_RIGHTS(t)	(1 << ((t)*2))
 #define CREATE_QUEEN_RIGHTS(t)	(2 << ((t)*2))

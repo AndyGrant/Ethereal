@@ -19,7 +19,7 @@
 #define MOVE_IS_NORMAL(move)		((move) & NormalFlag)
 #define MOVE_IS_CASTLE(move)		((move) & CastleFlag)
 #define MOVE_IS_ENPASS(move)		((move) & EnpassFlag)
-#define MOVE_IS_PROMOTION(move)		((move) & PromoteFlags)
+#define MOVE_IS_PROMOTION(move)		((move) & PromotionFlag)
 
 /* Move Creation Macro Definitions */
 #define MAKE_NORMAL_MOVE(f,t,c,p)	((f)|((t)<<8)|((c)<<16)|(NormalFlag)|((p)<<28))
