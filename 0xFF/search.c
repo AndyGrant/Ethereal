@@ -40,7 +40,6 @@ move_t get_best_move(board_t * board, int t){
 		int value = alpha_beta_prune(&tree,&(tree.principle_variation),depth,-CheckMate,CheckMate);
 		
 		printf("Search Depth        : %d\n",depth);
-		printf("MicroPawns          : %c%.2f",value >= 0, value/100.0);
 		printf("Raw Nodes           : %d\n",tree.raw_nodes - rnodes);
 		printf("Alpha Nodes         : %d\n",tree.alpha_beta_nodes - anodes);
 		printf("Quiescence Nodes    : %d\n",tree.quiescence_nodes - qnodes);
@@ -50,7 +49,8 @@ move_t get_best_move(board_t * board, int t){
 			print_move_t(tree.principle_variation.line[i]);
 			printf(" -> ");
 		}
-		printf("\n\n");
+		printf("\nMicroPawns          : %s%.3f\n",value >= 0 ? "+" : "", value/100.0);
+		printf("------------------------------\n");
 	}
 	
 	printf("TIME TAKEN %d\n",((int)clock()-(int)start)/CLOCKS_PER_SEC);
