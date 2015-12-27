@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "../board.h"
-#include "../util.h"
+#include "../../src/board.h"
+#include "../../src/util.h"
 
 int main(){
 	
@@ -12,7 +12,7 @@ int main(){
 	char c, str[73];
 	board_t board;
 	clock_t start = clock(), end;
-	FILE * input = fopen("PerftTests.txt","r");
+	FILE * input = fopen("src/PerftTests.txt","r");
 	
 	while(1){
 		
