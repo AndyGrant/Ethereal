@@ -36,12 +36,6 @@ void gen_all_captures(board_t * board, move_t * list, int * size){
 	unsigned int to, from, cap, flag;
 	int turn = board->turn;
 	int direction = board->turn == ColourWhite ? -16 : 16;
-	unsigned int r, rights = board->castle_rights;
-	unsigned int my_rights = 0;
-	if (KING_HAS_RIGHTS(turn,rights))
-		my_rights |= CREATE_KING_RIGHTS(turn);
-	if (QUEEN_HAS_RIGHTS(turn,rights))
-		my_rights |= CREATE_QUEEN_RIGHTS(turn);
 	int * location = &(board->piece_locations[turn][0]);
 	
 	while (*location != -1){
@@ -124,18 +118,12 @@ void gen_all_captures(board_t * board, move_t * list, int * size){
 				}				
 				break;
 				
-			case RookFlag:
-				r = 0;
-				if (KING_HAS_RIGHTS(turn,rights) && IS_RIGHT_ROOK(turn,from))
-					r |= CREATE_KING_RIGHTS(turn);
-				if (QUEEN_HAS_RIGHTS(turn,rights) && IS_LEFT_ROOK(turn,from))
-					r |= CREATE_QUEEN_RIGHTS(turn);
-				
+			case RookFlag:				
 				to = from; cap = Empty;
 				while(cap == Empty){
 					to += -16; cap = board->squares[to];
 					if (IS_ENEMY(cap,turn))
-						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,r);
+						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 					if (IS_EMPTY(cap))
 						continue;
 					break;
@@ -145,7 +133,7 @@ void gen_all_captures(board_t * board, move_t * list, int * size){
 				while(cap == Empty){
 					to += -1; cap = board->squares[to];
 					if (IS_ENEMY(cap,turn))
-						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,r);
+						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 					if (IS_EMPTY(cap))
 						continue;
 					break;
@@ -155,7 +143,7 @@ void gen_all_captures(board_t * board, move_t * list, int * size){
 				while(cap == Empty){
 					to += 1; cap = board->squares[to];
 					if (IS_ENEMY(cap,turn))
-						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,r);
+						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 					if (IS_EMPTY(cap))
 						continue;
 					break;
@@ -165,7 +153,7 @@ void gen_all_captures(board_t * board, move_t * list, int * size){
 				while(cap == Empty){
 					to += 16; cap = board->squares[to];
 					if (IS_ENEMY(cap,turn))
-						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,r);
+						list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 					if (IS_EMPTY(cap))
 						continue;
 					break;
@@ -257,35 +245,35 @@ void gen_all_captures(board_t * board, move_t * list, int * size){
 			case KingFlag:				
 				to = from - 17; cap = board->squares[to];
 				if (IS_ENEMY(cap,turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,my_rights);
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				
 				to = from - 16; cap = board->squares[to];
 				if (IS_ENEMY(cap,turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,my_rights);
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				
 				to = from - 15; cap = board->squares[to];
 				if (IS_ENEMY(cap,turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,my_rights);
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				
 				to = from - 1; cap = board->squares[to];
 				if (IS_ENEMY(cap,turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,my_rights);
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				
 				to = from + 1; cap = board->squares[to];
 				if (IS_ENEMY(cap,turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,my_rights);
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				
 				to = from + 15; cap = board->squares[to];
 				if (IS_ENEMY(cap,turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,my_rights);
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				
 				to = from + 16; cap = board->squares[to];
 				if (IS_ENEMY(cap,turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,my_rights);
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				
 				to = from + 17; cap = board->squares[to];
 				if (IS_ENEMY(cap,turn))
-					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,my_rights);
+					list[(*size)++] = MAKE_NORMAL_MOVE(from,to,cap,0);
 				break;
 			
 			default: 
@@ -359,15 +347,11 @@ void gen_all_moves(board_t * board, move_t * list, int * size){
 	int turn = board->turn;
 	int direction = board->turn == ColourWhite ? -16 : 16;
 	unsigned int r, rights = board->castle_rights;
-	unsigned int my_rights = 0;
+	unsigned int my_rights = GET_RIGHTS(turn,board);
 	int psuedo_valid_king = 0;
 	int psuedo_valid_queen = 0;
 	int one_step_valid_king = 0;
 	int one_step_valid_queen = 0;
-	if (KING_HAS_RIGHTS(turn,rights))
-		my_rights |= CREATE_KING_RIGHTS(turn);
-	if (QUEEN_HAS_RIGHTS(turn,rights))
-		my_rights |= CREATE_QUEEN_RIGHTS(turn);
 	int * location = &(board->piece_locations[turn][0]);
 	
 	while (*location != -1){
@@ -555,20 +539,18 @@ void gen_all_moves(board_t * board, move_t * list, int * size){
 				one_step_valid_queen = 0;
 			
 				if (is_not_in_check(board,turn)){					
-					if (from == 184 - (turn * (184-72))){
-						if (KING_HAS_RIGHTS(turn,board->castle_rights))
-							if (IS_EMPTY(board->squares[from+1]))
-								if (IS_EMPTY(board->squares[from+2]))
-									if (PIECE_IS_ROOK(board->squares[from+3]))
-										psuedo_valid_king = 1;	
-									
-						if (QUEEN_HAS_RIGHTS(turn,board->castle_rights))
-							if (IS_EMPTY(board->squares[from-1]))
-								if (IS_EMPTY(board->squares[from-2]))
-									if (IS_EMPTY(board->squares[from-3]))
-										if (PIECE_IS_ROOK(board->squares[from-4]))
-											psuedo_valid_queen = 1;
-					}
+					if (KING_HAS_RIGHTS(turn,board->castle_rights))
+						if (IS_EMPTY(board->squares[from+1]))
+							if (IS_EMPTY(board->squares[from+2]))
+								if (PIECE_IS_ROOK(board->squares[from+3]))
+									psuedo_valid_king = 1;	
+								
+					if (QUEEN_HAS_RIGHTS(turn,board->castle_rights))
+						if (IS_EMPTY(board->squares[from-1]))
+							if (IS_EMPTY(board->squares[from-2]))
+								if (IS_EMPTY(board->squares[from-3]))
+									if (PIECE_IS_ROOK(board->squares[from-4]))
+										psuedo_valid_queen = 1;
 				}
 				
 				to = from - 17; cap = board->squares[to];
@@ -889,7 +871,6 @@ void revert_move(board_t * board, move_t move){
 }
 
 void insert_position(board_t * board, int to, int turn){
-	int i;
 	if (PIECE_IS_PAWN(board->squares[to])){
 		board->pawn_locations[turn][board->pawn_counts[turn]] = to;
 		board->positions[to] = board->pawn_counts[turn];
@@ -918,7 +899,7 @@ void remove_position(board_t * board, int to, int turn){
 	}
 }
 
-int square_is_attacked(board_t * board, int turn, int square){	
+int square_is_attacked(board_t * board, int turn, int square){
 	int i, tile, inc, *curr;
 	int * sq = &(board->squares[square]);
 	int * kincptr = &(king_movements[0]);
