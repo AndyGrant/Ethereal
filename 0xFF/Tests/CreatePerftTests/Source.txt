@@ -1,5 +1,0 @@
-Much Thanks to 
-
-http://www.rocechess.ch/perft.html
-
-For providing these perft test cases
