@@ -54,7 +54,7 @@ bool contains(std::string a, std::string b){
 }
 
 std::vector<std::string> parse_moves(std::string line){
-	int start = line.find("moves")+6;
+	unsigned int start = line.find("moves")+6;
 	std::vector<std::string> moves;
 	std::string buff = "";
 	char c;
@@ -115,7 +115,7 @@ int main(){
 			if (contains(line,"startpos")){
 				init_board_t(&board,starting_position);
 				std::vector<std::string> moves = parse_moves(line);
-				for(int i = 0; i < moves.size(); i++)
+				for(unsigned int i = 0; i < moves.size(); i++)
 					make_move_from_string(&board,moves[i]);
 			} else {
 				std::cout << "ERROR : GIVEN FEN POSITION\n";

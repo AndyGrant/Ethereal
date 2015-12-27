@@ -66,4 +66,5 @@ int main(){
 	printf("Seconds: %d\n",(end - start) / CLOCKS_PER_SEC);
 	printf("MNPS   : %.3f",(total/(float)(1000000 * ((end-start)/CLOCKS_PER_SEC))));
 	
+	return 0;
 }

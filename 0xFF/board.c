@@ -16,7 +16,7 @@ char BaseBoard[73] = "rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRN
 
 void init_board_t(board_t * board, char setup[73]){
 		
-	memset(board,0,sizeof(board));
+	memset(board,0,sizeof(*board));
 	
 	int i, sq, flag;
 	
