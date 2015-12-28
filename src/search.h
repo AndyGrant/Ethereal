@@ -20,5 +20,6 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 int evaluate_board(board_t * board);
 void order_by_value(move_t * moves, int * values, int size);
 int quiescence_search(search_tree_t * tree, int alpha, int beta);
-void basic_heuristic(board_t * board, move_t * moves, int size);
+void basic_heuristic(search_tree_t * tree, move_t * moves, int size);
+void update_killer_heuristic(search_tree_t * tree, move_t move);
 #endif
