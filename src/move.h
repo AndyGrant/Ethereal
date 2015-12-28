@@ -35,12 +35,12 @@ static int knight_movements[8] = {33,31,18,14,-14,-18,-31,-33};
 static int king_movements[8] = {-17,-15,15,17,-16,-1,1,16};
 
 /* Move Decode Macro Definitions */
-#define MOVE_GET_FROM(m)			((m & (0b11111111 <<  0)) >>  0)
-#define MOVE_GET_TO(m)				((m & (0b11111111 <<  8)) >>  8)
-#define MOVE_GET_CAPTURE(m)			((m & (0b11111111 << 16)) >> 16)
-#define MOVE_GET_ENPASS_SQUARE(m)	((m & (0b11111111 << 16)) >> 16)
-#define MOVE_GET_CASTLE_FLAGS(m)	((m & (0b00001111 << 28)) >> 28)
-#define MOVE_GET_PROMOTE_TYPE(m,c)	(PromoteTypes[((m&PromoteFlags)>>28)]+c)
+#define MOVE_GET_FROM(m)			(((m) & (0b11111111 <<  0)) >>  0)
+#define MOVE_GET_TO(m)				(((m) & (0b11111111 <<  8)) >>  8)
+#define MOVE_GET_CAPTURE(m)			(((m) & (0b11111111 << 16)) >> 16)
+#define MOVE_GET_ENPASS_SQUARE(m)	(((m) & (0b11111111 << 16)) >> 16)
+#define MOVE_GET_CASTLE_FLAGS(m)	(((m) & (0b00001111 << 28)) >> 28)
+#define MOVE_GET_PROMOTE_TYPE(m,c)	(PromoteTypes[(((m)&PromoteFlags)>>28)]+c)
 
 /* Function Prototypes */
 void gen_all_legal_moves(board_t * board, move_t * list, int * size);
