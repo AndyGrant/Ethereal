@@ -25,9 +25,6 @@ move_t get_best_move(board_t * board, int t){
 	
 	clock_t start = clock();
 	
-	move_t moves[MaxMoves];
-	gen_all_legal_moves(board,moves,&size);
-	
 	search_tree_t tree;
 	init_search_tree_t(&tree,board);
 	
@@ -54,15 +51,13 @@ move_t get_best_move(board_t * board, int t){
 		printf("\nMicroPawns          : %s%d\n",value >= 0 ? "+" : "", value);
 		printf("------------------------------\n");
 		
-		if (abs(value) == CheckMate)
+		if (EndTime < time(NULL))
 			break;
 	}
 	
 	printf("TIME TAKEN %d\n",((int)clock()-(int)start)/CLOCKS_PER_SEC);
 	
-	return tree.principle_variation.line[0];
-	
-	
+	return tree.principle_variation.line[0];	
 }
 
 void init_search_tree_t(search_tree_t * tree, board_t * board){
@@ -106,7 +101,7 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 	int i, value, best = -CheckMate;
 	for (i = 0; i < size; i++){
 		apply_move(board,moves[i]);
-		if (is_not_in_check(board,!board->turn)){
+		if (is_not_in_check(board,!(board->turn))){
 			
 			value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
 			
@@ -146,6 +141,10 @@ int quiescence_search(search_tree_t * tree, int alpha, int beta){
 	
 	board_t * board = &(tree->board);
 	
+	int best = evaluate_board(board);
+	if (best > alpha) alpha = best;
+	if (alpha > beta) return best;
+	
 	tree->ply++;
 	
 	int size = 0;
@@ -154,7 +153,7 @@ int quiescence_search(search_tree_t * tree, int alpha, int beta){
 	
 	basic_heuristic(tree,&(moves[0]),size);
 	
-	int i, value = -100000, best = evaluate_board(board);
+	int i, value;
 	for (i = size-1; i >= 0; i--){
 		apply_move(board,moves[i]);
 		if (is_not_in_check(board,!board->turn)){
@@ -240,8 +239,8 @@ void order_by_value(move_t * moves, int * values, int size){
 				values[i] = temp_value;
 				
 				temp_move = moves[j];
-				moves[i] = moves[j];
-				moves[j] = temp_move;
+				moves[j] = moves[i];
+				moves[i] = temp_move;
 			}
 		}
 	}
@@ -260,6 +259,10 @@ void basic_heuristic(search_tree_t * tree, move_t * moves, int size){
 			values[i] += 1000;
 		else if (arr[2] == moves[i])
 			values[i] += 500;
+		
+		if (moves[i] == tree->principle_variation.line[tree->ply-1])
+			values[i] += 30000;
+		
 	}
 	
 	order_by_value(moves,values,size);
