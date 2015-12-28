@@ -5,6 +5,7 @@
 
 //#include "search.h"
 #define MaxDepth	(128)
+#define MaxMoves	(256)
 
 /* Structure Definitions */
 
