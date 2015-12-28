@@ -20,7 +20,7 @@ move_t get_best_move(board_t * board, int t){
 	int depth, i, size = 0; 	
 	
 	StartTime = time(NULL);
-	EndTime = StartTime + 60;
+	EndTime = StartTime + 5;
 	EvaluatingPlayer = board->turn;
 	
 	clock_t start = clock();
