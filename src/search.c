@@ -48,7 +48,7 @@ move_t get_best_move(board_t * board, int t){
 			print_move_t(tree.principle_variation.line[i]);
 			printf(" -> ");
 		}
-		printf("\nMicroPawns          : %s%d\n",value >= 0 ? "+" : "", value);
+		printf("\nCentiPawns          : %s%d\n",value >= 0 ? "+" : "", value);
 		printf("------------------------------\n");
 		
 		if (EndTime < time(NULL))
