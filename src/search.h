@@ -7,11 +7,11 @@
 #define CheckMate	(100000)
 
 /* Piece Value Definitions */
-#define PawnValue 	(100)
-#define KnightValue	(300)
-#define BishopValue	(300)
-#define RookValue 	(500)
-#define QueenValue 	(900)
+#define PawnValue 	(300)
+#define KnightValue	(3 * PawnValue)
+#define BishopValue	(3 * PawnValue)
+#define RookValue 	(5 * PawnValue)
+#define QueenValue 	(9 * PawnValue)
 
 /* Function Prototypes */
 move_t get_best_move(board_t * board, int time);

@@ -30,7 +30,7 @@ move_t get_best_move(board_t * board, int t){
 	
 	print_board_t(board);
 	
-	for(depth = 2; depth <= 5; depth++){
+	for(depth = 2; depth <= MaxDepth; depth++){
 		
 		int rnodes = tree.raw_nodes;
 		int anodes = tree.alpha_beta_nodes;
@@ -48,10 +48,11 @@ move_t get_best_move(board_t * board, int t){
 			print_move_t(tree.principle_variation.line[i]);
 			printf(" -> ");
 		}
-		printf("\nCentiPawns          : %s%d\n",value >= 0 ? "+" : "", value);
+		printf("\nValue               : %s%.2f\n",value >= 0 ? "+" : "", (float)value/PawnValue);
+		printf("Time Elapsed        : %d\n",(int)(time(NULL) - StartTime));
 		printf("------------------------------\n");
 		
-		if (EndTime < time(NULL))
+		if (EndTime - 2 < time(NULL))
 			break;
 	}
 	
@@ -181,51 +182,37 @@ int evaluate_board(board_t * board){
 	
 	for(location = &(board->piece_locations[turn][1]); *location != -1; location++){
 		switch(PIECE_TYPE(board->squares[*location])){
-			case QueenFlag: 	value += (QueenValue 	+ 1 * QUEEN_POSITION_VALUE(*location)); 	break;
-			case RookFlag: 		value += (RookValue 	+ 1 * ROOK_POSITION_VALUE(*location)); 		break;
-			case BishopFlag: 	value += (BishopValue 	+ 1 * BISHOP_POSITION_VALUE(*location)); 	break;
-			case KnightFlag: 	value += (KnightValue 	+ 1 * KNIGHT_POSITION_VALUE(*location)); 	break;
+			case QueenFlag: 	value += (QueenValue 	+ QUEEN_POSITION_VALUE(*location)); 	break;
+			case RookFlag: 		value += (RookValue 	+ ROOK_POSITION_VALUE(*location)); 		break;
+			case BishopFlag: 	value += (BishopValue 	+ BISHOP_POSITION_VALUE(*location)); 	break;
+			case KnightFlag: 	value += (KnightValue 	+ KNIGHT_POSITION_VALUE(*location)); 	break;
 		}
 	}
 	
 	for(location = &(board->piece_locations[!turn][1]); *location != -1; location++){
 		switch(PIECE_TYPE(board->squares[*location])){
-			case QueenFlag: 	value -= (QueenValue 	+ 1 * QUEEN_POSITION_VALUE(*location)); 	break;
-			case RookFlag: 		value -= (RookValue 	+ 1 * ROOK_POSITION_VALUE(*location)); 		break;
-			case BishopFlag: 	value -= (BishopValue 	+ 1 * BISHOP_POSITION_VALUE(*location)); 	break;
-			case KnightFlag: 	value -= (KnightValue 	+ 1 * KNIGHT_POSITION_VALUE(*location)); 	break;
+			case QueenFlag: 	value -= (QueenValue 	+ QUEEN_POSITION_VALUE(*location)); 	break;
+			case RookFlag: 		value -= (RookValue 	+ ROOK_POSITION_VALUE(*location)); 		break;
+			case BishopFlag: 	value -= (BishopValue 	+ BISHOP_POSITION_VALUE(*location)); 	break;
+			case KnightFlag: 	value -= (KnightValue 	+ KNIGHT_POSITION_VALUE(*location)); 	break;
 		}
 	}
+	
 	
 	value += PawnValue * (board->pawn_counts[turn] - board->pawn_counts[!turn]);
 	
-	int temp[3] = {0, 3, 7};
 	for(location = &(board->pawn_locations[turn][0]); *location != -1; location++){
-		if (turn == ColourWhite){
-			int supports = board->squares[*location+17] == WhitePawn; 
-				supports += board->squares[*location+15] == WhitePawn;
-			value += temp[supports];
+		if (turn == ColourWhite)
 			value += WHITE_PAWN_POSITION_VALUE(*location);
-		} else if (turn == ColourBlack){
-			int supports = board->squares[*location-17] == BlackPawn; 
-				supports += board->squares[*location-15] == BlackPawn;
-			value += temp[supports];
+		else if (turn == ColourBlack)
 			value += BLACK_PAWN_POSITION_VALUE(*location);
-		}
 	}
 	
 	for(location = &(board->pawn_locations[!turn][0]); *location != -1; location++){
-		if (turn == ColourWhite){
-			int supports = board->squares[*location+17] == WhitePawn; 
-				supports += board->squares[*location+15] == WhitePawn;
-			value -= temp[supports];
+		if (turn == ColourWhite)
 			value -= WHITE_PAWN_POSITION_VALUE(*location);
-		} else if (turn == ColourBlack){
-			int supports = board->squares[*location-17] == BlackPawn; 
-				supports += board->squares[*location-15] == BlackPawn;
-			value -= temp[supports];
+		else if (turn == ColourBlack)
 			value -= BLACK_PAWN_POSITION_VALUE(*location);
-		}
 	}
 	
 	return value;
