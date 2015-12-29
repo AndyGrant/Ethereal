@@ -181,19 +181,19 @@ int evaluate_board(board_t * board){
 	
 	for(location = &(board->piece_locations[turn][1]); *location != -1; location++){
 		switch(PIECE_TYPE(board->squares[*location])){
-			case QueenFlag: 	value += (QueenValue 	+ 3 * QUEEN_POSITION_VALUE(*location)); 	break;
-			case RookFlag: 		value += (RookValue 	+ 3 * ROOK_POSITION_VALUE(*location)); 		break;
-			case BishopFlag: 	value += (BishopValue 	+ 3 * BISHOP_POSITION_VALUE(*location)); 	break;
-			case KnightFlag: 	value += (KnightValue 	+ 3 * KNIGHT_POSITION_VALUE(*location)); 	break;
+			case QueenFlag: 	value += (QueenValue 	+ 1 * QUEEN_POSITION_VALUE(*location)); 	break;
+			case RookFlag: 		value += (RookValue 	+ 1 * ROOK_POSITION_VALUE(*location)); 		break;
+			case BishopFlag: 	value += (BishopValue 	+ 1 * BISHOP_POSITION_VALUE(*location)); 	break;
+			case KnightFlag: 	value += (KnightValue 	+ 1 * KNIGHT_POSITION_VALUE(*location)); 	break;
 		}
 	}
 	
 	for(location = &(board->piece_locations[!turn][1]); *location != -1; location++){
 		switch(PIECE_TYPE(board->squares[*location])){
-			case QueenFlag: 	value -= (QueenValue 	+ 3 * QUEEN_POSITION_VALUE(*location)); 	break;
-			case RookFlag: 		value -= (RookValue 	+ 3 * ROOK_POSITION_VALUE(*location)); 		break;
-			case BishopFlag: 	value -= (BishopValue 	+ 3 * BISHOP_POSITION_VALUE(*location)); 	break;
-			case KnightFlag: 	value -= (KnightValue 	+ 3 * KNIGHT_POSITION_VALUE(*location)); 	break;
+			case QueenFlag: 	value -= (QueenValue 	+ 1 * QUEEN_POSITION_VALUE(*location)); 	break;
+			case RookFlag: 		value -= (RookValue 	+ 1 * ROOK_POSITION_VALUE(*location)); 		break;
+			case BishopFlag: 	value -= (BishopValue 	+ 1 * BISHOP_POSITION_VALUE(*location)); 	break;
+			case KnightFlag: 	value -= (KnightValue 	+ 1 * KNIGHT_POSITION_VALUE(*location)); 	break;
 		}
 	}
 	
@@ -205,10 +205,12 @@ int evaluate_board(board_t * board){
 			int supports = board->squares[*location+17] == WhitePawn; 
 				supports += board->squares[*location+15] == WhitePawn;
 			value += temp[supports];
+			value += WHITE_PAWN_POSITION_VALUE(*location);
 		} else if (turn == ColourBlack){
 			int supports = board->squares[*location-17] == BlackPawn; 
 				supports += board->squares[*location-15] == BlackPawn;
 			value += temp[supports];
+			value += BLACK_PAWN_POSITION_VALUE(*location);
 		}
 	}
 	
@@ -217,10 +219,12 @@ int evaluate_board(board_t * board){
 			int supports = board->squares[*location+17] == WhitePawn; 
 				supports += board->squares[*location+15] == WhitePawn;
 			value -= temp[supports];
+			value -= WHITE_PAWN_POSITION_VALUE(*location);
 		} else if (turn == ColourBlack){
 			int supports = board->squares[*location-17] == BlackPawn; 
 				supports += board->squares[*location-15] == BlackPawn;
 			value -= temp[supports];
+			value -= BLACK_PAWN_POSITION_VALUE(*location);
 		}
 	}
 	
