@@ -16,11 +16,11 @@
 time_t StartTime, EndTime;
 int EvaluatingPlayer;
 
-move_t get_best_move(board_t * board, int t){
+move_t get_best_move(board_t * board, int alloted_time){
 	int depth, i, size = 0; 	
-	
+	alloted_time = 10;
 	StartTime = time(NULL);
-	EndTime = StartTime + 5;
+	EndTime = StartTime + alloted_time;
 	EvaluatingPlayer = board->turn;
 	
 	clock_t start = clock();
@@ -49,10 +49,9 @@ move_t get_best_move(board_t * board, int t){
 			printf(" -> ");
 		}
 		printf("\nValue               : %s%.2f\n",value >= 0 ? "+" : "", (float)value/PawnValue);
-		printf("Time Elapsed        : %d\n",(int)(time(NULL) - StartTime));
 		printf("------------------------------\n");
 		
-		if (EndTime - 2 < time(NULL))
+		if (EndTime - ((float)(alloted_time) * .95) < time(NULL))
 			break;
 	}
 	
@@ -84,6 +83,8 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 	}
 	
 	if (depth == 0){
+		tree->raw_nodes--;
+		tree->alpha_beta_nodes--;
 		pv->length = 0;
 		return quiescence_search(tree,alpha,beta);
 	}
