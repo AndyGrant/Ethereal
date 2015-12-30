@@ -118,8 +118,12 @@ int main(){
 			if (contains(line,"startpos")){
 				init_board_t(&board,starting_position);
 				std::vector<std::string> moves = parse_moves(line);
-				for(unsigned int i = 0; i < moves.size(); i++)
+				for(unsigned int i = 0; i < moves.size(); i++){
 					make_move_from_string(&board,moves[i]);
+					board.ep_history[0] = board.ep_history[board.depth];
+					board.depth = 0;
+				}
+				
 			} else {
 				std::cout << "ERROR : GIVEN FEN POSITION\n";
 			}
