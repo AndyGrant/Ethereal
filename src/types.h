@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 //#include "search.h"
-#define MaxDepth	(128)
+#define MaxDepth	(64)
 #define MaxMoves	(256)
 
 /* Structure Definitions */
@@ -55,6 +55,8 @@ typedef struct search_tree_t {
 	
 	board_t board;
 	
+	
+	int depth_one_values[MaxMoves];
 	move_t killer_moves[MaxDepth][3];
 	principle_variation_t principle_variation;
 	
