@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 #include <assert.h>
 
 #include "board.h"
@@ -105,7 +106,7 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 		return quiescence_search(tree,alpha,beta);
 	}
 	
-	tree->ply++;
+	tree->ply++;	
 	
 	int valid_size = 0, size = 0;
 	move_t moves[MaxMoves];
@@ -120,13 +121,37 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 		if (is_not_in_check(board,!(board->turn))){
 			valid_size++;
 			
-			if (i != 0 && first_node_was_pv){
-				value = -alpha_beta_prune(tree,&lpv,depth-1,-alpha-1,-alpha);
-				if (value > alpha && value < beta)
-					value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-value);
-			} else{
+			if (i == 0 && first_node_was_pv)
 				value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
+			
+			else if (valid_size > sqrt(2*size)/2 && depth >= 3 && IS_EMPTY(MOVE_GET_CAPTURE(moves[i])) && is_not_in_check(board,board->turn)){
+				if (first_node_was_pv){
+					value = -alpha_beta_prune(tree,&lpv,depth-3,-alpha-1,-alpha);
+			
+					if (value > alpha)
+						value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
+				}
+				
+				else {
+					value = -alpha_beta_prune(tree,&lpv,depth-2,-beta,-alpha);
+			
+					if (value > alpha)
+						value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
+				}
 			}
+				
+			else {
+				if (first_node_was_pv){
+					value = -alpha_beta_prune(tree,&lpv,depth-1,-alpha-1,-alpha);
+					
+					if (value > alpha && value < beta)
+						value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
+				}
+				
+				else 
+					value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
+			}
+			
 			
 			if (value > best)
 				best = value;
@@ -201,7 +226,7 @@ int quiescence_search(search_tree_t * tree, int alpha, int beta){
 }
 
 int evaluate_board(board_t * board){
-	int value = 0;
+	int value = 60;
 	int turn = board->turn;
 	int * location;
 	
