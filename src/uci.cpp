@@ -59,6 +59,9 @@ std::vector<std::string> parse_moves(std::string line){
 	std::string buff = "";
 	char c;
 	
+	if (start -1 >= line.length())
+		return moves;
+	
 	while(true){
 		c = line[start++];
 		

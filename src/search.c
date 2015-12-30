@@ -59,7 +59,12 @@ move_t get_best_move(board_t * board, int alloted_time){
 		printf("\n");
 		printf("------------------------------\n");
 		
-		if (EndTime < time(NULL)) break;
+		if (value > initial_value){
+ 			if (EndTime - ((float)(alloted_time) * .95) < time(NULL))
+ 				break;
+ 		}
+ 		else if (EndTime - ((float)(alloted_time) * .80) < time(NULL))
+ 			break;
 	}
 	
 	printf("TIME TAKEN %d\n",((int)clock()-(int)start)/CLOCKS_PER_SEC);
@@ -72,8 +77,10 @@ void init_search_tree_t(search_tree_t * tree, board_t * board){
 	tree->raw_nodes = 0;
 	tree->alpha_beta_nodes = 0;
 	tree->quiescence_nodes = 0;
-	memcpy(&(tree->board),board,sizeof(*board));
+	memcpy(&(tree->board),board,sizeof(board_t));
 	tree->principle_variation.length = 0;
+	memset(&(tree->principle_variation.line[0]),0,sizeof(move_t) * MaxDepth);
+	memset(&(tree->killer_moves[0][0]),0,sizeof(move_t) * 3 * MaxDepth);
 }
 
 int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth, int alpha, int beta){
@@ -82,6 +89,8 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 	tree->alpha_beta_nodes++;
 	
 	principle_variation_t lpv;
+	lpv.length = 0;
+	
 	board_t * board = &(tree->board);
 	
 	if (EndTime < time(NULL)){
@@ -101,9 +110,6 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 	int valid_size = 0, size = 0;
 	move_t moves[MaxMoves];
 	gen_all_moves(&(tree->board),&(moves[0]),&size);
-	
-	if (tree->ply == 1)		order_by_value(&(moves[0]),&(tree->depth_one_values[0]),size);
-	else					basic_heuristic(tree,&(moves[0]),size);
 	basic_heuristic(tree,&(moves[0]),size);
 	
 	int first_node_was_pv = tree->principle_variation.line[tree->ply-1] == moves[0];
@@ -121,9 +127,6 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 			} else{
 				value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
 			}
-			
-			if (tree->ply == 1)
-				tree->depth_one_values[i] = value;
 			
 			if (value > best)
 				best = value;
