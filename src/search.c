@@ -59,13 +59,6 @@ move_t get_best_move(board_t * board, int alloted_time){
 		printf("\n");
 		printf("------------------------------\n");
 		
-		if (value > initial_value){
-			if (EndTime - ((float)(alloted_time) * .95) < time(NULL))
-				break;
-		}
-		else if (EndTime - ((float)(alloted_time) * .80) < time(NULL))
-			break;
-		
 		if (EndTime < time(NULL)) break;
 	}
 	
