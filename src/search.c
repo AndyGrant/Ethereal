@@ -51,7 +51,7 @@ move_t get_best_move(board_t * board, int alloted_time){
 			printf(" -> ");
 		}
 		printf("\nValue               : %s%.2f\n",value >= 0 ? "+" : "", (float)value/PawnValue);
-		printf("info depth %d time %d nodes %d pv ",depth,1000 * (time(NULL) - StartTime), tree.raw_nodes);
+		printf("info depth %d score cp %d time %d nodes %d pv ",depth,(100*value)/PawnValue,1000 * (time(NULL) - StartTime), tree.raw_nodes);
 		for(i = 0; i < tree.principle_variation.length; i++){
 			print_move_t(tree.principle_variation.line[i]);
 			printf(" ");
