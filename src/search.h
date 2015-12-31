@@ -13,6 +13,11 @@
 #define RookValue 	(5 * PawnValue)
 #define QueenValue 	(9 * PawnValue)
 
+#define PawnStackedValue				(-40)
+#define IsolatedPawnValue				(-15)
+#define DiagonallyConnectedPawnValue	( 10)
+#define ConnectedPawn					(  0)	
+
 /* Function Prototypes */
 move_t get_best_move(board_t * board, int time);
 void init_search_tree_t(search_tree_t * tree, board_t * board);

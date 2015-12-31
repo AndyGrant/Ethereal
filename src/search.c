@@ -17,9 +17,14 @@
 time_t StartTime, EndTime;
 int EvaluatingPlayer;
 
+int SuccessfulLateMoveReductions = 0;
+int FailedLateMoveReductions = 0;
+int SuccessfulNullWindow = 0;
+int FailedNullWindow = 0;
+
 move_t get_best_move(board_t * board, int alloted_time){
 	int depth, i, size = 0; 	
-	alloted_time = 10;
+	alloted_time = 30;
 	StartTime = time(NULL);
 	EndTime = StartTime + alloted_time;
 	EvaluatingPlayer = board->turn;
@@ -35,6 +40,10 @@ move_t get_best_move(board_t * board, int alloted_time){
 	
 	for(depth = 1; depth < MaxDepth; depth++){
 		
+		int slmr = SuccessfulLateMoveReductions;
+		int flmr = FailedLateMoveReductions;
+		int snw = SuccessfulNullWindow;
+		int fnw = FailedNullWindow;
 		int rnodes = tree.raw_nodes;
 		int anodes = tree.alpha_beta_nodes;
 		int qnodes = tree.quiescence_nodes;
@@ -42,6 +51,10 @@ move_t get_best_move(board_t * board, int alloted_time){
 		int value = alpha_beta_prune(&tree,&(tree.principle_variation),depth,-CheckMate,CheckMate);
 		
 		printf("Search Depth        : %d\n",depth);
+		printf("Successful LMR      : %d\n",SuccessfulLateMoveReductions-slmr);
+		printf("Failed LMR          : %d\n",FailedLateMoveReductions-flmr);
+		printf("Successful NW       : %d\n",SuccessfulNullWindow-snw);
+		printf("Failed NW           : %d\n",FailedNullWindow-fnw);
 		printf("Raw Nodes           : %d\n",tree.raw_nodes - rnodes);
 		printf("Alpha Nodes         : %d\n",tree.alpha_beta_nodes - anodes);
 		printf("Quiescence Nodes    : %d\n",tree.quiescence_nodes - qnodes);
@@ -114,7 +127,7 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 	basic_heuristic(tree,&(moves[0]),size);
 	
 	int first_node_was_pv = tree->principle_variation.line[tree->ply-1] == moves[0];
-	
+	first_node_was_pv = 1;
 	int i, value, best = -CheckMate;
 	for (i = 0; i < size; i++){
 		apply_move(board,moves[i]);
@@ -124,19 +137,42 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 			if (i == 0 && first_node_was_pv)
 				value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
 			
-			else if (valid_size > sqrt(2*size)/2 && depth >= 3 && IS_EMPTY(MOVE_GET_CAPTURE(moves[i])) && is_not_in_check(board,board->turn)){
+			else if (valid_size > sqrt(size) && depth >= 3 && IS_EMPTY(MOVE_GET_CAPTURE(moves[i])) && is_not_in_check(board,board->turn)){
 				if (first_node_was_pv){
-					value = -alpha_beta_prune(tree,&lpv,depth-3,-alpha-1,-alpha);
+					value = -alpha_beta_prune(tree,&lpv,depth-3,-beta,-alpha);
 			
-					if (value > alpha)
-						value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
+					if (value > alpha){
+						value = -alpha_beta_prune(tree,&lpv,depth-1,-alpha-1,-alpha);
+						
+						if (value > alpha && value < beta){
+							value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
+							FailedNullWindow++;
+						} else
+							SuccessfulNullWindow++;
+							
+						FailedLateMoveReductions++;
+					}
+					else
+						SuccessfulLateMoveReductions++;
 				}
 				
 				else {
 					value = -alpha_beta_prune(tree,&lpv,depth-2,-beta,-alpha);
 			
-					if (value > alpha)
-						value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
+					if (value > alpha){
+						value = -alpha_beta_prune(tree,&lpv,depth-1,-alpha-1,-alpha);
+						
+						if (value > alpha && value < beta){
+							value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
+							FailedNullWindow++;
+						} else
+							SuccessfulNullWindow++;
+							
+						FailedLateMoveReductions++;
+					}
+					else
+						SuccessfulLateMoveReductions++;
+					
 				}
 			}
 				
@@ -144,8 +180,12 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 				if (first_node_was_pv){
 					value = -alpha_beta_prune(tree,&lpv,depth-1,-alpha-1,-alpha);
 					
-					if (value > alpha && value < beta)
+					if (value > alpha && value < beta){
 						value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
+						FailedNullWindow++;
+					} else
+						SuccessfulNullWindow++;
+						
 				}
 				
 				else 
@@ -251,18 +291,46 @@ int evaluate_board(board_t * board){
 	
 	value += PawnValue * (board->pawn_counts[turn] - board->pawn_counts[!turn]);
 	
+	int pawn_delta = turn == ColourWhite ? -16 : 16;
+	
+	int fstack[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 	for(location = &(board->pawn_locations[turn][0]); *location != -1; location++){
 		if (turn == ColourWhite)
 			value += WHITE_PAWN_POSITION_VALUE(*location);
 		else if (turn == ColourBlack)
 			value += BLACK_PAWN_POSITION_VALUE(*location);
+		if (++(fstack[*location%16]) != 1)
+			value += PawnStackedValue;
+		
+		int self = board->squares[*location];
+		if (board->squares[*location-pawn_delta-1] == self)
+			value += DiagonallyConnectedPawnValue;
+		else if (board->squares[*location-pawn_delta+1] == self)
+			value += DiagonallyConnectedPawnValue;
 	}
 	
+	int estack[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 	for(location = &(board->pawn_locations[!turn][0]); *location != -1; location++){
 		if (turn == ColourWhite)
 			value -= WHITE_PAWN_POSITION_VALUE(*location);
 		else if (turn == ColourBlack)
 			value -= BLACK_PAWN_POSITION_VALUE(*location);
+		if (++(estack[*location%16]) != 1)
+			value -= PawnStackedValue;
+		
+		int self = board->squares[*location];
+		if (board->squares[*location-pawn_delta-1] == self)
+			value -= DiagonallyConnectedPawnValue;
+		else if (board->squares[*location-pawn_delta+1] == self)
+			value -= DiagonallyConnectedPawnValue;
+	}
+	
+	int i;
+	for(i = 5; i < 11; i++){
+		if (fstack[i] && !(fstack[i-1]) && !(fstack[i+1]))
+			value += IsolatedPawnValue;
+		if (estack[i] && !(estack[i-1]) && !(estack[i+1]))
+			value -= IsolatedPawnValue;
 	}
 	
 	return value;
