@@ -14,9 +14,9 @@
 #define QueenValue 	(9 * PawnValue)
 
 #define PawnStackedValue				(-80)
-#define IsolatedPawnValue				(-25)
-#define DiagonallyConnectedPawnValue	( 20)
-#define ConnectedPawn					(  0)	
+#define IsolatedPawnValue				( -9)
+#define DiagonallyConnectedPawnValue	(  5)
+#define HorizontallyConnectedPawnValue  (  2)	
 
 /* Function Prototypes */
 move_t get_best_move(board_t * board, int time);

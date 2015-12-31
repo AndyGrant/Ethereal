@@ -303,10 +303,16 @@ int evaluate_board(board_t * board){
 			value += PawnStackedValue;
 		
 		int self = board->squares[*location];
+		
 		if (board->squares[*location-pawn_delta-1] == self)
 			value += DiagonallyConnectedPawnValue;
 		else if (board->squares[*location-pawn_delta+1] == self)
 			value += DiagonallyConnectedPawnValue;
+		
+		if (board->squares[*location+1] == self)
+			value += HorizontallyConnectedPawnValue;
+		else if (board->squares[*location-1] == self)
+			value += HorizontallyConnectedPawnValue;
 	}
 	
 	int estack[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -319,10 +325,16 @@ int evaluate_board(board_t * board){
 			value -= PawnStackedValue;
 		
 		int self = board->squares[*location];
+		
 		if (board->squares[*location-pawn_delta-1] == self)
 			value -= DiagonallyConnectedPawnValue;
 		else if (board->squares[*location-pawn_delta+1] == self)
 			value -= DiagonallyConnectedPawnValue;
+		
+		if (board->squares[*location+1] == self)
+			value += HorizontallyConnectedPawnValue;
+		else if (board->squares[*location-1] == self)
+			value += HorizontallyConnectedPawnValue;
 	}
 	
 	int i;
