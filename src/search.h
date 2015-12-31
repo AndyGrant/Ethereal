@@ -13,9 +13,9 @@
 #define RookValue 	(5 * PawnValue)
 #define QueenValue 	(9 * PawnValue)
 
-#define PawnStackedValue				(-40)
-#define IsolatedPawnValue				(-15)
-#define DiagonallyConnectedPawnValue	( 10)
+#define PawnStackedValue				(-80)
+#define IsolatedPawnValue				(-25)
+#define DiagonallyConnectedPawnValue	( 20)
 #define ConnectedPawn					(  0)	
 
 /* Function Prototypes */
