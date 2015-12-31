@@ -79,6 +79,10 @@ move_t get_best_move(board_t * board, int alloted_time){
  		}
  		else if (EndTime - ((float)(alloted_time) * .8) < time(NULL))
  			break;
+		
+		if (value >= CheckMate || value <= -CheckMate)
+			break;
+			
 	}
 	
 	printf("TIME TAKEN %d\n",((int)clock()-(int)start)/CLOCKS_PER_SEC);
@@ -128,7 +132,7 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 	
 	int first_node_was_pv = tree->principle_variation.line[tree->ply-1] == moves[0];
 	first_node_was_pv = 1;
-	int i, value, best = -CheckMate;
+	int i, value, best = -CheckMate - depth;
 	for (i = 0; i < size; i++){
 		apply_move(board,moves[i]);
 		if (is_not_in_check(board,!(board->turn))){
