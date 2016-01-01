@@ -138,9 +138,9 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 			if (i == 0 && first_node_was_pv)
 				value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
 			
-			else if (valid_size > sqrt(size) && depth >= 3 && IS_EMPTY(MOVE_GET_CAPTURE(moves[i])) && is_not_in_check(board,board->turn)){
+			else if (valid_size > sqrt(size) * 2 && depth >= 3 && IS_EMPTY(MOVE_GET_CAPTURE(moves[i])) && is_not_in_check(board,board->turn)){
 				if (first_node_was_pv){
-					value = -alpha_beta_prune(tree,&lpv,depth-3,-beta,-alpha);
+					value = -alpha_beta_prune(tree,&lpv,depth-2,-beta,-alpha);
 			
 					if (value > alpha){
 						value = -alpha_beta_prune(tree,&lpv,depth-1,-alpha-1,-alpha);
