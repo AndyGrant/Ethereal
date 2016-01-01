@@ -20,7 +20,7 @@ int evaluate_board(board_t * board){
 	int pawn_info[2][10] = {{0,0,0,0,0,0,0,0,0,0},{7,7,7,7,7,7,7,7,7,7}};
 	for(turn = ColourWhite; turn <= ColourBlack; turn++){
 		for(location = &(board->pawn_locations[turn][0]); *location != -1; location++){
-			int sq64 = CONVERT_256_TO_64(board->pawn_locations[turn][*location]);
+			int sq64 = CONVERT_256_TO_64(*location);
 			int col = 1 + sq64 % 8;
 			int row = 7 - sq64 / 8;
 			
@@ -89,14 +89,14 @@ int evaluate_player(board_t * board, int turn, int pawn_info[2][10]){
 				break;
 			
 			case WhiteKing:
-				if (board->piece_counts[0] + board->piece_counts[1] < 7)
+				if (board->piece_counts[0] + board->piece_counts[1] < 6)
 					value += KingEndValueMap[sq64];
 				else
 					value += KingEarlyValueMap[sq64];
 				break;
 				
 			case BlackKing:
-				if (board->piece_counts[0] + board->piece_counts[1] < 7)
+				if (board->piece_counts[0] + board->piece_counts[1] < 6)
 					value += KingEndValueMap[inv[sq64]];
 				else
 					value += KingEarlyValueMap[inv[sq64]];
@@ -112,7 +112,11 @@ int evaluate_player(board_t * board, int turn, int pawn_info[2][10]){
 		int row = 7 - sq64 / 8;
 		
 		value += PawnValue;
-		value += PawnValueMap[sq64];
+		
+		if (turn == ColourWhite)
+			value += PawnValueMap[sq64];
+		else
+			value += PawnValueMap[inv[sq64]];
 		
 		if (turn == ColourWhite){
 			if (pawn_info[ColourWhite][col] > row)

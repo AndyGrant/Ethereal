@@ -24,7 +24,7 @@ int FailedNullWindow = 0;
 
 move_t get_best_move(board_t * board, int alloted_time){
 	int depth, i, size = 0; 	
-	alloted_time = 2;
+	alloted_time = 10;
 	StartTime = time(NULL);
 	EndTime = StartTime + alloted_time;
 	EvaluatingPlayer = board->turn;
