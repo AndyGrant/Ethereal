@@ -95,7 +95,7 @@ void init_search_tree_t(search_tree_t * tree, board_t * board){
 	memcpy(&(tree->board),board,sizeof(board_t));
 	tree->principle_variation.length = 0;
 	memset(&(tree->principle_variation.line[0]),0,sizeof(move_t) * MaxDepth);
-	memset(&(tree->killer_moves[0][0]),0,sizeof(move_t) * 3 * MaxDepth);
+	memset(&(tree->killer_moves[0][0]),0,sizeof(move_t) * 5 * MaxDepth);
 }
 
 int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth, int alpha, int beta){
@@ -292,16 +292,18 @@ void basic_heuristic(search_tree_t * tree, move_t * moves, int size){
 		int cap = MOVE_GET_CAPTURE(moves[i]);
 		values[i] = (!IS_EMPTY(cap) * cap) / tree->board.squares[MOVE_GET_FROM(moves[i])];
 		
-		if (arr[0] == moves[i])
-			values[i] += 1500;
-		else if (arr[1] == moves[i])
-			values[i] += 1000;
-		else if (arr[2] == moves[i])
-			values[i] += 500;
-		
 		if (moves[i] == tree->principle_variation.line[tree->ply-1])
 			values[i] += 30000;
-		
+		else if (arr[0] == moves[i])
+			values[i] += 2500;
+		else if (arr[1] == moves[i])
+			values[i] += 2000;
+		else if (arr[2] == moves[i])
+			values[i] += 1500;
+		else if (arr[3] == moves[i])
+			values[i] += 1000;
+		else if (arr[4] == moves[i])
+			values[i] += 500;
 	}
 	
 	order_by_value(moves,values,size);
@@ -309,6 +311,8 @@ void basic_heuristic(search_tree_t * tree, move_t * moves, int size){
 
 void update_killer_heuristic(search_tree_t * tree, move_t move){
 	move_t * arr = &(tree->killer_moves[tree->ply][0]);
+	arr[4] = arr[3];
+	arr[3] = arr[2];
 	arr[2] = arr[1];
 	arr[1] = arr[0];
 	arr[0] = move;

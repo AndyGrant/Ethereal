@@ -55,7 +55,7 @@ typedef struct search_tree_t {
 	
 	board_t board;
 	
-	move_t killer_moves[MaxDepth][3];
+	move_t killer_moves[MaxDepth][5];
 	principle_variation_t principle_variation;
 	
 } search_tree_t;
