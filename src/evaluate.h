@@ -15,6 +15,8 @@
 
 #define StackedPawnValue				(-10)
 #define IsolatedPawnValue				(-20)
+#define OpenFileRookValue				( 16)
+#define SemiOpenFileRookValue			( 10)
 
 static int PawnValueMap[64] = {
 	  0,   0,   0,   0,   0,   0,   0,   0,
@@ -56,8 +58,8 @@ static int KingEarlyValueMap[64] = {
 	-50, -50, -50, -50, -50, -50, -50, -50,
 	-50, -50, -50, -50, -50, -50, -50, -50,
 	-50, -50, -50, -50, -50, -50, -50, -50,
-	-30, -30, -30, -30, -30, -30, -30, -30,
-	  0,  20,  40, -20,   0, -20,  40,  20
+	-30, -30, -30, -60, -60, -60, -30, -30,
+	  0,  20,  40, -60,   0, -60,  40,  20
 };
 
 static int KingEndValueMap[64] = {
