@@ -24,7 +24,7 @@ int FailedNullWindow = 0;
 
 move_t get_best_move(board_t * board, int alloted_time){
 	int depth, i, size = 0; 	
-	alloted_time = 10;
+	alloted_time = 16;
 	StartTime = time(NULL);
 	EndTime = StartTime + alloted_time;
 	EvaluatingPlayer = board->turn;
@@ -73,13 +73,10 @@ move_t get_best_move(board_t * board, int alloted_time){
 		printf("\n");
 		printf("------------------------------\n");
 		
-		if (value > initial_value){
- 			if (EndTime - ((float)(alloted_time) * .9) < time(NULL))
- 				break;
- 		}
- 		else if (EndTime - ((float)(alloted_time) * .8) < time(NULL))
- 			break;
 		
+ 		if (EndTime - ((float)(alloted_time) * .7) < time(NULL))
+ 			break;
+	
 		if (value >= CheckMate || value <= -CheckMate)
 			break;
 			

@@ -39,8 +39,8 @@ int evaluate_board(board_t * board){
 	int black = evaluate_player(board,ColourBlack,pawn_info);
 	
 	if (board->turn == ColourWhite)
-		return white - black;
-	return black - white;
+		return 10 + white - black;
+	return 10 + black - white;
 }
 
 int evaluate_player(board_t * board, int turn, int pawn_info[2][10]){
