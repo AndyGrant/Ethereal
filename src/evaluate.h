@@ -7,11 +7,11 @@
 #define CheckMate	(100000)
 
 /* Piece Value Definitions */
-#define PawnValue 	(100)
-#define KnightValue	(300)
-#define BishopValue	(300)
-#define RookValue 	(500)
-#define QueenValue 	(900)
+#define PawnValue 	(200)
+#define KnightValue	(600)
+#define BishopValue	(600)
+#define RookValue 	(1000)
+#define QueenValue 	(1800)
 
 #define StackedPawnValue				(-10)
 #define IsolatedPawnValue				(-20)
