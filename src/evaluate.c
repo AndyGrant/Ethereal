@@ -15,83 +15,120 @@
 #include "util.h"
 
 int evaluate_board(board_t * board){
-	int value = 60;
-	int turn = board->turn;
-	int * location;
 	
-	for(location = &(board->piece_locations[turn][1]); *location != -1; location++){
-		switch(PIECE_TYPE(board->squares[*location])){
-			case QueenFlag: 	value += (QueenValue 	+ QUEEN_POSITION_VALUE(*location)); 	break;
-			case RookFlag: 		value += (RookValue 	+ ROOK_POSITION_VALUE(*location)); 		break;
-			case BishopFlag: 	value += (BishopValue 	+ BISHOP_POSITION_VALUE(*location)); 	break;
-			case KnightFlag: 	value += (KnightValue 	+ KNIGHT_POSITION_VALUE(*location)); 	break;
+	int turn, *location;
+	int pawn_info[2][10] = {{0,0,0,0,0,0,0,0,0,0},{7,7,7,7,7,7,7,7,7,7}};
+	for(turn = ColourWhite; turn <= ColourBlack; turn++){
+		for(location = &(board->pawn_locations[turn][0]); *location != -1; location++){
+			int sq64 = CONVERT_256_TO_64(board->pawn_locations[turn][*location]);
+			int col = 1 + sq64 % 8;
+			int row = 7 - sq64 / 8;
+			
+			if (turn == ColourWhite){
+				if (row > pawn_info[ColourWhite][col])
+					pawn_info[ColourWhite][col] = row;
+			}
+			else if(turn == ColourBlack){
+				if (row < pawn_info[ColourBlack][col])
+					pawn_info[ColourBlack][col] = row;
+			}
 		}
 	}
 	
-	for(location = &(board->piece_locations[!turn][1]); *location != -1; location++){
-		switch(PIECE_TYPE(board->squares[*location])){
-			case QueenFlag: 	value -= (QueenValue 	+ QUEEN_POSITION_VALUE(*location)); 	break;
-			case RookFlag: 		value -= (RookValue 	+ ROOK_POSITION_VALUE(*location)); 		break;
-			case BishopFlag: 	value -= (BishopValue 	+ BISHOP_POSITION_VALUE(*location)); 	break;
-			case KnightFlag: 	value -= (KnightValue 	+ KNIGHT_POSITION_VALUE(*location)); 	break;
+	int white = evaluate_player(board,ColourWhite,pawn_info);
+	int black = evaluate_player(board,ColourBlack,pawn_info);
+	
+	if (board->turn == ColourWhite)
+		return white - black;
+	return black - white;
+}
+
+int evaluate_player(board_t * board, int turn, int pawn_info[2][10]){
+	int value = 0, *location, i;
+	
+	for(location = &(board->piece_locations[turn][0]); *location != -1; location++){
+		int type = board->squares[*location];
+		int sq256 = *location;
+		int sq64 = CONVERT_256_TO_64(sq256);
+		
+		switch(type){
+			case WhiteKnight:
+				value += KnightValue;
+				value += KnightValueMap[sq64];
+				break;
+			
+			case BlackKnight:
+				value += KnightValue;
+				value += KnightValueMap[inv[sq64]];
+				break;
+			
+			case WhiteBishop:
+				value += BishopValue;
+				value += BishopValueMap[sq64];
+				break;
+			
+			case BlackBishop:
+				value += BishopValue;
+				value += BishopValueMap[inv[sq64]];
+				break;
+				
+			case WhiteRook:
+				value += RookValue;
+				break;
+			
+			case BlackRook:
+				value += RookValue;
+				break;
+				
+			case WhiteQueen:
+				value += QueenValue;
+				break;
+			
+			case BlackQueen:
+				value += QueenValue;
+				break;
+			
+			case WhiteKing:
+				if (board->piece_counts[0] + board->piece_counts[1] < 7)
+					value += KingEndValueMap[sq64];
+				else
+					value += KingEarlyValueMap[sq64];
+				break;
+				
+			case BlackKing:
+				if (board->piece_counts[0] + board->piece_counts[1] < 7)
+					value += KingEndValueMap[inv[sq64]];
+				else
+					value += KingEarlyValueMap[inv[sq64]];
+				break;
+			
 		}
 	}
 	
-	
-	value += PawnValue * (board->pawn_counts[turn] - board->pawn_counts[!turn]);
-	
-	int pawn_delta = turn == ColourWhite ? -16 : 16;
-	
-	int fstack[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 	for(location = &(board->pawn_locations[turn][0]); *location != -1; location++){
-		if (turn == ColourWhite)
-			value += WHITE_PAWN_POSITION_VALUE(*location);
-		else if (turn == ColourBlack)
-			value += BLACK_PAWN_POSITION_VALUE(*location);
-		if (++(fstack[*location%16]) != 1)
-			value += PawnStackedValue;
+		int sq256 = *location;
+		int sq64 = CONVERT_256_TO_64(sq256);
+		int col = 1 + sq64 % 8;
+		int row = 7 - sq64 / 8;
 		
-		int self = board->squares[*location];
+		value += PawnValue;
+		value += PawnValueMap[sq64];
 		
-		if (board->squares[*location-pawn_delta-1] == self)
-			value += DiagonallyConnectedPawnValue;
-		else if (board->squares[*location-pawn_delta+1] == self)
-			value += DiagonallyConnectedPawnValue;
+		if (turn == ColourWhite){
+			if (pawn_info[ColourWhite][col] > row)
+				value += StackedPawnValue;
+			
+			if (pawn_info[ColourWhite][col+1] == 0 && pawn_info[ColourWhite][col-1] == 0)
+				value += IsolatedPawnValue;
+		}
 		
-		if (board->squares[*location+1] == self)
-			value += HorizontallyConnectedPawnValue;
-		else if (board->squares[*location-1] == self)
-			value += HorizontallyConnectedPawnValue;
-	}
-	
-	int estack[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-	for(location = &(board->pawn_locations[!turn][0]); *location != -1; location++){
-		if (turn == ColourWhite)
-			value -= WHITE_PAWN_POSITION_VALUE(*location);
-		else if (turn == ColourBlack)
-			value -= BLACK_PAWN_POSITION_VALUE(*location);
-		if (++(estack[*location%16]) != 1)
-			value -= PawnStackedValue;
-		
-		int self = board->squares[*location];
-		
-		if (board->squares[*location-pawn_delta-1] == self)
-			value -= DiagonallyConnectedPawnValue;
-		else if (board->squares[*location-pawn_delta+1] == self)
-			value -= DiagonallyConnectedPawnValue;
-		
-		if (board->squares[*location+1] == self)
-			value += HorizontallyConnectedPawnValue;
-		else if (board->squares[*location-1] == self)
-			value += HorizontallyConnectedPawnValue;
-	}
-	
-	int i;
-	for(i = 5; i < 11; i++){
-		if (fstack[i] && !(fstack[i-1]) && !(fstack[i+1]))
-			value += IsolatedPawnValue;
-		if (estack[i] && !(estack[i-1]) && !(estack[i+1]))
-			value -= IsolatedPawnValue;
+		else if (turn == ColourBlack){
+			if (pawn_info[ColourBlack][col] < row)
+				value += StackedPawnValue;
+			
+			if (pawn_info[ColourBlack][col+1] == 0 && pawn_info[ColourBlack][col-1] == 0)
+				value += IsolatedPawnValue;
+		}
 	}
 	
 	return value;
