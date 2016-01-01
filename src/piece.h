@@ -49,7 +49,7 @@
 #define PIECE_IS_ROOK_OR_QUEEN(piece)	((piece) & (RookFlag	| QueenFlag))
 
 #define IS_EMPTY_OR_ENEMY(s,t) 		((s) != Wall && ((s) == Empty || ((s)%2) != (t)))
-#define IS_ENEMY(s,t)				((s) != Empty && (s) != Wall && ((s)%2) != t)
+#define IS_ENEMY(s,t)				((s) < Empty && (s%2) != (t))
 
 #define MAKE_PIECE(type, colour)	((1 << (type + 1)) + colour)
 
