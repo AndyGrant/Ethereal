@@ -65,6 +65,7 @@ move_t get_best_move(board_t * board, int alloted_time){
 			printf(" -> ");
 		}
 		printf("\nValue               : %s%.2f\n",value >= 0 ? "+" : "", (float)value/PawnValue);
+		
 		printf("info depth %d score cp %d time %d nodes %d pv ",depth,(100*value)/PawnValue,1000 * (time(NULL) - StartTime), tree.raw_nodes);
 		for(i = 0; i < tree.principle_variation.length; i++){
 			print_move_t(tree.principle_variation.line[i]);
@@ -77,9 +78,9 @@ move_t get_best_move(board_t * board, int alloted_time){
  		if (EndTime - ((float)(alloted_time) * .7) < time(NULL))
  			break;
 	
-		if (value >= CheckMate || value <= -CheckMate)
+		if (value >= CheckMate)
 			break;
-			
+	
 	}
 	
 	printf("TIME TAKEN %d\n",((int)clock()-(int)start)/CLOCKS_PER_SEC);
@@ -139,9 +140,9 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 			if (i == 0 && first_node_was_pv)
 				value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
 			
-			else if (valid_size > sqrt(size) * 2 && depth >= 3 && IS_EMPTY(MOVE_GET_CAPTURE(moves[i])) && is_not_in_check(board,board->turn)){
+			else if (valid_size > sqrt(size) && depth >= 3 && IS_EMPTY(MOVE_GET_CAPTURE(moves[i])) && is_not_in_check(board,board->turn)){
 				if (first_node_was_pv){
-					value = -alpha_beta_prune(tree,&lpv,depth-2,-beta,-alpha);
+					value = -alpha_beta_prune(tree,&lpv,depth-2,-alpha-1,-alpha);
 			
 					if (value > alpha){
 						value = -alpha_beta_prune(tree,&lpv,depth-1,-alpha-1,-alpha);
@@ -190,7 +191,7 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 						
 				}
 				
-				else 
+				else
 					value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
 			}
 			
