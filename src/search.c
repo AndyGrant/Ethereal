@@ -97,6 +97,7 @@ void init_search_tree_t(search_tree_t * tree, board_t * board){
 	tree->principle_variation.length = 0;
 	memset(&(tree->principle_variation.line[0]),0,sizeof(move_t) * MaxDepth);
 	memset(&(tree->killer_moves[0][0]),0,sizeof(move_t) * 5 * MaxDepth);
+	memset(&(tree->depth_one_evaluations[0]),0,sizeof(move_t) * MaxMoves);
 }
 
 int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth, int alpha, int beta){
@@ -194,7 +195,6 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 				else
 					value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
 			}
-			
 			
 			if (value > best)
 				best = value;
