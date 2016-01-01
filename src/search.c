@@ -246,7 +246,7 @@ int quiescence_search(search_tree_t * tree, int alpha, int beta){
 	basic_heuristic(tree,&(moves[0]),size);
 	
 	int i, value;
-	for (i = size-1; i >= 0; i--){
+	for(i = 0; i < size; i++){
 		apply_move(board,moves[i]);
 		if (is_not_in_check(board,!board->turn)){
 			value = -quiescence_search(tree,-beta,-alpha);
