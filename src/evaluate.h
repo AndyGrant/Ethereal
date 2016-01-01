@@ -15,8 +15,8 @@
 
 #define StackedPawnValue				(-10)
 #define IsolatedPawnValue				(-20)
-#define OpenFileRookValue				( 16)
-#define SemiOpenFileRookValue			( 10)
+#define OpenFileRookValue				( 25)
+#define SemiOpenFileRookValue			( 15)
 
 static int PawnValueMap[64] = {
 	  0,   0,   0,   0,   0,   0,   0,   0,
