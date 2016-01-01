@@ -50,6 +50,7 @@ int evaluate_player(board_t * board, int turn, int pawn_info[2][10]){
 		int type = board->squares[*location];
 		int sq256 = *location;
 		int sq64 = CONVERT_256_TO_64(sq256);
+		int col = 1 + sq64 % 8;
 		
 		switch(type){
 			case WhiteKnight:
@@ -74,10 +75,22 @@ int evaluate_player(board_t * board, int turn, int pawn_info[2][10]){
 				
 			case WhiteRook:
 				value += RookValue;
+				if (pawn_info[ColourWhite][col] == 0){
+					if (pawn_info[ColourBlack][col] == 7)
+						value += OpenFileRookValue;
+					else
+						value += SemiOpenFileRookValue;
+				}
 				break;
 			
 			case BlackRook:
 				value += RookValue;
+				if (pawn_info[ColourBlack][col] == 7){
+					if (pawn_info[ColourWhite][col] == 0)
+						value += OpenFileRookValue;
+					else
+						value += SemiOpenFileRookValue;
+				}
 				break;
 				
 			case WhiteQueen:
@@ -89,14 +102,14 @@ int evaluate_player(board_t * board, int turn, int pawn_info[2][10]){
 				break;
 			
 			case WhiteKing:
-				if (board->piece_counts[0] + board->piece_counts[1] < 6)
+				if (board->piece_counts[0] + board->piece_counts[1] <= 6)
 					value += KingEndValueMap[sq64];
 				else
 					value += KingEarlyValueMap[sq64];
 				break;
 				
 			case BlackKing:
-				if (board->piece_counts[0] + board->piece_counts[1] < 6)
+				if (board->piece_counts[0] + board->piece_counts[1] <= 6)
 					value += KingEndValueMap[inv[sq64]];
 				else
 					value += KingEarlyValueMap[inv[sq64]];
