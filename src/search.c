@@ -117,7 +117,8 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 		tree->raw_nodes--;
 		tree->alpha_beta_nodes--;
 		pv->length = 0;
-		return quiescence_search(tree,alpha,beta);
+		int qs = quiescence_search(tree,alpha,beta);
+		return qs == -CheckMate ? evaluate_board(board) : qs;
 	}
 	
 	tree->ply++;	
@@ -224,40 +225,43 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 }
 
 int quiescence_search(search_tree_t * tree, int alpha, int beta){
-	
+	int i, size = 0, value, best;
+	board_t * board = &(tree->board);
+	tree->ply++;
 	tree->raw_nodes++;
 	tree->quiescence_nodes++;
 	
-	if (EndTime < time(NULL))
+	if (EndTime < time(NULL)){
+		tree->ply--;
 		return tree->board.turn == EvaluatingPlayer ? -CheckMate : CheckMate;
+	}
 	
-	board_t * board = &(tree->board);
-	
-	int best = evaluate_board(board);
+	best = evaluate_board(board);
 	if (best > alpha) alpha = best;
-	if (alpha > beta) return best;
+	if (alpha > beta) {tree->ply--; return best;}
 	
-	tree->ply++;
 	
-	int size = 0;
 	move_t moves[MaxMoves];
 	gen_all_captures(&(tree->board),&(moves[0]),&size);
 	
+	for(i = 0; i < size; i++){
+		if (PIECE_IS_KING(MOVE_GET_CAPTURE(moves[i]))){
+			tree->ply--;
+			return -CheckMate;
+		}
+	}
+	
 	basic_heuristic(tree,&(moves[0]),size);
 	
-	int i, value;
 	for(i = 0; i < size; i++){
-		apply_move(board,moves[i]);
-		if (is_not_in_check(board,!board->turn)){
-			value = -quiescence_search(tree,-beta,-alpha);
-			
-			if (value > best)	best = value;
-			if (best > alpha)	alpha = best;
-			if (alpha > beta){
-				update_killer_heuristic(tree,moves[i]);
-				revert_move(board,moves[i]); 
-				break;
-			}
+		apply_move(board,moves[i]);		
+		value = -quiescence_search(tree,-beta,-alpha);
+		if (value > best)	best = value;
+		if (best > alpha)	alpha = best;
+		if (alpha > beta){
+			update_killer_heuristic(tree,moves[i]);
+			revert_move(board,moves[i]); 
+			break;
 		}
 		revert_move(board,moves[i]);
 	}
@@ -291,6 +295,9 @@ void basic_heuristic(search_tree_t * tree, move_t * moves, int size){
 	for(i = 0; i < size; i++){
 		int cap = MOVE_GET_CAPTURE(moves[i]);
 		values[i] = (!IS_EMPTY(cap) * cap) / tree->board.squares[MOVE_GET_FROM(moves[i])];
+		
+		if (MOVE_IS_PROMOTION(moves[i]))
+			values[i] += 5 * MOVE_GET_PROMOTE_TYPE(moves[i],ColourWhite);
 		
 		if (moves[i] == tree->principle_variation.line[tree->ply-1])
 			values[i] += 30000;
