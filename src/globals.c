@@ -2,3 +2,4 @@
 
 board_t board;
 search_tree_t tree;
+zorbist_t zorbist;

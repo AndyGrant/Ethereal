@@ -11,6 +11,7 @@
 #include "search.h"
 #include "types.h"
 #include "util.h"
+#include "zorbist.h"
 
 extern board_t board;
 
@@ -19,6 +20,8 @@ char BaseBoard[73] = "rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRN
 void init_board_t(char setup[73]){
 		
 	memset(&board,0,sizeof(board_t));
+	
+	init_zorbist_t();
 	
 	int i, sq, flag;
 	
@@ -79,6 +82,8 @@ void init_board_t(char setup[73]){
 	board.castle_rights = CREATE_CASTLE_RIGHTS(setup[64]-'0',setup[65]-'0',setup[66]-'0',setup[67]-'0');
 	board.ep_history[0] = (100*(setup[68]-'0'))+(10 * (setup[69]-'0'))+(setup[70]-'0');
 	board.turn = (setup[71] - '0');
+	
+	init_zorbist_hash();
 }
 
 void encode_board_t(char str[73]){

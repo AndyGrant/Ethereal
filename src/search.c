@@ -16,6 +16,7 @@
 
 extern board_t board;
 extern search_tree_t tree;
+extern zorbist_t zorbist;
 
 time_t StartTime, EndTime;
 int EvaluatingPlayer;
@@ -28,17 +29,17 @@ int FailedNullWindow = 0;
 move_t get_best_move(int alloted_time){
 	int depth, i, size = 0; 	
 	alloted_time = 16;
+	
 	StartTime = time(NULL);
 	EndTime = StartTime + alloted_time;
-	EvaluatingPlayer = board.turn;
-	
 	clock_t start = clock();
 	
-	init_search_tree_t();
+	EvaluatingPlayer = board.turn;
 	
+	init_search_tree_t();
 	print_board_t();
 	
-	int initial_value = evaluate_board();
+	int old_hash = board.hash;
 	
 	for(depth = 1; depth < MaxDepth; depth++){
 		
@@ -74,7 +75,10 @@ move_t get_best_move(int alloted_time){
 			printf(" ");
 		}
 		printf("\n");
+		printf("OLD HASH : %d NEW HASH %d\n",old_hash,board.hash);
 		printf("------------------------------\n");
+		
+		
 		
 		
  		if (EndTime - ((float)(alloted_time) * .7) < time(NULL))

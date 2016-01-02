@@ -21,6 +21,11 @@ typedef struct transposition_t {
 	
 } transposition_t;
 
+typedef struct zorbist_t{
+	int bitstrings[64][16];
+	
+} zorbist_t;
+
 typedef struct board_t {
 	int positions[256];
 	int squares[256];
@@ -35,6 +40,8 @@ typedef struct board_t {
 	
 	int depth;
 	move_t ep_history[MaxDepth];
+	
+	int hash;
 	
 	int turn;
 	
