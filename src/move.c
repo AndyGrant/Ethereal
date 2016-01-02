@@ -742,8 +742,8 @@ void apply_move(move_t move){
 		board.turn = !(board.turn);
 	}
 	
-	else 
-		assert("No Move Type Detected" == 0);
+	board.hash_history[board.hash_entries++] = board.hash;
+
 	
 }
 
@@ -859,8 +859,7 @@ void revert_move(move_t move){
 		board.turn = !(board.turn);
 	}
 	
-	else 
-		assert("No Move Type Detected" == 0);
+	board.hash_entries--;
 }
 
 void insert_position(int to, int turn){

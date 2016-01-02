@@ -132,7 +132,15 @@ int alpha_beta_prune(principle_variation_t * pv, int depth, int alpha, int beta)
 		if (is_not_in_check(!(board.turn))){
 			valid_size++;
 			
-			if (i == 0)
+			int z, repititions = 0;
+			for(z = board.hash_entries-1; z >= 0; z-=2)
+				if (board.hash_history[z] == board.hash)
+					repititions++;
+			
+			if (repititions >= 3)
+				value = 0;
+			
+			else if (i == 0)
 				value = -alpha_beta_prune(&lpv,depth-1,-beta,-alpha);
 			
 			else if (valid_size > sqrt(size) && depth >= 3 && IS_EMPTY(MOVE_GET_CAPTURE(moves[i])) && is_not_in_check(board.turn)){
