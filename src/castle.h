@@ -10,15 +10,17 @@
 #include "types.h"
 #include "util.h"
 
+extern board_t board;
+
 /* Castle Right Definitions */
 #define WhiteKingCastle		(1 << 0)
 #define WhiteQueenCastle	(1 << 1)
 #define BlackKingCastle		(1 << 2)
 #define BlackQueenCastle	(1 << 3)
 
-#define KING_HAS_RIGHTS(t,r)	((r) & (1 << ((t)*2)))
-#define QUEEN_HAS_RIGHTS(t,r)	((r) & (2 << ((t)*2)))
-#define GET_RIGHTS(t,b)			((b)->castle_rights & (3 << (t*2)))
+#define KING_HAS_RIGHTS(t)		((board.castle_rights) & (1 << ((t)*2)))
+#define QUEEN_HAS_RIGHTS(t)		((board.castle_rights) & (2 << ((t)*2)))
+#define GET_RIGHTS(t)			((board.castle_rights) & (3 << (t*2)))
 
 #define CREATE_KING_RIGHTS(t)	(1 << ((t)*2))
 #define CREATE_QUEEN_RIGHTS(t)	(2 << ((t)*2))

@@ -13,9 +13,11 @@ extern "C" {
 	#include "util.h"
 };
 
+extern board_t board;
+
 char starting_position[73] = "rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000";
 
-std::string convert_move_to_string(board_t * board, move_t move){
+std::string convert_move_to_string(move_t move){
 	std::string str;
 	int from = MOVE_GET_FROM(move);
 	int to = MOVE_GET_TO(move);
@@ -32,18 +34,18 @@ std::string convert_move_to_string(board_t * board, move_t move){
 }
 
 void print_move_standard_notation(move_t move){
-	std::string str = convert_move_to_string(NULL,move);
+	std::string str = convert_move_to_string(move);
 	std::cout << str;
 }
 
-void make_move_from_string(board_t * board, std::string move){
+void make_move_from_string(std::string move){
 	int size = 0;
 	move_t moves[MaxMoves];
-	gen_all_legal_moves(board,&(moves[0]),&size);
+	gen_all_legal_moves(&(moves[0]),&size);
 	
 	for(size -= 1; size >= 0; size--){
-		if (move == convert_move_to_string(board,moves[size])){
-			apply_move(board,moves[size]);
+		if (move == convert_move_to_string(moves[size])){
+			apply_move(moves[size]);
 			return;
 		}
 	}
@@ -83,9 +85,10 @@ std::vector<std::string> parse_moves(std::string line){
 }
 
 int main(){
-	board_t board;
+	
+	
+	
 	std::string line;
-
 	while(getline(std::cin,line)){
 		
 		if (line == "uci"){
@@ -116,10 +119,10 @@ int main(){
 
 		if (contains(line,"position")){
 			if (contains(line,"startpos")){
-				init_board_t(&board,starting_position);
+				init_board_t(starting_position);
 				std::vector<std::string> moves = parse_moves(line);
 				for(unsigned int i = 0; i < moves.size(); i++){
-					make_move_from_string(&board,moves[i]);
+					make_move_from_string(moves[i]);
 					board.ep_history[0] = board.ep_history[board.depth];
 					board.depth = 0;
 				}
@@ -130,7 +133,7 @@ int main(){
 		}
 
 		if (contains(line,"go")){
-			std::cout << "bestmove " << convert_move_to_string(&board,get_best_move(&board,1000)) << "\n";
+			std::cout << "bestmove " << convert_move_to_string(get_best_move(1000)) << "\n";
 		}
 
 		if (line == "quit")

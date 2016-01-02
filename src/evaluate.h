@@ -87,7 +87,7 @@ static int inv[64] = {
 	  0,   1,   2,   3,   4,   5,   6,   7
 };
 
-int evaluate_board(board_t * board);
-int evaluate_player(board_t * board, int turn, int pawn_info[2][10]);
+int evaluate_board();
+int evaluate_player(int turn, int pawn_info[2][10]);
 
 #endif

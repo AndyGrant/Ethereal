@@ -14,12 +14,13 @@
 #include "types.h"
 #include "util.h"
 
-int evaluate_board(board_t * board){
-	
+extern board_t board;
+
+int evaluate_board(){
 	int turn, *location;
 	int pawn_info[2][10] = {{0,0,0,0,0,0,0,0,0,0},{7,7,7,7,7,7,7,7,7,7}};
 	for(turn = ColourWhite; turn <= ColourBlack; turn++){
-		for(location = &(board->pawn_locations[turn][0]); *location != -1; location++){
+		for(location = &(board.pawn_locations[turn][0]); *location != -1; location++){
 			int sq64 = CONVERT_256_TO_64(*location);
 			int col = 1 + sq64 % 8;
 			int row = 7 - sq64 / 8;
@@ -35,22 +36,22 @@ int evaluate_board(board_t * board){
 		}
 	}
 	
-	int white = evaluate_player(board,ColourWhite,pawn_info);
-	int black = evaluate_player(board,ColourBlack,pawn_info);
+	int white = evaluate_player(ColourWhite,pawn_info);
+	int black = evaluate_player(ColourBlack,pawn_info);
 	
-	if (board->turn == ColourWhite)
+	if (board.turn == ColourWhite)
 		return 10 + white - black;
 	return 10 + black - white;
 }
 
-int evaluate_player(board_t * board, int turn, int pawn_info[2][10]){
+int evaluate_player(int turn, int pawn_info[2][10]){
 	int value = 0, *location, i;
 	
 	int num_knights = 0;
 	int num_bishops = 0;
 	
-	for(location = &(board->piece_locations[turn][0]); *location != -1; location++){
-		int type = board->squares[*location];
+	for(location = &(board.piece_locations[turn][0]); *location != -1; location++){
+		int type = board.squares[*location];
 		int sq256 = *location;
 		int sq64 = CONVERT_256_TO_64(sq256);
 		int col = 1 + sq64 % 8;
@@ -117,22 +118,22 @@ int evaluate_player(board_t * board, int turn, int pawn_info[2][10]){
 				break;
 			
 			case WhiteKing:
-				if (board->piece_counts[0] + board->piece_counts[1] <= 6)
+				if (board.piece_counts[0] + board.piece_counts[1] <= 6)
 					value += KingEndValueMap[sq64];
 				else{
 					value += KingEarlyValueMap[sq64];
-					if (board->squares[sq256-16] == WhitePawn)
+					if (board.squares[sq256-16] == WhitePawn)
 						value += PawnInfrontOfKingValue;
 				}
 				
 				break;
 				
 			case BlackKing:
-				if (board->piece_counts[0] + board->piece_counts[1] <= 6)
+				if (board.piece_counts[0] + board.piece_counts[1] <= 6)
 					value += KingEndValueMap[inv[sq64]];
 				else{
 					value += KingEarlyValueMap[inv[sq64]];
-					if (board->squares[sq256+16] == BlackPawn)
+					if (board.squares[sq256+16] == BlackPawn)
 						value += PawnInfrontOfKingValue;
 				}
 				break;
@@ -141,9 +142,9 @@ int evaluate_player(board_t * board, int turn, int pawn_info[2][10]){
 	}
 	
 	if (num_bishops == 2)	value += 50;
-	value += 5 * num_knights * board->pawn_counts[turn];
+	value += 5 * num_knights * board.pawn_counts[turn];
 	
-	for(location = &(board->pawn_locations[turn][0]); *location != -1; location++){
+	for(location = &(board.pawn_locations[turn][0]); *location != -1; location++){
 		int sq256 = *location;
 		int sq64 = CONVERT_256_TO_64(sq256);
 		int col = 1 + sq64 % 8;
