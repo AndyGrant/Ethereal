@@ -101,7 +101,6 @@ void init_search_tree_t(search_tree_t * tree, board_t * board){
 }
 
 int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth, int alpha, int beta){
-	
 	tree->raw_nodes++;
 	tree->alpha_beta_nodes++;
 	
@@ -118,7 +117,6 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 	if (depth == 0){
 		tree->raw_nodes--;
 		tree->alpha_beta_nodes--;
-		pv->length = 0;
 		int qs = quiescence_search(tree,alpha,beta);
 		return qs == -CheckMate ? evaluate_board(board) : qs;
 	}
@@ -130,58 +128,19 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 	gen_all_moves(&(tree->board),&(moves[0]),&size);
 	basic_heuristic(tree,&(moves[0]),size);
 	
-	int first_node_was_pv = tree->principle_variation.line[tree->ply-1] == moves[0];
-	first_node_was_pv = 1;
 	int i, value, best = -CheckMate - depth;
 	for (i = 0; i < size; i++){
 		apply_move(board,moves[i]);
 		if (is_not_in_check(board,!(board->turn))){
 			valid_size++;
 			
-			if (i == 0 && first_node_was_pv)
+			if (i == 0)
 				value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
 			
 			else if (valid_size > sqrt(size) && depth >= 3 && IS_EMPTY(MOVE_GET_CAPTURE(moves[i])) && is_not_in_check(board,board->turn)){
-				if (first_node_was_pv){
-					value = -alpha_beta_prune(tree,&lpv,depth-2,-alpha-1,-alpha);
-			
-					if (value > alpha){
-						value = -alpha_beta_prune(tree,&lpv,depth-1,-alpha-1,-alpha);
-						
-						if (value > alpha && value < beta){
-							value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
-							FailedNullWindow++;
-						} else
-							SuccessfulNullWindow++;
-							
-						FailedLateMoveReductions++;
-					}
-					else
-						SuccessfulLateMoveReductions++;
-				}
-				
-				else {
-					value = -alpha_beta_prune(tree,&lpv,depth-2,-beta,-alpha);
-			
-					if (value > alpha){
-						value = -alpha_beta_prune(tree,&lpv,depth-1,-alpha-1,-alpha);
-						
-						if (value > alpha && value < beta){
-							value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
-							FailedNullWindow++;
-						} else
-							SuccessfulNullWindow++;
-							
-						FailedLateMoveReductions++;
-					}
-					else
-						SuccessfulLateMoveReductions++;
-					
-				}
-			}
-				
-			else {
-				if (first_node_was_pv){
+				value = -alpha_beta_prune(tree,&lpv,depth-2,-alpha-1,-alpha);
+		
+				if (value > alpha){
 					value = -alpha_beta_prune(tree,&lpv,depth-1,-alpha-1,-alpha);
 					
 					if (value > alpha && value < beta){
@@ -190,10 +149,20 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 					} else
 						SuccessfulNullWindow++;
 						
+					FailedLateMoveReductions++;
 				}
-				
 				else
+					SuccessfulLateMoveReductions++;
+			}
+				
+			else {
+				value = -alpha_beta_prune(tree,&lpv,depth-1,-alpha-1,-alpha);
+					
+				if (value > alpha && value < beta){
 					value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
+					FailedNullWindow++;
+				} else
+					SuccessfulNullWindow++;
 			}
 			
 			if (value > best)
@@ -240,7 +209,6 @@ int quiescence_search(search_tree_t * tree, int alpha, int beta){
 	best = evaluate_board(board);
 	if (best > alpha) alpha = best;
 	if (alpha > beta) {tree->ply--; return best;}
-	
 	
 	move_t moves[MaxMoves];
 	gen_all_captures(&(tree->board),&(moves[0]),&size);
@@ -295,23 +263,23 @@ void basic_heuristic(search_tree_t * tree, move_t * moves, int size){
 	int i, values[size];
 	for(i = 0; i < size; i++){
 		int cap = MOVE_GET_CAPTURE(moves[i]);
-		values[i] = (!IS_EMPTY(cap) * cap) / tree->board.squares[MOVE_GET_FROM(moves[i])];
+		values[i] = 50*(!IS_EMPTY(cap) * cap) / tree->board.squares[MOVE_GET_FROM(moves[i])];
 		
 		if (MOVE_IS_PROMOTION(moves[i]))
-			values[i] += 5 * MOVE_GET_PROMOTE_TYPE(moves[i],ColourWhite);
+			values[i] += 50 * MOVE_GET_PROMOTE_TYPE(moves[i],ColourWhite);
 		
 		if (moves[i] == tree->principle_variation.line[tree->ply-1])
-			values[i] += 30000;
+			values[i] += 300000;
 		else if (arr[0] == moves[i])
-			values[i] += 2500;
+			values[i] += 25000;
 		else if (arr[1] == moves[i])
-			values[i] += 2000;
+			values[i] += 20000;
 		else if (arr[2] == moves[i])
-			values[i] += 1500;
+			values[i] += 15000;
 		else if (arr[3] == moves[i])
-			values[i] += 1000;
+			values[i] += 10000;
 		else if (arr[4] == moves[i])
-			values[i] += 500;
+			values[i] += 5000;
 	}
 	
 	order_by_value(moves,values,size);
