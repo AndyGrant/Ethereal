@@ -76,11 +76,7 @@ move_t get_best_move(board_t * board, int alloted_time){
 		
 		
  		if (EndTime - ((float)(alloted_time) * .7) < time(NULL))
- 			break;
-	
-		if (value >= CheckMate)
-			break;
-	
+ 			break;	
 	}
 	
 	printf("TIME TAKEN %d\n",((int)clock()-(int)start)/CLOCKS_PER_SEC);
@@ -212,25 +208,19 @@ int quiescence_search(search_tree_t * tree, int alpha, int beta){
 	
 	move_t moves[MaxMoves];
 	gen_all_captures(&(tree->board),&(moves[0]),&size);
-	
-	for(i = 0; i < size; i++){
-		if (PIECE_IS_KING(MOVE_GET_CAPTURE(moves[i]))){
-			tree->ply--;
-			return -CheckMate;
-		}
-	}
-	
 	basic_heuristic(tree,&(moves[0]),size);
 	
 	for(i = 0; i < size; i++){
-		apply_move(board,moves[i]);		
-		value = -quiescence_search(tree,-beta,-alpha);
-		if (value > best)	best = value;
-		if (best > alpha)	alpha = best;
-		if (alpha > beta){
-			update_killer_heuristic(tree,moves[i]);
-			revert_move(board,moves[i]); 
-			break;
+		apply_move(board,moves[i]);	
+		if (is_not_in_check(board,!board->turn)){
+			value = -quiescence_search(tree,-beta,-alpha);
+			if (value > best)	best = value;
+			if (best > alpha)	alpha = best;
+			if (alpha > beta){
+				update_killer_heuristic(tree,moves[i]);
+				revert_move(board,moves[i]); 
+				break;
+			}
 		}
 		revert_move(board,moves[i]);
 	}
