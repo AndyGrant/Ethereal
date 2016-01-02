@@ -4,13 +4,14 @@
 #include "../../src/board.h"
 #include "../../src/util.h"
 
+extern board_t board;
+
 int main(){
 	
 	int i, depth;
 	int passed = 0, failed = 0;
 	unsigned long long total = 0, found, nodes[128];
 	char c, str[73];
-	board_t board;
 	clock_t start = clock(), end;
 	FILE * input = fopen("src/PerftTests.txt","r");
 	
@@ -21,7 +22,7 @@ int main(){
 			break;
 		
 		// Initialze Board
-		init_board_t(&board,str);
+		init_board_t(str);
 		
 		// Throw away extra space
 		fgetc(input);
@@ -44,7 +45,7 @@ int main(){
 		// Output success or failure
 		// Update passed,failed counters
 		for(depth = 1; depth <= i+1; depth++){
-			found = perft(&board,depth);
+			found = perft(depth);
 			total += found;
 			
 			if (found == nodes[depth-1]){
