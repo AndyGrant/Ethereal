@@ -9,9 +9,9 @@ extern "C"{
 	#include "move.h"
 };
 
-std::string convert_move_to_string(board_t * board, move_t move);
+std::string convert_move_to_string( move_t move);
 void print_move_standard_notation(move_t move)
-void make_move_from_string(board_t * board, std::string move);
+void make_move_from_string(std::string move);
 bool contains(std::string a, std::string b);
 std::vector<std::string> parse_moves(std::string line);
 void foo();

@@ -43,9 +43,9 @@ static int table_64_to_256[64] = {
 /* Function Prototypes */
 int char_to_piece(char c);
 char piece_to_char(int p);
-void print_board_t(board_t * board);
+void print_board_t();
 void print_move_t(move_t move);
-unsigned long long perft(board_t * board, int depth);
+unsigned long long perft(int depth);
 
 
 /* Macro Definitions */

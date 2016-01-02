@@ -5,6 +5,7 @@
 #include "piece.h"
 #include "util.h"
 
+extern board_t board;
 
 int char_to_piece(char c){
 	switch(c){
@@ -44,7 +45,7 @@ char piece_to_char(int p){
 	}
 }
 
-void print_board_t(board_t * board){
+void print_board_t(){
 	int x, y;
 	
 	char files[9] = "87654321";
@@ -53,7 +54,7 @@ void print_board_t(board_t * board){
 		printf("\n     |----|----|----|----|----|----|----|----|\n");
 		printf("    %c",files[x]);
 		for(y = 0; y < 8; y++){
-			int piece = board->squares[CONVERT_64_TO_256((x*8+y))];
+			int piece = board.squares[CONVERT_64_TO_256((x*8+y))];
 			if (IS_PIECE(piece)){
 				if (PIECE_IS_WHITE(piece))
 					printf("| w%c ",piece_to_char(piece));
@@ -84,21 +85,21 @@ void print_move_t(move_t move){
 		printf("%c",piece_to_char(MOVE_GET_PROMOTE_TYPE(move,1)));
 }
 
-unsigned long long perft(board_t * board, int depth){
+unsigned long long perft(int depth){
 	if (depth == 0)
 		return 0;
 	
 	move_t moves[MaxMoves];
 	int size = 0;
-	gen_all_moves(board,&(moves[0]),&size);
+	gen_all_moves(&(moves[0]),&size);
 	
 	unsigned long long found = 0;
 	
 	for (size = size - 1; size >= 0; size--){
-		apply_move(board,moves[size]);
-		if (is_not_in_check(board,!board->turn))
-			found += 1 + perft(board,depth-1);
-		revert_move(board,moves[size]);
+		apply_move(moves[size]);
+		if (is_not_in_check(!board.turn))
+			found += 1 + perft(depth-1);
+		revert_move(moves[size]);
 	}
 	
 	return found;

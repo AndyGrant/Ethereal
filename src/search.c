@@ -14,6 +14,9 @@
 #include "types.h"
 #include "util.h"
 
+extern board_t board;
+extern search_tree_t tree;
+
 time_t StartTime, EndTime;
 int EvaluatingPlayer;
 
@@ -22,21 +25,20 @@ int FailedLateMoveReductions = 0;
 int SuccessfulNullWindow = 0;
 int FailedNullWindow = 0;
 
-move_t get_best_move(board_t * board, int alloted_time){
+move_t get_best_move(int alloted_time){
 	int depth, i, size = 0; 	
 	alloted_time = 16;
 	StartTime = time(NULL);
 	EndTime = StartTime + alloted_time;
-	EvaluatingPlayer = board->turn;
+	EvaluatingPlayer = board.turn;
 	
 	clock_t start = clock();
 	
-	search_tree_t tree;
-	init_search_tree_t(&tree,board);
+	init_search_tree_t();
 	
-	print_board_t(board);
+	print_board_t();
 	
-	int initial_value = evaluate_board(board);
+	int initial_value = evaluate_board();
 	
 	for(depth = 1; depth < MaxDepth; depth++){
 		
@@ -48,7 +50,7 @@ move_t get_best_move(board_t * board, int alloted_time){
 		int anodes = tree.alpha_beta_nodes;
 		int qnodes = tree.quiescence_nodes;
 		
-		int value = alpha_beta_prune(&tree,&(tree.principle_variation),depth,-CheckMate,CheckMate);
+		int value = alpha_beta_prune(&(tree.principle_variation),depth,-CheckMate,CheckMate);
 		
 		printf("Search Depth        : %d\n",depth);
 		printf("Successful LMR      : %d\n",SuccessfulLateMoveReductions-slmr);
@@ -84,63 +86,59 @@ move_t get_best_move(board_t * board, int alloted_time){
 	return tree.principle_variation.line[0];	
 }
 
-void init_search_tree_t(search_tree_t * tree, board_t * board){
-	tree->ply = 0;
-	tree->raw_nodes = 0;
-	tree->alpha_beta_nodes = 0;
-	tree->quiescence_nodes = 0;
-	memcpy(&(tree->board),board,sizeof(board_t));
-	tree->principle_variation.length = 0;
-	memset(&(tree->principle_variation.line[0]),0,sizeof(move_t) * MaxDepth);
-	memset(&(tree->killer_moves[0][0]),0,sizeof(move_t) * 5 * MaxDepth);
-	memset(&(tree->depth_one_evaluations[0]),0,sizeof(move_t) * MaxMoves);
+void init_search_tree_t(){
+	tree.ply = 0;
+	tree.raw_nodes = 0;
+	tree.alpha_beta_nodes = 0;
+	tree.quiescence_nodes = 0;
+	tree.principle_variation.length = 0;
+	memset(&(tree.principle_variation.line[0]),0,sizeof(move_t) * MaxDepth);
+	memset(&(tree.killer_moves[0][0]),0,sizeof(move_t) * 5 * MaxDepth);
 }
 
-int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth, int alpha, int beta){
-	tree->raw_nodes++;
-	tree->alpha_beta_nodes++;
+int alpha_beta_prune(principle_variation_t * pv, int depth, int alpha, int beta){
+	tree.raw_nodes++;
+	tree.alpha_beta_nodes++;
 	
 	principle_variation_t lpv;
 	lpv.length = 0;
 	
-	board_t * board = &(tree->board);
-	
 	if (EndTime < time(NULL)){
 		pv->length = -1;
-		return tree->board.turn == EvaluatingPlayer ? -CheckMate : CheckMate;
+		return board.turn == EvaluatingPlayer ? -CheckMate : CheckMate;
 	}
 	
 	if (depth == 0){
-		tree->raw_nodes--;
-		tree->alpha_beta_nodes--;
-		int qs = quiescence_search(tree,alpha,beta);
+		tree.raw_nodes--;
+		tree.alpha_beta_nodes--;
+		int qs = quiescence_search(alpha,beta);
 		return qs == -CheckMate ? evaluate_board(board) : qs;
 	}
 	
-	tree->ply++;	
+	tree.ply++;	
 	
 	int valid_size = 0, size = 0;
 	move_t moves[MaxMoves];
-	gen_all_moves(&(tree->board),&(moves[0]),&size);
-	basic_heuristic(tree,&(moves[0]),size);
+	gen_all_moves(&(moves[0]),&size);
+	basic_heuristic(&(moves[0]),size);
 	
 	int i, value, best = -CheckMate - depth;
 	for (i = 0; i < size; i++){
-		apply_move(board,moves[i]);
-		if (is_not_in_check(board,!(board->turn))){
+		apply_move(moves[i]);
+		if (is_not_in_check(!(board.turn))){
 			valid_size++;
 			
 			if (i == 0)
-				value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
+				value = -alpha_beta_prune(&lpv,depth-1,-beta,-alpha);
 			
-			else if (valid_size > sqrt(size) && depth >= 3 && IS_EMPTY(MOVE_GET_CAPTURE(moves[i])) && is_not_in_check(board,board->turn)){
-				value = -alpha_beta_prune(tree,&lpv,depth-2,-alpha-1,-alpha);
+			else if (valid_size > sqrt(size) && depth >= 3 && IS_EMPTY(MOVE_GET_CAPTURE(moves[i])) && is_not_in_check(board.turn)){
+				value = -alpha_beta_prune(&lpv,depth-2,-alpha-1,-alpha);
 		
 				if (value > alpha){
-					value = -alpha_beta_prune(tree,&lpv,depth-1,-alpha-1,-alpha);
+					value = -alpha_beta_prune(&lpv,depth-1,-alpha-1,-alpha);
 					
 					if (value > alpha && value < beta){
-						value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
+						value = -alpha_beta_prune(&lpv,depth-1,-beta,-alpha);
 						FailedNullWindow++;
 					} else
 						SuccessfulNullWindow++;
@@ -152,10 +150,10 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 			}
 				
 			else {
-				value = -alpha_beta_prune(tree,&lpv,depth-1,-alpha-1,-alpha);
+				value = -alpha_beta_prune(&lpv,depth-1,-alpha-1,-alpha);
 					
 				if (value > alpha && value < beta){
-					value = -alpha_beta_prune(tree,&lpv,depth-1,-beta,-alpha);
+					value = -alpha_beta_prune(&lpv,depth-1,-beta,-alpha);
 					FailedNullWindow++;
 				} else
 					SuccessfulNullWindow++;
@@ -175,57 +173,57 @@ int alpha_beta_prune(search_tree_t * tree, principle_variation_t * pv, int depth
 			}
 			
 			if (alpha > beta){
-				update_killer_heuristic(tree,moves[i]);
-				revert_move(board,moves[i]); 
+				update_killer_heuristic(moves[i]);
+				revert_move(moves[i]); 
 				break;
 			}
 		}
-		revert_move(board,moves[i]);
+		revert_move(moves[i]);
 	}
 	
-	if (valid_size == 0 && is_not_in_check(board,board->turn))
+	if (valid_size == 0 && is_not_in_check(board.turn))
 		best = 0;
 	
-	tree->ply--;
+	tree.ply--;
 	return best;
 }
 
-int quiescence_search(search_tree_t * tree, int alpha, int beta){
+int quiescence_search(int alpha, int beta){
 	int i, size = 0, value, best;
-	board_t * board = &(tree->board);
-	tree->ply++;
-	tree->raw_nodes++;
-	tree->quiescence_nodes++;
+	
+	tree.ply++;
+	tree.raw_nodes++;
+	tree.quiescence_nodes++;
 	
 	if (EndTime < time(NULL)){
-		tree->ply--;
-		return tree->board.turn == EvaluatingPlayer ? -CheckMate : CheckMate;
+		tree.ply--;
+		return board.turn == EvaluatingPlayer ? -CheckMate : CheckMate;
 	}
 	
-	best = evaluate_board(board);
+	best = evaluate_board();
 	if (best > alpha) alpha = best;
-	if (alpha > beta) {tree->ply--; return best;}
+	if (alpha > beta) {tree.ply--; return best;}
 	
 	move_t moves[MaxMoves];
-	gen_all_captures(&(tree->board),&(moves[0]),&size);
-	basic_heuristic(tree,&(moves[0]),size);
+	gen_all_captures(&(moves[0]),&size);
+	basic_heuristic(&(moves[0]),size);
 	
 	for(i = 0; i < size; i++){
-		apply_move(board,moves[i]);	
-		if (is_not_in_check(board,!board->turn)){
-			value = -quiescence_search(tree,-beta,-alpha);
+		apply_move(moves[i]);	
+		if (is_not_in_check(!board.turn)){
+			value = -quiescence_search(-beta,-alpha);
 			if (value > best)	best = value;
 			if (best > alpha)	alpha = best;
 			if (alpha > beta){
-				update_killer_heuristic(tree,moves[i]);
-				revert_move(board,moves[i]); 
+				update_killer_heuristic(moves[i]);
+				revert_move(moves[i]); 
 				break;
 			}
 		}
-		revert_move(board,moves[i]);
+		revert_move(moves[i]);
 	}
 	
-	tree->ply--;
+	tree.ply--;
 	return best;
 }
 
@@ -248,17 +246,17 @@ void order_by_value(move_t * moves, int * values, int size){
 	}
 }
 
-void basic_heuristic(search_tree_t * tree, move_t * moves, int size){
-	move_t * arr = &(tree->killer_moves[tree->ply][0]);
+void basic_heuristic(move_t * moves, int size){
+	move_t * arr = &(tree.killer_moves[tree.ply][0]);
 	int i, values[size];
 	for(i = 0; i < size; i++){
 		int cap = MOVE_GET_CAPTURE(moves[i]);
-		values[i] = 50*(!IS_EMPTY(cap) * cap) / tree->board.squares[MOVE_GET_FROM(moves[i])];
+		values[i] = 50*(!IS_EMPTY(cap) * cap) / board.squares[MOVE_GET_FROM(moves[i])];
 		
 		if (MOVE_IS_PROMOTION(moves[i]))
 			values[i] += 50 * MOVE_GET_PROMOTE_TYPE(moves[i],ColourWhite);
 		
-		if (moves[i] == tree->principle_variation.line[tree->ply-1])
+		if (moves[i] == tree.principle_variation.line[tree.ply-1])
 			values[i] += 300000;
 		else if (arr[0] == moves[i])
 			values[i] += 25000;
@@ -275,8 +273,8 @@ void basic_heuristic(search_tree_t * tree, move_t * moves, int size){
 	order_by_value(moves,values,size);
 }
 
-void update_killer_heuristic(search_tree_t * tree, move_t move){
-	move_t * arr = &(tree->killer_moves[tree->ply][0]);
+void update_killer_heuristic(move_t move){
+	move_t * arr = &(tree.killer_moves[tree.ply][0]);
 	arr[4] = arr[3];
 	arr[3] = arr[2];
 	arr[2] = arr[1];

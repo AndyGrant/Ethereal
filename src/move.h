@@ -43,19 +43,19 @@ static int king_movements[8] = {-17,-15,15,17,-16,-1,1,16};
 #define MOVE_GET_PROMOTE_TYPE(m,c)	(PromoteTypes[(((m)&PromoteFlags)>>28)]+c)
 
 /* Function Prototypes */
-void gen_all_legal_moves(board_t * board, move_t * list, int * size);
-void gen_all_moves(board_t * board, move_t * list, int * size);
-void gen_all_captures(board_t * board, move_t * list, int * size);
-void apply_move(board_t * board, move_t move);
-void revert_move(board_t * board, move_t move);
+void gen_all_legal_moves(move_t * list, int * size);
+void gen_all_moves(move_t * list, int * size);
+void gen_all_captures(move_t * list, int * size);
+void apply_move(move_t move);
+void revert_move(move_t move);
 
-void insert_position(board_t * board, int to, int turn);
-void remove_position(board_t * board, int to, int turn);
+void insert_position(int to, int turn);
+void remove_position(int to, int turn);
 
-int is_not_in_check(board_t * board, int turn);
-int square_is_attacked(board_t * board, int turn, int square);
+int is_not_in_check(int turn);
+int square_is_attacked(int turn, int square);
 
 /* Function Macros */
-#define is_not_in_check(b,t)	(!(square_is_attacked(b,t,b->piece_locations[t][0])))
+#define is_not_in_check(t)	(!(square_is_attacked(t,board.piece_locations[(t)][0])))
 	
 #endif
