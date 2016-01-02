@@ -13,6 +13,7 @@
 #include "util.h"
 
 extern board_t board;
+extern zorbist_t zorbist;
 
 void gen_all_legal_moves(move_t * list, int * size){
 	int raw_size = 0;
@@ -635,7 +636,14 @@ void apply_move(move_t move){
 	else
 		board.ep_history[board.depth] = 0;
 	
-	if (MOVE_IS_NORMAL(move)){		
+	if (MOVE_IS_NORMAL(move)){
+		
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(from)][CONVERT_PIECE256_TO_PIECE12(board.squares[from])];
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(to)][CONVERT_PIECE256_TO_PIECE12(board.squares[from])];
+		
+		if (cap != Empty)
+			board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(to)][CONVERT_PIECE256_TO_PIECE12(board.squares[to])];
+		
 		if (cap != Empty)
 			remove_position(to,!turn);
 		
@@ -656,6 +664,14 @@ void apply_move(move_t move){
 	
 	else if (MOVE_IS_CASTLE(move)){
 		
+		int rfrom = from + ((to-from) == 2 ? 3 : -4);
+		int rto = from + ((to-from) == 2 ? 1 : -1);
+		
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(from)][CONVERT_PIECE256_TO_PIECE12(board.squares[from])];
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(to)][CONVERT_PIECE256_TO_PIECE12(board.squares[from])];
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(rfrom)][CONVERT_PIECE256_TO_PIECE12(board.squares[rfrom])];
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(rto)][CONVERT_PIECE256_TO_PIECE12(board.squares[rfrom])];
+		
 		board.squares[to] = board.squares[from];
 		board.squares[from] = Empty;
 		
@@ -663,9 +679,6 @@ void apply_move(move_t move){
 		board.positions[from] = -1;
 		
 		board.piece_locations[turn][board.positions[to]] = to;
-		
-		int rfrom = from + ((to-from) == 2 ? 3 : -4);
-		int rto = from + ((to-from) == 2 ? 1 : -1);
 		
 		board.squares[rto] = board.squares[rfrom];
 		board.squares[rfrom] = Empty;
@@ -682,6 +695,13 @@ void apply_move(move_t move){
 	else if (MOVE_IS_PROMOTION(move)){
 		
 		int promo = MOVE_GET_PROMOTE_TYPE(move,turn);
+		
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(from)][CONVERT_PIECE256_TO_PIECE12(board.squares[from])];
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(to)][CONVERT_PIECE256_TO_PIECE12(promo)];
+		
+		if (cap != Empty)
+			board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(to)][CONVERT_PIECE256_TO_PIECE12(board.squares[to])];
+		
 		if (cap != Empty)
 			remove_position(to,!turn);
 		
@@ -699,6 +719,11 @@ void apply_move(move_t move){
 	
 	else if (MOVE_IS_ENPASS(move)){
 	
+		int enpass = MOVE_GET_ENPASS_SQUARE(move);
+		
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(from)][CONVERT_PIECE256_TO_PIECE12(board.squares[from])];
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(to)][CONVERT_PIECE256_TO_PIECE12(board.squares[from])];
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(enpass)][CONVERT_PIECE256_TO_PIECE12(board.squares[enpass])];
 		
 		board.squares[to] = board.squares[from];
 		board.squares[from] = Empty;
@@ -708,7 +733,7 @@ void apply_move(move_t move){
 		
 		board.pawn_locations[turn][board.positions[to]] = to;
 		
-		int enpass = MOVE_GET_ENPASS_SQUARE(move);
+		
 		
 		remove_position(enpass,!turn);
 		board.squares[enpass] = Empty;
@@ -732,6 +757,14 @@ void revert_move(move_t move){
 	board.depth--;
 	
 	if (MOVE_IS_NORMAL(move)){
+		
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(from)][CONVERT_PIECE256_TO_PIECE12(board.squares[to])];
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(to)][CONVERT_PIECE256_TO_PIECE12(board.squares[to])];
+		
+		if (cap != Empty)
+			board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(to)][CONVERT_PIECE256_TO_PIECE12(cap)];
+			
+		
 		board.squares[from] = board.squares[to];
 		board.squares[to] = cap;
 		
@@ -751,6 +784,15 @@ void revert_move(move_t move){
 	}
 	
 	else if (MOVE_IS_CASTLE(move)){
+		
+		int rfrom = from + ((to-from) == 2 ? 3 : -4);
+		int rto = from + ((to-from) == 2 ? 1 : -1);
+		
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(from)][CONVERT_PIECE256_TO_PIECE12(board.squares[to])];
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(to)][CONVERT_PIECE256_TO_PIECE12(board.squares[to])];
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(rfrom)][CONVERT_PIECE256_TO_PIECE12(board.squares[rto])];
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(rto)][CONVERT_PIECE256_TO_PIECE12(board.squares[rto])];
+		
 		board.squares[from] = board.squares[to];
 		board.squares[to] = Empty;
 		
@@ -759,8 +801,7 @@ void revert_move(move_t move){
 		
 		board.piece_locations[!turn][board.positions[from]] = from;
 		
-		int rfrom = from + ((to-from) == 2 ? 3 : -4);
-		int rto = from + ((to-from) == 2 ? 1 : -1);
+		
 		
 		board.squares[rfrom] = board.squares[rto];
 		board.squares[rto] = Empty;
@@ -776,6 +817,12 @@ void revert_move(move_t move){
 	
 	else if (MOVE_IS_PROMOTION(move)){
 		
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(to)][CONVERT_PIECE256_TO_PIECE12(MOVE_GET_PROMOTE_TYPE(move,!turn))];
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(from)][CONVERT_PIECE256_TO_PIECE12(PawnFlag + !turn)];
+		
+		if (cap != Empty)
+			board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(to)][CONVERT_PIECE256_TO_PIECE12(cap)];
+		
 		board.squares[from] = PawnFlag + !turn;
 		insert_position(from,!turn);
 		
@@ -790,6 +837,13 @@ void revert_move(move_t move){
 	}
 	
 	else if (MOVE_IS_ENPASS(move)){
+		
+		int enpass = MOVE_GET_ENPASS_SQUARE(move);
+		
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(from)][CONVERT_PIECE256_TO_PIECE12(board.squares[to])];
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(to)][CONVERT_PIECE256_TO_PIECE12(board.squares[to])];
+		board.hash ^= zorbist.bitstrings[CONVERT_256_TO_64(enpass)][CONVERT_PIECE256_TO_PIECE12(PawnFlag + turn)];
+		
 		board.squares[from] = board.squares[to];
 		board.squares[to] = Empty;
 		
@@ -797,8 +851,6 @@ void revert_move(move_t move){
 		board.positions[to] = -1;
 		
 		board.pawn_locations[!turn][board.positions[from]] = from;
-		
-		int enpass = MOVE_GET_ENPASS_SQUARE(move);
 		
 		board.squares[enpass] = PawnFlag + turn;
 		board.positions[enpass] = -1;

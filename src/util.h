@@ -40,6 +40,26 @@ static int table_64_to_256[64] = {
 	180,181,182,183,184,185,186,187
 };
 
+
+static int piece_to_int12[128] = {
+	-1, -1,  0,  1,  2,  3, -1, -1, 
+	 4,  5, -1, -1, -1, -1, -1, -1, 
+	 6,  7, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	 8,  9, -1, -1, -1, -1,	-1, -1, 
+	-1, -1, -1, -1, -1, -1, -1, -1, 
+	-1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, 
+	10, 11, -1, -1, -1, -1, -1, -1, 
+	-1, -1, -1, -1, -1, -1, -1, -1, 
+	-1, -1, -1, -1, -1, -1, -1, -1, 
+	-1, -1, -1, -1, -1, -1, -1, -1, 
+	-1, -1, -1, -1, -1, -1, -1, -1, 
+	-1, -1, -1, -1, -1, -1, -1, -1, 
+	-1, -1, -1, -1, -1, -1, -1, -1, 
+	-1, -1, -1, -1, -1, -1, -1, -1
+};
+
 /* Function Prototypes */
 int char_to_piece(char c);
 char piece_to_char(int p);
@@ -49,9 +69,10 @@ unsigned long long perft(int depth);
 
 
 /* Macro Definitions */
-#define CONVERT_64_TO_256(n)	(table_64_to_256[(n)])
-#define CONVERT_256_TO_64(n)	(table_256_to_64[(n)])
-#define CONVERT_TO_FILE(n)		('a' + (n % 16) - 4)
-#define CONVERT_TO_RANK(n)		('8' - (n / 16) + 4)
+#define CONVERT_PIECE256_TO_PIECE12(n)	(piece_to_int12[(n)])
+#define CONVERT_64_TO_256(n)			(table_64_to_256[(n)])
+#define CONVERT_256_TO_64(n)			(table_256_to_64[(n)])
+#define CONVERT_TO_FILE(n)				('a' + (n % 16) - 4)
+#define CONVERT_TO_RANK(n)				('8' - (n / 16) + 4)
 
 #endif
