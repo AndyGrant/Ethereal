@@ -46,6 +46,9 @@ int evaluate_board(board_t * board){
 int evaluate_player(board_t * board, int turn, int pawn_info[2][10]){
 	int value = 0, *location, i;
 	
+	int num_knights = 0;
+	int num_bishops = 0;
+	
 	for(location = &(board->piece_locations[turn][0]); *location != -1; location++){
 		int type = board->squares[*location];
 		int sq256 = *location;
@@ -56,21 +59,25 @@ int evaluate_player(board_t * board, int turn, int pawn_info[2][10]){
 			case WhiteKnight:
 				value += KnightValue;
 				value += KnightValueMap[sq64];
+				num_knights++;
 				break;
 			
 			case BlackKnight:
 				value += KnightValue;
 				value += KnightValueMap[inv[sq64]];
+				num_knights++;
 				break;
 			
 			case WhiteBishop:
 				value += BishopValue;
 				value += BishopValueMap[sq64];
+				num_bishops++;
 				break;
 			
 			case BlackBishop:
 				value += BishopValue;
 				value += BishopValueMap[inv[sq64]];
+				num_bishops++;
 				break;
 				
 			case WhiteRook:
@@ -81,6 +88,10 @@ int evaluate_player(board_t * board, int turn, int pawn_info[2][10]){
 					else
 						value += SemiOpenFileRookValue;
 				}
+				
+				if (sq64 / 16 == 1)
+					value += SeventhRankRookValue;
+				
 				break;
 			
 			case BlackRook:
@@ -91,6 +102,10 @@ int evaluate_player(board_t * board, int turn, int pawn_info[2][10]){
 					else
 						value += SemiOpenFileRookValue;
 				}
+				
+				if (sq64 / 16 == 6)
+					value += SeventhRankRookValue;
+				
 				break;
 				
 			case WhiteQueen:
@@ -104,19 +119,29 @@ int evaluate_player(board_t * board, int turn, int pawn_info[2][10]){
 			case WhiteKing:
 				if (board->piece_counts[0] + board->piece_counts[1] <= 6)
 					value += KingEndValueMap[sq64];
-				else
+				else{
 					value += KingEarlyValueMap[sq64];
+					if (board->squares[sq256-16] == WhitePawn)
+						value += PawnInfrontOfKingValue;
+				}
+				
 				break;
 				
 			case BlackKing:
 				if (board->piece_counts[0] + board->piece_counts[1] <= 6)
 					value += KingEndValueMap[inv[sq64]];
-				else
+				else{
 					value += KingEarlyValueMap[inv[sq64]];
+					if (board->squares[sq256+16] == BlackPawn)
+						value += PawnInfrontOfKingValue;
+				}
 				break;
 			
 		}
 	}
+	
+	if (num_bishops == 2)	value += 50;
+	value += 5 * num_knights * board->pawn_counts[turn];
 	
 	for(location = &(board->pawn_locations[turn][0]); *location != -1; location++){
 		int sq256 = *location;
@@ -137,6 +162,11 @@ int evaluate_player(board_t * board, int turn, int pawn_info[2][10]){
 			
 			if (pawn_info[ColourWhite][col+1] == 0 && pawn_info[ColourWhite][col-1] == 0)
 				value += IsolatedPawnValue;
+			
+			if (pawn_info[ColourBlack][col] < row &&
+				pawn_info[ColourBlack][col-1] <= row &&
+				pawn_info[ColourBlack][col+1] <= row)
+				value += row * PassedPawnValue;
 		}
 		
 		else if (turn == ColourBlack){
@@ -145,6 +175,11 @@ int evaluate_player(board_t * board, int turn, int pawn_info[2][10]){
 			
 			if (pawn_info[ColourBlack][col+1] == 0 && pawn_info[ColourBlack][col-1] == 0)
 				value += IsolatedPawnValue;
+			
+			if (pawn_info[ColourBlack][col] > row &&
+				pawn_info[ColourBlack][col-1] >= row &&
+				pawn_info[ColourBlack][col+1] >= row)
+				value += (7-row) * PassedPawnValue;
 		}
 	}
 	
