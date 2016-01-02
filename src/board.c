@@ -84,6 +84,9 @@ void init_board_t(char setup[73]){
 	board.turn = (setup[71] - '0');
 	
 	init_zorbist_hash();
+	
+	board.hash_history[0] = board.hash;
+	board.hash_entries = 1;	
 }
 
 void encode_board_t(char str[73]){

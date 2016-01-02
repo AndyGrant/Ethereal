@@ -42,6 +42,8 @@ typedef struct board_t {
 	move_t ep_history[MaxDepth];
 	
 	int hash;
+	int hash_entries;
+	int hash_history[1024];
 	
 	int turn;
 	
