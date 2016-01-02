@@ -8,15 +8,18 @@
 
 /* Piece Value Definitions */
 #define PawnValue 	(150)
-#define KnightValue	(450)
+#define KnightValue	(475)
 #define BishopValue	(450)
 #define RookValue 	(750)
 #define QueenValue 	(1350)
 
 #define StackedPawnValue				(-10)
 #define IsolatedPawnValue				(-20)
+#define PassedPawnValue					( 10)
 #define OpenFileRookValue				( 25)
 #define SemiOpenFileRookValue			( 15)
+#define SeventhRankRookValue			( 10)
+#define PawnInfrontOfKingValue			(  5)
 
 static int PawnValueMap[64] = {
 	  0,   0,   0,   0,   0,   0,   0,   0,
@@ -25,7 +28,7 @@ static int PawnValueMap[64] = {
 	  3,   6,   9,  12,  12,   9,   6,   3,
 	  2,   4,   6,   8,   8,   6,   4,   2,
 	  1,   2,   3, -10, -10,   3,   2,   1,
-	  0,   0,   0, -30, -30,   0,   0,   0,
+	  0,   0,   0, -35, -35,   0,   0,   0,
 	  0,   0,   0,   0,   0,   0,   0,   0
 };
 
