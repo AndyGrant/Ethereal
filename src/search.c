@@ -11,12 +11,14 @@
 #include "move.h"
 #include "piece.h"
 #include "search.h"
+#include "ttable.h"
 #include "types.h"
 #include "util.h"
 
 extern board_t board;
 extern search_tree_t tree;
 extern zorbist_t zorbist;
+extern ttable_t table;
 
 time_t StartTime, EndTime;
 int EvaluatingPlayer;
@@ -37,6 +39,7 @@ move_t get_best_move(int alloted_time){
 	EvaluatingPlayer = board.turn;
 	
 	init_search_tree_t();
+	init_ttable_t();
 	print_board_t();
 	
 	int old_hash = board.hash;
@@ -75,11 +78,7 @@ move_t get_best_move(int alloted_time){
 			printf(" ");
 		}
 		printf("\n");
-		printf("OLD HASH : %d NEW HASH %d\n",old_hash,board.hash);
 		printf("------------------------------\n");
-		
-		
-		
 		
  		if (EndTime - ((float)(alloted_time) * .7) < time(NULL))
  			break;	
@@ -87,6 +86,7 @@ move_t get_best_move(int alloted_time){
 	
 	printf("TIME TAKEN %d\n",((int)clock()-(int)start)/CLOCKS_PER_SEC);
 	
+	free(table.entries);
 	return tree.principle_variation.line[0];	
 }
 
@@ -196,6 +196,8 @@ int alpha_beta_prune(principle_variation_t * pv, int depth, int alpha, int beta)
 	
 	if (valid_size == 0 && is_not_in_check(board.turn))
 		best = 0;
+	
+	store_entry(board.hash,alpha,beta,value,board.turn,depth);
 	
 	tree.ply--;
 	return best;

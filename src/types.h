@@ -16,11 +16,6 @@ typedef uint32_t move_t;
 //	bits	24-27: Move Type
 //	bits	28-31: Castle Changes
 
-typedef struct transposition_t {
-	int node_count;
-	
-} transposition_t;
-
 typedef struct zorbist_t{
 	int bitstrings[64][16];
 	
@@ -66,5 +61,16 @@ typedef struct search_tree_t {
 	principle_variation_t principle_variation;
 	
 } search_tree_t;
+
+typedef uint32_t ttentry_t;
+// bits		00-15: Value + 32768
+// bits		16-16: Turn
+// bits		17-23: Depth
+// bits		24-25: Bound Type
+
+typedef struct ttable_t {
+	ttentry_t * entries;	
+	
+} ttable_t;
 
 #endif
