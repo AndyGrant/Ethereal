@@ -4,18 +4,15 @@
 #include "ttable.h"
 #include "types.h"
 
-#define ENTRY_GET_DEPTH(n)	(((n) & (0b1111111 << 17)) >> 17)
-#define ENTRY_GET_VALUE(n)	(((n) & (0xFFFF)) - 32768)
-#define ENTRY_GET_BOUND(n)	(((n) & (0b111 << 24)))
-#define ENTRY_GET_TURN(n)	(((n) & (1 << 16)) >> 16)
-
 extern ttable_t table;
 
 void init_ttable_t(){
 	printf("Intialized Table of size %.3fMb\n",(float)(sizeof(ttentry_t) * TableSize) / (1024 * 1024));
 	table.entries = calloc(TableSize,sizeof(ttentry_t));
-	if (table.entries == NULL)
-		printf("Unable to Allocate Table\n");
+	
+	int i;
+	for(i = 0; i < TableSize; i++)
+		table.entries[i] = 0;
 }
 
 int get_bound_type(int alpha, int beta, int value){
@@ -27,13 +24,18 @@ int get_bound_type(int alpha, int beta, int value){
 }
 
 ttentry_t get_entry(int hash){
-	return table.entries[abs(hash)%TableSize];
+	ttentry_t entry = table.entries[abs(hash)%TableSize];
+	
+	if (ENTRY_GET_HASH(entry) == abs(hash))
+		return entry;
+	
+	return 0;
 }
 
 void store_entry(int hash, int alpha, int beta, int value, int turn, int depth){
 	ttentry_t cur = get_entry(hash);
 	int bound = get_bound_type(alpha,beta,value);
 	
-	if (cur == 0 || ENTRY_GET_DEPTH(cur) > depth || (bound == ExactBound && ENTRY_GET_BOUND(cur) != ExactBound))
-		table.entries[hash%TableSize] = (value + 32768) | (turn << 16) | (depth << 17) | (bound);
+	if (cur == 0 || ENTRY_GET_DEPTH(cur) < depth)
+		table.entries[abs(hash)%TableSize] = (value + 32768) | (turn << 16) | (depth << 17) | (bound) | ((unsigned long long)(abs(hash)) << 32);
 }
