@@ -62,15 +62,15 @@ typedef struct search_tree_t {
 	
 } search_tree_t;
 
-typedef uint32_t ttentry_t;
+typedef unsigned long long ttentry_t;
 // bits		00-15: Value + 32768
 // bits		16-16: Turn
 // bits		17-23: Depth
 // bits		24-25: Bound Type
 
 typedef struct ttable_t {
-	ttentry_t * entries;	
-	
+	ttentry_t * entries;
+
 } ttable_t;
 
 #endif

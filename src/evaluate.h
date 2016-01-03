@@ -4,7 +4,7 @@
 #include "util.h"
 
 /* Search Definitions */
-#define CheckMate	(100000)
+#define CheckMate	(32768 - 128)
 
 /* Piece Value Definitions */
 #define PawnValue 	(150)
