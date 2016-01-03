@@ -17,3 +17,12 @@ Ethereal is a UCI compliant Chess Engine based on the minimax search algorithm. 
   Select "File" and "New Game" to Play
   
   
+# Things to add to Ethereal:
+  
+  Add Transposition Table
+  
+  Add Opening Book
+  
+  Add full UCI supportS
+  
+  
