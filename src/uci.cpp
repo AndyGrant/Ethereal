@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <cassert>
+#include <stdio.h>
 
 extern "C" {	
 	#include "types.h"
@@ -13,9 +14,52 @@ extern "C" {
 	#include "util.h"
 };
 
+#include "uci.h"
+
 extern board_t board;
 
 char starting_position[73] = "rnbqkbnrppppppppeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeePPPPPPPPRNBQKBNR11110000";
+
+char * decode_fen(char enc[73], std::string fen){
+	int enci = 0;
+	
+	int i;
+	for(i = 0;; i++){
+		std::string str; str += fen[i];
+		
+		if (contains("12345678",str))
+			for(int j = 0; j < fen[i] - '0'; j++)
+				enc[enci++] = 'e';
+		
+		if (contains("pPnNbBrRqQkK",str))
+			enc[enci++] = fen[i];
+		
+		if (fen[i] == ' ')
+			break;
+	}
+	
+	i++;
+	enc[71] = fen[i] == 'w' ? '0' : '1';
+	i += 2;
+	
+	enc[64] = '0';
+	enc[65] = '0';
+	enc[66] = '0';
+	enc[67] = '0';
+	
+	for(;fen[i] != ' ';i++){
+		if 		(fen[i] == 'K') enc[64] = '1';
+		else if (fen[i] == 'Q') enc[65] = '1';
+		else if (fen[i] == 'k') enc[66] = '1';
+		else if (fen[i] == 'q') enc[67] = '1';
+	}
+	
+	enc[68] = '0';
+	enc[69] = '0';
+	enc[70] = '0';
+	enc[72] = '\0';
+	return enc;
+}
 
 std::string convert_move_to_string(move_t move){
 	std::string str;
@@ -84,10 +128,7 @@ std::vector<std::string> parse_moves(std::string line){
 	return moves;
 }
 
-int main(){
-	
-	
-	
+int main(){	
 	std::string line;
 	while(getline(std::cin,line)){
 		
@@ -117,18 +158,21 @@ int main(){
 
 		}
 
-		if (contains(line,"position")){
-			if (contains(line,"startpos")){
+		if (contains(line,"position")){		
+			if (contains(line,"startpos"))
 				init_board_t(starting_position);
-				std::vector<std::string> moves = parse_moves(line);
-				for(unsigned int i = 0; i < moves.size(); i++){
-					make_move_from_string(moves[i]);
-					board.ep_history[0] = board.ep_history[board.depth];
-					board.depth = 0;
-				}
-				
-			} else {
-				std::cout << "ERROR : GIVEN FEN POSITION\n";
+			
+			if (contains(line,"fen")){
+				char encoding[73];
+				decode_fen(&(encoding[0]),line.substr(line.find("fen")+4,std::string::npos));
+				init_board_t(&(encoding[0]));
+			}
+			
+			std::vector<std::string> moves = parse_moves(line);
+			for(unsigned int i = 0; i < moves.size(); i++){
+				make_move_from_string(moves[i]);
+				board.ep_history[0] = board.ep_history[board.depth];
+				board.depth = 0;
 			}
 		}
 
