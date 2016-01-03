@@ -119,7 +119,7 @@ int evaluate_player(int turn, int pawn_info[2][10]){
 			
 			case WhiteKing:
 				if (board.piece_counts[0] + board.piece_counts[1] <= 6)
-					value += KingEndValueMap[sq64];
+					value += KingEndValueMap[sq64] / 2;
 				else{
 					value += KingEarlyValueMap[sq64];
 					if (board.squares[sq256-16] == WhitePawn)
@@ -130,7 +130,7 @@ int evaluate_player(int turn, int pawn_info[2][10]){
 				
 			case BlackKing:
 				if (board.piece_counts[0] + board.piece_counts[1] <= 6)
-					value += KingEndValueMap[inv[sq64]];
+					value += KingEndValueMap[inv[sq64]] / 2;
 				else{
 					value += KingEarlyValueMap[inv[sq64]];
 					if (board.squares[sq256+16] == BlackPawn)
@@ -144,6 +144,8 @@ int evaluate_player(int turn, int pawn_info[2][10]){
 	if (num_bishops == 2)	value += 50;
 	value += 5 * num_knights * board.pawn_counts[turn];
 	
+	int is_end_game = (board.piece_counts[0] + board.piece_counts[1] <= 6);
+	
 	for(location = &(board.pawn_locations[turn][0]); *location != -1; location++){
 		int sq256 = *location;
 		int sq64 = CONVERT_256_TO_64(sq256);
@@ -152,10 +154,18 @@ int evaluate_player(int turn, int pawn_info[2][10]){
 		
 		value += PawnValue;
 		
-		if (turn == ColourWhite)
-			value += PawnValueMap[sq64];
-		else
-			value += PawnValueMap[inv[sq64]];
+		if (turn == ColourWhite){
+			if (is_end_game)
+				value += PawnEndValueMap[sq64];
+			else
+				value += PawnEarlyValueMap[sq64];
+		}
+		else{
+			if (is_end_game)
+				value += PawnEndValueMap[inv[sq64]];
+			else
+				value += PawnEarlyValueMap[inv[sq64]];
+		}
 		
 		if (turn == ColourWhite){
 			if (pawn_info[ColourWhite][col] > row)

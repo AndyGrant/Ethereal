@@ -144,6 +144,7 @@ int alpha_beta_prune(principle_variation_t * pv, int depth, int alpha, int beta)
 				value = -alpha_beta_prune(&lpv,depth-1,-beta,-alpha);
 			
 			else if (valid_size > sqrt(size) && depth >= 3 && IS_EMPTY(MOVE_GET_CAPTURE(moves[i])) && is_not_in_check(board.turn)){
+				
 				value = -alpha_beta_prune(&lpv,depth-2,-alpha-1,-alpha);
 		
 				if (value > alpha){
