@@ -7,25 +7,25 @@
 #define CheckMate	(32768 - 128)
 
 /* Piece Value Definitions */
-#define PawnValue 	(105)
-#define KnightValue	(325)
-#define BishopValue	(300)
-#define RookValue 	(515)
-#define QueenValue 	(985)
+#define PawnValue 	(1000)
+#define KnightValue	(3000)
+#define BishopValue	(3000)
+#define RookValue 	(5000)
+#define QueenValue 	(9000)
 
-#define StackedPawnValue				(-10)
-#define IsolatedPawnValue				(-15)
-#define PassedPawnValue					(  8)
-#define PawnInfrontOfKingValue			(  5)
+#define StackedPawnValue				(-30)
+#define IsolatedPawnValue				(-45)
+#define PassedPawnValue					( 16)
+#define PawnInfrontOfKingValue			( 10)
 
-#define OpenFileRookValue				( 25)
-#define SemiOpenFileRookValue			( 10)
-#define SeventhRankRookValue			( 20)
-#define EightRankRookValue				(  8)
-#define RooksOnSameOpenFileValue		( 40)
-#define RooksOnSameSemiOpenFileValue	( 15)
+#define OpenFileRookValue				( 75)
+#define SemiOpenFileRookValue			( 35)
+#define SeventhRankRookValue			( 40)
+#define EighthRankRookValue				( 30)
+#define RooksOnSameOpenFileValue		( 90)
+#define RooksOnSameSemiOpenFileValue	( 60)
 
-#define HasBothBishopsValue				( 25)
+
 
 static int PawnEarlyValueMap[64] = {
 	  0,   0,   0,   0,   0,   0,   0,   0,
@@ -57,7 +57,7 @@ static int KnightValueMap[64] = {
 	-10,   0,   5,  10,  10,   5,   0, -10,
 	-10,   0,   5,   5,   5,   5,   0, -10,
 	-10,   0,   0,   0,   0,   0,   0, -10,
-	-10, -30, -10, -10, -10, -10, -30, -10
+	-10, -80, -10, -10, -10, -10, -80, -10
 };
 
 static int BishopValueMap[64] = {
@@ -68,7 +68,7 @@ static int BishopValueMap[64] = {
 	-10,   0,   5,  10,  10,   5,   0, -10,
 	-10,   0,   5,   5,   5,   5,   0, -10,
 	-10,   0,   0,   0,   0,   0,   0, -10,
-	-10, -10, -20, -10, -10, -20, -10, -10
+	-10, -10, -50, -10, -10, -50, -10, -10
 };
 
 static int KingEarlyValueMap[64] = {
@@ -79,7 +79,7 @@ static int KingEarlyValueMap[64] = {
 	-50, -50, -50, -50, -50, -50, -50, -50,
 	-50, -50, -50, -50, -50, -50, -50, -50,
 	-30, -30, -30, -60, -60, -60, -30, -30,
-	  0,  20,  40, -60,   0, -60,  40,  20
+	  0,  20,  80, -60,   0, -60,  80,  20
 };
 
 static int KingEndValueMap[64] = {

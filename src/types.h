@@ -57,7 +57,7 @@ typedef struct search_tree_t {
 	int alpha_beta_nodes;
 	int quiescence_nodes;
 	
-	move_t killer_moves[MaxDepth][5];
+	move_t killer_moves[MaxDepth][3];
 	principle_variation_t principle_variation;
 	
 } search_tree_t;

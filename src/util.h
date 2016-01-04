@@ -71,7 +71,7 @@ unsigned long long perft(int depth);
 /* Macro Definitions */
 #define CONVERT_PIECE256_TO_PIECE12(n)	(piece_to_int12[(n)])
 #define CONVERT_64_TO_256(n)			(table_64_to_256[(n)])
-#define CONVERT_256_TO_64(n)			(table_256_to_64[(n)])
+#define CONVERT_256_TO_64(n)			(((8 * ((n)/16)) - 36 + ((n)%16)))
 #define CONVERT_TO_FILE(n)				('a' + (n % 16) - 4)
 #define CONVERT_TO_RANK(n)				('8' - (n / 16) + 4)
 
