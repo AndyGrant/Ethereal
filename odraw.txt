@@ -1,0 +1,36 @@
+Intialized Table of size 8.000Mb
+
+     |----|----|----|----|----|----|----|----|
+    8|    |    |    | bk |    |    |    |    |
+     |----|----|----|----|----|----|----|----|
+    7| wP | wK |    | bn |    |    |    |    |
+     |----|----|----|----|----|----|----|----|
+    6|    |    | wR |    |    |    |    |    |
+     |----|----|----|----|----|----|----|----|
+    5|    |    |    | bp |    | wP |    | bp |
+     |----|----|----|----|----|----|----|----|
+    4|    |    | bp |    |    | wP |    |    |
+     |----|----|----|----|----|----|----|----|
+    3|    |    | wP |    |    |    |    |    |
+     |----|----|----|----|----|----|----|----|
+    2|    |    |    |    |    |    |    |    |
+     |----|----|----|----|----|----|----|----|
+    1| br |    |    |    |    |    |    |    |
+     |----|----|----|----|----|----|----|----|
+        A    B    C    D    E    F    G    H
+info depth 1 score cp 217 time 0 nodes 39 pv a1e1 
+info depth 2 score cp 219 time 0 nodes 233 pv a1b1 b7a6 
+info depth 3 score cp 219 time 0 nodes 401 pv a1b1 b7a6 h5h4 
+info depth 4 score cp 215 time 0 nodes 990 pv a1b1 b7a6 b1a1 a6b7 
+info depth 5 score cp 217 time 0 nodes 3164 pv a1b1 b7a6 b1a1 a6b7 a1b1 
+info depth 6 score cp 14 time 0 nodes 7257 pv a1b1 b7a6 d7b8 a7b8q b1b8 c6e6 
+info depth 7 score cp 17 time 0 nodes 20407 pv a1b1 b7a6 b1b8 a7b8q d7b8 a6b7 b8c6 
+info depth 8 score cp 17 time 0 nodes 52141 pv a1b1 b7a6 b1b8 a7b8q d7b8 a6b7 b8c6 b7c6 
+info depth 9 score cp 0 time 0 nodes 148413 pv a1b1 b7a6 b1a1 a6b7 a1b1 b7a6 d7b6 
+info depth 10 score cp 0 time 0 nodes 385692 pv a1b1 b7a6 b1a1 a6b7 a1b1 b7a6 
+info depth 11 score cp 0 time 0 nodes 1027343 pv a1b1 b7a6 b1a1 a6b7 a1b1 b7a6 
+info depth 12 score cp 0 time 1000 nodes 2691446 pv a1b1 b7a6 b1a1 a6b7 a1b1 b7a6 
+info depth 13 score cp 0 time 3000 nodes 7386697 pv a1b1 b7a6 b1a1 a6b7 a1b1 b7a6 
+info depth 14 score cp 0 time 9000 nodes 20616075 pv a1b1 b7a6 b1a1 a6b7 a1b1 b7a6 
+TIME TAKEN 9
+bestmove a1b1

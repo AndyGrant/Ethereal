@@ -1,0 +1,190 @@
+Intialized Table of size 8.000Mb
+
+     |----|----|----|----|----|----|----|----|
+    8|    |    |    | bk |    |    |    |    |
+     |----|----|----|----|----|----|----|----|
+    7| wP | wK |    | bn |    |    |    |    |
+     |----|----|----|----|----|----|----|----|
+    6|    |    | wR |    |    |    |    |    |
+     |----|----|----|----|----|----|----|----|
+    5|    |    |    | bp |    | wP |    | bp |
+     |----|----|----|----|----|----|----|----|
+    4|    |    | bp |    |    | wP |    |    |
+     |----|----|----|----|----|----|----|----|
+    3|    |    | wP |    |    |    |    |    |
+     |----|----|----|----|----|----|----|----|
+    2|    |    |    |    |    |    |    |    |
+     |----|----|----|----|----|----|----|----|
+    1| br |    |    |    |    |    |    |    |
+     |----|----|----|----|----|----|----|----|
+        A    B    C    D    E    F    G    H
+Search Depth        : 1
+Successful LMR      : 0
+Failed LMR          : 0
+Successful NW       : 19
+Failed NW           : 3
+Raw Nodes           : 38
+Alpha Nodes         : 1
+Quiescence Nodes    : 37
+Principle Variation : a1b1 -> 
+Value               : +2.17
+info depth 1 score cp 217 time 0 nodes 38 pv a1b1 
+------------------------------
+Search Depth        : 2
+Successful LMR      : 0
+Failed LMR          : 0
+Successful NW       : 46
+Failed NW           : 3
+Raw Nodes           : 110
+Alpha Nodes         : 24
+Quiescence Nodes    : 86
+Principle Variation : a1b1 -> b7a6 -> 
+Value               : +2.36
+info depth 2 score cp 236 time 0 nodes 148 pv a1b1 b7a6 
+------------------------------
+Search Depth        : 3
+Successful LMR      : 15
+Failed LMR          : 0
+Successful NW       : 140
+Failed NW           : 3
+Raw Nodes           : 209
+Alpha Nodes         : 39
+Quiescence Nodes    : 170
+Principle Variation : a1b1 -> b7a6 -> h5h4 -> 
+Value               : +2.30
+info depth 3 score cp 230 time 0 nodes 357 pv a1b1 b7a6 h5h4 
+------------------------------
+Search Depth        : 4
+Successful LMR      : 15
+Failed LMR          : 0
+Successful NW       : 258
+Failed NW           : 4
+Raw Nodes           : 458
+Alpha Nodes         : 150
+Quiescence Nodes    : 308
+Principle Variation : a1b1 -> b7a6 -> b1a1 -> a6b7 -> 
+Value               : +2.22
+info depth 4 score cp 221 time 0 nodes 815 pv a1b1 b7a6 b1a1 a6b7 
+------------------------------
+Search Depth        : 5
+Successful LMR      : 67
+Failed LMR          : 5
+Successful NW       : 1357
+Failed NW           : 3
+Raw Nodes           : 2158
+Alpha Nodes         : 434
+Quiescence Nodes    : 1724
+Principle Variation : a1b1 -> b7a6 -> b1a1 -> a6b7 -> a1b1 -> 
+Value               : +2.17
+info depth 5 score cp 217 time 0 nodes 2973 pv a1b1 b7a6 b1a1 a6b7 a1b1 
+------------------------------
+Search Depth        : 6
+Successful LMR      : 128
+Failed LMR          : 0
+Successful NW       : 2204
+Failed NW           : 8
+Raw Nodes           : 3838
+Alpha Nodes         : 1187
+Quiescence Nodes    : 2651
+Principle Variation : a1b1 -> b7a6 -> d7b8 -> a7b8q -> b1b8 -> c6e6 -> 
+Value               : +0.53
+info depth 6 score cp 53 time 0 nodes 6811 pv a1b1 b7a6 d7b8 a7b8q b1b8 c6e6 
+------------------------------
+Search Depth        : 7
+Successful LMR      : 542
+Failed LMR          : 2
+Successful NW       : 7523
+Failed NW           : 13
+Raw Nodes           : 12841
+Alpha Nodes         : 3587
+Quiescence Nodes    : 9254
+Principle Variation : a1b1 -> b7a6 -> b1b8 -> a7b8q -> d7b8 -> a6b6 -> b8c6 -> 
+Value               : +0.63
+info depth 7 score cp 62 time 0 nodes 19652 pv a1b1 b7a6 b1b8 a7b8q d7b8 a6b6 b8c6 
+------------------------------
+Search Depth        : 8
+Successful LMR      : 931
+Failed LMR          : 3
+Successful NW       : 20239
+Failed NW           : 7
+Raw Nodes           : 34130
+Alpha Nodes         : 10171
+Quiescence Nodes    : 23959
+Principle Variation : a1b1 -> b7a6 -> b1b8 -> c6d6 -> b8c8 -> d6d5 -> d8e7 -> a6b5 -> 
+Value               : +0.52
+info depth 8 score cp 52 time 0 nodes 53782 pv a1b1 b7a6 b1b8 c6d6 b8c8 d6d5 d8e7 a6b5 
+------------------------------
+Search Depth        : 9
+Successful LMR      : 3699
+Failed LMR          : 20
+Successful NW       : 60637
+Failed NW           : 94
+Raw Nodes           : 100574
+Alpha Nodes         : 28110
+Quiescence Nodes    : 72464
+Principle Variation : a1b1 -> b7a6 -> b1a1 -> a6b7 -> a1b1 -> b7a6 -> h5h4 -> c6d6 -> b1b5 -> 
+Value               : +0.00
+info depth 9 score cp 0 time 0 nodes 154356 pv a1b1 b7a6 b1a1 a6b7 a1b1 b7a6 h5h4 c6d6 b1b5 
+------------------------------
+Search Depth        : 10
+Successful LMR      : 7037
+Failed LMR          : 28
+Successful NW       : 135350
+Failed NW           : 0
+Raw Nodes           : 232360
+Alpha Nodes         : 70751
+Quiescence Nodes    : 161609
+Principle Variation : a1b1 -> b7a6 -> b1a1 -> a6b7 -> a1b1 -> b7a6 -> 
+Value               : +0.00
+info depth 10 score cp 0 time 0 nodes 386716 pv a1b1 b7a6 b1a1 a6b7 a1b1 b7a6 
+------------------------------
+Search Depth        : 11
+Successful LMR      : 25249
+Failed LMR          : 74
+Successful NW       : 402111
+Failed NW           : 0
+Raw Nodes           : 661284
+Alpha Nodes         : 186827
+Quiescence Nodes    : 474457
+Principle Variation : a1b1 -> b7a6 -> b1a1 -> a6b7 -> a1b1 -> b7a6 -> 
+Value               : +0.00
+info depth 11 score cp 0 time 0 nodes 1048000 pv a1b1 b7a6 b1a1 a6b7 a1b1 b7a6 
+------------------------------
+Search Depth        : 12
+Successful LMR      : 55516
+Failed LMR          : 261
+Successful NW       : 1016057
+Failed NW           : 0
+Raw Nodes           : 1734516
+Alpha Nodes         : 515929
+Quiescence Nodes    : 1218587
+Principle Variation : a1b1 -> b7a6 -> b1a1 -> a6b7 -> a1b1 -> b7a6 -> 
+Value               : +0.00
+info depth 12 score cp 0 time 1000 nodes 2782516 pv a1b1 b7a6 b1a1 a6b7 a1b1 b7a6 
+------------------------------
+Search Depth        : 13
+Successful LMR      : 202020
+Failed LMR          : 675
+Successful NW       : 3121491
+Failed NW           : 0
+Raw Nodes           : 5205550
+Alpha Nodes         : 1479637
+Quiescence Nodes    : 3725913
+Principle Variation : a1b1 -> b7a6 -> b1a1 -> a6b7 -> a1b1 -> b7a6 -> 
+Value               : +0.00
+info depth 13 score cp 0 time 3000 nodes 7988066 pv a1b1 b7a6 b1a1 a6b7 a1b1 b7a6 
+------------------------------
+Search Depth        : 14
+Successful LMR      : 512272
+Failed LMR          : 2275
+Successful NW       : 8745859
+Failed NW           : 0
+Raw Nodes           : 14730715
+Alpha Nodes         : 4268021
+Quiescence Nodes    : 10462694
+Principle Variation : a1b1 -> b7a6 -> b1a1 -> a6b7 -> a1b1 -> b7a6 -> 
+Value               : +0.00
+info depth 14 score cp 0 time 10000 nodes 22718781 pv a1b1 b7a6 b1a1 a6b7 a1b1 b7a6 
+------------------------------
+TIME TAKEN 10
+bestmove a1b1
