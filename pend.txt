@@ -1,0 +1,282 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+ 21.09      0.66     0.66 19001683     0.00     0.00  square_is_attacked
+ 16.93      1.19     0.53  8600236     0.00     0.00  basic_heuristic
+ 14.70      1.65     0.46  8778933     0.00     0.00  evaluate_board
+ 10.22      1.97     0.32       17     0.02     0.18  alpha_beta_prune
+  8.95      2.25     0.28  4026389     0.00     0.00  gen_all_moves
+  6.71      2.46     0.21 13753236     0.00     0.00  apply_move
+  6.39      2.66     0.20  8778933     0.00     0.00  get_entry
+  5.75      2.84     0.18 13753236     0.00     0.00  revert_move
+  4.79      2.99     0.15  4573847     0.00     0.00  gen_all_captures
+  3.51      3.10     0.11  6527706     0.00     0.00  quiescence_search
+  0.32      3.11     0.01  4573847     0.00     0.00  store_entry
+  0.32      3.12     0.01                             __chkstk_ms
+  0.32      3.13     0.01                             time
+  0.00      3.13     0.00      306     0.00     0.00  print_move_t
+  0.00      3.13     0.00      171     0.00     0.00  _monstartup
+  0.00      3.13     0.00       64     0.00     0.00  char_to_piece
+  0.00      3.13     0.00        1     0.00     0.00  decode_fen(char*, std::string)
+  0.00      3.13     0.00        1     0.00     0.00  parse_moves(std::string)
+  0.00      3.13     0.00        1     0.00     0.00  convert_move_to_string(unsigned int)
+  0.00      3.13     0.00        1     0.00     3.11  get_best_move
+  0.00      3.13     0.00        1     0.00     0.00  init_board_t
+  0.00      3.13     0.00        1     0.00     0.00  init_ttable_t
+  0.00      3.13     0.00        1     0.00     0.00  init_zorbist_hash
+  0.00      3.13     0.00        1     0.00     0.00  init_zorbist_t
+  0.00      3.13     0.00        1     0.00     0.00  print_board_t
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+ 
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this 
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 4 byte(s) for 0.32% of 3.13 seconds
+
+index % time    self  children    called     name
+                             10554078             alpha_beta_prune [1]
+                0.32    2.79      17/17          get_best_move [2]
+[1]     99.4    0.32    2.79      17+10554078 alpha_beta_prune [1]
+                0.11    1.25 6527706/6527706     quiescence_search [4]
+                0.44    0.00 12594296/19001683     square_is_attacked [5]
+                0.28    0.14 4026389/4026389     gen_all_moves [8]
+                0.25    0.00 4026389/8600236     basic_heuristic [6]
+                0.17    0.00 11372238/13753236     apply_move [9]
+                0.15    0.00 11372238/13753236     revert_move [11]
+                             10554078             alpha_beta_prune [1]
+-----------------------------------------------
+                0.00    3.11       1/1           _fu63___ZNSs4_Rep20_S_empty_rep_storageE [3]
+[2]     99.4    0.00    3.11       1         get_best_move [2]
+                0.32    2.79      17/17          alpha_beta_prune [1]
+                0.00    0.00     306/306         print_move_t [17]
+                0.00    0.00       1/1           init_ttable_t [24]
+                0.00    0.00       1/1           print_board_t [27]
+-----------------------------------------------
+                                                 <spontaneous>
+[3]     99.4    0.00    3.11                 _fu63___ZNSs4_Rep20_S_empty_rep_storageE [3]
+                0.00    3.11       1/1           get_best_move [2]
+                0.00    0.00       1/1           convert_move_to_string(unsigned int) [22]
+-----------------------------------------------
+                             2251227             quiescence_search [4]
+                0.11    1.25 6527706/6527706     alpha_beta_prune [1]
+[4]     43.5    0.11    1.25 6527706+2251227 quiescence_search [4]
+                0.46    0.00 8778933/8778933     evaluate_board [7]
+                0.28    0.00 4573847/8600236     basic_heuristic [6]
+                0.20    0.00 8778933/8778933     get_entry [10]
+                0.15    0.00 4573847/4573847     gen_all_captures [12]
+                0.08    0.00 2380998/19001683     square_is_attacked [5]
+                0.04    0.00 2380998/13753236     apply_move [9]
+                0.03    0.00 2380998/13753236     revert_move [11]
+                0.01    0.00 4573847/4573847     store_entry [13]
+                             2251227             quiescence_search [4]
+-----------------------------------------------
+                0.08    0.00 2380998/19001683     quiescence_search [4]
+                0.14    0.00 4026389/19001683     gen_all_moves [8]
+                0.44    0.00 12594296/19001683     alpha_beta_prune [1]
+[5]     21.1    0.66    0.00 19001683         square_is_attacked [5]
+-----------------------------------------------
+                0.25    0.00 4026389/8600236     alpha_beta_prune [1]
+                0.28    0.00 4573847/8600236     quiescence_search [4]
+[6]     16.9    0.53    0.00 8600236         basic_heuristic [6]
+-----------------------------------------------
+                0.46    0.00 8778933/8778933     quiescence_search [4]
+[7]     14.7    0.46    0.00 8778933         evaluate_board [7]
+-----------------------------------------------
+                0.28    0.14 4026389/4026389     alpha_beta_prune [1]
+[8]     13.4    0.28    0.14 4026389         gen_all_moves [8]
+                0.14    0.00 4026389/19001683     square_is_attacked [5]
+-----------------------------------------------
+                0.04    0.00 2380998/13753236     quiescence_search [4]
+                0.17    0.00 11372238/13753236     alpha_beta_prune [1]
+[9]      6.7    0.21    0.00 13753236         apply_move [9]
+-----------------------------------------------
+                0.20    0.00 8778933/8778933     quiescence_search [4]
+[10]     6.4    0.20    0.00 8778933         get_entry [10]
+-----------------------------------------------
+                0.03    0.00 2380998/13753236     quiescence_search [4]
+                0.15    0.00 11372238/13753236     alpha_beta_prune [1]
+[11]     5.8    0.18    0.00 13753236         revert_move [11]
+-----------------------------------------------
+                0.15    0.00 4573847/4573847     quiescence_search [4]
+[12]     4.8    0.15    0.00 4573847         gen_all_captures [12]
+-----------------------------------------------
+                0.01    0.00 4573847/4573847     quiescence_search [4]
+[13]     0.3    0.01    0.00 4573847         store_entry [13]
+-----------------------------------------------
+                                                 <spontaneous>
+[14]     0.3    0.01    0.00                 __chkstk_ms [14]
+-----------------------------------------------
+                                                 <spontaneous>
+[15]     0.3    0.01    0.00                 time [15]
+-----------------------------------------------
+                0.00    0.00     306/306         get_best_move [2]
+[17]     0.0    0.00    0.00     306         print_move_t [17]
+-----------------------------------------------
+                0.00    0.00      31/171         _fu64___ZNSs4_Rep20_S_empty_rep_storageE [254]
+                0.00    0.00     140/171         _fu8___ZNSs4_Rep20_S_empty_rep_storageE [268]
+[18]     0.0    0.00    0.00     171         _monstartup [18]
+-----------------------------------------------
+                0.00    0.00      64/64          init_board_t [23]
+[19]     0.0    0.00    0.00      64         char_to_piece [19]
+-----------------------------------------------
+                0.00    0.00       1/1           _fu57___ZNSs4_Rep20_S_empty_rep_storageE [247]
+[20]     0.0    0.00    0.00       1         decode_fen(char*, std::string) [20]
+-----------------------------------------------
+                0.00    0.00       1/1           _fu58___ZNSs4_Rep20_S_empty_rep_storageE [248]
+[21]     0.0    0.00    0.00       1         parse_moves(std::string) [21]
+-----------------------------------------------
+                0.00    0.00       1/1           _fu63___ZNSs4_Rep20_S_empty_rep_storageE [3]
+[22]     0.0    0.00    0.00       1         convert_move_to_string(unsigned int) [22]
+-----------------------------------------------
+                0.00    0.00       1/1           _fu58___ZNSs4_Rep20_S_empty_rep_storageE [248]
+[23]     0.0    0.00    0.00       1         init_board_t [23]
+                0.00    0.00      64/64          char_to_piece [19]
+                0.00    0.00       1/1           init_zorbist_t [26]
+                0.00    0.00       1/1           init_zorbist_hash [25]
+-----------------------------------------------
+                0.00    0.00       1/1           get_best_move [2]
+[24]     0.0    0.00    0.00       1         init_ttable_t [24]
+-----------------------------------------------
+                0.00    0.00       1/1           init_board_t [23]
+[25]     0.0    0.00    0.00       1         init_zorbist_hash [25]
+-----------------------------------------------
+                0.00    0.00       1/1           init_board_t [23]
+[26]     0.0    0.00    0.00       1         init_zorbist_t [26]
+-----------------------------------------------
+                0.00    0.00       1/1           get_best_move [2]
+[27]     0.0    0.00    0.00       1         print_board_t [27]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function is in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+Copyright (C) 2012 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Index by function name
+
+  [20] decode_fen(char*, std::string) [7] evaluate_board  [27] print_board_t
+  [21] parse_moves(std::string) [12] gen_all_captures     [17] print_move_t
+  [22] convert_move_to_string(unsigned int) [8] gen_all_moves [4] quiescence_search
+  [14] __chkstk_ms             [2] get_best_move          [11] revert_move
+  [18] _monstartup            [10] get_entry               [5] square_is_attacked
+   [1] alpha_beta_prune       [23] init_board_t           [13] store_entry
+   [9] apply_move             [24] init_ttable_t          [15] time
+   [6] basic_heuristic        [25] init_zorbist_hash
+  [19] char_to_piece          [26] init_zorbist_t
