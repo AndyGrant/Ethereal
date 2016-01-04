@@ -49,6 +49,7 @@ int evaluate_player(int turn, int pawn_info[2][10]){
 	
 	int num_knights = 0;
 	int num_bishops = 0;
+	int rook_location = -1;
 	
 	for(location = &(board.piece_locations[turn][0]); *location != -1; location++){
 		int type = board.squares[*location];
@@ -84,28 +85,52 @@ int evaluate_player(int turn, int pawn_info[2][10]){
 			case WhiteRook:
 				value += RookValue;
 				if (pawn_info[ColourWhite][col] == 0){
-					if (pawn_info[ColourBlack][col] == 7)
+					if (pawn_info[ColourBlack][col] == 7){
 						value += OpenFileRookValue;
-					else
+						if (rook_location == -1) 
+							rook_location = sq64;
+						else if (rook_location % 8 == sq64 % 8)
+							value += RooksOnSameOpenFileValue;
+					}
+					else{
 						value += SemiOpenFileRookValue;
+						if (rook_location == -1) 
+							rook_location = sq64;
+						else if (rook_location % 8 == sq64 % 8)
+							value += RooksOnSameOpenFileValue;
+					}
 				}
 				
 				if (sq64 / 16 == 1)
 					value += SeventhRankRookValue;
+				if (sq64 / 16 == 0)
+					value += EightRankRookValue;
 				
 				break;
 			
 			case BlackRook:
 				value += RookValue;
 				if (pawn_info[ColourBlack][col] == 7){
-					if (pawn_info[ColourWhite][col] == 0)
+					if (pawn_info[ColourWhite][col] == 0){
 						value += OpenFileRookValue;
-					else
+						if (rook_location == -1) 
+							rook_location = sq64;
+						else if (rook_location % 8 == sq64 % 8)
+							value += RooksOnSameOpenFileValue;
+					}
+					else{
 						value += SemiOpenFileRookValue;
+						if (rook_location == -1) 
+							rook_location = sq64;
+						else if (rook_location % 8 == sq64 % 8)
+							value += RooksOnSameSemiOpenFileValue;
+					}
 				}
 				
 				if (sq64 / 16 == 6)
 					value += SeventhRankRookValue;
+				if (sq64 / 16 == 7)
+					value += EightRankRookValue;
 				
 				break;
 				
@@ -118,22 +143,30 @@ int evaluate_player(int turn, int pawn_info[2][10]){
 				break;
 			
 			case WhiteKing:
-				if (board.piece_counts[0] + board.piece_counts[1] <= 6)
+				if (board.piece_counts[0] + board.piece_counts[1] <= 7)
 					value += KingEndValueMap[sq64] / 2;
 				else{
 					value += KingEarlyValueMap[sq64];
 					if (board.squares[sq256-16] == WhitePawn)
+						value += PawnInfrontOfKingValue;
+					if (board.squares[sq256-15] == WhitePawn)
+						value += PawnInfrontOfKingValue;
+					if (board.squares[sq256-17] == WhitePawn)
 						value += PawnInfrontOfKingValue;
 				}
 				
 				break;
 				
 			case BlackKing:
-				if (board.piece_counts[0] + board.piece_counts[1] <= 6)
+				if (board.piece_counts[0] + board.piece_counts[1] <= 7)
 					value += KingEndValueMap[inv[sq64]] / 2;
 				else{
 					value += KingEarlyValueMap[inv[sq64]];
 					if (board.squares[sq256+16] == BlackPawn)
+						value += PawnInfrontOfKingValue;
+					if (board.squares[sq256+17] == BlackPawn)
+						value += PawnInfrontOfKingValue;
+					if (board.squares[sq256+15] == BlackPawn)
 						value += PawnInfrontOfKingValue;
 				}
 				break;
@@ -141,10 +174,10 @@ int evaluate_player(int turn, int pawn_info[2][10]){
 		}
 	}
 	
-	if (num_bishops == 2)	value += 50;
-	value += 5 * num_knights * board.pawn_counts[turn];
+	if (num_bishops == 2)	
+		value += HasBothBishopsValue;
 	
-	int is_end_game = (board.piece_counts[0] + board.piece_counts[1] <= 6);
+	int is_end_game = (board.piece_counts[0] + board.piece_counts[1] <= 7);
 	
 	for(location = &(board.pawn_locations[turn][0]); *location != -1; location++){
 		int sq256 = *location;
