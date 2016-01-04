@@ -147,22 +147,15 @@ int alpha_beta_prune(principle_variation_t * pv, int depth, int alpha, int beta)
 			
 			else if (valid_size > sqrt(size) && depth >= 3 && IS_EMPTY(MOVE_GET_CAPTURE(moves[i])) && is_not_in_check(board.turn)){
 				
-				if (depth >= 9 && valid_size > sqrt(size) * 4){
+				if (depth >= 9 && valid_size > sqrt(size) * 6)
 					value = -alpha_beta_prune(&lpv,depth-4,-alpha-1,-alpha);
-					d = 4;
-				}
-				else if (depth >= 6 && valid_size > sqrt(size) * 2){
+				else if (depth >= 6 && valid_size > sqrt(size) * 3)
 					value = -alpha_beta_prune(&lpv,depth-3,-alpha-1,-alpha);
-					d = 3;
-				}
-				else{
+				else
 					value = -alpha_beta_prune(&lpv,depth-2,-alpha-1,-alpha);
-					d = 2;
-				}
+					
 		
 				if (value > alpha){
-					
-					d = -1;
 					
 					value = -alpha_beta_prune(&lpv,depth-1,-alpha-1,-alpha);
 					
@@ -215,8 +208,6 @@ int alpha_beta_prune(principle_variation_t * pv, int depth, int alpha, int beta)
 	
 	if (valid_size == 0 && is_not_in_check(board.turn))
 		best = 0;
-	else
-		store_entry(board.hash,alpha,beta,best,board.turn,depth+1-d);
 	
 	tree.ply--;
 	return best;
