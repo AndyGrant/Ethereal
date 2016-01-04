@@ -15,9 +15,6 @@
 #include "types.h"
 #include "util.h"
 
-int USE_TABLE = 1;
-int USE_TABLE_IN_HEURISTIC = 0;
-
 extern board_t board;
 extern search_tree_t tree;
 extern zorbist_t zorbist;
@@ -33,7 +30,7 @@ int FailedNullWindow = 0;
 
 move_t get_best_move(int alloted_time){
 	int depth, i, size = 0; 	
-	alloted_time = 16;
+	alloted_time = 10;
 	
 	StartTime = time(NULL);
 	EndTime = StartTime + alloted_time;
@@ -119,9 +116,11 @@ int alpha_beta_prune(principle_variation_t * pv, int depth, int alpha, int beta)
 		tree.alpha_beta_nodes--;
 		int qs = quiescence_search(alpha,beta);
 		return qs == -CheckMate ? evaluate_board(board) : qs;
-	}
+	}	
 	
 	tree.ply++;	
+	
+	int d = 1;
 	
 	int valid_size = 0, size = 0;
 	move_t moves[MaxMoves];
@@ -146,16 +145,25 @@ int alpha_beta_prune(principle_variation_t * pv, int depth, int alpha, int beta)
 			else if (i == 0)
 				value = -alpha_beta_prune(&lpv,depth-1,-beta,-alpha);
 			
-			else if (valid_size > sqrt(size) / 2 && depth >= 3 && IS_EMPTY(MOVE_GET_CAPTURE(moves[i])) && is_not_in_check(board.turn)){
+			else if (valid_size > sqrt(size) && depth >= 3 && IS_EMPTY(MOVE_GET_CAPTURE(moves[i])) && is_not_in_check(board.turn)){
 				
-				if (depth >= 9 && valid_size > size / 2)
+				if (depth >= 9 && valid_size > sqrt(size) * 4){
 					value = -alpha_beta_prune(&lpv,depth-4,-alpha-1,-alpha);
-				else if (depth >= 6 && valid_size > 2 * sqrt(size))
+					d = 4;
+				}
+				else if (depth >= 6 && valid_size > sqrt(size) * 2){
 					value = -alpha_beta_prune(&lpv,depth-3,-alpha-1,-alpha);
-				else
+					d = 3;
+				}
+				else{
 					value = -alpha_beta_prune(&lpv,depth-2,-alpha-1,-alpha);
+					d = 2;
+				}
 		
 				if (value > alpha){
+					
+					d = -1;
+					
 					value = -alpha_beta_prune(&lpv,depth-1,-alpha-1,-alpha);
 					
 					if (value > alpha && value < beta){
@@ -168,6 +176,7 @@ int alpha_beta_prune(principle_variation_t * pv, int depth, int alpha, int beta)
 				}
 				else
 					SuccessfulLateMoveReductions++;
+				
 			}
 				
 			else {
@@ -206,6 +215,8 @@ int alpha_beta_prune(principle_variation_t * pv, int depth, int alpha, int beta)
 	
 	if (valid_size == 0 && is_not_in_check(board.turn))
 		best = 0;
+	else
+		store_entry(board.hash,alpha,beta,best,board.turn,depth+1-d);
 	
 	tree.ply--;
 	return best;
@@ -223,27 +234,26 @@ int quiescence_search(int alpha, int beta){
 		return board.turn == EvaluatingPlayer ? -CheckMate : CheckMate;
 	}
 	
-	if (USE_TABLE){
-		ttentry_t entry = get_entry(board.hash);
-		if (entry != 0){
-			int rawv = ENTRY_GET_VALUE(entry);
-			int realv = ENTRY_GET_TURN(entry) == board.turn ? rawv : -rawv;
-			int bound = ENTRY_GET_BOUNDS(entry);
-			
-			if (bound == ExactBound){
-				tree.ply--;
-				return realv;
-			}
-			
-			if (bound == LowerBound && realv > alpha)
-				alpha = realv;
-			if (bound == UpperBound && realv < beta)
-				beta = realv;
-			
-			if (alpha > beta){
-				tree.ply--;
-				return realv;
-			}
+
+	ttentry_t entry = get_entry(board.hash);
+	if (entry != 0){
+		int rawv = ENTRY_GET_VALUE(entry);
+		int realv = ENTRY_GET_TURN(entry) == board.turn ? rawv : -rawv;
+		int bound = ENTRY_GET_BOUNDS(entry);
+		
+		if (bound == ExactBound){
+			tree.ply--;
+			return realv;
+		}
+		
+		if (bound == LowerBound && realv > alpha)
+			alpha = realv;
+		if (bound == UpperBound && realv < beta)
+			beta = realv;
+		
+		if (alpha > beta){
+			tree.ply--;
+			return realv;
 		}
 	}
 	
@@ -300,7 +310,7 @@ void basic_heuristic(move_t * moves, int size){
 	int i, values[size];
 	for(i = 0; i < size; i++){
 		int cap = MOVE_GET_CAPTURE(moves[i]);
-		values[i] = 50*(!IS_EMPTY(cap) * cap) / board.squares[MOVE_GET_FROM(moves[i])];
+		values[i] = 25*(!IS_EMPTY(cap) * cap) / board.squares[MOVE_GET_FROM(moves[i])];
 		
 		if (MOVE_IS_PROMOTION(moves[i]))
 			values[i] += 50 * MOVE_GET_PROMOTE_TYPE(moves[i],ColourWhite);
