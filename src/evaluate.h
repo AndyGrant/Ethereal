@@ -7,19 +7,25 @@
 #define CheckMate	(32768 - 128)
 
 /* Piece Value Definitions */
-#define PawnValue 	(150)
-#define KnightValue	(475)
-#define BishopValue	(450)
-#define RookValue 	(750)
-#define QueenValue 	(1350)
+#define PawnValue 	(105)
+#define KnightValue	(325)
+#define BishopValue	(300)
+#define RookValue 	(515)
+#define QueenValue 	(985)
 
 #define StackedPawnValue				(-10)
-#define IsolatedPawnValue				(-20)
-#define PassedPawnValue					( 10)
-#define OpenFileRookValue				( 25)
-#define SemiOpenFileRookValue			( 15)
-#define SeventhRankRookValue			( 10)
+#define IsolatedPawnValue				(-15)
+#define PassedPawnValue					(  8)
 #define PawnInfrontOfKingValue			(  5)
+
+#define OpenFileRookValue				( 25)
+#define SemiOpenFileRookValue			( 10)
+#define SeventhRankRookValue			( 20)
+#define EightRankRookValue				(  8)
+#define RooksOnSameOpenFileValue		( 40)
+#define RooksOnSameSemiOpenFileValue	( 15)
+
+#define HasBothBishopsValue				( 25)
 
 static int PawnEarlyValueMap[64] = {
 	  0,   0,   0,   0,   0,   0,   0,   0,
