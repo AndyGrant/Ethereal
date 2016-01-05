@@ -62,7 +62,6 @@ int evaluate_player(int turn, int pawn_info[2][10]){
 		
 		int truesq = turn == ColourWhite ? sq64 : inv[sq64];
 		
-		
 		switch(type){
 			case WhiteKnight:
 				value += KnightValue + KnightValueMap[truesq];
