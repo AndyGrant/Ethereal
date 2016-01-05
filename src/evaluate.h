@@ -4,14 +4,14 @@
 #include "util.h"
 
 /* Search Definitions */
-#define CheckMate	(32768 - 128)
+#define CheckMate	(100000)
 
 /* Piece Value Definitions */
-#define PawnValue 	(250)
-#define KnightValue	(750)
-#define BishopValue	(750)
-#define RookValue 	(1250)
-#define QueenValue 	(1750)
+#define PawnValue 	(2000)
+#define KnightValue	(6000)
+#define BishopValue	(7000)
+#define RookValue 	(10000)
+#define QueenValue 	(18000)
 
 #define StackedPawnValue				(-30)
 #define IsolatedPawnValue				(-45)
@@ -25,7 +25,25 @@
 #define RooksOnSameOpenFileValue		( 90)
 #define RooksOnSameSemiOpenFileValue	( 60)
 
+#define PawnAttacksNonPawnValue			( 90)
+#define PawnDefendsPawnValue			( 20)
 
+#define KnightAttacksPieceValue			( 45)
+#define KnightDefendsPieceVlaue			( 15)
+#define KnightAttacksEmptyValue			( 15)
+
+#define BishopAttacksPieceValue			( 35)
+#define BishopDefendsPieceValue			( 15)
+
+#define QueenAttacksPieceValue			( 80)
+#define QueenDefendsPieceValue			( 15)
+
+#define MultiplierPawnEarlyPosition		( 15)
+#define MultiplierPawnEndPosition		(  5)
+#define MultiplierKnightPosition		( 12)
+#define MultiplierBishopPosition		(  8) 
+#define MultiplierKingEarlyPosition		(  4)
+#define MultiplierKingEndPosition		(  2)
 
 static int PawnEarlyValueMap[64] = {
 	  0,   0,   0,   0,   0,   0,   0,   0,
@@ -79,7 +97,7 @@ static int KingEarlyValueMap[64] = {
 	-50, -50, -50, -50, -50, -50, -50, -50,
 	-50, -50, -50, -50, -50, -50, -50, -50,
 	-30, -30, -30, -60, -60, -60, -30, -30,
-	  0,  20,  80, -60,   0, -60,  80,  20
+	  0,  20,  70, -60,   0, -60,  80,  20
 };
 
 static int KingEndValueMap[64] = {

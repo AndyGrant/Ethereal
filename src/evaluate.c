@@ -53,6 +53,7 @@ int evaluate_player(int turn, int pawn_info[2][10]){
 	int is_endgame  = (board.piece_counts[0] + board.piece_counts[1] <= 7);
 	int rook_sq     = -1;
 	int rook_stack  = 0;
+	int i			= 0;
 	
 	for(location = &(board.piece_locations[turn][0]); *location != -1; location++){
 		int type = board.squares[*location] & ~1;
@@ -64,11 +65,31 @@ int evaluate_player(int turn, int pawn_info[2][10]){
 		
 		switch(type){
 			case WhiteKnight:
-				value += KnightValue + KnightValueMap[truesq];
+				value += KnightValue + (MultiplierKnightPosition * KnightValueMap[truesq]);
+			
+				for(i = 0; i < 8; i++){
+					int p = (board.squares[sq256+knight_movements[i]]);
+					if (IS_EMPTY(p)) 		value += KnightAttacksEmptyValue;
+					else if (IS_WALL(p))	value += 0;
+					else if (p % 2 == turn) value += KnightAttacksEmptyValue;
+					else if (p % 2 != turn) value += KnightAttacksPieceValue;
+				}
+			
 			break;
 			
 			case WhiteBishop:
-				value += BishopValue + BishopValueMap[truesq];
+				value += BishopValue + (MultiplierBishopPosition * BishopValueMap[truesq]);
+			
+				for(i = 0; i < 4; i++){
+					int qstart = sq256;
+					while(board.squares[(qstart+=king_movements[i])] == Empty);
+					
+					if IS_PIECE(board.squares[qstart]){
+						if (board.squares[qstart] % 2 == turn)		value += BishopDefendsPieceValue;
+						else if (board.squares[qstart] % 2 != turn) value += BishopAttacksPieceValue;
+					}
+				}
+
 			break;
 			
 			case WhiteRook:
@@ -100,13 +121,24 @@ int evaluate_player(int turn, int pawn_info[2][10]){
 				
 			case WhiteQueen:
 				value += QueenValue;
+			
+				for(i = 0; i < 8; i++){
+					int qstart = sq256;
+					while(board.squares[(qstart+=king_movements[i])] == Empty);
+					
+					if IS_PIECE(board.squares[qstart]){
+						if (board.squares[qstart] % 2 == turn)		value += QueenDefendsPieceValue;
+						else if (board.squares[qstart] % 2 != turn) value += QueenAttacksPieceValue;
+					}
+				}
+		
 			break;
 			
 			case WhiteKing:
 				if (is_endgame)
-					value += KingEndValueMap[truesq];
+					value += MultiplierKingEndPosition * KingEndValueMap[truesq];
 				else
-					value += KingEarlyValueMap[truesq];
+					value += MultiplierKingEarlyPosition * KingEarlyValueMap[truesq];
 			break;
 		}
 	}
@@ -121,15 +153,15 @@ int evaluate_player(int turn, int pawn_info[2][10]){
 		
 		if (turn == ColourWhite){
 			if (is_endgame)
-				value += PawnEndValueMap[sq64];
+				value += MultiplierPawnEndPosition * PawnEndValueMap[sq64];
 			else
-				value += PawnEarlyValueMap[sq64];
+				value += MultiplierPawnEarlyPosition * PawnEarlyValueMap[sq64];
 		}
 		else{
 			if (is_endgame)
-				value += PawnEndValueMap[inv[sq64]];
+				value += MultiplierPawnEndPosition * PawnEndValueMap[inv[sq64]];
 			else
-				value += PawnEarlyValueMap[inv[sq64]];
+				value += MultiplierPawnEarlyPosition * PawnEarlyValueMap[inv[sq64]];
 		}
 		
 		if (turn == ColourWhite){
