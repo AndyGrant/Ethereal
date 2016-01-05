@@ -18,7 +18,13 @@ void init_zorbist_t(){
 }
 
 int gen_bitstring(){
-	return (rand() | (rand() << 8) | (rand() << 16) | (rand() << 24));
+	unsigned long long bitstring = 0;
+	int i;
+	
+	for(i = 0; i < 64; i++)
+		bitstring ^= (rand() << i);
+	
+	return bitstring;
 }
 
 void init_zorbist_hash(){

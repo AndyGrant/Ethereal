@@ -36,7 +36,7 @@ typedef struct board_t {
 	int depth;
 	move_t ep_history[MaxDepth];
 	
-	int hash;
+	unsigned long long hash;
 	int hash_entries;
 	int hash_history[1024];
 	
@@ -62,7 +62,7 @@ typedef struct search_tree_t {
 	
 } search_tree_t;
 
-typedef unsigned long long ttentry_t;
+typedef uint32_t ttentry_t;
 // bits		00-15: Value + 32768
 // bits		16-16: Turn
 // bits		17-23: Depth
@@ -70,6 +70,7 @@ typedef unsigned long long ttentry_t;
 
 typedef struct ttable_t {
 	ttentry_t * entries;
+	unsigned long long * hashes;
 
 } ttable_t;
 

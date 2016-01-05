@@ -34,7 +34,6 @@ move_t get_best_move(int alloted_time){
 	EvaluatingPlayer = board.turn;
 	
 	init_search_tree_t();
-	init_ttable_t();
 	print_board_t();
 	
 	int old_hash = board.hash;
@@ -53,8 +52,7 @@ move_t get_best_move(int alloted_time){
  			break;	
 	}
 	
-	printf("TIME TAKEN %d\n",((int)clock()-(int)start)/CLOCKS_PER_SEC);	
-	free(table.entries);
+	printf("TIME TAKEN %d\n",((int)clock()-(int)start)/CLOCKS_PER_SEC);
 	return tree.principle_variation.line[0];	
 }
 
@@ -85,72 +83,48 @@ int alpha_beta_prune(principle_variation_t * pv, int depth, int alpha, int beta)
 		tree.alpha_beta_nodes--;
 		return quiescence_search(alpha,beta);
 	}	
-	
-	tree.ply++;	
+
+	tree.ply++;
 	
 	int valid_size = 0, size = 0;
 	move_t moves[MaxMoves];
 	gen_all_moves(&(moves[0]),&size);
-	basic_heuristic(&(moves[0]),size);
+	int values[size];
+	basic_heuristic(&(values[0]),&(moves[0]),size);
 	
-	move_t best_move = 0;
-	int i, value, best = -CheckMate - depth;
+	int i, index, value, best = -CheckMate - depth;
 	
-	for (i = 0; i < size; i++){
-		
+	for(index = 0; index < size; index++){
+		i = get_best_next_index(&(values[0]),size);
 		apply_move(moves[i]);
 		
-		if (is_not_in_check(!(board.turn))){
+		if(is_not_in_check(!board.turn)){
 			valid_size++;
-			
 			// Determine three-fold repitition
 			int z, repititions = 0;
 			for(z = board.hash_entries-1; z >= 0; z-=2)
 				if (board.hash_history[z] == board.hash)
 					repititions++;
 			
-			// Penalty for approaching repitition
-			if (repititions == 2)
-				value = -100;
-			
-			/* Determine Value Of Node */
+			// Determine Value Of Node 
 			if (repititions >= 3){
 				value = 0;
-				
 			} else if (i == 0){
 				value = -alpha_beta_prune(&lpv,depth-1,-beta,-alpha);
-				
-			} else if (valid_size > sqrt(size) && depth >= 3 && IS_EMPTY(MOVE_GET_CAPTURE(moves[i])) && is_not_in_check(board.turn)){
-				if (depth >= 9 && valid_size > sqrt(size) * 4)
-					value = -alpha_beta_prune(&lpv,depth-4,-alpha-1,-alpha);
-				else if (depth >= 6 && valid_size > sqrt(size) * 2)
-					value = -alpha_beta_prune(&lpv,depth-3,-alpha-1,-alpha);
-				else
-					value = -alpha_beta_prune(&lpv,depth-2,-alpha-1,-alpha);
-					
-				if (value > alpha){					
-					value = -alpha_beta_prune(&lpv,depth-1,-alpha-1,-alpha);
-					
-					if (value > alpha && value < beta)
-						value = -alpha_beta_prune(&lpv,depth-1,-beta,-alpha);
-				}
-				
+			} else if (i >= 2 && depth >= 2 &&  IS_EMPTY(MOVE_GET_CAPTURE(moves[i]))){
+				value = -alpha_beta_prune(&lpv,depth-2,-beta,-alpha);
+				if (value > alpha)
+					value = -alpha_beta_prune(&lpv,depth-1,-beta,-alpha);
 			} else {
 				value = -alpha_beta_prune(&lpv,depth-1,-alpha-1,-alpha);
-					
 				if (value > alpha && value < beta)
 					value = -alpha_beta_prune(&lpv,depth-1,-beta,-alpha);
 			}
-			/* End Determine Value Of Node */
 			
-			
-			// Adjust Alpha Beta Windows And Update PV
 			if (value > best){
 				best = value;
-				
 				if (best > alpha){
 					alpha = best;
-				
 					if (lpv.length != -1){
 						pv->line[0] = moves[i];
 						memcpy(pv->line + 1, lpv.line, sizeof(move_t) * lpv.length);
@@ -159,8 +133,6 @@ int alpha_beta_prune(principle_variation_t * pv, int depth, int alpha, int beta)
 				}
 			}
 			
-			
-			// Terminate Search If Cut-Off Found
 			if (alpha > beta){
 				update_killer_heuristic(moves[i]);
 				revert_move(moves[i]); 
@@ -180,33 +152,11 @@ int alpha_beta_prune(principle_variation_t * pv, int depth, int alpha, int beta)
 }
 
 int quiescence_search(int alpha, int beta){
-	int i, size = 0, value, best;
+	int index, i, size = 0, value, best;
 	
 	tree.ply++;
 	tree.raw_nodes++;
 	tree.quiescence_nodes++;
-	
-	ttentry_t entry = get_entry(board.hash);
-	if (entry != 0){
-		int rawv = ENTRY_GET_VALUE(entry);
-		int realv = ENTRY_GET_TURN(entry) == board.turn ? rawv : -rawv;
-		int bound = ENTRY_GET_BOUNDS(entry);
-		
-		if (bound == ExactBound){
-			tree.ply--;
-			return realv;
-		}
-		
-		if (bound == LowerBound && realv > alpha)
-			alpha = realv;
-		if (bound == UpperBound && realv < beta)
-			beta = realv;
-		
-		if (alpha > beta){
-			tree.ply--;
-			return realv;
-		}
-	}
 	
 	best = evaluate_board();
 	if (best > alpha) alpha = best;
@@ -214,13 +164,15 @@ int quiescence_search(int alpha, int beta){
 	
 	move_t moves[MaxMoves];
 	gen_all_captures(&(moves[0]),&size);
-	quiescence_heuristic(&(moves[0]),size);	
+	int values[size];
+	quiescence_heuristic(&(values[0]),&(moves[0]),size);	
 	
-	for(i = 0; i < size; i++){
+	for(index = 0; index < size; index++){
+		i = get_best_next_index(&(values[0]),size);
 		apply_move(moves[i]);	
 		if (is_not_in_check(!board.turn)){
 			value = -quiescence_search(-beta,-alpha);
-			if (value > best)	best = value;
+			if (value > best){	best = value;}
 			if (best > alpha)	alpha = best;
 			if (alpha > beta){
 				update_killer_heuristic(moves[i]);
@@ -231,34 +183,14 @@ int quiescence_search(int alpha, int beta){
 		revert_move(moves[i]);
 	}
 	
-	store_entry(board.hash,alpha,beta,best,board.turn,0);
-	
 	tree.ply--;
 	return best;
 }
 
-void order_by_value(move_t * moves, int * values, int size){
-	int i, j, temp_value;
-	move_t temp_move;
-	
-	for(i = 0; i < size; i++){
-		for(j = i+1; j < size; j++){
-			if (values[j] > values[i]){
-				temp_value = values[j];
-				values[j] = values[i];
-				values[i] = temp_value;
-				
-				temp_move = moves[j];
-				moves[j] = moves[i];
-				moves[i] = temp_move;
-			}
-		}
-	}
-}
-
-void basic_heuristic(move_t * moves, int size){	
+void basic_heuristic(int * values, move_t * moves, int size){	
 	move_t * arr = &(tree.killer_moves[tree.ply][0]);
-	int i, values[size];
+	int i;
+	
 	for(i = 0; i < size; i++){
 		int cap = MOVE_GET_CAPTURE(moves[i]);
 		
@@ -280,10 +212,7 @@ void basic_heuristic(move_t * moves, int size){
 			case WhiteBishop:
 				values[i] += BishopValueMap[truesq];
 		}
-			
-		if (MOVE_IS_PROMOTION(moves[i]))
-			values[i] += 50 * MOVE_GET_PROMOTE_TYPE(moves[i],ColourWhite);
-		
+				
 		if (moves[i] == tree.principle_variation.line[tree.ply-1])
 			values[i] += 300000;
 		else if (arr[0] == moves[i])
@@ -293,13 +222,11 @@ void basic_heuristic(move_t * moves, int size){
 		else if (arr[2] == moves[i])
 			values[i] += 25000;
 	}
-	
-	order_by_value(moves,values,size);
 }
 
-void quiescence_heuristic(move_t * moves, int size){
+void quiescence_heuristic(int * values, move_t * moves, int size){
 	move_t * arr = &(tree.killer_moves[tree.ply][0]);
-	int i, values[size];
+	int i;
 	for(i = 0; i < size; i++){
 		values[i] =  40 * MOVE_GET_CAPTURE(moves[i]) - board.squares[MOVE_GET_FROM(moves[i])];
 		if (arr[0] == moves[i])
@@ -309,8 +236,17 @@ void quiescence_heuristic(move_t * moves, int size){
 		else if (arr[2] == moves[i])
 			values[i] += 5000;
 	}
+}
+
+int get_best_next_index(int * values, int size){
+	int index, bestindex;
+	for(index = 0, bestindex = 0; index < size; index++){
+		if (values[bestindex] < values[index])
+				bestindex = index;
+	}
 	
-	order_by_value(moves,values,size);
+	values[bestindex] = -CheckMate;
+	return bestindex;
 }
 
 void update_killer_heuristic(move_t move){
