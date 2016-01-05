@@ -13,10 +13,10 @@
 #define RookValue 	(10000)
 #define QueenValue 	(18000)
 
-#define StackedPawnValue				(-30)
-#define IsolatedPawnValue				(-45)
-#define PassedPawnValue					( 16)
-#define PawnInfrontOfKingValue			( 10)
+#define StackedPawnValue				(-99)
+#define IsolatedPawnValue				(-90)
+#define PassedPawnValue					( 25)
+#define PawnInfrontOfKingValue			( 20)
 
 #define OpenFileRookValue				( 75)
 #define SemiOpenFileRookValue			( 35)
@@ -32,16 +32,16 @@
 #define KnightDefendsPieceVlaue			( 15)
 #define KnightAttacksEmptyValue			( 15)
 
-#define BishopAttacksPieceValue			( 35)
-#define BishopDefendsPieceValue			( 15)
+#define BishopAttacksPieceValue			( 45)
+#define BishopDefendsPieceValue			( 25)
 
 #define QueenAttacksPieceValue			( 80)
-#define QueenDefendsPieceValue			( 15)
+#define QueenDefendsPieceValue			( 25)
 
-#define MultiplierPawnEarlyPosition		( 15)
-#define MultiplierPawnEndPosition		(  5)
-#define MultiplierKnightPosition		( 12)
-#define MultiplierBishopPosition		(  8) 
+#define MultiplierPawnEarlyPosition		( 20)
+#define MultiplierPawnEndPosition		(  8)
+#define MultiplierKnightPosition		(  8)
+#define MultiplierBishopPosition		(  9) 
 #define MultiplierKingEarlyPosition		(  4)
 #define MultiplierKingEndPosition		(  2)
 
