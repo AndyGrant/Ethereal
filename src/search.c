@@ -48,7 +48,7 @@ move_t get_best_move(int alloted_time){
 		}
 		printf("\n");
 		
- 		if (EndTime - ((float)(alloted_time) * .8) < time(NULL))
+ 		if ((time(NULL) - StartTime) * 4 > alloted_time)
  			break;	
 	}
 	
