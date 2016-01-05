@@ -112,7 +112,9 @@ int alpha_beta_prune(principle_variation_t * pv, int depth, int alpha, int beta)
 			} else if (i == 0){
 				value = -alpha_beta_prune(&lpv,depth-1,-beta,-alpha);
 			} else if (i >= 2 && depth >= 2 &&  IS_EMPTY(MOVE_GET_CAPTURE(moves[i]))){
-				value = -alpha_beta_prune(&lpv,depth-2,-beta,-alpha);
+				if (depth >= 6) value = -alpha_beta_prune(&lpv,depth-3,-beta,-alpha);
+				else			value = -alpha_beta_prune(&lpv,depth-2,-beta,-alpha);
+				
 				if (value > alpha)
 					value = -alpha_beta_prune(&lpv,depth-1,-beta,-alpha);
 			} else {
@@ -244,7 +246,6 @@ int get_best_next_index(int * values, int size){
 		if (values[bestindex] < values[index])
 				bestindex = index;
 	}
-	
 	values[bestindex] = -CheckMate;
 	return bestindex;
 }
