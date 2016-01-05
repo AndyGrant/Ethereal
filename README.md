@@ -19,10 +19,19 @@ Ethereal is a UCI compliant Chess Engine based on the minimax search algorithm. 
   
 # Things To Add To Ethereal:
   
-  Add Transposition Table
+  Add FiftyMoveRule
   
   Add Opening Book
   
-  Add full UCI supportS
+  Add full UCI supports
+  
+  Add Endgame specific evaluations
+  
+  
+# Noteable Results:
+
+  20 Minute Unlimited
+  
+    Ethereal vs TSCP (http://www.tckerrigan.com/Chess/TSCP/) ~1700 ELO :: 1.5 .5
   
   
