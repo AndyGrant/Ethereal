@@ -74,4 +74,11 @@ typedef struct ttable_t {
 
 } ttable_t;
 
+typedef struct evaltable_t {
+	unsigned long long * hashes;
+	int * turns;
+	int * values;
+	int skipped;
+} evaltable_t;
+
 #endif

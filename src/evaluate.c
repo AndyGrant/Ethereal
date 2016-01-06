@@ -7,6 +7,7 @@
 
 #include "board.h"
 #include "colour.h"
+#include "evaltable.h"
 #include "evaluate.h"
 #include "move.h"
 #include "piece.h"
@@ -15,8 +16,16 @@
 #include "util.h"
 
 extern board_t board;
+extern evaltable_t evaltable;
 
 int evaluate_board(){
+	
+	int stored = get_evalentry(board.hash,board.turn);
+	if (stored != NoValidEntryFound){
+		evaltable.skipped++;
+		return stored;
+	}
+	
 	int turn, *location;
 	int pawn_info[2][10] = {{0,0,0,0,0,0,0,0,0,0},{7,7,7,7,7,7,7,7,7,7}};
 	for(turn = ColourWhite; turn <= ColourBlack; turn++){
@@ -38,10 +47,16 @@ int evaluate_board(){
 	
 	int white = evaluate_player(ColourWhite,pawn_info);
 	int black = evaluate_player(ColourBlack,pawn_info);
+	int value;
 	
 	if (board.turn == ColourWhite)
-		return 0 + white - black;
-	return 0 + black - white;
+		value = TempoValue + white - black;
+	else
+		value = TempoValue - white + black;
+	
+	store_evalentry(board.hash,board.turn,value);
+	
+	return value;
 }
 
 int evaluate_player(int turn, int pawn_info[2][10]){	
@@ -71,7 +86,7 @@ int evaluate_player(int turn, int pawn_info[2][10]){
 					int p = (board.squares[sq256+knight_movements[i]]);
 					if (IS_EMPTY(p)) 		value += KnightAttacksEmptyValue;
 					else if (IS_WALL(p))	value += 0;
-					else if (p % 2 == turn) value += KnightAttacksEmptyValue;
+					else if (p % 2 == turn) value += KnightDefendsPieceValue;
 					else if (p % 2 != turn) value += KnightAttacksPieceValue;
 				}
 			
@@ -100,8 +115,8 @@ int evaluate_player(int turn, int pawn_info[2][10]){
 				else if (truesq % 8 == rook_sq % 8)
 					rook_stack = 1;
 				
-				if (pawn_info[board.turn][col] == pstart){
-					if (pawn_info[!board.turn][col] == pend){
+				if (pawn_info[turn][col] == pstart){
+					if (pawn_info[!turn][col] == pend){
 						value += OpenFileRookValue;
 						if (rook_stack)
 							value += RooksOnSameOpenFileValue;
@@ -184,9 +199,9 @@ int evaluate_player(int turn, int pawn_info[2][10]){
 			if (pawn_info[ColourBlack][col+1] == 0 && pawn_info[ColourBlack][col-1] == 0)
 				value += IsolatedPawnValue;
 			
-			if (pawn_info[ColourBlack][col] > row &&
-				pawn_info[ColourBlack][col-1] >= row &&
-				pawn_info[ColourBlack][col+1] >= row)
+			if (pawn_info[ColourWhite][col] > row &&
+				pawn_info[ColourWhite][col-1] >= row &&
+				pawn_info[ColourWhite][col+1] >= row)
 				value += (7-row) * PassedPawnValue;
 		}
 	}

@@ -6,6 +6,8 @@
 /* Search Definitions */
 #define CheckMate	(100000)
 
+#define TempoValue (50)
+
 /* Piece Value Definitions */
 #define PawnValue 	(2000)
 #define KnightValue	(6000)
@@ -29,7 +31,7 @@
 #define PawnDefendsPawnValue			( 20)
 
 #define KnightAttacksPieceValue			( 45)
-#define KnightDefendsPieceVlaue			( 15)
+#define KnightDefendsPieceValue			( 15)
 #define KnightAttacksEmptyValue			( 15)
 
 #define BishopAttacksPieceValue			( 45)
@@ -124,5 +126,7 @@ static int inv[64] = {
 
 int evaluate_board();
 int evaluate_player(int turn, int pawn_info[2][10]);
+int evaluate_white(int pawn_info[2][10]);
+int evaluate_black(int pawn_info[2][10]);
 
 #endif
