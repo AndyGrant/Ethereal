@@ -196,7 +196,7 @@ int evaluate_player(int turn, int pawn_info[2][10]){
 			if (pawn_info[ColourBlack][col] < row)
 				value += StackedPawnValue;
 			
-			if (pawn_info[ColourBlack][col+1] == 0 && pawn_info[ColourBlack][col-1] == 0)
+			if (pawn_info[ColourBlack][col+1] == 7 && pawn_info[ColourBlack][col-1] == 7)
 				value += IsolatedPawnValue;
 			
 			if (pawn_info[ColourWhite][col] > row &&
