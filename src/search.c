@@ -11,7 +11,7 @@
 #include "move.h"
 #include "piece.h"
 #include "search.h"
-#include "ttable.h"
+#include "evaltable.h"
 #include "types.h"
 #include "util.h"
 
@@ -19,6 +19,7 @@ extern board_t board;
 extern search_tree_t tree;
 extern zorbist_t zorbist;
 extern ttable_t table;
+extern evaltable_t evaltable;
 
 time_t StartTime, EndTime;
 int EvaluatingPlayer;
@@ -33,13 +34,12 @@ move_t get_best_move(int alloted_time){
 	
 	EvaluatingPlayer = board.turn;
 	
+	init_evaltable_t();
 	init_search_tree_t();
+	
 	print_board_t();
-	
-	int old_hash = board.hash;
-	
-	for(depth = 0; depth < MaxDepth; depth++){
-		
+
+	for(depth = 0; depth < MaxDepth; depth++){		
 		int value = alpha_beta_prune(&(tree.principle_variation),depth,-CheckMate,CheckMate);		
 		printf("info depth %d score cp %d time %d nodes %d pv ",depth,(100*value)/PawnValue,1000 * (time(NULL) - StartTime), tree.raw_nodes);
 		for(i = 0; i < tree.principle_variation.length; i++){
@@ -51,7 +51,7 @@ move_t get_best_move(int alloted_time){
  		if ((time(NULL) - StartTime) * 4 > alloted_time)
  			break;	
 	}
-	
+	printf("EVALUATIONS SKIPPED : %d\n",evaltable.skipped);
 	printf("TIME TAKEN %d\n",((int)clock()-(int)start)/CLOCKS_PER_SEC);
 	return tree.principle_variation.line[0];	
 }
@@ -96,6 +96,7 @@ int alpha_beta_prune(principle_variation_t * pv, int depth, int alpha, int beta)
 	
 	for(index = 0; index < size; index++){
 		i = get_best_next_index(&(values[0]),size);
+		
 		apply_move(moves[i]);
 		
 		if(is_not_in_check(!board.turn)){
@@ -111,12 +112,6 @@ int alpha_beta_prune(principle_variation_t * pv, int depth, int alpha, int beta)
 				value = 0;
 			} else if (i == 0){
 				value = -alpha_beta_prune(&lpv,depth-1,-beta,-alpha);
-			} else if (i >= 3 && depth >= 2 && IS_EMPTY(MOVE_GET_CAPTURE(moves[i])) && is_not_in_check(board.turn)){
-				if (depth >= 6) value = -alpha_beta_prune(&lpv,depth-3,-beta,-alpha);
-				else			value = -alpha_beta_prune(&lpv,depth-2,-beta,-alpha);
-				
-				if (value > alpha)
-					value = -alpha_beta_prune(&lpv,depth-1,-beta,-alpha);
 			} else {
 				value = -alpha_beta_prune(&lpv,depth-1,-alpha-1,-alpha);
 				if (value > alpha && value < beta)
@@ -193,27 +188,17 @@ void basic_heuristic(int * values, move_t * moves, int size){
 	move_t * arr = &(tree.killer_moves[tree.ply][0]);
 	int i;
 	
+	int is_endgame  = (board.piece_counts[0] + board.piece_counts[1] <= 7);
+	
 	for(i = 0; i < size; i++){
+		
 		int cap = MOVE_GET_CAPTURE(moves[i]);
+		cap *= !(IS_EMPTY(cap));
 		
-		if (!IS_EMPTY(cap))		values[i] = cap - board.squares[MOVE_GET_FROM(moves[i])];
-		else					values[i] = -board.squares[MOVE_GET_FROM(moves[i])];
-		
-		int sq64 = CONVERT_256_TO_64(MOVE_GET_TO(moves[i]));
-		int truesq = board.turn == ColourWhite ? sq64 : inv[sq64];
-		int is_endgame  = (board.piece_counts[0] + board.piece_counts[1] <= 7);
-		
-		switch(board.squares[MOVE_GET_FROM(moves[i])] & ~1){
-			case WhitePawn:
-				if (is_endgame) values[i] += PawnEndValueMap[truesq];
-				else			values[i] += PawnEarlyValueMap[truesq];
-			
-			case WhiteKnight:
-				values[i] += KnightValueMap[truesq];
-			
-			case WhiteBishop:
-				values[i] += BishopValueMap[truesq];
-		}
+		if (MOVE_IS_PROMOTION(moves[i]))
+			values[i] = (8 * cap) +  (4 * MOVE_GET_PROMOTE_TYPE(moves[i],ColourWhite));
+		else
+			values[i] = (50 * cap) / board.squares[MOVE_GET_FROM(moves[i])];
 				
 		if (moves[i] == tree.principle_variation.line[tree.ply-1])
 			values[i] += 300000;

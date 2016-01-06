@@ -1,3 +1,3 @@
 all:
-	gcc -O3 -march=native -DNDEBUG src/globals.c src/uci.cpp src/board.c src/move.c src/util.c src/search.c src/evaluate.c src/zorbist.c src/ttable.c -o Ethereal -lstdc++
+	gcc -O3 -march=native -DNDEBUG src/globals.c src/uci.cpp src/board.c src/move.c src/util.c src/search.c src/evaluate.c src/zorbist.c src/evaltable.c -o Ethereal -lstdc++
 
