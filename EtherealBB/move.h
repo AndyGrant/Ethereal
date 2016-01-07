@@ -1,7 +1,8 @@
 #ifndef _MOVE_H
 #define _MOVE_H
 
-#include <stdint.h>
+#include <stdint.h> // For uint16_t
+#include "types.h" // For Board & Undo
 
 /* Moves are stored in uint16_t variables
  * Usage of bits : 
@@ -9,6 +10,10 @@
  *   [15 14 13 12] [11 10 9 8 7 6] [5 4 3 2 1 0]
  *   [ Move Type ] [  To Square  ] [From Square]
 */
+
+/* Taken from Fruit v2.1 */
+#define NoneMove ( 0) // HACK: a1a1 cannot be a legal move
+#define NullMove (11) // HACK: a1d2 cannot be a legal move
 
 #define NormalMove		(0 << 12)
 #define CastleMove		(1 << 12)
@@ -25,5 +30,8 @@
 #define MOVE_TYPE(move)			((move) & (3 << 12))
 #define MOVE_PROMO_TYPE(move)	((move)	& (3 << 14))
 #define MOVE_MAKE(from,to,flag)	((from) | ((to) << 6) | (flag))
+
+void apply_move(Board * board, uint16_t move, Undo * undo);
+void revert_move(Board * board, uint16_t move, Undo * undo);
 
 #endif

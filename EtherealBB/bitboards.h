@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+/* To determine if empty squares between king and castling rook */
 uint64_t WhiteCastleKingSide  = (1ull <<  5) + (1ull <<  6);
 uint64_t BlackCastleKingSide  = (1ull << 61) + (1ull << 62);
 uint64_t WhiteCastleQueenSide = (1ull <<  1) + (1ull <<  2) + (1ull << 3);

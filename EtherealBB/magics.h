@@ -4,7 +4,6 @@
 #include <stdio.h>
 
 /* Prototypes */
-
 void init_magics();
 void generate_knight_map();
 void generate_king_map();
@@ -15,6 +14,7 @@ void generate_occupancy_variations_bishop();
 void generate_move_database_rook();
 void generate_move_database_bishop();
 
+/* Courtesy of Rival Chess */
 static int MagicShiftsRook[64] = {
 	52,53,53,53,53,53,53,52,53,54,54,54,54,54,54,53,
 	53,54,54,54,54,54,54,53,53,54,54,54,54,54,54,53,
@@ -22,6 +22,7 @@ static int MagicShiftsRook[64] = {
 	53,54,54,54,54,54,54,53,52,53,53,53,53,53,53,52
 };
 
+/* Courtesy of Rival Chess */
 static int MagicShiftsBishop[64] = {
 	58,59,59,59,59,59,59,58,59,59,59,59,59,59,59,59,
 	59,59,57,57,57,57,59,59,59,59,57,55,55,57,59,59,
@@ -29,6 +30,7 @@ static int MagicShiftsBishop[64] = {
 	59,59,59,59,59,59,59,59,58,59,59,59,59,59,59,58
 };
 
+/* Courtesy of Rival Chess */
 static uint64_t MagicNumberRook[64] = {
 	0xa180022080400230, 0x40100040022000, 0x80088020001002, 0x80080280841000,
 	0x4200042010460008, 0x4800a0003040080, 0x400110082041008, 0x8000a041000880,
@@ -48,6 +50,7 @@ static uint64_t MagicNumberRook[64] = {
 	0x8015001002441801, 0x801000804000603, 0xc0900220024a401, 0x1000200608243
 };
 
+/* Courtesy of Rival Chess */
 static uint64_t MagicNumberBishop[64] = {
 	0x2910054208004104, 0x2100630a7020180, 0x5822022042000000, 0x2ca804a100200020, 
 	0x204042200000900, 0x2002121024000002, 0x80404104202000e8, 0x812a020205010840,
