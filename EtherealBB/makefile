@@ -1,2 +1,2 @@
 all:
-	gcc -m64 *.c -o foo
+	gcc *.c -o foo
