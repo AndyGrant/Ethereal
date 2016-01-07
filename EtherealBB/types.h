@@ -22,15 +22,31 @@ typedef struct Board {
 	int lastcap;
 	
 	// Zorbist Key
-	int mainhash;
+	uint64_t hash;
 	
-	// Pawn Zorbist Key
-	int pawnhash;
-	
-	// Values depending on phase
+	// Material + PST values
 	int opening;
 	int endgame;
+	
 } Board;
 
+typedef struct Undo {
+	
+	// Fast undo of captures
+	int capture_sq;
+	int capture_piece;
+	
+	// Previous turn and Castle Rights
+	int turn;
+	int castlerights;
+	
+	// Previous Material + PST values
+	int opening;
+	int endgame;
+	
+	// Previous Zorbist key
+	uint64_t hash;
+	
+} Undo;
 
 #endif
