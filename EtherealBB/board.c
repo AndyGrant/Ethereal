@@ -65,5 +65,5 @@ void print_board(Board * board){
 int main(){
 	Board board;	
 	init_board(&board,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-	init_magics();
+	init_magics();	
 }
