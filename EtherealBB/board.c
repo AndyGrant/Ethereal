@@ -62,8 +62,31 @@ void print_board(Board * board){
 	
 }
 
+int perft(Board * board, int depth){
+	if (depth == 0)
+		return 0;
+	
+	uint16_t moves[256];
+	int size = 0;
+	gen_all_moves(board,moves,&size);
+	Undo undo;
+	
+	int found = size;
+	for(size -= 1; size >= 0; size--){
+		apply_move(board,moves[size],&undo);
+		if (is_not_in_check(board,!board->turn))
+			found += perft(board,depth-1);
+		revert_move(board,moves[size],&undo);
+	}
+	
+	return found;
+}
+
 int main(){
 	Board board;	
-	init_board(&board,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-	init_magics();	
+	//init_board(&board,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+	init_board(&board,"rnbqkbnr/8/8/8/8/8/8/RNBQKBNR w KQkq - 0 1");
+	init_magics();
+	
+	printf("Moves : %d\n",perft(&board,1));
 }
