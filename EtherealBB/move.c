@@ -62,14 +62,14 @@ void revert_move(Board * board, uint16_t move, Undo * undo){
 			from = MOVE_FROM(move);
 			
 			fromtype = PIECE_TYPE(board->squares[to]);
-			totype = undo->capture_piece;
+			totype = PIECE_TYPE(undo->capture_piece);
 			
 			board->colourBitBoards[undo->turn] |= 1ull << from;
 			board->colourBitBoards[undo->turn] ^= 1ull << to;
 			board->colourBitBoards[PIECE_COLOUR(undo->capture_piece)] |= 1ull << to;
 			
-			board->pieceBitBoards[fromtype] |= 1ull << to;
-			board->pieceBitBoards[fromtype] ^= 1ull << from;
+			board->pieceBitBoards[fromtype] ^= 1ull << to;
+			board->pieceBitBoards[fromtype] |= 1ull << from;
 			board->pieceBitBoards[totype] |= 1ull << to;
 			
 			board->squares[from] = board->squares[to];

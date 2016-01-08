@@ -195,14 +195,13 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 	}
 }
 
-int is_not_in_check(Board * board, int turn){
-	int bit, dbindex;
-	uint64_t blockers;
+int is_not_in_check(Board * board, int turn){	
+	int kingbit, dbindex;
+	uint64_t myking, blockers;
 	
 	uint64_t friendly = board->colourBitBoards[turn];
 	uint64_t enemy = board->colourBitBoards[!turn];
 	uint64_t notempty = friendly | enemy;
-	uint64_t attacked = 0;
 	
 	uint64_t enemypawns = enemy & board->pieceBitBoards[0];
 	uint64_t enemyknights = enemy & board->pieceBitBoards[1];
@@ -214,36 +213,26 @@ int is_not_in_check(Board * board, int turn){
 	enemybishops |= enemyqueens;
 	enemyrooks |= enemyqueens;
 	
-	while(enemyknights != 0){
-		bit = get_lsb(enemyknights);
-		attacked |= KnightMap[bit] & friendly;
-		enemyknights ^= 1ull << bit;
-	}
+	myking = friendly & board->pieceBitBoards[5];
+	kingbit = get_lsb(myking);
 	
-	while(enemybishops != 0){
-		bit = get_lsb(enemybishops);
-		blockers = notempty & OccupancyMaskBishop[bit];
-		dbindex = (blockers * MagicNumberBishop[bit]) >> MagicShiftsBishop[bit];
-		attacked |= MoveDatabaseBishop[bit][dbindex] & ~friendly;
-		enemybishops ^= 1ull << bit;
-	}
+	// Knights
+	if (KnightMap[kingbit] & enemyknights != 0) return 0;
 	
-	while(enemyrooks != 0){
-		bit = get_lsb(enemyrooks);
-		blockers = notempty & OccupancyMaskRook[bit];
-		dbindex = (blockers * MagicNumberRook[bit]) >> MagicShiftsRook[bit];
-		attacked |= MoveDatabaseRook[bit][dbindex] & ~friendly;
-		enemyrooks ^= 1ull << bit;
-	}
+	// Bishops and Queens
+	blockers = notempty & OccupancyMaskBishop[kingbit];
+	dbindex = (blockers * MagicNumberBishop[kingbit]) >> MagicShiftsBishop[kingbit];
+	if (MoveDatabaseBishop[kingbit][dbindex] & enemybishops != 0) return 0;
 	
-	while(enemykings != 0){
-		bit = get_lsb(enemykings);
-		attacked |= KingMap[bit] & friendly;
-		enemykings ^= 1ull << bit;
-	}
+	// Rooks and Queens
+	blockers = notempty & OccupancyMaskRook[kingbit];
+	dbindex = (blockers * MagicNumberRook[kingbit]) >> MagicShiftsRook[kingbit];
+	if (MoveDatabaseRook[kingbit][dbindex] & enemyrooks != 0) return 0;
 	
-
-	return !(attacked & (friendly & board->pieceBitBoards[5]));
+	// King
+	if (KingMap[kingbit] & enemykings != 0) return 0;
+	
+	return 1;
 }
 
 
