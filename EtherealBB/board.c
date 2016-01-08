@@ -59,7 +59,12 @@ void init_board(Board * board, char * fen){
 }
 
 void print_board(Board * board){
-	
+	int i, j;
+	for(i = 63; i >= 0;){
+		for(j = 0; j < 8; j++, i--)
+			printf("%d ", board->squares[i]);
+		printf("\n");
+	}
 }
 
 int perft(Board * board, int depth){
@@ -73,7 +78,11 @@ int perft(Board * board, int depth){
 	
 	int found = size;
 	for(size -= 1; size >= 0; size--){
+		printf("\nBefore\n");
+		print_board(board);
 		apply_move(board,moves[size],&undo);
+		printf("\nAfter\n");
+		print_board(board);
 		if (is_not_in_check(board,!board->turn))
 			found += perft(board,depth-1);
 		revert_move(board,moves[size],&undo);
@@ -85,7 +94,7 @@ int perft(Board * board, int depth){
 int main(){
 	Board board;	
 	//init_board(&board,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-	init_board(&board,"rnbqkbnr/8/8/8/8/8/8/RNBQKBNR w KQkq - 0 1");
+	init_board(&board,"rnbqkbnr/8/8/8/8/8/8/RNBQKBNR w KQkq - 0 1");	
 	init_magics();
 	
 	printf("Moves : %d\n",perft(&board,1));
