@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <assert.h>
+#include <string.h>
 
 #include "board.h"
 #include "magics.h"
@@ -38,12 +40,14 @@ void init_board(Board * board, char * fen){
 	// Empty all BitBoards
 	board->colourBitBoards[0] = 0;
 	board->colourBitBoards[1] = 0;
+	board->colourBitBoards[2] = 0xFFFFFFFFFFFFFFFF;
 	board->pieceBitBoards[0] = 0;
 	board->pieceBitBoards[1] = 0;
 	board->pieceBitBoards[2] = 0;
 	board->pieceBitBoards[3] = 0;
 	board->pieceBitBoards[4] = 0;
 	board->pieceBitBoards[5] = 0;
+	board->pieceBitBoards[6] = 0xFFFFFFFFFFFFFFFF;
 	
 	// Fill BitBoards
 	for(i = 0; i < 64; i++){
@@ -69,20 +73,16 @@ void print_board(Board * board){
 
 int perft(Board * board, int depth){
 	if (depth == 0)
-		return 0;
+		return 1;
 	
 	uint16_t moves[256];
 	int size = 0;
 	gen_all_moves(board,moves,&size);
 	Undo undo;
 	
-	int found = size;
-	for(size -= 1; size >= 0; size--){
-		printf("\nBefore\n");
-		print_board(board);
+	int found = 0;
+	for(size -= 1; size >= 0; size--){		
 		apply_move(board,moves[size],&undo);
-		printf("\nAfter\n");
-		print_board(board);
 		if (is_not_in_check(board,!board->turn))
 			found += perft(board,depth-1);
 		revert_move(board,moves[size],&undo);
@@ -94,8 +94,9 @@ int perft(Board * board, int depth){
 int main(){
 	Board board;	
 	//init_board(&board,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-	init_board(&board,"rnbqkbnr/8/8/8/8/8/8/RNBQKBNR w KQkq - 0 1");	
+	init_board(&board,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");	
+	//init_board(&board,"8/1k6/8/5N2/8/4n3/8/2K5 w - - 0 1");
 	init_magics();
 	
-	printf("Moves : %d\n",perft(&board,1));
+	printf("Moves : %d\n",perft(&board,6));
 }
