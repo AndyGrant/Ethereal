@@ -118,18 +118,33 @@ void init_board(Board * board, char * fen){
 }
 
 void print_board(Board * board){
-	int i, j;
+	int i, j, f, c, t;
+	
 	char table[3][7] = {
 		{'P','N','B','R','Q','K'},
 		{'p','n','b','r','q','k'},
 		{' ',' ',' ',' ',' ',' '} 
 	};
 	
-	for(i = 56; i >= 0; i-=8){
-		for(j = 0; j < 8; j++)
-			printf("%c ", table[PIECE_COLOUR(board->squares[i+j])][PIECE_TYPE(board->squares[i+j])]);
-		printf("\n");
+	for(i = 56, f = 8; i >= 0; i-=8, f--){
+		printf("\n     |----|----|----|----|----|----|----|----|\n");
+		printf("    %d",f);
+		for(j = 0; j < 8; j++){
+			c = PIECE_COLOUR(board->squares[i+j]);
+			t = PIECE_TYPE(board->squares[i+j]);
+			
+			switch(c){
+				case ColourWhite: printf("| *%c ",table[c][t]); break;
+				case ColourBlack: printf("|  %c ",table[c][t]); break;
+				default 		: printf("|    "); break;
+			}
+		}
+		
+		printf("|");
 	}
+	
+	printf("\n     |----|----|----|----|----|----|----|----|");
+	printf("\n        A    B    C    D    E    F    G    H\n");
 }
 
 int perft(Board * board, int depth){
