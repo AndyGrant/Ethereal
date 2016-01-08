@@ -43,7 +43,7 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 		forwardshift = 8;
 		leftshift = 7;
 		rightshift = 9;
-	} else if (board->turn == ColourBlack){
+	} else {
 		forwardshift = -8;
 		leftshift = -7;
 		rightshift = -9;
@@ -67,7 +67,7 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 		pawnforwardone &= ~RANK_8;
 		pawnleft &= ~RANK_8;
 		pawnright &= ~RANK_8;
-	} else if (board->turn == ColourBlack){
+	} else {
 		pawnforwardone = (mypawns >> 8) & empty;
 		pawnforwardtwo = ((pawnforwardone & RANK_6) >> 8) & empty;
 		pawnleft = ((mypawns >> 7) & ~FILE_H) & enemy;
@@ -195,7 +195,7 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 	}
 }
 
-int is_not_in_check(Board * board, int turn){	
+int is_not_in_check(Board * board, int turn){
 	int kingbit, dbindex;
 	uint64_t myking, blockers;
 	
@@ -216,21 +216,30 @@ int is_not_in_check(Board * board, int turn){
 	myking = friendly & board->pieceBitBoards[5];
 	kingbit = get_lsb(myking);
 	
+	// Pawns
+	if (turn == ColourWhite){
+		if ((((myking << 7) & ~FILE_A) & enemypawns) != 0) return 0;
+		if ((((myking << 9) & ~FILE_H) & enemypawns) != 0) return 0;
+	} else {
+		if ((((myking >> 7) & ~FILE_H) & enemypawns) != 0) return 0;
+		if ((((myking >> 9) & ~FILE_A) & enemypawns) != 0) return 0;
+	}
+	
 	// Knights
-	if (KnightMap[kingbit] & enemyknights != 0) return 0;
+	if ((KnightMap[kingbit] & enemyknights) != 0) return 0;
 	
 	// Bishops and Queens
 	blockers = notempty & OccupancyMaskBishop[kingbit];
 	dbindex = (blockers * MagicNumberBishop[kingbit]) >> MagicShiftsBishop[kingbit];
-	if (MoveDatabaseBishop[kingbit][dbindex] & enemybishops != 0) return 0;
+	if ((MoveDatabaseBishop[kingbit][dbindex] & enemybishops) != 0) return 0;
 	
 	// Rooks and Queens
 	blockers = notempty & OccupancyMaskRook[kingbit];
 	dbindex = (blockers * MagicNumberRook[kingbit]) >> MagicShiftsRook[kingbit];
-	if (MoveDatabaseRook[kingbit][dbindex] & enemyrooks != 0) return 0;
+	if ((MoveDatabaseRook[kingbit][dbindex] & enemyrooks) != 0) return 0;
 	
 	// King
-	if (KingMap[kingbit] & enemykings != 0) return 0;
+	if ((KingMap[kingbit] & enemykings) != 0) return 0;
 	
 	return 1;
 }

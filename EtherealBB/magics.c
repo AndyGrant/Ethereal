@@ -1,6 +1,7 @@
 #include <stdint.h>
 
 #include "magics.h"
+#include "bitutils.h"
 
 void init_magics(){
 	generate_knight_map();

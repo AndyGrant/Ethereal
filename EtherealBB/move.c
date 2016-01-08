@@ -6,8 +6,9 @@
 #include "piece.h"
 
 void apply_move(Board * board, uint16_t move, Undo * undo){
-	int to, from, cap;
+	int to, from;
 	int fromtype, totype;
+	uint64_t shiftfrom, shiftto;
 	
 	switch(MOVE_TYPE(move)){
 		case NormalMove:
@@ -16,6 +17,9 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 			
 			fromtype = PIECE_TYPE(board->squares[from]);
 			totype = PIECE_TYPE(board->squares[to]);
+			
+			shiftfrom = 1ull << from;
+			shiftto = 1ull << to;
 			
 			// Initalize Undo
 			undo->capture_sq = to;
@@ -27,14 +31,14 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 			undo->hash = board->hash;
 			
 			// Adjust Colour BitBoards
-			board->colourBitBoards[board->turn] ^= 1ull << from;
-			board->colourBitBoards[board->turn] |= 1ull << to;
-			board->colourBitBoards[PIECE_COLOUR(undo->capture_piece)] ^= 1ull << to;
+			board->colourBitBoards[board->turn] ^= shiftfrom;
+			board->colourBitBoards[board->turn] |= shiftto;
+			board->colourBitBoards[PIECE_COLOUR(undo->capture_piece)] ^= shiftto;
 			
 			// Adjust Piece BitBoards
-			board->pieceBitBoards[totype] ^= 1ull << to;
-			board->pieceBitBoards[fromtype] ^= 1ull << from;
-			board->pieceBitBoards[fromtype] |= 1ull << to;
+			board->pieceBitBoards[totype] ^= shiftto;
+			board->pieceBitBoards[fromtype] ^= shiftfrom;
+			board->pieceBitBoards[fromtype] |= shiftto;
 			
 			board->squares[to] = board->squares[from];
 			board->squares[from] = Empty;
@@ -48,13 +52,12 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		
 		case PromotionMove: break;
 	}
-	
-	printf("TYPE = %d\n",MOVE_TYPE(move));
 }
 
 void revert_move(Board * board, uint16_t move, Undo * undo){
 	int to, from;
 	int fromtype, totype;
+	uint64_t shiftfrom, shiftto;
 	
 	switch(MOVE_TYPE(move)){
 		case NormalMove:
@@ -64,13 +67,16 @@ void revert_move(Board * board, uint16_t move, Undo * undo){
 			fromtype = PIECE_TYPE(board->squares[to]);
 			totype = PIECE_TYPE(undo->capture_piece);
 			
-			board->colourBitBoards[undo->turn] |= 1ull << from;
-			board->colourBitBoards[undo->turn] ^= 1ull << to;
-			board->colourBitBoards[PIECE_COLOUR(undo->capture_piece)] |= 1ull << to;
+			shiftfrom = 1ull << from;
+			shiftto = 1ull << to;
 			
-			board->pieceBitBoards[fromtype] ^= 1ull << to;
-			board->pieceBitBoards[fromtype] |= 1ull << from;
-			board->pieceBitBoards[totype] |= 1ull << to;
+			board->colourBitBoards[undo->turn] |= shiftfrom;
+			board->colourBitBoards[undo->turn] ^= shiftto;
+			board->colourBitBoards[PIECE_COLOUR(undo->capture_piece)] |= shiftto;
+			
+			board->pieceBitBoards[fromtype] ^= shiftto;
+			board->pieceBitBoards[fromtype] |= shiftfrom;
+			board->pieceBitBoards[totype] |= shiftto;
 			
 			board->squares[from] = board->squares[to];
 			board->squares[to] = undo->capture_piece;

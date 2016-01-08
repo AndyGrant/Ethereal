@@ -2,24 +2,27 @@ Flat profile:
 
 Each sample counts as 0.01 seconds.
   %   cumulative   self              self     total           
- time   seconds   seconds    calls  ms/call  ms/call  name    
- 35.09      0.20     0.20  5082669     0.00     0.00  is_not_in_check
- 21.05      0.32     0.12  5082669     0.00     0.00  apply_move
- 21.05      0.44     0.12   206134     0.00     0.00  gen_all_moves
- 12.28      0.51     0.07  5082669     0.00     0.00  revert_move
-  7.02      0.55     0.04        1    40.00   550.00  perft
-  1.75      0.56     0.01   107776     0.00     0.00  get_set_bits
-  1.75      0.57     0.01        1    10.00    10.00  generate_occupancy_mask_bishop
-  0.00      0.57     0.00      256     0.00     0.00  count_set_bits
-  0.00      0.57     0.00        1     0.00     0.00  generate_king_map
-  0.00      0.57     0.00        1     0.00     0.00  generate_knight_map
-  0.00      0.57     0.00        1     0.00     0.00  generate_move_database_bishop
-  0.00      0.57     0.00        1     0.00     0.00  generate_move_database_rook
-  0.00      0.57     0.00        1     0.00     0.00  generate_occupancy_mask_rook
-  0.00      0.57     0.00        1     0.00     0.49  generate_occupancy_variations_bishop
-  0.00      0.57     0.00        1     0.00     9.51  generate_occupancy_variations_rook
-  0.00      0.57     0.00        1     0.00     0.00  init_board
-  0.00      0.57     0.00        1     0.00    20.00  init_magics
+ time   seconds   seconds    calls   s/call   s/call  name    
+ 24.63      3.14     3.14 125037154     0.00     0.00  is_not_in_check
+ 17.49      5.37     2.23 125037154     0.00     0.00  apply_move
+ 17.25      7.57     2.20 125037154     0.00     0.00  revert_move
+ 14.35      9.40     1.83                             _mcount_private
+ 12.55     11.00     1.60  5071955     0.00     0.00  gen_all_moves
+  8.71     12.11     1.11                             __fentry__
+  4.71     12.71     0.60        1     0.60     9.77  perft
+  0.16     12.73     0.02   107776     0.00     0.00  get_set_bits
+  0.08     12.74     0.01        1     0.01     0.01  generate_move_database_rook
+  0.08     12.75     0.01                             main
+  0.00     12.75     0.00      256     0.00     0.00  count_set_bits
+  0.00     12.75     0.00        1     0.00     0.00  generate_king_map
+  0.00     12.75     0.00        1     0.00     0.00  generate_knight_map
+  0.00     12.75     0.00        1     0.00     0.00  generate_move_database_bishop
+  0.00     12.75     0.00        1     0.00     0.00  generate_occupancy_mask_bishop
+  0.00     12.75     0.00        1     0.00     0.00  generate_occupancy_mask_rook
+  0.00     12.75     0.00        1     0.00     0.00  generate_occupancy_variations_bishop
+  0.00     12.75     0.00        1     0.00     0.02  generate_occupancy_variations_rook
+  0.00     12.75     0.00        1     0.00     0.00  init_board
+  0.00     12.75     0.00        1     0.00     0.03  init_magics
 
  %         the percentage of the total running time of the
 time       program used by this function.
@@ -48,7 +51,7 @@ name       the name of the function.  This is the minor sort
 	   in parenthesis it shows where it would appear in
 	   the gprof listing if it were to be printed.
 
-Copyright (C) 2012 Free Software Foundation, Inc.
+Copyright (C) 2012-2014 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
@@ -57,89 +60,95 @@ notice and this notice are preserved.
 		     Call graph (explanation follows)
 
 
-granularity: each sample hit covers 4 byte(s) for 1.75% of 0.57 seconds
+granularity: each sample hit covers 4 byte(s) for 0.08% of 12.75 seconds
 
 index % time    self  children    called     name
                                                  <spontaneous>
-[1]    100.0    0.00    0.57                 main [1]
-                0.04    0.51       1/1           perft [2]
-                0.00    0.02       1/1           init_magics [7]
-                0.00    0.00       1/1           init_board [19]
+[1]     76.9    0.01    9.80                 main [1]
+                0.60    9.17       1/1           perft [2]
+                0.00    0.03       1/1           init_magics [9]
+                0.00    0.00       1/1           init_board [20]
 -----------------------------------------------
-                             5013336             perft [2]
-                0.04    0.51       1/1           main [1]
-[2]     96.5    0.04    0.51       1+5013336 perft [2]
-                0.20    0.00 5082669/5082669     is_not_in_check [3]
-                0.12    0.00 5082669/5082669     apply_move [4]
-                0.12    0.00  206134/206134      gen_all_moves [5]
-                0.07    0.00 5082669/5082669     revert_move [6]
-                             5013336             perft [2]
+                             124120395             perft [2]
+                0.60    9.17       1/1           main [1]
+[2]     76.6    0.60    9.17       1+124120395 perft [2]
+                3.14    0.00 125037154/125037154     is_not_in_check [3]
+                2.23    0.00 125037154/125037154     apply_move [4]
+                2.20    0.00 125037154/125037154     revert_move [5]
+                1.60    0.00 5071955/5071955     gen_all_moves [7]
+                             124120395             perft [2]
 -----------------------------------------------
-                0.20    0.00 5082669/5082669     perft [2]
-[3]     35.1    0.20    0.00 5082669         is_not_in_check [3]
+                3.14    0.00 125037154/125037154     perft [2]
+[3]     24.6    3.14    0.00 125037154         is_not_in_check [3]
 -----------------------------------------------
-                0.12    0.00 5082669/5082669     perft [2]
-[4]     21.1    0.12    0.00 5082669         apply_move [4]
+                2.23    0.00 125037154/125037154     perft [2]
+[4]     17.5    2.23    0.00 125037154         apply_move [4]
 -----------------------------------------------
-                0.12    0.00  206134/206134      perft [2]
-[5]     21.1    0.12    0.00  206134         gen_all_moves [5]
+                2.20    0.00 125037154/125037154     perft [2]
+[5]     17.3    2.20    0.00 125037154         revert_move [5]
 -----------------------------------------------
-                0.07    0.00 5082669/5082669     perft [2]
-[6]     12.3    0.07    0.00 5082669         revert_move [6]
+                                                 <spontaneous>
+[6]     14.4    1.83    0.00                 _mcount_private [6]
 -----------------------------------------------
-                0.00    0.02       1/1           main [1]
-[7]      3.5    0.00    0.02       1         init_magics [7]
-                0.01    0.00       1/1           generate_occupancy_mask_bishop [9]
-                0.00    0.01       1/1           generate_occupancy_variations_rook [10]
-                0.00    0.00       1/1           generate_occupancy_variations_bishop [11]
-                0.00    0.00       1/1           generate_knight_map [15]
-                0.00    0.00       1/1           generate_king_map [14]
-                0.00    0.00       1/1           generate_occupancy_mask_rook [18]
-                0.00    0.00       1/1           generate_move_database_rook [17]
-                0.00    0.00       1/1           generate_move_database_bishop [16]
+                1.60    0.00 5071955/5071955     perft [2]
+[7]     12.5    1.60    0.00 5071955         gen_all_moves [7]
 -----------------------------------------------
-                0.00    0.00    5312/107776      generate_occupancy_variations_bishop [11]
-                0.01    0.00  102464/107776      generate_occupancy_variations_rook [10]
-[8]      1.8    0.01    0.00  107776         get_set_bits [8]
+                                                 <spontaneous>
+[8]      8.7    1.11    0.00                 __fentry__ [8]
 -----------------------------------------------
-                0.01    0.00       1/1           init_magics [7]
-[9]      1.8    0.01    0.00       1         generate_occupancy_mask_bishop [9]
+                0.00    0.03       1/1           main [1]
+[9]      0.2    0.00    0.03       1         init_magics [9]
+                0.00    0.02       1/1           generate_occupancy_variations_rook [11]
+                0.01    0.00       1/1           generate_move_database_rook [12]
+                0.00    0.00       1/1           generate_occupancy_variations_bishop [13]
+                0.00    0.00       1/1           generate_knight_map [16]
+                0.00    0.00       1/1           generate_king_map [15]
+                0.00    0.00       1/1           generate_occupancy_mask_rook [19]
+                0.00    0.00       1/1           generate_occupancy_mask_bishop [18]
+                0.00    0.00       1/1           generate_move_database_bishop [17]
 -----------------------------------------------
-                0.00    0.01       1/1           init_magics [7]
-[10]     1.7    0.00    0.01       1         generate_occupancy_variations_rook [10]
-                0.01    0.00  102464/107776      get_set_bits [8]
-                0.00    0.00      64/256         count_set_bits [13]
+                0.00    0.00    5312/107776      generate_occupancy_variations_bishop [13]
+                0.02    0.00  102464/107776      generate_occupancy_variations_rook [11]
+[10]     0.2    0.02    0.00  107776         get_set_bits [10]
 -----------------------------------------------
-                0.00    0.00       1/1           init_magics [7]
-[11]     0.1    0.00    0.00       1         generate_occupancy_variations_bishop [11]
-                0.00    0.00    5312/107776      get_set_bits [8]
-                0.00    0.00      64/256         count_set_bits [13]
+                0.00    0.02       1/1           init_magics [9]
+[11]     0.1    0.00    0.02       1         generate_occupancy_variations_rook [11]
+                0.02    0.00  102464/107776      get_set_bits [10]
+                0.00    0.00      64/256         count_set_bits [14]
 -----------------------------------------------
-                0.00    0.00      64/256         generate_occupancy_variations_rook [10]
-                0.00    0.00      64/256         generate_occupancy_variations_bishop [11]
-                0.00    0.00      64/256         generate_move_database_rook [17]
-                0.00    0.00      64/256         generate_move_database_bishop [16]
-[13]     0.0    0.00    0.00     256         count_set_bits [13]
+                0.01    0.00       1/1           init_magics [9]
+[12]     0.1    0.01    0.00       1         generate_move_database_rook [12]
+                0.00    0.00      64/256         count_set_bits [14]
 -----------------------------------------------
-                0.00    0.00       1/1           init_magics [7]
-[14]     0.0    0.00    0.00       1         generate_king_map [14]
+                0.00    0.00       1/1           init_magics [9]
+[13]     0.0    0.00    0.00       1         generate_occupancy_variations_bishop [13]
+                0.00    0.00    5312/107776      get_set_bits [10]
+                0.00    0.00      64/256         count_set_bits [14]
 -----------------------------------------------
-                0.00    0.00       1/1           init_magics [7]
-[15]     0.0    0.00    0.00       1         generate_knight_map [15]
+                0.00    0.00      64/256         generate_occupancy_variations_rook [11]
+                0.00    0.00      64/256         generate_occupancy_variations_bishop [13]
+                0.00    0.00      64/256         generate_move_database_rook [12]
+                0.00    0.00      64/256         generate_move_database_bishop [17]
+[14]     0.0    0.00    0.00     256         count_set_bits [14]
 -----------------------------------------------
-                0.00    0.00       1/1           init_magics [7]
-[16]     0.0    0.00    0.00       1         generate_move_database_bishop [16]
-                0.00    0.00      64/256         count_set_bits [13]
+                0.00    0.00       1/1           init_magics [9]
+[15]     0.0    0.00    0.00       1         generate_king_map [15]
 -----------------------------------------------
-                0.00    0.00       1/1           init_magics [7]
-[17]     0.0    0.00    0.00       1         generate_move_database_rook [17]
-                0.00    0.00      64/256         count_set_bits [13]
+                0.00    0.00       1/1           init_magics [9]
+[16]     0.0    0.00    0.00       1         generate_knight_map [16]
 -----------------------------------------------
-                0.00    0.00       1/1           init_magics [7]
-[18]     0.0    0.00    0.00       1         generate_occupancy_mask_rook [18]
+                0.00    0.00       1/1           init_magics [9]
+[17]     0.0    0.00    0.00       1         generate_move_database_bishop [17]
+                0.00    0.00      64/256         count_set_bits [14]
+-----------------------------------------------
+                0.00    0.00       1/1           init_magics [9]
+[18]     0.0    0.00    0.00       1         generate_occupancy_mask_bishop [18]
+-----------------------------------------------
+                0.00    0.00       1/1           init_magics [9]
+[19]     0.0    0.00    0.00       1         generate_occupancy_mask_rook [19]
 -----------------------------------------------
                 0.00    0.00       1/1           main [1]
-[19]     0.0    0.00    0.00       1         init_board [19]
+[20]     0.0    0.00    0.00       1         init_board [20]
 -----------------------------------------------
 
  This table describes the call tree of the program, and was sorted by
@@ -224,7 +233,7 @@ index % time    self  children    called     name
  for that member, how many times it was called from other members of
  the cycle.
 
-Copyright (C) 2012 Free Software Foundation, Inc.
+Copyright (C) 2012-2014 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
@@ -232,9 +241,10 @@ notice and this notice are preserved.
 
 Index by function name
 
-   [4] apply_move             [17] generate_move_database_rook [19] init_board
-  [13] count_set_bits          [9] generate_occupancy_mask_bishop [7] init_magics
-   [5] gen_all_moves          [18] generate_occupancy_mask_rook [3] is_not_in_check
-  [14] generate_king_map      [11] generate_occupancy_variations_bishop [2] perft
-  [15] generate_knight_map    [10] generate_occupancy_variations_rook [6] revert_move
-  [16] generate_move_database_bishop [8] get_set_bits
+   [8] __fentry__             [17] generate_move_database_bishop [20] init_board
+   [6] _mcount_private        [12] generate_move_database_rook [9] init_magics
+   [4] apply_move             [18] generate_occupancy_mask_bishop [3] is_not_in_check
+  [14] count_set_bits         [19] generate_occupancy_mask_rook [1] main
+   [7] gen_all_moves          [13] generate_occupancy_variations_bishop [2] perft
+  [15] generate_king_map      [11] generate_occupancy_variations_rook [5] revert_move
+  [16] generate_knight_map    [10] get_set_bits
