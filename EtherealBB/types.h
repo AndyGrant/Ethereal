@@ -19,7 +19,6 @@ typedef struct Board {
 	int castlerights;
 	int fiftymoverule;
 	int epsquare;
-	int lastcap;
 	
 	// Zorbist Key
 	uint64_t hash;

@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "board.h"
+#include "castle.h"
 #include "magics.h"
 #include "piece.h"
 #include "types.h"
@@ -10,7 +11,8 @@
 #include "movegen.h"
 
 void init_board(Board * board, char * fen){
-	int i, j, sq, p;
+	int i, j, sq;
+	char r, f;
 	
 	// Init board->squares from fen notation;
 	for(i = 0, sq = 56; fen[i] != ' '; i++){
@@ -37,8 +39,60 @@ void init_board(Board * board, char * fen){
 				case 'r': board->squares[sq++] = BlackRook;   break;
 				case 'q': board->squares[sq++] = BlackQueen;  break;
 				case 'k': board->squares[sq++] = BlackKing;   break;
+				default : assert("Unable to decode piece in init_board()" && 0);
 			}
 		}
+	}
+	
+	// Determine turn
+	switch(fen[++i]){
+		case 'w': board->turn = ColourWhite; break;
+		case 'b': board->turn = ColourBlack; break;
+		default : assert("Unable to determine player to move in init_board()" && 0);
+	}
+	
+	i++; // Skip over space between turn and rights
+	
+	// Determine Castle Rights
+	board->castlerights = 0;
+	while(fen[++i] != ' '){
+		switch(fen[i]){
+			case 'K' : board->castlerights |= WhiteKingRights; break;
+			case 'Q' : board->castlerights |= WhiteQueenRights; break;
+			case 'k' : board->castlerights |= BlackKingRights; break;
+			case 'q' : board->castlerights |= BlackQueenRights; break;
+			case '-' : break;
+			default  : assert("Unable to decode castle rights in init_board()" && 0);
+		}
+	}
+	
+	// Determine Enpass Square
+	board->epsquare = -1;
+	if (fen[++i] != '-'){
+		r = fen[i];
+		f = fen[++i];
+		assert("Unable to decode enpass rank in init_board()" && r>='a' && r<='h');
+		assert("Unable to decode enpass file in init_board()" && f>='1' && f<='8');
+		
+		board->epsquare = (r - 'a') + (8 * (f - '1'));
+		
+		assert("Incorrectly decoded enpass square in init_board()" && board->epsquare >= 0 && board->epsquare <= 63);
+	}
+	
+	i++; // Skip over space between ensquare and halfmove count
+		
+	// Determine Number of half moves into fiftymoverule
+	board->fiftymoverule = 0;
+	if (fen[++i] != '-'){
+		// Two Digit Number
+		if (fen[i+1] != ' ') 
+			board->fiftymoverule = (10 * (fen[i] - '0')) + fen[1+i++] - '0';
+		
+		// One Digit Number
+		else
+			board->fiftymoverule = fen[i] - '0';
+		
+		assert("Incorrectly decoded half-move count in init_board()" && (board->fiftymoverule >=0 && board->fiftymoverule < 100));
 	}
 	
 	// Set BitBoards to default values
@@ -59,18 +113,21 @@ void init_board(Board * board, char * fen){
 		board->pieceBitBoards[PIECE_TYPE(board->squares[i])] 	|= (1ull << i);
 	}
 	
-	board->turn = ColourWhite;
-	board->castlerights = 0b1111;
-	board->fiftymoverule = 0;
-	board->epsquare = 0;
-	board->lastcap = Empty;	
+	printf("Created Board with turn=%d castle=%d epsquare=%d halfmove=%d\n",board->turn,
+							  board->castlerights,board->epsquare,board->fiftymoverule);
 }
 
 void print_board(Board * board){
 	int i, j;
+	char table[3][7] = {
+		{'P','N','B','R','Q','K'},
+		{'p','n','b','r','q','k'},
+		{' ',' ',' ',' ',' ',' '} 
+	};
+	
 	for(i = 56; i >= 0; i-=8){
 		for(j = 0; j < 8; j++)
-			printf("%d ", board->squares[i+j]);
+			printf("%c ", table[PIECE_COLOUR(board->squares[i+j])][PIECE_TYPE(board->squares[i+j])]);
 		printf("\n");
 	}
 }
@@ -96,15 +153,13 @@ int perft(Board * board, int depth){
 }
 
 int main(){
-	Board board;	
-	//init_board(&board,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-	init_board(&board,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");	
-	//init_board(&board,"K7/8/2n5/1n6/8/8/8/k6N w - - 0 1");
-	//init_board(&board,"8/1k6/8/5N2/8/4n3/8/2K5 w - - 0 1");
+	
 	init_magics();
 	
+	Board board;	
+	init_board(&board,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");	
+	print_board(&board);
+	
 	printf("Moves : %d\n",perft(&board,4));
-	//printf("Moves : %d\n",perft(&board,6));
-	//printf("Moves : %d\n",perft(&board,6));
 	printf("Moves : %d\n",perft(&board,6));
 }
