@@ -171,8 +171,8 @@ int main(){
 	init_magics();
 	
 	Board board;	
-	//init_board(&board,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");	
-	init_board(&board,"r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1 ");	
+	init_board(&board,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");	
+	//init_board(&board,"r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1 ");	
 	
 
 	print_board(&board);
