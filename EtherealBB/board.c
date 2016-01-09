@@ -98,13 +98,15 @@ void init_board(Board * board, char * fen){
 	// Set BitBoards to default values
 	board->colourBitBoards[0] = 0;
 	board->colourBitBoards[1] = 0;
-	board->colourBitBoards[2] = 0xFFFFFFFFFFFFFFFF;
 	board->pieceBitBoards[0] = 0;
 	board->pieceBitBoards[1] = 0;
 	board->pieceBitBoards[2] = 0;
 	board->pieceBitBoards[3] = 0;
 	board->pieceBitBoards[4] = 0;
 	board->pieceBitBoards[5] = 0;
+	
+	// Set Empty BitBoards to filled
+	board->colourBitBoards[2] = 0xFFFFFFFFFFFFFFFF;
 	board->pieceBitBoards[6] = 0xFFFFFFFFFFFFFFFF;
 	
 	// Fill BitBoards
@@ -112,9 +114,6 @@ void init_board(Board * board, char * fen){
 		board->colourBitBoards[PIECE_COLOUR(board->squares[i])] |= (1ull << i);
 		board->pieceBitBoards[PIECE_TYPE(board->squares[i])] 	|= (1ull << i);
 	}
-	
-	printf("Created Board with turn=%d castle=%d epsquare=%d halfmove=%d\n",board->turn,
-							  board->castlerights,board->epsquare,board->fiftymoverule);
 }
 
 void print_board(Board * board){
@@ -172,9 +171,10 @@ int main(){
 	init_magics();
 	
 	Board board;	
-	init_board(&board,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");	
-	print_board(&board);
+	//init_board(&board,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");	
+	init_board(&board,"r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1 ");	
 	
-	printf("Moves : %d\n",perft(&board,4));
+
+	print_board(&board);
 	printf("Moves : %d\n",perft(&board,6));
 }
