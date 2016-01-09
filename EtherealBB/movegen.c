@@ -1,7 +1,9 @@
 #include <stdint.h>
+#include <assert.h>
 
 #include "bitboards.h"
 #include "bitutils.h"
+#include "castle.h"
 #include "magics.h"
 #include "move.h"
 #include "movegen.h"
@@ -193,11 +195,50 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 		
 		mykings ^= 1ull << bit;
 	}
+	
+	// Generate Castles
+	if (is_not_in_check(board,board->turn)){
+		if (board->turn == ColourWhite){
+			
+			// King Side Castle
+			if (board->castlerights & WhiteKingRights)
+				if ((notempty & WhiteCastleKingSideMap) == 0)
+					if (!square_is_attacked(board,ColourWhite,5))
+						moves[(*size)++] = MOVE_MAKE(4,6,CastleMove);
+						
+			// Queen Side Castle
+			if (board->castlerights & WhiteQueenRights)
+				if ((notempty & WhiteCastleQueenSideMap) == 0)
+					if (!square_is_attacked(board,ColourWhite,3))
+						moves[(*size)++] = MOVE_MAKE(4,2,CastleMove);
+		}
+		
+		else {
+			
+			// King Side Castle
+			if (board->castlerights & BlackKingRights)
+				if ((notempty & BlackCastleKingSideMap) == 0)
+					if (!square_is_attacked(board,ColourBlack,61))
+						moves[(*size)++] = MOVE_MAKE(60,62,CastleMove);
+						
+			// Queen Side Castle
+			if (board->castlerights & BlackQueenRights)
+				if ((notempty & BlackCastleQueenSideMap) == 0)
+					if (!square_is_attacked(board,ColourBlack,59))
+						moves[(*size)++] = MOVE_MAKE(60,58,CastleMove);
+		}
+	}
 }
 
 int is_not_in_check(Board * board, int turn){
+	int kingsq = get_lsb(board->colourBitBoards[turn] & board->pieceBitBoards[5]);
+	assert(board->squares[kingsq] == WhiteKing + turn);
+	return !square_is_attacked(board,turn,kingsq);
+}
+
+int square_is_attacked(Board * board, int turn, int sq){
 	int kingbit, dbindex;
-	uint64_t myking, blockers;
+	uint64_t square, blockers;
 	
 	uint64_t friendly = board->colourBitBoards[turn];
 	uint64_t enemy = board->colourBitBoards[!turn];
@@ -212,36 +253,34 @@ int is_not_in_check(Board * board, int turn){
 	
 	enemybishops |= enemyqueens;
 	enemyrooks |= enemyqueens;
-	
-	myking = friendly & board->pieceBitBoards[5];
-	kingbit = get_lsb(myking);
+	square = (1ull << sq);
 	
 	// Pawns
 	if (turn == ColourWhite){
-		if ((((myking << 7) & ~FILE_A) & enemypawns) != 0) return 0;
-		if ((((myking << 9) & ~FILE_H) & enemypawns) != 0) return 0;
+		if ((((square << 7) & ~FILE_A) & enemypawns) != 0) return 1;
+		if ((((square << 9) & ~FILE_H) & enemypawns) != 0) return 1;
 	} else {
-		if ((((myking >> 7) & ~FILE_H) & enemypawns) != 0) return 0;
-		if ((((myking >> 9) & ~FILE_A) & enemypawns) != 0) return 0;
+		if ((((square >> 7) & ~FILE_H) & enemypawns) != 0) return 1;
+		if ((((square >> 9) & ~FILE_A) & enemypawns) != 0) return 1;
 	}
 	
 	// Knights
-	if ((KnightMap[kingbit] & enemyknights) != 0) return 0;
+	if ((KnightMap[sq] & enemyknights) != 0) return 1;
 	
 	// Bishops and Queens
-	blockers = notempty & OccupancyMaskBishop[kingbit];
-	dbindex = (blockers * MagicNumberBishop[kingbit]) >> MagicShiftsBishop[kingbit];
-	if ((MoveDatabaseBishop[kingbit][dbindex] & enemybishops) != 0) return 0;
+	blockers = notempty & OccupancyMaskBishop[sq];
+	dbindex = (blockers * MagicNumberBishop[sq]) >> MagicShiftsBishop[sq];
+	if ((MoveDatabaseBishop[sq][dbindex] & enemybishops) != 0) return 1;
 	
 	// Rooks and Queens
-	blockers = notempty & OccupancyMaskRook[kingbit];
-	dbindex = (blockers * MagicNumberRook[kingbit]) >> MagicShiftsRook[kingbit];
-	if ((MoveDatabaseRook[kingbit][dbindex] & enemyrooks) != 0) return 0;
+	blockers = notempty & OccupancyMaskRook[sq];
+	dbindex = (blockers * MagicNumberRook[sq]) >> MagicShiftsRook[sq];
+	if ((MoveDatabaseRook[sq][dbindex] & enemyrooks) != 0) return 1;
 	
 	// King
-	if ((KingMap[kingbit] & enemykings) != 0) return 0;
+	if ((KingMap[sq] & enemykings) != 0) return 1;
 	
-	return 1;
+	return 0;
 }
 
 

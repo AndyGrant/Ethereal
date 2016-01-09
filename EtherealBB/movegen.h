@@ -7,5 +7,6 @@
 void gen_all_moves(Board * board, uint16_t * moves, int * size);
 
 int is_not_in_check(Board * board, int turn);
+int square_is_attacked(Board * board, int turn, int sq);
 
 #endif
