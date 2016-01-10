@@ -36,11 +36,12 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		shiftto = 1ull << to;
 	
 		board->colourBitBoards[board->turn] ^= shiftfrom | shiftto;
-		board->colourBitBoards[PIECE_COLOUR(undo->capture_piece)] ^= shiftto;
+		board->colourBitBoards[PIECE_COLOUR(board->squares[to])] ^= shiftto;
 		
 		board->pieceBitBoards[totype] ^= shiftto;
 		board->pieceBitBoards[fromtype] ^= shiftfrom | shiftto;		
 		
+		undo->capture_piece = board->squares[to];
 		board->squares[to] = board->squares[from];
 		board->squares[from] = Empty;
 		

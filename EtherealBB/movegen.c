@@ -70,19 +70,17 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 		pawnleft &= ~RANK_8;
 		pawnright &= ~RANK_8;
 		
-		
 		if(board->epsquare != -1){
-			if (board->squares[board->epsquare-7] == WhitePawn){
-				if (board->squares[board->epsquare-8] == BlackPawn)
-					moves[(*size)++] = MOVE_MAKE(board->epsquare-7,board->epsquare,EnpassMove);
+			if (board->squares[board->epsquare+7] == BlackPawn)
+				if (board->squares[board->epsquare+8] == WhitePawn)
+					moves[(*size)++] = MOVE_MAKE(board->epsquare+7,board->epsquare,EnpassMove);
+			
+			
+			if (board->squares[board->epsquare+9] == BlackPawn){
+				if (board->squares[board->epsquare+8] == WhitePawn)
+					moves[(*size)++] = MOVE_MAKE(board->epsquare+9,board->epsquare,EnpassMove);
 			}
-			
-			if (board->squares[board->epsquare-9] == WhitePawn)
-				if (board->squares[board->epsquare-8] == BlackPawn)
-					moves[(*size)++] = MOVE_MAKE(board->epsquare-9,board->epsquare,EnpassMove);
-			
-		}
-		
+		}		
 	} else {
 		pawnforwardone = (mypawns >> 8) & empty;
 		pawnforwardtwo = ((pawnforwardone & RANK_6) >> 8) & empty;
@@ -98,15 +96,15 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 		pawnright &= ~RANK_1;
 		
 		if(board->epsquare != -1){
-			if (board->squares[board->epsquare+7] == BlackPawn)
-				if (board->squares[board->epsquare+8] == WhitePawn)
-					moves[(*size)++] = MOVE_MAKE(board->epsquare+7,board->epsquare,EnpassMove);
-			
-			
-			if (board->squares[board->epsquare+9] == BlackPawn){
-				if (board->squares[board->epsquare+8] == WhitePawn)
-					moves[(*size)++] = MOVE_MAKE(board->epsquare+9,board->epsquare,EnpassMove);
+			if (board->squares[board->epsquare-7] == WhitePawn){
+				if (board->squares[board->epsquare-8] == BlackPawn)
+					moves[(*size)++] = MOVE_MAKE(board->epsquare-7,board->epsquare,EnpassMove);
 			}
+			
+			if (board->squares[board->epsquare-9] == WhitePawn)
+				if (board->squares[board->epsquare-8] == BlackPawn)
+					moves[(*size)++] = MOVE_MAKE(board->epsquare-9,board->epsquare,EnpassMove);
+			
 		}
 	}
 	
