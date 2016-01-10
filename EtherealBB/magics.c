@@ -12,6 +12,8 @@ void init_magics(){
 	generate_occupancy_variations_bishop();
 	generate_move_database_rook();
 	generate_move_database_bishop();
+	
+	INITALIZED_MAGICS = 1;
 }
 
 void generate_knight_map(){
