@@ -13,7 +13,7 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 	int to, from;
 	int rto, rfrom;
 	int fromtype, totype;
-	int ep;
+	int promotype, ep;
 	uint64_t shiftfrom, shiftto;
 	uint64_t rshiftfrom, rshiftto;
 	uint64_t shiftep;
@@ -83,6 +83,33 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		return;
 	}
 	
+	if (MOVE_TYPE(move) == PromotionMove){
+		to = MOVE_TO(move);
+		from = MOVE_FROM(move);
+		
+		fromtype = PIECE_TYPE(board->squares[from]);
+		totype = PIECE_TYPE(board->squares[to]);
+		promotype = 1 + (move >> 14);
+		
+		shiftfrom = 1ull << from;
+		shiftto = 1ull << to;
+	
+		board->colourBitBoards[board->turn] ^= shiftfrom | shiftto;
+		board->colourBitBoards[PIECE_COLOUR(board->squares[to])] ^= shiftto;
+		
+		board->pieceBitBoards[0] ^= shiftfrom;
+		board->pieceBitBoards[promotype] ^= shiftto;
+		board->pieceBitBoards[totype] ^= shiftto;
+		
+		undo->capture_piece = board->squares[to];
+		board->squares[to] = (4 * promotype) + board->turn;
+		board->squares[from] = Empty;
+		
+		board->turn = !board->turn;
+		board->epsquare = -1;		
+		return;
+	}
+	
 	if (MOVE_TYPE(move) == EnpassMove){
 		to = MOVE_TO(move);
 		from = MOVE_FROM(move);
@@ -114,7 +141,7 @@ void revert_move(Board * board, uint16_t move, Undo * undo){
 	int to, from;
 	int rto, rfrom;
 	int fromtype, totype;
-	int ep;
+	int promotype, ep;
 	uint64_t shiftfrom, shiftto;
 	uint64_t rshiftfrom, rshiftto;
 	uint64_t shiftep;
@@ -178,6 +205,35 @@ void revert_move(Board * board, uint16_t move, Undo * undo){
 		return;
 	}
 	
+	if (MOVE_TYPE(move) == PromotionMove){
+		to = MOVE_TO(move);
+		from = MOVE_FROM(move);
+		
+		fromtype = WhitePawn + undo->turn;
+		totype = PIECE_TYPE(undo->capture_piece);
+		promotype = 1 + (move >> 14);
+		
+		shiftfrom = 1ull << from;
+		shiftto = 1ull << to;
+	
+		board->colourBitBoards[undo->turn] ^= shiftfrom | shiftto;
+		board->colourBitBoards[PIECE_COLOUR(undo->capture_piece)] ^= shiftto;
+		
+		board->pieceBitBoards[0] ^= shiftfrom;
+		board->pieceBitBoards[promotype] ^= shiftto;
+		board->pieceBitBoards[totype] ^= shiftto;
+		
+		board->squares[to] = undo->capture_piece;
+		board->squares[from] = WhitePawn + undo->turn;
+		
+		board->turn = undo->turn;
+		board->epsquare = undo->epsquare;
+		board->opening = undo->opening;
+		board->endgame = undo->endgame;
+		board->hash = undo->hash;
+		return;
+	}
+	
 	if (MOVE_TYPE(move) == EnpassMove){
 		to = MOVE_TO(move);
 		from = MOVE_FROM(move);
@@ -198,7 +254,11 @@ void revert_move(Board * board, uint16_t move, Undo * undo){
 		board->squares[to] = Empty;
 		board->squares[ep] = undo->capture_piece;
 		
-		board->turn = !board->turn;
-		board->epsquare = -1;	
+		board->turn = undo->turn;
+		board->epsquare = undo->epsquare;
+		board->opening = undo->opening;
+		board->endgame = undo->endgame;
+		board->hash = undo->hash;
+		return;
 	}
 }
