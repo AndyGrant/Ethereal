@@ -176,5 +176,5 @@ int main(){
 	
 
 	print_board(&board);
-	printf("Moves : %d\n",perft(&board,6));
+	printf("Moves : %d\n",perft(&board,3));
 }

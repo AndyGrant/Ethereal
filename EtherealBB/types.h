@@ -43,6 +43,9 @@ typedef struct Undo {
 	int opening;
 	int endgame;
 	
+	// Previous EP Square
+	int epsquare;
+	
 	// Previous Zorbist key
 	uint64_t hash;
 	
