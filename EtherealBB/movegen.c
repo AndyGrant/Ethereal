@@ -11,7 +11,7 @@
 #include "types.h"
 
 
-void gen_all_moves(Board * board, uint16_t * moves, int * size){
+void gen_all_moves(Board * board, uint16_t * moves, int * size){	
 	uint64_t blockers;
 	uint64_t attackable;
 	
@@ -226,30 +226,34 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 			
 			// King Side Castle
 			if (board->castlerights & WhiteKingRights)
-				if ((notempty & WhiteCastleKingSideMap) == 0)
-					if (!square_is_attacked(board,ColourWhite,5))
-						moves[(*size)++] = MOVE_MAKE(4,6,CastleMove);
+				if (board->squares[7] == WhiteRook)
+					if ((notempty & WhiteCastleKingSideMap) == 0)
+						if (!square_is_attacked(board,ColourWhite,5))
+							moves[(*size)++] = MOVE_MAKE(4,6,CastleMove);
 						
 			// Queen Side Castle
 			if (board->castlerights & WhiteQueenRights)
-				if ((notempty & WhiteCastleQueenSideMap) == 0)
-					if (!square_is_attacked(board,ColourWhite,3))
-						moves[(*size)++] = MOVE_MAKE(4,2,CastleMove);
+				if (board->squares[0] == WhiteRook)
+					if ((notempty & WhiteCastleQueenSideMap) == 0)
+						if (!square_is_attacked(board,ColourWhite,3))
+							moves[(*size)++] = MOVE_MAKE(4,2,CastleMove);
 		}
 		
 		else {
 			
 			// King Side Castle
 			if (board->castlerights & BlackKingRights)
-				if ((notempty & BlackCastleKingSideMap) == 0)
-					if (!square_is_attacked(board,ColourBlack,61))
-						moves[(*size)++] = MOVE_MAKE(60,62,CastleMove);
+				if (board->squares[63] == BlackRook)
+					if ((notempty & BlackCastleKingSideMap) == 0)
+						if (!square_is_attacked(board,ColourBlack,61))
+							moves[(*size)++] = MOVE_MAKE(60,62,CastleMove);
 						
 			// Queen Side Castle
 			if (board->castlerights & BlackQueenRights)
-				if ((notempty & BlackCastleQueenSideMap) == 0)
-					if (!square_is_attacked(board,ColourBlack,59))
-						moves[(*size)++] = MOVE_MAKE(60,58,CastleMove);
+				if (board->squares[56] == BlackRook)
+					if ((notempty & BlackCastleQueenSideMap) == 0)
+						if (!square_is_attacked(board,ColourBlack,59))
+							moves[(*size)++] = MOVE_MAKE(60,58,CastleMove);
 		}
 	}
 }

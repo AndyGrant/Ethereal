@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+static int INITALIZED_MAGICS = 0;
+
 /* Prototypes */
 void init_magics();
 void generate_knight_map();
