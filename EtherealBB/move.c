@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <assert.h>
 
+
+#include "board.h"
 #include "castle.h"
 #include "types.h"
 #include "move.h"
@@ -10,8 +13,17 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 	int to, from;
 	int rto, rfrom;
 	int fromtype, totype;
+	int ep;
 	uint64_t shiftfrom, shiftto;
 	uint64_t rshiftfrom, rshiftto;
+	uint64_t shiftep;
+	
+	undo->epsquare = board->epsquare;
+	undo->turn = board->turn;
+	undo->castlerights = board->castlerights;
+	undo->opening = board->opening;
+	undo->endgame = board->endgame;
+	undo->hash = board->hash;
 	
 	if (MOVE_TYPE(move) == NormalMove){
 		to = MOVE_TO(move);
@@ -22,14 +34,6 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		
 		shiftfrom = 1ull << from;
 		shiftto = 1ull << to;
-		
-		undo->capture_sq = to;
-		undo->capture_piece = board->squares[to];
-		undo->turn = board->turn;
-		undo->castlerights = board->castlerights;
-		undo->opening = board->opening;
-		undo->endgame = board->endgame;
-		undo->hash = board->hash;
 	
 		board->colourBitBoards[board->turn] ^= shiftfrom | shiftto;
 		board->colourBitBoards[PIECE_COLOUR(undo->capture_piece)] ^= shiftto;
@@ -42,6 +46,11 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		
 		board->castlerights &= CastleMask[from];
 		board->turn = !board->turn;
+		
+		board->epsquare = -1;
+		if (PIECE_TYPE(board->squares[to]) == 0 && ((to-from) == 16 || (from-to == 16)))
+			board->epsquare = from + ((to-from)/2);
+		
 		return;
 	}
 	
@@ -56,12 +65,6 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		rshiftfrom = 1ull << rfrom;
 		rshiftto = 1ull << rto;
 		
-		undo->turn = board->turn;
-		undo->castlerights = board->castlerights;
-		undo->opening = board->opening;
-		undo->endgame = board->endgame;
-		undo->hash = board->hash;
-	
 		board->colourBitBoards[board->turn] ^= shiftto | shiftfrom | rshiftto | rshiftfrom;
 		
 		board->pieceBitBoards[5] ^= shiftfrom | shiftto;
@@ -75,6 +78,36 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		
 		board->castlerights &= CastleMask[from];
 		board->turn = !board->turn;
+		board->epsquare = -1;
+		return;
+	}
+	
+	if (MOVE_TYPE(move) == EnpassMove){
+		print_board(board);
+		to = MOVE_TO(move);
+		from = MOVE_FROM(move);
+		ep = board->epsquare - (board->turn == ColourWhite ? 8 : -8);
+		
+		shiftfrom = 1ull << from;
+		shiftto = 1ull << to;
+		shiftep = 1ull << ep;
+		
+		board->colourBitBoards[!board->turn] ^= shiftep;
+		board->pieceBitBoards[0] ^= shiftep;
+		
+		board->colourBitBoards[board->turn] ^= shiftfrom | shiftto;
+		board->pieceBitBoards[0] ^= shiftfrom | shiftto;
+		
+		board->squares[to] = board->squares[from];
+		board->squares[from] = Empty;
+		
+		undo->capture_piece = board->squares[ep];
+		board->squares[ep] = Empty;
+		
+		board->turn = !board->turn;
+		board->epsquare = -1;
+		print_board(board);
+		printf("\n\n");
 		return;
 	}
 }
@@ -83,8 +116,10 @@ void revert_move(Board * board, uint16_t move, Undo * undo){
 	int to, from;
 	int rto, rfrom;
 	int fromtype, totype;
+	int ep;
 	uint64_t shiftfrom, shiftto;
 	uint64_t rshiftfrom, rshiftto;
+	uint64_t shiftep;
 	
 	if (MOVE_TYPE(move) == NormalMove){
 		to = MOVE_TO(move);
@@ -107,6 +142,7 @@ void revert_move(Board * board, uint16_t move, Undo * undo){
 		
 		board->castlerights = undo->castlerights;
 		board->turn = undo->turn;
+		board->epsquare = undo->epsquare;
 		board->opening = undo->opening;
 		board->endgame = undo->endgame;
 		board->hash = undo->hash;
@@ -137,9 +173,34 @@ void revert_move(Board * board, uint16_t move, Undo * undo){
 		
 		board->castlerights = undo->castlerights;
 		board->turn = undo->turn;
+		board->epsquare = undo->epsquare;
 		board->opening = undo->opening;
 		board->endgame = undo->endgame;
 		board->hash = undo->hash;
 		return;
+	}
+	
+	if (MOVE_TYPE(move) == EnpassMove){
+		to = MOVE_TO(move);
+		from = MOVE_FROM(move);
+		ep = undo->epsquare;
+		
+		shiftfrom = 1ull << from;
+		shiftto = 1ull << to;
+		shiftep = 1ull << ep;
+		
+		
+		board->colourBitBoards[!undo->turn] ^= shiftep;
+		board->pieceBitBoards[0] ^= shiftep;
+		
+		board->colourBitBoards[undo->turn] ^= shiftfrom | shiftto;
+		board->pieceBitBoards[0] ^= shiftfrom | shiftto;
+		
+		board->squares[from] = board->squares[to];
+		board->squares[to] = Empty;
+		board->squares[ep] = undo->capture_piece;
+		
+		board->turn = !board->turn;
+		board->epsquare = -1;	
 	}
 }

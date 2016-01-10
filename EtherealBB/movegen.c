@@ -55,7 +55,7 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 	mybishops |= myqueens;
 	myrooks |= myqueens;
 	
-	// Generate Pawn BitBoards
+	// Generate Pawn BitBoards and Generate Enpass Moves
 	if (board->turn == ColourWhite){
 		pawnforwardone = (mypawns << 8) & empty;
 		pawnforwardtwo = ((pawnforwardone & RANK_3) << 8) & empty;
@@ -69,6 +69,20 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 		pawnforwardone &= ~RANK_8;
 		pawnleft &= ~RANK_8;
 		pawnright &= ~RANK_8;
+		
+		
+		if(board->epsquare != -1){
+			if (board->squares[board->epsquare-7] == WhitePawn){
+				if (board->squares[board->epsquare-8] == BlackPawn)
+					moves[(*size)++] = MOVE_MAKE(board->epsquare-7,board->epsquare,EnpassMove);
+			}
+			
+			if (board->squares[board->epsquare-9] == WhitePawn)
+				if (board->squares[board->epsquare-8] == BlackPawn)
+					moves[(*size)++] = MOVE_MAKE(board->epsquare-9,board->epsquare,EnpassMove);
+			
+		}
+		
 	} else {
 		pawnforwardone = (mypawns >> 8) & empty;
 		pawnforwardtwo = ((pawnforwardone & RANK_6) >> 8) & empty;
@@ -82,6 +96,18 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 		pawnforwardone &= ~RANK_1;
 		pawnleft &= ~RANK_1;
 		pawnright &= ~RANK_1;
+		
+		if(board->epsquare != -1){
+			if (board->squares[board->epsquare+7] == BlackPawn)
+				if (board->squares[board->epsquare+8] == WhitePawn)
+					moves[(*size)++] = MOVE_MAKE(board->epsquare+7,board->epsquare,EnpassMove);
+			
+			
+			if (board->squares[board->epsquare+9] == BlackPawn){
+				if (board->squares[board->epsquare+8] == WhitePawn)
+					moves[(*size)++] = MOVE_MAKE(board->epsquare+9,board->epsquare,EnpassMove);
+			}
+		}
 	}
 	
 	// Generate Pawn Moves
