@@ -71,14 +71,14 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 		pawnright &= ~RANK_8;
 		
 		if(board->epsquare != -1){
-			if (board->squares[board->epsquare+7] == BlackPawn)
-				if (board->squares[board->epsquare+8] == WhitePawn)
-					moves[(*size)++] = MOVE_MAKE(board->epsquare+7,board->epsquare,EnpassMove);
+			if (board->epsquare != 47 && board->squares[board->epsquare-7] == WhitePawn)
+				if (board->squares[board->epsquare-8] == BlackPawn)
+					moves[(*size)++] = MOVE_MAKE(board->epsquare-7,board->epsquare,EnpassMove);
 			
 			
-			if (board->squares[board->epsquare+9] == BlackPawn){
-				if (board->squares[board->epsquare+8] == WhitePawn)
-					moves[(*size)++] = MOVE_MAKE(board->epsquare+9,board->epsquare,EnpassMove);
+			if (board->epsquare != 40 && board->squares[board->epsquare-9] == WhitePawn){
+				if (board->squares[board->epsquare-8] == BlackPawn)
+					moves[(*size)++] = MOVE_MAKE(board->epsquare-9,board->epsquare,EnpassMove);
 			}
 		}		
 	} else {
@@ -96,14 +96,14 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 		pawnright &= ~RANK_1;
 		
 		if(board->epsquare != -1){
-			if (board->squares[board->epsquare-7] == WhitePawn){
-				if (board->squares[board->epsquare-8] == BlackPawn)
-					moves[(*size)++] = MOVE_MAKE(board->epsquare-7,board->epsquare,EnpassMove);
+			if (board->epsquare != 16 && board->squares[board->epsquare+7] == BlackPawn){
+				if (board->squares[board->epsquare+8] == WhitePawn)
+					moves[(*size)++] = MOVE_MAKE(board->epsquare+7,board->epsquare,EnpassMove);
 			}
 			
-			if (board->squares[board->epsquare-9] == WhitePawn)
-				if (board->squares[board->epsquare-8] == BlackPawn)
-					moves[(*size)++] = MOVE_MAKE(board->epsquare-9,board->epsquare,EnpassMove);
+			if (board->epsquare != 23 && board->squares[board->epsquare+9] == BlackPawn)
+				if (board->squares[board->epsquare+8] == WhitePawn)
+					moves[(*size)++] = MOVE_MAKE(board->epsquare+9,board->epsquare,EnpassMove);
 			
 		}
 	}

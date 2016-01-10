@@ -84,7 +84,6 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 	}
 	
 	if (MOVE_TYPE(move) == EnpassMove){
-		print_board(board);
 		to = MOVE_TO(move);
 		from = MOVE_FROM(move);
 		ep = board->epsquare - (board->turn == ColourWhite ? 8 : -8);
@@ -107,8 +106,6 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		
 		board->turn = !board->turn;
 		board->epsquare = -1;
-		print_board(board);
-		printf("\n\n");
 		return;
 	}
 }
@@ -184,7 +181,7 @@ void revert_move(Board * board, uint16_t move, Undo * undo){
 	if (MOVE_TYPE(move) == EnpassMove){
 		to = MOVE_TO(move);
 		from = MOVE_FROM(move);
-		ep = undo->epsquare;
+		ep = undo->epsquare - (undo->turn == ColourWhite ? 8 : -8);
 		
 		shiftfrom = 1ull << from;
 		shiftto = 1ull << to;
