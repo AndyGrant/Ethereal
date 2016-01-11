@@ -70,17 +70,14 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 		pawnleft &= ~RANK_8;
 		pawnright &= ~RANK_8;
 		
-		if(board->epsquare != -1){
-			if (board->epsquare != 47 && board->squares[board->epsquare-7] == WhitePawn)
-				if (board->squares[board->epsquare-8] == BlackPawn)
-					moves[(*size)++] = MOVE_MAKE(board->epsquare-7,board->epsquare,EnpassMove);
+		if(board->epsquare >= 40){
+			if (board->squares[board->epsquare-7] == WhitePawn && board->epsquare != 47)
+				moves[(*size)++] = MOVE_MAKE(board->epsquare-7,board->epsquare,EnpassMove);
 			
-			
-			if (board->epsquare != 40 && board->squares[board->epsquare-9] == WhitePawn){
-				if (board->squares[board->epsquare-8] == BlackPawn)
-					moves[(*size)++] = MOVE_MAKE(board->epsquare-9,board->epsquare,EnpassMove);
-			}
-		}		
+			if (board->squares[board->epsquare-9] == WhitePawn && board->epsquare != 40)
+				moves[(*size)++] = MOVE_MAKE(board->epsquare-9,board->epsquare,EnpassMove);
+		}
+		
 	} else {
 		pawnforwardone = (mypawns >> 8) & empty;
 		pawnforwardtwo = ((pawnforwardone & RANK_6) >> 8) & empty;
@@ -95,16 +92,12 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 		pawnleft &= ~RANK_1;
 		pawnright &= ~RANK_1;
 		
-		if(board->epsquare != -1){
-			if (board->epsquare != 16 && board->squares[board->epsquare+7] == BlackPawn){
-				if (board->squares[board->epsquare+8] == WhitePawn)
-					moves[(*size)++] = MOVE_MAKE(board->epsquare+7,board->epsquare,EnpassMove);
-			}
+		if(board->epsquare > 0 && board->epsquare < 40){
+			if (board->squares[board->epsquare+7] == BlackPawn && board->epsquare != 16)
+				moves[(*size)++] = MOVE_MAKE(board->epsquare+7,board->epsquare,EnpassMove);
 			
-			if (board->epsquare != 23 && board->squares[board->epsquare+9] == BlackPawn)
-				if (board->squares[board->epsquare+8] == WhitePawn)
-					moves[(*size)++] = MOVE_MAKE(board->epsquare+9,board->epsquare,EnpassMove);
-			
+			if (board->squares[board->epsquare+9] == BlackPawn && board->epsquare != 23)
+				moves[(*size)++] = MOVE_MAKE(board->epsquare+9,board->epsquare,EnpassMove);
 		}
 	}
 	
