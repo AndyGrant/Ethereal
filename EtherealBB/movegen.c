@@ -225,16 +225,16 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 		if (board->turn == ColourWhite){
 			
 			// King Side Castle
-			if (board->castlerights & WhiteKingRights)
-				if (board->squares[7] == WhiteRook)
-					if ((notempty & WhiteCastleKingSideMap) == 0)
+			if ((notempty & WhiteCastleKingSideMap) == 0)
+				if (board->castlerights & WhiteKingRights)
+					if (board->squares[7] == WhiteRook)
 						if (!square_is_attacked(board,ColourWhite,5))
 							moves[(*size)++] = MOVE_MAKE(4,6,CastleMove);
 						
 			// Queen Side Castle
-			if (board->castlerights & WhiteQueenRights)
-				if (board->squares[0] == WhiteRook)
-					if ((notempty & WhiteCastleQueenSideMap) == 0)
+			if ((notempty & WhiteCastleQueenSideMap) == 0)
+				if (board->castlerights & WhiteQueenRights)
+					if (board->squares[0] == WhiteRook)
 						if (!square_is_attacked(board,ColourWhite,3))
 							moves[(*size)++] = MOVE_MAKE(4,2,CastleMove);
 		}
@@ -242,16 +242,16 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 		else {
 			
 			// King Side Castle
-			if (board->castlerights & BlackKingRights)
-				if (board->squares[63] == BlackRook)
-					if ((notempty & BlackCastleKingSideMap) == 0)
+			if ((notempty & BlackCastleKingSideMap) == 0)
+				if (board->castlerights & BlackKingRights)
+					if (board->squares[63] == BlackRook)
 						if (!square_is_attacked(board,ColourBlack,61))
 							moves[(*size)++] = MOVE_MAKE(60,62,CastleMove);
 						
 			// Queen Side Castle
-			if (board->castlerights & BlackQueenRights)
-				if (board->squares[56] == BlackRook)
-					if ((notempty & BlackCastleQueenSideMap) == 0)
+			if ((notempty & BlackCastleQueenSideMap) == 0)
+				if (board->castlerights & BlackQueenRights)
+					if (board->squares[56] == BlackRook)
 						if (!square_is_attacked(board,ColourBlack,59))
 							moves[(*size)++] = MOVE_MAKE(60,58,CastleMove);
 		}
