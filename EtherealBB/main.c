@@ -13,14 +13,6 @@
 #include "movegentest.h"
 #include "zorbist.h"
 
-int foobar1(int x, int y){
-	return x << y;
-}
-
-int foobar2(int x, unsigned int y){
-	return x << y;
-}
-
 int main(){
 	move_gen_test();
 	return 0;
