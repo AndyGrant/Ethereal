@@ -9,13 +9,17 @@
 #include "types.h"
 #include "move.h"
 #include "movegen.h"
+#include "zorbist.h"
 
 void init_board(Board * board, char * fen){
 	int i, j, sq;
 	char r, f;
 	
 	// Setup Magics
-	if (!INITALIZED_MAGICS) init_magics();
+	init_magics();
+	
+	// Setup Zorbist
+	init_zorbist();	
 	
 	// Init board->squares from fen notation;
 	for(i = 0, sq = 56; fen[i] != ' '; i++){
@@ -117,6 +121,10 @@ void init_board(Board * board, char * fen){
 		board->colourBitBoards[PIECE_COLOUR(board->squares[i])] |= (1ull << i);
 		board->pieceBitBoards[PIECE_TYPE(board->squares[i])] 	|= (1ull << i);
 	}
+	
+	// Init Zorbist Hash
+	for(i = 0, board->hash = 0; i < 64; i++)
+		board->hash ^= ZorbistKeys[board->squares[i]][i];
 }
 
 void print_board(Board * board){
@@ -159,7 +167,7 @@ int perft(Board * board, int depth){
 	Undo undo;
 	
 	int found = 0;
-	for(size -= 1; size >= 0; size--){		
+	for(size -= 1; size >= 0; size--){
 		apply_move(board,moves[size],&undo);
 		if (is_not_in_check(board,!board->turn))
 			found += perft(board,depth-1);
@@ -167,23 +175,4 @@ int perft(Board * board, int depth){
 	}
 	
 	return found;
-}
-
-int main2(){
-	
-	init_magics();
-	
-	Board board;	
-	//init_board(&board,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");	
-	//init_board(&board,"r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1 ");	
-	init_board(&board,"r3k3/1K6/8/8/8/8/8/8 w q - 0 1 ");
-	
-
-	print_board(&board);
-	printf("Moves : %d\n",perft(&board,1));
-	printf("Moves : %d\n",perft(&board,2));
-	printf("Moves : %d\n",perft(&board,3));
-	printf("Moves : %d\n",perft(&board,4));
-	printf("Moves : %d\n",perft(&board,5));
-	printf("Moves : %d\n",perft(&board,6));
 }

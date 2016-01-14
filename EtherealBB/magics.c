@@ -4,6 +4,9 @@
 #include "bitutils.h"
 
 void init_magics(){
+	if (INITALIZED_MAGICS)
+		return;
+	
 	generate_knight_map();
 	generate_king_map();
 	generate_occupancy_mask_rook();
