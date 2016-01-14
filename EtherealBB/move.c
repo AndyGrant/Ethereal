@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include <assert.h>
 
-
 #include "board.h"
 #include "castle.h"
 #include "types.h"

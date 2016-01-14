@@ -10,7 +10,6 @@
 #include "piece.h"
 #include "types.h"
 
-
 void gen_all_moves(Board * board, uint16_t * moves, int * size){	
 	uint64_t blockers;
 	uint64_t attackable;
