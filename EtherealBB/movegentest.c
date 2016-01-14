@@ -6,13 +6,13 @@
 #include "board.h"
 #include "types.h"
 
-int main(){
+void move_gen_test(){
 	int i, depth;
 	int passed = 0, failed = 0;
 	uint64_t total = 0, found, nodes[128];
 	char c, str[128];
 	clock_t start = clock(), end;
-	FILE * input = fopen("perfttests.txt","r");
+	FILE * input = fopen("perfttestsshort.txt","r");
 	
 	while(1){
 		
@@ -78,6 +78,4 @@ int main(){
 	printf("Nodes  : %llu\n",total);
 	printf("Seconds: %d\n",(end - start) / CLOCKS_PER_SEC);
 	printf("MNPS   : %.3f",(total/(float)(1000000 * ((end-start)/CLOCKS_PER_SEC))));
-	
-	return 0;
 }

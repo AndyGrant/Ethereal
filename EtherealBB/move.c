@@ -8,12 +8,18 @@
 #include "types.h"
 #include "move.h"
 #include "piece.h"
+#include "zorbist.h"
 
 void apply_move(Board * board, uint16_t move, Undo * undo){
 	int to, from;
 	int rto, rfrom;
 	int fromtype, totype;
 	int promotype, ep;
+	
+	int frompiece, topiece;
+	int rfrompiece, enpasspiece;
+	int promopiece;
+	
 	uint64_t shiftfrom, shiftto;
 	uint64_t rshiftfrom, rshiftto;
 	uint64_t shiftep;
@@ -29,14 +35,17 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		to = MOVE_TO(move);
 		from = MOVE_FROM(move);
 		
-		fromtype = PIECE_TYPE(board->squares[from]);
-		totype = PIECE_TYPE(board->squares[to]);
-		
 		shiftfrom = 1ull << from;
 		shiftto = 1ull << to;
-	
+		
+		frompiece = board->squares[from];
+		topiece = board->squares[to];
+		
+		fromtype = PIECE_TYPE(frompiece);
+		totype = PIECE_TYPE(topiece);
+		
 		board->colourBitBoards[board->turn] ^= shiftfrom | shiftto;
-		board->colourBitBoards[PIECE_COLOUR(board->squares[to])] ^= shiftto;
+		board->colourBitBoards[PIECE_COLOUR(topiece)] ^= shiftto;
 		
 		board->pieceBitBoards[totype] ^= shiftto;
 		board->pieceBitBoards[fromtype] ^= shiftfrom | shiftto;		
@@ -48,18 +57,25 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		board->castlerights &= CastleMask[from];
 		board->turn = !board->turn;
 		
-		board->epsquare = -1;
-		if (PIECE_TYPE(board->squares[to]) == 0 && ((to-from) == 16 || (from-to == 16)))
-			board->epsquare = from + ((to-from)/2);
+		board->hash ^= ZorbistKeys[frompiece][from]
+					^  ZorbistKeys[frompiece][to]
+					^  ZorbistKeys[topiece][to];
 		
+		board->epsquare = -1;		
+		if (!fromtype && ((from-to) == 16 - (board->turn << 5)))
+			board->epsquare = from + (to>>1) - (from>>1);		
 		return;
 	}
 	
 	if (MOVE_TYPE(move) == CastleMove){
 		to = MOVE_TO(move);
 		from = MOVE_FROM(move);
+		
 		rto = to + (to-from == 2 ? -1 : 1);
 		rfrom = from + (to-from == 2 ? 3 : -4);
+		
+		frompiece = WhiteKing + board->turn;
+		rfrompiece = frompiece - 8;
 		
 		shiftfrom = 1ull << from;
 		shiftto = 1ull << to;
@@ -79,6 +95,12 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		
 		board->castlerights &= CastleMask[from];
 		board->turn = !board->turn;
+		
+		board->hash ^= ZorbistKeys[frompiece][from]
+					^  ZorbistKeys[frompiece][to]
+					^  ZorbistKeys[rfrompiece][rfrom]
+					^  ZorbistKeys[rfrompiece][rto];
+		
 		board->epsquare = -1;
 		return;
 	}
@@ -90,6 +112,10 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		fromtype = PIECE_TYPE(board->squares[from]);
 		totype = PIECE_TYPE(board->squares[to]);
 		promotype = 1 + (move >> 14);
+		
+		frompiece = board->squares[from];
+		topiece = board->squares[to];
+		promopiece = (promotype * 4) + board->turn;
 		
 		shiftfrom = 1ull << from;
 		shiftto = 1ull << to;
@@ -106,6 +132,11 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		board->squares[from] = Empty;
 		
 		board->turn = !board->turn;
+		
+		board->hash ^= ZorbistKeys[frompiece][from]
+					^  ZorbistKeys[promopiece][to]
+					^  ZorbistKeys[topiece][to];
+		
 		board->epsquare = -1;		
 		return;
 	}
@@ -114,6 +145,9 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		to = MOVE_TO(move);
 		from = MOVE_FROM(move);
 		ep = board->epsquare - (board->turn == ColourWhite ? 8 : -8);
+		
+		frompiece = WhitePawn + board->turn;
+		enpasspiece = WhitePawn + !board->turn;
 		
 		shiftfrom = 1ull << from;
 		shiftto = 1ull << to;
@@ -132,6 +166,11 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		board->squares[ep] = Empty;
 		
 		board->turn = !board->turn;
+		
+		board->hash ^= ZorbistKeys[frompiece][from]
+					^ ZorbistKeys[frompiece][to]
+					^ ZorbistKeys[enpasspiece][ep];
+		
 		board->epsquare = -1;
 		return;
 	}
