@@ -302,6 +302,3 @@ int square_is_attacked(Board * board, int turn, int sq){
 	
 	return 0;
 }
-
-
-
