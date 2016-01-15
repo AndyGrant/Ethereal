@@ -70,8 +70,8 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		to = MOVE_TO(move);
 		from = MOVE_FROM(move);
 		
-		rto = to + (to-from == 2 ? -1 : 1);
-		rfrom = from + (to-from == 2 ? 3 : -4);
+		rto = CASTLE_GET_ROOK_TO(from,to);
+		rfrom = CASTLE_GET_ROOK_FROM(from,to);
 		
 		frompiece = WhiteKing + board->turn;
 		rfrompiece = frompiece - 8;
@@ -215,8 +215,9 @@ void revert_move(Board * board, uint16_t move, Undo * undo){
 	if (MOVE_TYPE(move) == CastleMove){
 		to = MOVE_TO(move);
 		from = MOVE_FROM(move);
-		rto = to + (to-from == 2 ? -1 : 1);
-		rfrom = from + (to-from == 2 ? 3 : -4);
+
+		rto = CASTLE_GET_ROOK_TO(from,to);
+		rfrom = CASTLE_GET_ROOK_FROM(from,to);
 		
 		shiftfrom = 1ull << from;
 		shiftto = 1ull << to;
