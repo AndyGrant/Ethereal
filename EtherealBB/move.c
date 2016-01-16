@@ -50,8 +50,8 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		board->pieceBitBoards[totype] ^= shiftto;
 		board->pieceBitBoards[fromtype] ^= shiftfrom | shiftto;		
 		
-		undo->capture_piece = board->squares[to];
-		board->squares[to] = board->squares[from];
+		undo->capture_piece = topiece;
+		board->squares[to] = frompiece;
 		board->squares[from] = Empty;
 		
 		board->castlerights &= CastleMask[from];
@@ -85,10 +85,10 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		board->pieceBitBoards[5] ^= shiftfrom | shiftto;
 		board->pieceBitBoards[3] ^= rshiftfrom | rshiftto;
 		
-		board->squares[to] = board->squares[from];
+		board->squares[to] = frompiece;
 		board->squares[from] = Empty;
 		
-		board->squares[rto] = board->squares[rfrom];
+		board->squares[rto] = rfrompiece;
 		board->squares[rfrom] = Empty;
 		
 		board->castlerights &= CastleMask[from];
@@ -113,20 +113,20 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		
 		frompiece = board->squares[from];
 		topiece = board->squares[to];
-		promopiece = (promotype * 4) + board->turn;
+		promopiece = (promotype << 2) + board->turn;
 		
 		shiftfrom = 1ull << from;
 		shiftto = 1ull << to;
 	
 		board->colourBitBoards[board->turn] ^= shiftfrom | shiftto;
-		board->colourBitBoards[PIECE_COLOUR(board->squares[to])] ^= shiftto;
+		board->colourBitBoards[PIECE_COLOUR(topiece)] ^= shiftto;
 		
 		board->pieceBitBoards[0] ^= shiftfrom;
 		board->pieceBitBoards[promotype] ^= shiftto;
 		board->pieceBitBoards[totype] ^= shiftto;
 		
-		undo->capture_piece = board->squares[to];
-		board->squares[to] = (4 * promotype) + board->turn;
+		undo->capture_piece = topiece;
+		board->squares[to] = promopiece;
 		board->squares[from] = Empty;
 		
 		board->turn = !board->turn;
@@ -142,7 +142,8 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 	if (MOVE_TYPE(move) == EnpassMove){
 		to = MOVE_TO(move);
 		from = MOVE_FROM(move);
-		ep = board->epsquare - (board->turn == ColourWhite ? 8 : -8);
+		//ep = board->epsquare - (board->turn == ColourWhite ? 8 : -8);
+		ep = board->epsquare - 8 + (board->turn << 4);
 		
 		frompiece = WhitePawn + board->turn;
 		enpasspiece = WhitePawn + !board->turn;
@@ -157,10 +158,10 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		board->colourBitBoards[board->turn] ^= shiftfrom | shiftto;
 		board->pieceBitBoards[0] ^= shiftfrom | shiftto;
 		
-		board->squares[to] = board->squares[from];
+		board->squares[to] = frompiece;
 		board->squares[from] = Empty;
 		
-		undo->capture_piece = board->squares[ep];
+		undo->capture_piece = enpasspiece;
 		board->squares[ep] = Empty;
 		
 		board->turn = !board->turn;
