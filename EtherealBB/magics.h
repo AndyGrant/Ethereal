@@ -81,7 +81,7 @@ uint64_t OccupancyMaskBishop[64];
 uint64_t OccupancyVariationsRook[64][4096];
 uint64_t OccupancyVariationsBishop[64][512];
 
-uint64_t MoveDatabaseRook[64][4096];
-uint64_t MoveDatabaseBishop[64][512];
+uint64_t ** MoveDatabaseRook;
+uint64_t ** MoveDatabaseBishop;
 
 #endif
