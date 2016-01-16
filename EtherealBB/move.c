@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <assert.h>
 
@@ -60,9 +61,7 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 					^  ZorbistKeys[frompiece][to]
 					^  ZorbistKeys[topiece][to];
 		
-		board->epsquare = -1;		
-		if (!fromtype && ((from-to) == 16 - (board->turn << 5)))
-			board->epsquare = from + (to>>1) - (from>>1);		
+		board->epsquare = ((!fromtype) & (abs(to-from) == 16)) * (from + ((to-from)>>1));
 		return;
 	}
 	
