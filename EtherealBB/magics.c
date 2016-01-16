@@ -1,7 +1,9 @@
 #include <stdint.h>
+#include "stdlib.h"
 
 #include "magics.h"
 #include "bitutils.h"
+
 
 void init_magics(){
 	if (INITALIZED_MAGICS)
@@ -148,9 +150,13 @@ void generate_move_database_rook(){
 	int variations, bitCount;
 	int bitRef, i, j, magicIndex;
 	
+	MoveDatabaseRook = malloc(sizeof(uint64_t) * 64);
+	
 	for (bitRef=0; bitRef<=63; bitRef++){
 		bitCount = count_set_bits(OccupancyMaskRook[bitRef]);
 		variations = (int)(1ull << bitCount);
+		
+		MoveDatabaseRook[bitRef] = malloc(sizeof(uint64_t) * variations);
 
 		for (i = 0; i < variations; i++){
 			validMoves = 0;
@@ -191,9 +197,13 @@ void generate_move_database_bishop(){
 	int variations, bitCount;
 	int bitRef, i, j, magicIndex;
 	
+	MoveDatabaseBishop = malloc(sizeof(uint64_t) * 64);
+	
 	for (bitRef=0; bitRef<=63; bitRef++){
 		bitCount = count_set_bits(OccupancyMaskBishop[bitRef]);
 		variations = (int)(1ull << bitCount);
+		
+		MoveDatabaseBishop[bitRef] = malloc(sizeof(uint64_t) * variations);
 		
 		for (i = 0; i < variations; i++){
 			validMoves = 0;

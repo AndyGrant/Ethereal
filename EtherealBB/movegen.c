@@ -25,6 +25,7 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 	
 	int bit, lsb, dbindex;
 	int forwardshift, leftshift, rightshift;
+	int epsquare = board->epsquare;
 	
 	uint64_t friendly = board->colourBitBoards[board->turn];
 	uint64_t enemy = board->colourBitBoards[!board->turn];
@@ -40,22 +41,16 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 	uint64_t myqueens  = friendly & board->pieceBitBoards[4];
 	uint64_t mykings   = friendly & board->pieceBitBoards[5];
 	
-	if (board->turn == ColourWhite){
-		forwardshift = 8;
-		leftshift = 7;
-		rightshift = 9;
-	} else {
-		forwardshift = -8;
-		leftshift = -7;
-		rightshift = -9;
-	}
-	
 	// Generate queen moves as if they were rooks and bishops
 	mybishops |= myqueens;
 	myrooks |= myqueens;
 	
 	// Generate Pawn BitBoards and Generate Enpass Moves
 	if (board->turn == ColourWhite){
+		forwardshift = 8;
+		leftshift = 7;
+		rightshift = 9;
+		
 		pawnforwardone = (mypawns << 8) & empty;
 		pawnforwardtwo = ((pawnforwardone & RANK_3) << 8) & empty;
 		pawnleft = ((mypawns << 7) & ~FILE_A) & enemy;
@@ -69,15 +64,19 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 		pawnleft &= ~RANK_8;
 		pawnright &= ~RANK_8;
 		
-		if(board->epsquare >= 40){
-			if (board->squares[board->epsquare-7] == WhitePawn && board->epsquare != 47)
-				moves[(*size)++] = MOVE_MAKE(board->epsquare-7,board->epsquare,EnpassMove);
+		if(epsquare >= 40){
+			if (board->squares[epsquare-7] == WhitePawn && epsquare != 47)
+				moves[(*size)++] = MOVE_MAKE(epsquare-7,epsquare,EnpassMove);
 			
-			if (board->squares[board->epsquare-9] == WhitePawn && board->epsquare != 40)
-				moves[(*size)++] = MOVE_MAKE(board->epsquare-9,board->epsquare,EnpassMove);
+			if (board->squares[epsquare-9] == WhitePawn && epsquare != 40)
+				moves[(*size)++] = MOVE_MAKE(epsquare-9,epsquare,EnpassMove);
 		}
 		
 	} else {
+		forwardshift = -8;
+		leftshift = -7;
+		rightshift = -9;
+		
 		pawnforwardone = (mypawns >> 8) & empty;
 		pawnforwardtwo = ((pawnforwardone & RANK_6) >> 8) & empty;
 		pawnleft = ((mypawns >> 7) & ~FILE_H) & enemy;
@@ -91,12 +90,12 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 		pawnleft &= ~RANK_1;
 		pawnright &= ~RANK_1;
 		
-		if(board->epsquare > 0 && board->epsquare < 40){
-			if (board->squares[board->epsquare+7] == BlackPawn && board->epsquare != 16)
-				moves[(*size)++] = MOVE_MAKE(board->epsquare+7,board->epsquare,EnpassMove);
+		if(epsquare > 0 && epsquare < 40){
+			if (board->squares[epsquare+7] == BlackPawn && epsquare != 16)
+				moves[(*size)++] = MOVE_MAKE(epsquare+7,epsquare,EnpassMove);
 			
-			if (board->squares[board->epsquare+9] == BlackPawn && board->epsquare != 23)
-				moves[(*size)++] = MOVE_MAKE(board->epsquare+9,board->epsquare,EnpassMove);
+			if (board->squares[epsquare+9] == BlackPawn && epsquare != 23)
+				moves[(*size)++] = MOVE_MAKE(epsquare+9,epsquare,EnpassMove);
 		}
 	}
 	

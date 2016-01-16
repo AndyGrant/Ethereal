@@ -12,7 +12,7 @@ void move_gen_test(){
 	uint64_t total = 0, found, nodes[128];
 	char c, str[128];
 	clock_t start = clock(), end;
-	FILE * input = fopen("perfttestsshort.txt","r");
+	FILE * input = fopen("perfttests.txt","r");
 	
 	while(1){
 		
