@@ -142,7 +142,6 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 	if (MOVE_TYPE(move) == EnpassMove){
 		to = MOVE_TO(move);
 		from = MOVE_FROM(move);
-		//ep = board->epsquare - (board->turn == ColourWhite ? 8 : -8);
 		ep = board->epsquare - 8 + (board->turn << 4);
 		
 		frompiece = WhitePawn + board->turn;
@@ -276,12 +275,11 @@ void revert_move(Board * board, uint16_t move, Undo * undo){
 	if (MOVE_TYPE(move) == EnpassMove){
 		to = MOVE_TO(move);
 		from = MOVE_FROM(move);
-		ep = undo->epsquare - (undo->turn == ColourWhite ? 8 : -8);
+		ep = undo->epsquare - 8 + (undo->turn << 4);
 		
 		shiftfrom = 1ull << from;
 		shiftto = 1ull << to;
 		shiftep = 1ull << ep;
-		
 		
 		board->colourBitBoards[!undo->turn] ^= shiftep;
 		board->pieceBitBoards[0] ^= shiftep;

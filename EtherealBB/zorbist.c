@@ -30,26 +30,6 @@ void init_zorbist(){
 	INITALIZED_ZORBIST = 1;
 }
 
-void validate_zorbist(){
-	int pieces[12] = {0,1,4,5,8,9,12,13,16,17,20,21};
-	int empty[20]  = {
-		 2,  3,  6,  7, 10,
-		11, 14, 15, 18, 19,
-		22, 23, 24, 25, 26,
-		27, 28, 29, 30, 31
-	};
-	
-	int i, s;
-	
-	for(i = 0; i < 12; i++)
-		for(s = 0; s < 64; s++)
-			assert(ZorbistKeys[pieces[i]][s] != 0 && "Invalid Zorbist Entry!");
-		
-	for(i = 0; i < 20; i++)
-		for(s = 0; s < 64; s++)
-			assert(ZorbistKeys[empty[i]][s] == 0 && "Invalid Zorbist Entry!");
-}
-
 uint64_t gen_rand_64bit(){
 	return (uint64_t)(rand());
 }
