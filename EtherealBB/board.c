@@ -6,6 +6,7 @@
 #include "castle.h"
 #include "magics.h"
 #include "piece.h"
+#include "psqt.h"
 #include "types.h"
 #include "move.h"
 #include "movegen.h"
@@ -15,11 +16,9 @@ void init_board(Board * board, char * fen){
 	int i, j, sq;
 	char r, f;
 	
-	// Setup Magics
 	init_magics();
-	
-	// Setup Zorbist
-	init_zorbist();	
+	init_zorbist();
+	init_psqt();
 	
 	// Init board->squares from fen notation;
 	for(i = 0, sq = 56; fen[i] != ' '; i++){
@@ -125,6 +124,14 @@ void init_board(Board * board, char * fen){
 	// Init Zorbist Hash
 	for(i = 0, board->hash = 0; i < 64; i++)
 		board->hash ^= ZorbistKeys[board->squares[i]][i];
+	
+	board->opening = 0;
+	board->endgame = 0;
+	
+	for(i = 0; i < 64; i++){
+		board->opening += PSQTopening[board->squares[i]][i];
+		board->endgame += PSQTendgame[board->squares[i]][i];
+	}
 }
 
 void print_board(Board * board){

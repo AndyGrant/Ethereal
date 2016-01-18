@@ -19,15 +19,9 @@ int main(){
 	
 	Board board;	
 	init_board(&board,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");	
-	//init_board(&board,"r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1 ");	
-	//init_board(&board,"r3k3/1K6/8/8/8/8/8/8 w q - 0 1 ");
-	
-
+	printf("Opening=%d Endgame=%d\n",board.opening,board.endgame);
 	print_board(&board);
-	//printf("Moves : %d\n",perft(&board,1));
-	//printf("Moves : %d\n",perft(&board,2));
-	//printf("Moves : %d\n",perft(&board,3));
-	//printf("Moves : %d\n",perft(&board,4));
-	//printf("Moves : %d\n",perft(&board,5));
-	printf("Moves : %d\n",perft(&board,6));
+	
+	
+	//printf("Moves : %d\n",perft(&board,6));
 }
