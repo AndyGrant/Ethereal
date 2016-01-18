@@ -8,6 +8,7 @@
 #include "types.h"
 #include "move.h"
 #include "piece.h"
+#include "psqt.h"
 #include "zorbist.h"
 
 void apply_move(Board * board, uint16_t move, Undo * undo){
@@ -57,6 +58,14 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		board->castlerights &= CastleMask[from];
 		board->turn = !board->turn;
 		
+		board->opening += PSQTopening[frompiece][to]
+						- PSQTopening[frompiece][from]
+						- PSQTopening[topiece][to];
+						
+		board->endgame += PSQTendgame[frompiece][to]
+						- PSQTendgame[frompiece][from]
+						- PSQTendgame[topiece][to];
+		
 		board->hash ^= ZorbistKeys[frompiece][from]
 					^  ZorbistKeys[frompiece][to]
 					^  ZorbistKeys[topiece][to];
@@ -93,6 +102,16 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		
 		board->castlerights &= CastleMask[from];
 		board->turn = !board->turn;
+		
+		board->opening += PSQTopening[frompiece][to]
+						- PSQTopening[frompiece][from]
+						+ PSQTopening[rfrompiece][to];
+						- PSQTopening[rfrompiece][from];
+						
+		board->endgame += PSQTendgame[frompiece][to]
+						- PSQTendgame[frompiece][from]
+						+ PSQTendgame[rfrompiece][to];
+						- PSQTendgame[rfrompiece][from];
 		
 		board->hash ^= ZorbistKeys[frompiece][from]
 					^  ZorbistKeys[frompiece][to]
@@ -131,6 +150,14 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		
 		board->turn = !board->turn;
 		
+		board->opening -= PSQTopening[frompiece][from]
+						+ PSQTopening[promopiece][to]
+						- PSQTopening[topiece][to];
+						
+		board->endgame -= PSQTendgame[frompiece][from]
+						+ PSQTendgame[promopiece][to]
+						- PSQTendgame[topiece][to];
+		
 		board->hash ^= ZorbistKeys[frompiece][from]
 					^  ZorbistKeys[promopiece][to]
 					^  ZorbistKeys[topiece][to];
@@ -164,6 +191,14 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		board->squares[ep] = Empty;
 		
 		board->turn = !board->turn;
+		
+		board->opening -= PSQTopening[frompiece][from]
+						+ PSQTopening[frompiece][to]
+						- PSQTopening[enpasspiece][ep];
+						
+		board->endgame -= PSQTendgame[frompiece][from]
+						+ PSQTendgame[frompiece][to]
+						- PSQTendgame[enpasspiece][ep];
 		
 		board->hash ^= ZorbistKeys[frompiece][from]
 					^ ZorbistKeys[frompiece][to]
