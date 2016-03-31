@@ -33,5 +33,6 @@
 
 void apply_move(Board * board, uint16_t move, Undo * undo);
 void revert_move(Board * board, uint16_t move, Undo * undo);
+void print_move(uint16_t move);
 
 #endif
