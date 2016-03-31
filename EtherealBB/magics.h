@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-static int INITALIZED_MAGICS = 0;
+static int INITIALIZED_MAGICS = 0;
 
 /* Prototypes */
 void init_magics();

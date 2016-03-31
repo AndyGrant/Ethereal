@@ -11,6 +11,17 @@
 #include "psqt.h"
 #include "zorbist.h"
 
+/* 
+ *	Apply a given move to a given board, and storing
+ *	irreversible operations or difficult to reverse
+ *	operations into a given struct Undo to be used when
+ *	reverting the move from the board
+ *
+ * 	Updates Position of pieces
+ *	Updates all chess-rule mechanics
+ *	Updates Rolling-Evaluations using PieceSquareTable
+ *	Updates Board hash using ZorbistKeys
+ */
 void apply_move(Board * board, uint16_t move, Undo * undo){
 	int to, from;
 	int rto, rfrom;
