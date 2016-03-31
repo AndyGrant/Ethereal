@@ -10,6 +10,7 @@ void move_gen_test(){
 	int i, depth;
 	int passed = 0, failed = 0;
 	uint64_t total = 0, found, nodes[128];
+	
 	char c, str[128];
 	clock_t start = clock(), end;
 	FILE * input = fopen("perfttests.txt","r");
@@ -20,7 +21,7 @@ void move_gen_test(){
 		for(i = 0;; i++){
 			c = fgetc(input);
 			if (c == EOF) goto END_OF_MAIN_LOOP;
-			if (c == ';')  break;
+			if (c == ';') break;
 			str[i] = c;
 			
 		}

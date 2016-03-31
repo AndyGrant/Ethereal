@@ -4,9 +4,16 @@
 #include "magics.h"
 #include "bitutils.h"
 
-
+/*
+ * 	Begings the process of initializing all magic bitboard
+ *	components needed to create the end result move database
+ *	lookup tables for move generation
+ *
+ *	Sets flag INITIALIZED_MAGICS (magics.h)  to indicate
+ *	that the lookup-tables have been initalized.
+ */
 void init_magics(){
-	if (INITALIZED_MAGICS)
+	if (INITIALIZED_MAGICS)
 		return;
 	
 	generate_knight_map();
@@ -18,7 +25,7 @@ void init_magics(){
 	generate_move_database_rook();
 	generate_move_database_bishop();
 	
-	INITALIZED_MAGICS = 1;
+	INITIALIZED_MAGICS = 1;
 }
 
 void generate_knight_map(){
