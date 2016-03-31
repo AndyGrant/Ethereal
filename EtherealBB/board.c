@@ -12,6 +12,21 @@
 #include "movegen.h"
 #include "zorbist.h"
 
+
+/*
+ *	Initialize a Board struct from a given FEN-string.
+ 
+ *	Initializes the PieceSquareTable for updated-by-the-move
+ *	scoring for opening and endgame material and positinal values.
+ * 	
+ *	Initializes MoveDatabases for Rooks and Bishops by calling
+ *	init_magics() (magics.h)
+ *
+ *	Initializes ZorbistKeys for the game board
+ *
+ *	Attempts to Validate given FEN String, throws errors when
+ *	Parsing Unexpected FEN-strings
+ */
 void init_board(Board * board, char * fen){
 	int i, j, sq;
 	char r, f;
@@ -134,6 +149,11 @@ void init_board(Board * board, char * fen){
 	}
 }
 
+/*
+ *	Outputs the board to stdout in a human friendly manor,
+ *	Including an ascii grid, filled with pieces, as well
+ *	as Rank and File markings
+ */
 void print_board(Board * board){
 	int i, j, f, c, t;
 	

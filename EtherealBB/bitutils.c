@@ -2,6 +2,10 @@
 
 #include "bitutils.h"
 
+/*
+ *	Determine number of set bits in a given 
+ *	unsigned 64-bit integer BitBoard
+ */
 int count_set_bits(uint64_t bb){
 	if (!bb)
 		return 0;
@@ -15,6 +19,10 @@ int count_set_bits(uint64_t bb){
 	return count;
 }
 
+/* 
+ * Fill given int array with bit locations of
+ * set bits in a given unsigned 64-bit integer BitBoard
+ */
 void get_set_bits(uint64_t bb, int * arr){
 	int count = 0;
 	while(bb){

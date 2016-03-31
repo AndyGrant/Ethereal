@@ -6,6 +6,17 @@
 
 #include "zorbist.h"
 
+/*
+ *	Fill ZorbistKeys[32][64] (zorbist.h) for a 2d-array
+ *	for [PieceType][SquareNum] with randomly generated
+ *	64-bit Integers. 
+ *	
+ *	Sets Flag INITALIZED_ZORBIST (zorbist.h) to indicate
+ *	that the ZorbistKeys have been initalized.
+ *
+ *	Initialized when a struct Board is created via 
+ *	init_board(...) (board.h)
+ */
 void init_zorbist(){
 	if (INITALIZED_ZORBIST)
 		return;
@@ -30,16 +41,17 @@ void init_zorbist(){
 	INITALIZED_ZORBIST = 1;
 }
 
-uint64_t gen_rand_64bit(){
-	return (uint64_t)(rand());
-}
-
+/*
+ *	Generates random 64-bit Integer for use in 
+ *	ZorbistKeys (zorbist.h). XORs 64 randomly generated
+ *  Integers whose bit-lengths are not defined by rand()
+ */
 uint64_t gen_random_bitstring(){
 	uint64_t str = 0;
 	int i;
 	
 	for(i = 0; i < 64; i++)
-		str ^= gen_rand_64bit() << (i);
+		str ^= ((uint64_t)(rand())) << (i);
 	
 	return str;
 }
