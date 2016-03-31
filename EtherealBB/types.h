@@ -3,6 +3,11 @@
 
 #include <stdint.h>
 
+/* Defined here to avoic circular include(s) */
+#define Mate		(100000)
+#define MaxDepth	(32)
+#define MaxHeight	(64)
+
 typedef struct Board {
 	
 	// Easy Lookups for piece types
@@ -50,5 +55,14 @@ typedef struct Undo {
 	uint64_t hash;
 	
 } Undo;
+
+typedef struct PrincipleVariation {
+	// Game Tree
+	uint16_t line[MaxHeight];
+	
+	// Length of Tree
+	int length;
+	
+} PrincipleVariation;
 
 #endif

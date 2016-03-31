@@ -345,3 +345,16 @@ void revert_move(Board * board, uint16_t move, Undo * undo){
 		return;
 	}
 }
+
+void print_move(uint16_t move){
+	int from = MOVE_FROM(move);
+	int to = MOVE_TO(move);
+	
+	char from_file = '1' + (from/8);
+	char to_file = '1' + (to/8);
+	
+	char from_rank = 'H' - (from%8);
+	char to_rank = 'H' - (to%8);
+	
+	printf("%c%c%c%c",from_rank,from_file,to_rank,to_file);
+}
