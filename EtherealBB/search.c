@@ -5,6 +5,7 @@
 
 #include "board.h"
 #include "castle.h"
+#include "evaluate.h"
 #include "magics.h"
 #include "piece.h"
 #include "search.h"
@@ -36,7 +37,7 @@ uint16_t get_best_move(Board * board, int seconds){
 	NodesSearched = 0;
 	EvaluatingPlayer = board->turn;
 	
-	init_transposition_table(&Table, 22);
+	init_transposition_table(&Table, 24);
 	
 	clock_t start = clock();
 	
@@ -52,12 +53,7 @@ uint16_t get_best_move(Board * board, int seconds){
 			break;
 	}
 	
-	printf("Table Info\n");
-	printf("TableSize      %d\n",Table.max_size);
-	printf("NumEntries     %d\n",Table.num_entries);
-	printf("Hits           %d\n",Table.hits);
-	printf("Misses         %d\n",Table.misses);
-	printf("KeyCollisoins  %d\n",Table.key_collisions);
+	dump_transposition_table(&Table);
 	
 	//return PV.line[0];	
 }
@@ -70,21 +66,22 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 	
 	// Max Depth Reached
 	if (depth == 0)
-		return EvaluatingPlayer == ColourWhite ? board->opening : -board->opening;
+		//return evaluate_board(board);
+		return quiescence_search(board,alpha,beta,height);
 	
 	// Max Height Reached
 	if (height >= MaxHeight)
-		return EvaluatingPlayer == ColourWhite ? board->opening : -board->opening;
+		return quiescence_search(board,alpha,beta,height);
 	
 	// Updated Node Counter
 	NodesSearched += 1;
 	
 	// For Transposition Table
 	uint16_t best_move = NoneMove;
-	int entry_had_pv = 0;
+	int used_table_entry = 0;	
 	
 	TranspositionEntry * entry = get_transposition_entry(&Table, board->hash);
-	if (entry != NULL && entry->depth >= depth && board->turn == entry->turn){		
+	if (entry != NULL && entry->depth >= depth && board->turn == entry->turn){
 		if (entry->type == PVNODE)
 			return entry->value;
 		else if (entry->type == CUTNODE && entry->value > alpha)
@@ -95,7 +92,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 		if (alpha >= beta)
 			return entry->value;
 		
-		entry_had_pv = 1;
+		used_table_entry = 1;
 	}
 	
 	int initial_alpha = alpha;
@@ -111,7 +108,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 	gen_all_moves(board,moves,&size);
 	
 	// Use heuristic to sort moves
-	sort_moves(moves,size,depth,height,entry);
+	sort_moves(board,moves,size,depth,height,entry);
 	
 	for (i = 0; i < size; i++){
 		apply_move(board,moves[i],undo);
@@ -122,17 +119,13 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 			continue;
 		}
 		
-		if (i < size)
+		if (i < 4 || used_table_entry)
 			value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1);
 		else {
-			printf("PROBLEM");
+			value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-1,height+1);
+			if (value > alpha)
+				value = -alpha_beta_prune(board,-beta,-value,depth-1,height+1);
 		}
-		//else{
-		//	printf("a");
-		//	value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-1,height+1);
-		//	if (alpha < value && value < beta)
-		//		value = -alpha_beta_prune(board,-beta,-value,depth-1,height+1);
-		//}
 		
 		revert_move(board,moves[i],undo);
 		
@@ -154,17 +147,69 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 		}
 	}
 	
-	if (best > initial_alpha && best < beta)
-		store_transposition_entry(&Table, depth, board->turn,  PVNODE, best, best_move, board->hash);
-	else if (best >= beta)
-		store_transposition_entry(&Table, depth, board->turn, CUTNODE, best, best_move, board->hash);
-	else if (best <= initial_alpha)
-		store_transposition_entry(&Table, depth, board->turn, ALLNODE, best, best_move, board->hash);
+	if (!used_table_entry){
+		if (best > initial_alpha && best < beta)
+			store_transposition_entry(&Table, depth, board->turn,  PVNODE, best, best_move, board->hash);
+		else if (best >= beta)
+			store_transposition_entry(&Table, depth, board->turn, CUTNODE, best, best_move, board->hash);
+		else if (best <= initial_alpha)
+			store_transposition_entry(&Table, depth, board->turn, ALLNODE, best, best_move, board->hash);
+	}
 	
-	return best;	
+	return best;
 }
 
-void sort_moves(uint16_t * moves, int size, int depth, int height, TranspositionEntry * entry){
+int quiescence_search(Board * board, int alpha, int beta, int height){
+	if (height >= MaxHeight)
+		return evaluate_board(board);
+	
+	int value = evaluate_board(board);
+	return value;
+	
+	if (value > alpha)
+		alpha = value;
+	
+	if (alpha > beta)
+		return value;
+	
+	NodesSearched += 1;
+	
+	Undo undo[1];
+	int i, size = 0;
+	uint16_t moves[256];
+	
+	gen_all_moves(board,moves,&size);
+	
+	sort_moves(board,moves,size,0,height,NULL);
+	
+	for(i = 0; i < size; i++){
+		if (board->squares[MOVE_TO(moves[i])] != Empty){
+			apply_move(board,moves[i],undo);
+			
+			if (!is_not_in_check(board,!board->turn)){
+				revert_move(board,moves[i],undo);
+				continue;
+			}
+			
+			value = -quiescence_search(board,-beta,-alpha,height+1);
+			
+			revert_move(board,moves[i],undo);
+			
+			if (value > alpha)
+				alpha = value;
+			if (alpha > beta){
+				KillerMoves[height][2] = KillerMoves[height][1];
+				KillerMoves[height][1] = KillerMoves[height][0];
+				KillerMoves[height][0] = moves[i];
+				break;
+			}
+		}
+	}
+	
+	return alpha;
+}
+
+void sort_moves(Board * board, uint16_t * moves, int size, int depth, int height, TranspositionEntry * entry){
 	int values[size], value;
 	int i, j;
 	
@@ -180,11 +225,12 @@ void sort_moves(uint16_t * moves, int size, int depth, int height, Transposition
 		entry_move = entry->best_move;
 	
 	for (i = 0; i < size; i++){
-		value  = 2048 * (entry_move == moves[i]);
-		value += 1024 * (   killer1 == moves[i]);
-		value +=  512 * (   killer2 == moves[i]);
-		value +=  256 * (   killer3 == moves[i]);
-		
+		value  = 8196 * (entry_move == moves[i]);
+		value += 4096 * (   killer1 == moves[i]);
+		value += 2048 * (   killer2 == moves[i]);
+		value += 1024 * (   killer3 == moves[i]);
+		value += PieceValues[PIECE_TYPE(board->squares[MOVE_TO(moves[i])])];
+		value += PieceValues[PIECE_TYPE(board->squares[MOVE_FROM(moves[i])])];
 		values[i] = value;
 	}
 	
@@ -202,4 +248,9 @@ void sort_moves(uint16_t * moves, int size, int depth, int height, Transposition
 			}
 		}
 	}
+}
+
+int evaluate_board(Board * board){
+	int value = board->opening;
+	return board->turn == ColourWhite ? value : -value;
 }
