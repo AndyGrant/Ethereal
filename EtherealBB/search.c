@@ -28,7 +28,7 @@ TranspositionTable Table;
 
 uint16_t get_best_move(Board * board, int seconds){
 	
-	int value, depth, i, j, size=0;
+	int value, depth, i, size=0;
 	
 	StartTime = time(NULL);
 	EndTime = StartTime + seconds;
@@ -102,7 +102,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 
 	// Storage to use moves
 	Undo undo[1];
-	int i, j, size = 0;
+	int i, size = 0;
 	uint16_t moves[256];
 	
 	// Storage for search outputs
