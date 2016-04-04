@@ -116,12 +116,12 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
 		
 		board->opening += PSQTopening[frompiece][to]
 						- PSQTopening[frompiece][from]
-						+ PSQTopening[rfrompiece][to];
+						+ PSQTopening[rfrompiece][to]
 						- PSQTopening[rfrompiece][from];
 						
 		board->endgame += PSQTendgame[frompiece][to]
 						- PSQTendgame[frompiece][from]
-						+ PSQTendgame[rfrompiece][to];
+						+ PSQTendgame[rfrompiece][to]
 						- PSQTendgame[rfrompiece][from];
 		
 		board->hash ^= ZorbistKeys[frompiece][from]

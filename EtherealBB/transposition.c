@@ -14,6 +14,16 @@ void init_transposition_table(TranspositionTable * table, int key_size){
 	table->hits = 0;
 	table->misses = 0;
 	table->key_collisions = 0;
+	
+	int i;
+	for (i = 0; i < table->max_size; i++){
+		table->entries[i].depth = 0;
+		table->entries[i].turn = 0;
+		table->entries[i].type = 0;
+		table->entries[i].value = 0;
+		table->entries[i].best_move = 0;
+		table->entries[i].hash = 0;
+	}
 }
 
 TranspositionEntry * get_transposition_entry(TranspositionTable * table, uint64_t hash){
