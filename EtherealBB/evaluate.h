@@ -8,4 +8,6 @@
 #define QueenValue	(900)
 #define KingValue	(  0)
 
+static int PieceValues[8] = {PawnValue, KnightValue, BishopValue, RookValue, QueenValue, KingValue, 50, 0};
+
 #endif
