@@ -11,6 +11,9 @@
 /* Prototypes */
 uint16_t get_best_move(Board * board, int seconds);
 int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height);
-void sort_moves(uint16_t * moves, int size, int depth, int height, TranspositionEntry * entry);
+int quiescence_search(Board * board, int alpha, int beta, int height);
+void sort_moves(Board * board, uint16_t * moves, int size, int depth, int height, TranspositionEntry * entry);
+int evaluate_board(Board * board);
+
 
 #endif
