@@ -23,5 +23,5 @@ int main(){
 	//init_board(&board,"4k3/2pppp2/8/8/8/8/2PPP3/4K3 w - - 0 1");
 	
 	
-	printf("%d",get_best_move(&board,20));
+	printf("%d",get_best_move(&board,10));
 }
