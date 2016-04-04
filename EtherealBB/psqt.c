@@ -23,7 +23,7 @@ void init_psqt(){
 		PSQTopening[WhitePawn][i+5] = PawnValue + PawnOpeningMap32[j+2];
 		PSQTopening[WhitePawn][i+3] = PawnValue + PawnOpeningMap32[j+3];
 		PSQTopening[WhitePawn][i+4] = PawnValue + PawnOpeningMap32[j+3];
-		                                               
+
 		// Endgame Pawn                                
 		PSQTendgame[WhitePawn][i+0] = PawnValue + PawnEndgameMap32[j+0];
 		PSQTendgame[WhitePawn][i+7] = PawnValue + PawnEndgameMap32[j+0];
@@ -63,7 +63,7 @@ void init_psqt(){
 		PSQTopening[WhiteBishop][i+5] = BishopValue + BishopOpeningMap32[j+2];
 		PSQTopening[WhiteBishop][i+3] = BishopValue + BishopOpeningMap32[j+3];
 		PSQTopening[WhiteBishop][i+4] = BishopValue + BishopOpeningMap32[j+3];
-                                        
+
 		// Ending Bishop                
 		PSQTendgame[WhiteBishop][i+0] = BishopValue + BishopEndgameMap32[j+0];
 		PSQTendgame[WhiteBishop][i+7] = BishopValue + BishopEndgameMap32[j+0];
@@ -83,7 +83,7 @@ void init_psqt(){
 		PSQTopening[WhiteRook][i+5] = RookValue + RookOpeningMap32[j+2];
 		PSQTopening[WhiteRook][i+3] = RookValue + RookOpeningMap32[j+3];
 		PSQTopening[WhiteRook][i+4] = RookValue + RookOpeningMap32[j+3];
-		                              
+
 		// Ending Rook                
 		PSQTendgame[WhiteRook][i+0] = RookValue + RookEndgameMap32[j+0];
 		PSQTendgame[WhiteRook][i+7] = RookValue + RookEndgameMap32[j+0];

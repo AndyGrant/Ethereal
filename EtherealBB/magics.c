@@ -9,7 +9,7 @@
  *	components needed to create the end result move database
  *	lookup tables for move generation
  *
- *	Sets flag INITIALIZED_MAGICS (magics.h)  to indicate
+ *	Sets flag INITIALIZED_MAGICS (magics.h) to indicate
  *	that the lookup-tables have been initalized.
  */
 void init_magics(){
