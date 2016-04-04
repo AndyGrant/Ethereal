@@ -184,6 +184,8 @@ void sort_moves(uint16_t * moves, int size, int depth, int height, Transposition
 		value += 1024 * (   killer1 == moves[i]);
 		value +=  512 * (   killer2 == moves[i]);
 		value +=  256 * (   killer3 == moves[i]);
+		
+		values[i] = value;
 	}
 	
 	for (i = 0; i < size; i++){
