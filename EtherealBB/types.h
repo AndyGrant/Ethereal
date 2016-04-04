@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-/* Defined here to avoic circular include(s) */
 #define Mate		(100000)
 #define MaxDepth	(32)
 #define MaxHeight	(64)
@@ -56,13 +55,25 @@ typedef struct Undo {
 	
 } Undo;
 
-typedef struct PrincipleVariation {
-	// Game Tree
-	uint16_t line[MaxHeight];
+typedef struct TranspositionEntry {
+	int8_t depth;
+	int8_t turn;
+	int8_t type;
+	int value;
+	uint16_t best_move;
+	uint64_t hash;	
 	
-	// Length of Tree
-	int length;
+} TranspositionEntry;
+
+typedef struct TranspositionTable {
+	TranspositionEntry * entries;
+	int max_size;
+	int key_size;
+	int num_entries;
+	int hits;
+	int misses;
+	int key_collisions;
 	
-} PrincipleVariation;
+} TranspositionTable;
 
 #endif

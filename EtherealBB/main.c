@@ -15,13 +15,13 @@
 #include "zorbist.h"
 
 int main(){
-	
-	
 	//move_gen_test();
 	//return 0;
 	
 	Board board;
 	init_board(&board,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+	//init_board(&board,"4k3/2pppp2/8/8/8/8/2PPP3/4K3 w - - 0 1");
 	
-	printf("%d",get_best_move(&board,60));
+	
+	printf("%d",get_best_move(&board,20));
 }
