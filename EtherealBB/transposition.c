@@ -55,7 +55,19 @@ void store_transposition_entry(TranspositionTable * table, int8_t depth, int8_t 
 		return;
 	} 
 	
-	if (depth > entry->depth){
+	else if (entry->type != PVNODE){
+		if (depth > entry->depth || type == PVNODE){
+			entry->depth = depth;
+			entry->turn = turn;
+			entry->type = type;
+			entry->value = value;
+			entry->best_move = best_move;
+			entry->hash = hash;
+			return;
+		}
+	} 
+	
+	else if (type == PVNODE && depth == entry->depth + 1){
 		entry->depth = depth;
 		entry->turn = turn;
 		entry->type = type;
@@ -63,7 +75,7 @@ void store_transposition_entry(TranspositionTable * table, int8_t depth, int8_t 
 		entry->best_move = best_move;
 		entry->hash = hash;
 		return;
-	}	
+	}
 }
 
 void dump_transposition_table(TranspositionTable * table){
@@ -74,25 +86,22 @@ void dump_transposition_table(TranspositionTable * table){
 	printf("Misses         %d\n",table->misses);
 	printf("KeyCollisoins  %d\n",table->key_collisions);
 	
-	int i, nodeTypes[4] = {0,0,0,0};
-	for (i = 0; i < table->max_size; i++)
-		nodeTypes[table->entries[i].type]++;
-	
-	printf("ExactNodes     %d\n",nodeTypes[ PVNODE]);
-	printf("LowerNodes     %d\n",nodeTypes[CUTNODE]);
-	printf("UpperNodes     %d\n",nodeTypes[ALLNODE]);
-	
-	int nodeDepths[MaxHeight];
-	for (i = 0; i < MaxHeight; i++)
-		nodeDepths[i] = 0;
-	
-	for (i = 0; i < table->max_size; i++)
-		if (table->entries[i].type != 0)
-			nodeDepths[table->entries[i].depth]++;
+	int i, j, data[MaxHeight][4];
 	
 	for (i = 0; i < MaxHeight; i++)
-		if (nodeDepths[i] != 0)
-			printf("Depth           %d %d\t\n",i,nodeDepths[i]);
+		for (j = 0; j < 4; j++)
+			data[i][j] = 0;
+		
+	for (i = 0; i < table->max_size; i++)
+		data[table->entries[i].depth][table->entries[i].type]++;
+	
+	printf("=========================================\n");
+	printf("|     TRANSPOSITION TABLE ENTRIES       |\n");
+	printf("|  Depth  |   PV    |   CUT   |   ALL   |\n");
+	for (i = 0; i < MaxHeight; i++)
+		if (data[i][1] || data[i][2] || data[i][3])
+			printf("|%9d|%9d|%9d|%9d|\n",i,data[i][1],data[i][2],data[i][3]);
+	printf("=========================================\n");
 	
 	free(table->entries);
 }
