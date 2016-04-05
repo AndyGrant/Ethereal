@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "move.h"
 #include "types.h"
 #include "transposition.h"
 
@@ -79,13 +80,14 @@ void store_transposition_entry(TranspositionTable * table, int8_t depth, int8_t 
 }
 
 void dump_transposition_table(TranspositionTable * table){
+	/*
 	printf("Table Info\n");
 	printf("TableSize      %d\n",table->max_size);
 	printf("NumEntries     %d\n",table->num_entries);
 	printf("Hits           %d\n",table->hits);
 	printf("Misses         %d\n",table->misses);
 	printf("KeyCollisoins  %d\n",table->key_collisions);
-	
+	*/
 	int i, j, data[MaxHeight][4];
 	
 	for (i = 0; i < MaxHeight; i++)
@@ -95,13 +97,56 @@ void dump_transposition_table(TranspositionTable * table){
 	for (i = 0; i < table->max_size; i++)
 		data[table->entries[i].depth][table->entries[i].type]++;
 	
-	printf("=========================================\n");
-	printf("|     TRANSPOSITION TABLE ENTRIES       |\n");
-	printf("|  Depth  |   PV    |   CUT   |   ALL   |\n");
+	printf("\n\n");
+	printf("<-----------TRANSPOSITION TABLE---------->\n");
+	printf("| Depth  |   PV    |    CUT    |   ALL   |\n");
 	for (i = 0; i < MaxHeight; i++)
 		if (data[i][1] || data[i][2] || data[i][3])
-			printf("|%9d|%9d|%9d|%9d|\n",i,data[i][1],data[i][2],data[i][3]);
-	printf("=========================================\n");
+			printf("|%8d|%9d|%11d|%9d|\n",i,data[i][1],data[i][2],data[i][3]);
+	printf("\n\n");
 	
 	free(table->entries);
 }
+
+void extract_pv_from_transposition_table(TranspositionTable * table, Board * board, int depth, uint16_t dest[MaxHeight]){
+	
+	TranspositionEntry * PV[MaxHeight];
+	Undo undo[MaxHeight];
+	
+	int i, j;
+	for (i = 0; i < depth; i++){
+		PV[i] = get_transposition_entry(table,board->hash);
+		apply_move(board,PV[i]->best_move,&(undo[i]));
+	}
+	
+	for (i = depth-1; i >= 0 ; i--)
+		revert_move(board,PV[i]->best_move,&(undo[i]));
+	
+	for (i = 0; i < depth; i++)
+		dest[i] = PV[i]->best_move;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

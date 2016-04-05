@@ -16,7 +16,6 @@
 #include "movegentest.h"
 #include "zorbist.h"
 
-
 time_t StartTime;
 time_t EndTime;
 
@@ -30,6 +29,7 @@ TranspositionTable Table;
 uint16_t get_best_move(Board * board, int seconds){
 	
 	int value, depth, i, size=0;
+	uint16_t PV[MaxHeight];
 	
 	StartTime = time(NULL);
 	EndTime = StartTime + seconds;
@@ -39,17 +39,22 @@ uint16_t get_best_move(Board * board, int seconds){
 	
 	init_transposition_table(&Table, 24);
 	
-	clock_t start = clock();
-	
-	printf("Starting Search, alloted_time=%d\n",seconds);
-	printf("Initial Value = %d\n",evaluate_board(board));
-	printf("Turn = %d\n",board->turn);
+	printf("Starting Search.....\n");
 	print_board(board);
+	printf("\n\n");
+	printf("<-------------SEARCH RESULTS-------------->\n");
+	printf("|  Depth  |  Score  |   Nodes   | Elapsed | PV\n");
 	
 	for (depth = 1; depth < MaxDepth; depth++){
 		value = alpha_beta_prune(board,-Mate,Mate,depth,0);
 		
-		printf("depth %d score %d Nodes %d Seconds %d\n",depth,value,NodesSearched,time(NULL)-StartTime);
+		extract_pv_from_transposition_table(&Table, board, depth, PV);
+		printf("|%9d|%9d|%11d|%9d| ",depth,value,NodesSearched,time(NULL)-StartTime);		
+		for(i = 0; i < depth; i++){
+			print_move(PV[i]);
+			printf(" ");
+		}		
+		printf("\n");
 		
 		if (time(NULL) - StartTime > seconds)
 			break;
@@ -227,8 +232,8 @@ void sort_moves(Board * board, uint16_t * moves, int size, int depth, int height
 	
 	uint16_t entry_move = NoneMove;
 	uint16_t killer1 = KillerMoves[height][0];
-	uint16_t killer2 = KillerMoves[height][2];
-	uint16_t killer3 = KillerMoves[height][3];
+	uint16_t killer2 = KillerMoves[height][1];
+	uint16_t killer3 = KillerMoves[height][2];
 	
 	if (entry != NULL)
 		entry_move = entry->best_move;

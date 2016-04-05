@@ -1,3 +1,3 @@
 all:
-	gcc -p -g -pg -DNDEBUG *.c -o foo
+	gcc -m64 -march=native -O3 -DNDEBUG *.c -o foo
 	

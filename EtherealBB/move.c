@@ -353,8 +353,8 @@ void print_move(uint16_t move){
 	char from_file = '1' + (from/8);
 	char to_file = '1' + (to/8);
 	
-	char from_rank = 'A' + (from%8);
-	char to_rank = 'A' + (to%8);
+	char from_rank = 'a' + (from%8);
+	char to_rank = 'a' + (to%8);
 	
 	printf("%c%c%c%c",from_rank,from_file,to_rank,to_file);
 }
