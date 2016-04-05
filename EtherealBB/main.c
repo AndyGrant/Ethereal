@@ -23,6 +23,5 @@ int main(){
 	//init_board(&board,"4k3/3ppp2/8/8/8/8/3PPP2/4K3 w - - 0 1");
 	//init_board(&board,"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w - - 0 1");
 	
-	
-	print_move(get_best_move(&board,12));
+	get_best_move(&board,20);
 }
