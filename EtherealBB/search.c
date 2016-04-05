@@ -47,9 +47,12 @@ uint16_t get_best_move(Board * board, int seconds){
 	
 	for (depth = 1; depth < MaxDepth; depth++){
 		value = alpha_beta_prune(board,-Mate,Mate,depth,0);
+		printf("|%9d|%9d|%11d|%9d| ",depth,value,NodesSearched,time(NULL)-StartTime);		
+		
+		if (value == -Mate)
+			break;
 		
 		extract_pv_from_transposition_table(&Table, board, depth, PV);
-		printf("|%9d|%9d|%11d|%9d| ",depth,value,NodesSearched,time(NULL)-StartTime);		
 		for(i = 0; i < depth; i++){
 			print_move(PV[i]);
 			printf(" ");
@@ -60,10 +63,8 @@ uint16_t get_best_move(Board * board, int seconds){
 			break;
 	}
 	
-	uint16_t best_move = (get_transposition_entry(&Table, board->hash))->best_move;	
 	dump_transposition_table(&Table);
-	
-	return best_move;
+	return PV[0];
 }
 
 int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
