@@ -65,7 +65,7 @@ void store_transposition_entry(TranspositionTable * table, int8_t depth, int8_t 
 			entry->best_move = best_move;
 			entry->hash = hash;
 			return;
-		}
+		}	
 	} 
 	
 	else if (type == PVNODE && depth == entry->depth + 1){
