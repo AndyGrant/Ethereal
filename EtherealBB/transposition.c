@@ -80,14 +80,6 @@ void store_transposition_entry(TranspositionTable * table, int8_t depth, int8_t 
 }
 
 void dump_transposition_table(TranspositionTable * table){
-	/*
-	printf("Table Info\n");
-	printf("TableSize      %d\n",table->max_size);
-	printf("NumEntries     %d\n",table->num_entries);
-	printf("Hits           %d\n",table->hits);
-	printf("Misses         %d\n",table->misses);
-	printf("KeyCollisoins  %d\n",table->key_collisions);
-	*/
 	int i, j, data[MaxHeight][4];
 	
 	for (i = 0; i < MaxHeight; i++)
