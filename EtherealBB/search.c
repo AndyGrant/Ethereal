@@ -42,15 +42,14 @@ uint16_t get_best_move(Board * board, int seconds){
 	clock_t start = clock();
 	
 	printf("Starting Search, alloted_time=%d\n",seconds);
-	printf("Initial Value = %d",evaluate_board(board));
+	printf("Initial Value = %d\n",evaluate_board(board));
+	printf("Turn = %d\n",board->turn);
 	print_board(board);
 	
 	for (depth = 1; depth < MaxDepth; depth++){
 		value = alpha_beta_prune(board,-Mate,Mate,depth,0);
 		
-		
 		printf("depth %d score %d Nodes %d Seconds %d\n",depth,value,NodesSearched,time(NULL)-StartTime);
-		
 		
 		if (time(NULL) - StartTime > seconds)
 			break;
@@ -70,8 +69,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 	
 	// Max Depth Reached
 	if (depth == 0)
-		//return quiescence_search(board,alpha,beta,height);
-		return evaluate_board(board);
+		return quiescence_search(board,alpha,beta,height);
 	
 	// Max Height Reached
 	if (height >= MaxHeight)
@@ -84,7 +82,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 	uint16_t best_move = NoneMove;
 	int used_table_entry = 0;	
 	
-	/*TranspositionEntry * entry = get_transposition_entry(&Table, board->hash);
+	TranspositionEntry * entry = get_transposition_entry(&Table, board->hash);
 	if (entry != NULL && entry->depth >= depth && board->turn == entry->turn){
 		if (entry->type == PVNODE)
 			return entry->value;
@@ -99,7 +97,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 		used_table_entry = 1;
 	}
 	
-	int initial_alpha = alpha;*/
+	int initial_alpha = alpha;
 
 	// Storage to use moves
 	Undo undo[1];
@@ -112,7 +110,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 	gen_all_moves(board,moves,&size);
 	
 	// Use heuristic to sort moves
-	//sort_moves(board,moves,size,depth,height,entry);
+	sort_moves(board,moves,size,depth,height,entry);
 	
 	for (i = 0; i < size; i++){
 		apply_move(board,moves[i],undo);
@@ -123,13 +121,13 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 			continue;
 		}
 		
-		//if (i < 4)
+		if (i < 4)
 			value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1);
-		//else {
-		//	value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-1,height+1);
-		//	if (value > alpha)
-		//		value = -alpha_beta_prune(board,-beta,-value,depth-1,height+1);
-		//}
+		else {
+			value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-1,height+1);
+			if (value > alpha)
+				value = -alpha_beta_prune(board,-beta,-value,depth-1,height+1);
+		}
 		
 		revert_move(board,moves[i],undo);
 		
@@ -151,17 +149,14 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 		}
 	}
 	
-	/*if (!used_table_entry && EndTime > time(NULL)){
+	if (!used_table_entry && EndTime > time(NULL)){
 		if (best > initial_alpha && best < beta)
 			store_transposition_entry(&Table, depth, board->turn,  PVNODE, best, best_move, board->hash);
 		else if (best >= beta)
 			store_transposition_entry(&Table, depth, board->turn, CUTNODE, best, best_move, board->hash);
 		else if (best <= initial_alpha)
 			store_transposition_entry(&Table, depth, board->turn, ALLNODE, best, best_move, board->hash);
-	}*/
-	
-	if (height == 0)
-		print_move(best_move);
+	}
 	
 	return best;
 }
@@ -239,10 +234,10 @@ void sort_moves(Board * board, uint16_t * moves, int size, int depth, int height
 		entry_move = entry->best_move;
 	
 	for (i = 0; i < size; i++){
-		value  = 8196 * (entry_move == moves[i]);
-		value += 4096 * (   killer1 == moves[i]);
-		value += 2048 * (   killer2 == moves[i]);
-		value += 1024 * (   killer3 == moves[i]);
+		value  = 16392 * (entry_move == moves[i]);
+		value +=  8096 * (   killer1 == moves[i]);
+		value +=  4048 * (   killer2 == moves[i]);
+		value +=  2024 * (   killer3 == moves[i]);
 		value += PieceValues[PIECE_TYPE(board->squares[MOVE_TO(moves[i])])];
 		value -= PieceValues[PIECE_TYPE(board->squares[MOVE_FROM(moves[i])])];
 		values[i] = value;
