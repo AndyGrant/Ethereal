@@ -3,6 +3,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "bitutils.h"
 #include "board.h"
 #include "castle.h"
 #include "evaluate.h"
@@ -42,29 +43,21 @@ uint16_t get_best_move(Board * board, int seconds){
 	printf("Starting Search.....\n");
 	print_board(board);
 	printf("\n\n");
-	printf("<-------------SEARCH RESULTS-------------->\n");
-	printf("|  Depth  |  Score  |   Nodes   | Elapsed | PV\n");
+	printf("<-----------------SEARCH RESULTS----------------->\n");
+	printf("|  Depth  |  Score  |   Nodes   | Elapsed | Best |\n");
 	
 	for (depth = 1; depth < MaxDepth; depth++){
 		value = alpha_beta_prune(board,-Mate,Mate,depth,0);
 		printf("|%9d|%9d|%11d|%9d| ",depth,value,NodesSearched,time(NULL)-StartTime);		
-		
-		if (value == -Mate)
-			break;
-		
-		extract_pv_from_transposition_table(&Table, board, depth, PV);
-		for(i = 0; i < depth; i++){
-			print_move(PV[i]);
-			printf(" ");
-		}		
-		printf("\n");
-		
+		print_move(get_transposition_entry(&Table, board->hash)->best_move);
+		printf(" |\n");
 		if (time(NULL) - StartTime > seconds)
 			break;
 	}
 	
+	uint16_t best_move = get_transposition_entry(&Table, board->hash)->best_move;
 	dump_transposition_table(&Table);
-	return PV[0];
+	return best_move;
 }
 
 int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
@@ -127,12 +120,23 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 			continue;
 		}
 		
-		if (i < 4)
-			value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1);
-		else {
-			value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-1,height+1);
-			if (value > alpha)
-				value = -alpha_beta_prune(board,-beta,-value,depth-1,height+1);
+		
+		if (i >= 4 && depth >= 3 && undo->capture_piece == Empty && is_not_in_check(board,board->turn))
+			if (i >= size / 2)
+				value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-3,height+1);
+			else
+				value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-2,height+1);
+		else
+			value = alpha + 1;
+		
+		if (value > alpha){
+			if (i < 4)
+				value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1);
+			else {
+				value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-1,height+1);
+				if (value > alpha)
+					value = -alpha_beta_prune(board,-beta,-value,depth-1,height+1);
+			}
 		}
 		
 		revert_move(board,moves[i],undo);
@@ -266,6 +270,11 @@ void sort_moves(Board * board, uint16_t * moves, int size, int depth, int height
 }
 
 int evaluate_board(Board * board){
-	int value = board->opening;
-	return board->turn == ColourWhite ? value : -value;
+	uint64_t pieces = board->colourBitBoards[0] | board->colourBitBoards[1];
+	int num = count_set_bits(pieces);
+	
+	if (num > 12)
+		return board->turn == ColourWhite ? board->opening : -board->opening;
+	else
+		return board->turn == ColourWhite ? board->endgame : -board->endgame;
 }
