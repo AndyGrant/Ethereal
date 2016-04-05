@@ -1,3 +1,3 @@
 all:
-	gcc -O3 -DNDEBUG *.c -o foo
+	gcc -p -g -pg -DNDEBUG *.c -o foo
 	
