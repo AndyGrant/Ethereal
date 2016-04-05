@@ -130,7 +130,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 			value = alpha + 1;
 		
 		if (value > alpha){
-			if (i < 4)
+			if (i < 1)
 				value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1);
 			else {
 				value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-1,height+1);
