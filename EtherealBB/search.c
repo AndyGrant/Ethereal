@@ -78,22 +78,42 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 	NodesSearched += 1;
 	
 	// For Transposition Table
+	uint16_t table_move = NoneMove;
 	uint16_t best_move = NoneMove;
-	int used_table_entry = 0;	
+	int used_table_entry = 0;
 	
 	TranspositionEntry * entry = get_transposition_entry(&Table, board->hash);
-	if (entry != NULL && entry->depth >= depth && board->turn == entry->turn){
-		if (entry->type == PVNODE)
-			return entry->value;
-		else if (entry->type == CUTNODE && entry->value > alpha)
-			alpha = entry->value;
-		else if (entry->type == ALLNODE && entry->value < beta)
-			beta = entry->value;
-		
-		if (alpha >= beta)
-			return entry->value;
-		
-		used_table_entry = 1;
+	if (entry != NULL){
+		table_move = entry->best_move;
+		if (entry->depth >= depth && board->turn == entry->turn){
+			if (entry->type == PVNODE)
+				return entry->value;
+			else if (entry->type == CUTNODE && entry->value > alpha)
+				alpha = entry->value;
+			else if (entry->type == ALLNODE && entry->value < beta)
+				beta = entry->value;
+			
+			if (alpha >= beta)
+				return entry->value;
+			
+			used_table_entry = 1;
+		}		
+	} else {
+		// IID
+	}
+	
+	int USE_NULL_MOVE_PRUNING = 1;
+	int USE_LATE_MOVE_REDUCTIONS = 1;
+	
+	if (USE_NULL_MOVE_PRUNING){
+		if (depth > 3 && evaluate_board(board) >= beta && table_move == NoneMove && is_not_in_check(board,board->turn)){
+			board->turn = !board->turn;
+			int eval = -alpha_beta_prune(board,-beta,-beta-1,depth-3,height);
+			board->turn = !board->turn;
+			
+			if (eval >= beta)
+				return eval;
+		}
 	}
 	
 	int initial_alpha = alpha;
@@ -109,7 +129,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 	gen_all_moves(board,moves,&size);
 	
 	// Use heuristic to sort moves
-	sort_moves(board,moves,size,depth,height,entry);
+	sort_moves(board,moves,size,depth,height,table_move);
 	
 	for (i = 0; i < size; i++){
 		apply_move(board,moves[i],undo);
@@ -120,13 +140,12 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 			continue;
 		}
 		
-		
-		if (i >= 4 && depth >= 3 && undo->capture_piece == Empty && is_not_in_check(board,board->turn))
-			if (i >= size / 2)
-				value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-3,height+1);
-			else
+		if (USE_LATE_MOVE_REDUCTIONS){
+			if (i >= size/2 && depth >= 3 && undo->capture_piece == Empty && is_not_in_check(board,board->turn))
 				value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-2,height+1);
-		else
+			else
+				value = alpha + 1;
+		} else 
 			value = alpha + 1;
 		
 		if (value > alpha){
@@ -135,7 +154,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 			else {
 				value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-1,height+1);
 				if (value > alpha)
-					value = -alpha_beta_prune(board,-beta,-value,depth-1,height+1);
+					value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1);
 			}
 		}
 		
@@ -193,13 +212,13 @@ int quiescence_search(Board * board, int alpha, int beta, int height){
 	
 	gen_all_moves(board,moves,&size);
 	
-	sort_moves(board,moves,size,0,height,NULL);
+	sort_moves(board,moves,size,0,height,NoneMove);
 	
 	uint64_t enemy = board->colourBitBoards[!board->turn];
 	
 	for(i = 0; i < size; i++){
 		if (MOVE_TYPE(moves[i]) == NormalMove){
-			if (enemy & (1ull << (MOVE_TO(moves[i])))){
+			if (enemy & (1ull << (MOVE_TO(moves[i])))){				
 				apply_move(board,moves[i],undo);
 				
 				if (!is_not_in_check(board,!board->turn)){
@@ -228,23 +247,19 @@ int quiescence_search(Board * board, int alpha, int beta, int height){
 	return best;
 }
 
-void sort_moves(Board * board, uint16_t * moves, int size, int depth, int height, TranspositionEntry * entry){
+void sort_moves(Board * board, uint16_t * moves, int size, int depth, int height, uint16_t best_move){
 	int values[size], value;
 	int i, j;
 	
 	int temp_value;
 	uint16_t temp_move;
 	
-	uint16_t entry_move = NoneMove;
 	uint16_t killer1 = KillerMoves[height][0];
 	uint16_t killer2 = KillerMoves[height][1];
 	uint16_t killer3 = KillerMoves[height][2];
 	
-	if (entry != NULL)
-		entry_move = entry->best_move;
-	
 	for (i = 0; i < size; i++){
-		value  = 16392 * (entry_move == moves[i]);
+		value  = 16392 * ( best_move == moves[i]);
 		value +=  8096 * (   killer1 == moves[i]);
 		value +=  4048 * (   killer2 == moves[i]);
 		value +=  2024 * (   killer3 == moves[i]);
