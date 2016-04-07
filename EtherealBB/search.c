@@ -113,13 +113,15 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 	}
 	
 	// Internal Iterative Deepening
-	/*if (depth >= 3 && table_move == NoneMove){
+	if (depth >= 3 && table_move == NoneMove){
 		value = alpha_beta_prune(board,alpha,beta,depth-2,height);
 		if (value <= alpha)
 			value = alpha_beta_prune(board,-Mate,beta,depth-2,height);
 		
-		table_move = get_transposition_entry(&Table, board->hash)->best_move;
-	}*/
+		TranspositionEntry * entry = get_transposition_entry(&Table, board->hash);
+		if (entry != NULL)
+			table_move = entry->best_move;
+	}
 	
 	// Generate and Sort Moves
 	gen_all_moves(board,moves,&size);	
