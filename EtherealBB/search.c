@@ -76,6 +76,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
 	if (depth == 0)
 		return quiescence_search(board,alpha,beta,height);
 	
+	
 	// Max Height Reached
 	if (height >= MaxHeight)
 		return quiescence_search(board,alpha,beta,height);
@@ -103,7 +104,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
 	}
 	
 	// Null Move Pruning
-	if (depth > 3 && node_type != PVNODE && evaluate_board(board) >= beta && table_move == NoneMove && is_not_in_check(board,board->turn)){
+	if (depth > 3 && evaluate_board(board) >= beta && is_not_in_check(board,board->turn)){
 		board->turn = !board->turn;
 		int eval;
 		if (node_type == CUTNODE)
@@ -117,7 +118,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
 	}
 	
 	// Internal Iterative Deepening
-	if (depth >= 3 && table_move == NoneMove && node_type == PVNODE){
+	if (depth >= 3 && table_move == NoneMove){
 		value = alpha_beta_prune(board,alpha,beta,depth-2,height,node_type);
 		if (value <= alpha)
 			value = alpha_beta_prune(board,-Mate,beta,depth-2,height,node_type);
@@ -140,7 +141,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
 		if (depth == 1 && !in_check && MOVE_TYPE(moves[i]) == NormalMove){
 			if (board->squares[MOVE_TO(moves[i])] == Empty){
 				if (opt_value == Mate)
-					opt_value = evaluate_board(board) + PawnValue + 50;
+					opt_value = evaluate_board(board) + PawnValue;
 				
 				value = opt_value;
 				
@@ -162,7 +163,9 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
 		if (i == 0 || table_move == NoneMove)
 			value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1,PVNODE);
 		else {
-			if (i > 6 && depth >= 4 && !in_check && MOVE_TYPE(moves[i]) == NormalMove && undo[0].capture_piece == Empty)
+			if (i > 16 && depth >= 6 && used_table_entry && !in_check && MOVE_TYPE(moves[i]) == NormalMove && undo[0].capture_piece == Empty)
+				value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-3,height+1,CUTNODE);
+			else if (i > 4 && depth >= 4 && !in_check && MOVE_TYPE(moves[i]) == NormalMove && undo[0].capture_piece == Empty)
 				value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-2,height+1,CUTNODE);
 			else
 				value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-1,height+1,CUTNODE);

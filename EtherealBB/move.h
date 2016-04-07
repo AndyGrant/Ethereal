@@ -1,5 +1,5 @@
-#ifndef _MOVE_H
-#define _MOVE_H
+#ifndef __MOVE_H
+#define __MOVE_H
 
 #include <stdint.h> // For uint16_t
 #include "types.h" // For Board & Undo
