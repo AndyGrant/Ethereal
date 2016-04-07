@@ -1,12 +1,12 @@
 #ifndef _EVALUATE_H
 #define _EVALUATE_H
 
-#define PawnValue	( 500)
-#define KnightValue	(1500)
-#define BishopValue	(1500)
-#define RookValue	(2500)
-#define QueenValue	(4500)
-#define KingValue	(   0)
+#define PawnValue	( 100)
+#define KnightValue	( 300)
+#define BishopValue	( 300)
+#define RookValue	( 500)
+#define QueenValue	( 900)
+#define KingValue	(1000)
 
 static int PieceValues[8] = {PawnValue, KnightValue, BishopValue, RookValue, QueenValue, KingValue, 0, 0};
 

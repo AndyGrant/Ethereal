@@ -61,6 +61,12 @@ uint16_t get_best_move(Board * board, int seconds){
 }
 
 int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
+	int i, value, size = 0, best = -Mate;
+	int in_check, opt_value;
+	int initial_alpha = alpha;
+	int used_table_entry = 0;
+	uint16_t table_move, best_move, moves[256];
+	Undo undo[1];
 	
 	// Alloted Time has Expired
 	if (EndTime < time(NULL))
@@ -77,11 +83,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 	// Updated Node Counter
 	NodesSearched += 1;
 	
-	// For Transposition Table
-	uint16_t table_move = NoneMove;
-	uint16_t best_move = NoneMove;
-	int used_table_entry = 0;
-	
+	// Perform Transposition Table Lookup
 	TranspositionEntry * entry = get_transposition_entry(&Table, board->hash);
 	if (entry != NULL){
 		table_move = entry->best_move;
@@ -98,40 +100,50 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 			
 			used_table_entry = 1;
 		}		
-	} else {
-		// IID
 	}
 	
-	int USE_NULL_MOVE_PRUNING = 1;
-	int USE_LATE_MOVE_REDUCTIONS = 1;
-	
-	if (USE_NULL_MOVE_PRUNING){
-		if (depth > 3 && evaluate_board(board) >= beta && table_move == NoneMove && is_not_in_check(board,board->turn)){
-			board->turn = !board->turn;
-			int eval = -alpha_beta_prune(board,-beta,-beta-1,depth-3,height);
-			board->turn = !board->turn;
+	// Null Move Pruning
+	if (depth > 3 && evaluate_board(board) >= beta && table_move == NoneMove && is_not_in_check(board,board->turn)){
+		board->turn = !board->turn;
+		int eval = -alpha_beta_prune(board,-beta,-beta-1,depth-3,height);
+		board->turn = !board->turn;
 			
-			if (eval >= beta)
-				return eval;
-		}
+		if (eval >= beta)
+			return eval;
 	}
 	
-	int initial_alpha = alpha;
-
-	// Storage to use moves
-	Undo undo[1];
-	int i, size = 0;
-	uint16_t moves[256];
+	// Internal Iterative Deepening
+	/*if (depth >= 3 && table_move == NoneMove){
+		value = alpha_beta_prune(board,alpha,beta,depth-2,height);
+		if (value <= alpha)
+			value = alpha_beta_prune(board,-Mate,beta,depth-2,height);
+		
+		table_move = get_transposition_entry(&Table, board->hash)->best_move;
+	}*/
 	
-	// Storage for search outputs
-	int value, best = -Mate;
-	
-	gen_all_moves(board,moves,&size);
-	
-	// Use heuristic to sort moves
+	// Generate and Sort Moves
+	gen_all_moves(board,moves,&size);	
 	sort_moves(board,moves,size,depth,height,table_move);
 	
+	in_check = !is_not_in_check(board,board->turn);
+	opt_value = Mate;
+	
 	for (i = 0; i < size; i++){
+		
+		/*// Futility Pruning
+		if (depth == 1 && !in_check && MOVE_TYPE(moves[i]) == NormalMove){
+			if (board->squares[MOVE_TO(moves[i])] == Empty){
+				if (opt_value == Mate)
+					opt_value = evaluate_board(board) + PawnValue + 50;
+				
+				value = opt_value;
+				
+				if (value <= alpha){
+					continue;
+				}
+			}
+		}*/
+		
 		apply_move(board,moves[i],undo);
 		
 		// Ensure move is Legal
@@ -140,22 +152,16 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 			continue;
 		}
 		
-		if (USE_LATE_MOVE_REDUCTIONS){
-			if (i >= size/2 && depth >= 3 && undo->capture_piece == Empty && is_not_in_check(board,board->turn))
+		// Principle Variation Search
+		if (i == 0 || table_move == NoneMove)
+			value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1);
+		else {
+			if (i > 6 && depth >= 4 && !in_check && MOVE_TYPE(moves[i]) == NormalMove && undo[0].capture_piece == Empty)
 				value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-2,height+1);
 			else
-				value = alpha + 1;
-		} else 
-			value = alpha + 1;
-		
-		if (value > alpha){
-			if (i < 1)
-				value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1);
-			else {
 				value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-1,height+1);
-				if (value > alpha)
-					value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1);
-			}
+			if (value > alpha)
+				value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1);
 		}
 		
 		revert_move(board,moves[i],undo);
@@ -170,7 +176,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 			}
 		}
 		
-		if (alpha > beta){
+		if (alpha >= beta){
 			KillerMoves[height][2] = KillerMoves[height][1];
 			KillerMoves[height][1] = KillerMoves[height][0];
 			KillerMoves[height][0] = moves[i];
@@ -178,7 +184,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 		}
 	}
 	
-	if (!used_table_entry && EndTime > time(NULL)){
+	if (!used_table_entry){
 		if (best > initial_alpha && best < beta)
 			store_transposition_entry(&Table, depth, board->turn,  PVNODE, best, best_move, board->hash);
 		else if (best >= beta)
@@ -216,9 +222,22 @@ int quiescence_search(Board * board, int alpha, int beta, int height){
 	
 	uint64_t enemy = board->colourBitBoards[!board->turn];
 	
+	int in_check = !is_not_in_check(board,board->turn);
+	int initial_alpha = alpha;
+	int opt_value = value + 50;
+	
 	for(i = 0; i < size; i++){
 		if (MOVE_TYPE(moves[i]) == NormalMove){
-			if (enemy & (1ull << (MOVE_TO(moves[i])))){				
+			if (enemy & (1ull << (MOVE_TO(moves[i])))){
+				
+				
+				// Delta Pruning
+				/*if (!in_check && initial_alpha+1 == beta){
+					value = opt_value + PieceValues[PIECE_TYPE(board->squares[MOVE_TO(moves[i])])];
+					if (value <= alpha)
+						continue;
+				}*/
+			
 				apply_move(board,moves[i],undo);
 				
 				if (!is_not_in_check(board,!board->turn)){
