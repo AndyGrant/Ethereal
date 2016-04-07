@@ -130,7 +130,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 	
 	for (i = 0; i < size; i++){
 		
-		/*// Futility Pruning
+		// Futility Pruning
 		if (depth == 1 && !in_check && MOVE_TYPE(moves[i]) == NormalMove){
 			if (board->squares[MOVE_TO(moves[i])] == Empty){
 				if (opt_value == Mate)
@@ -142,7 +142,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height){
 					continue;
 				}
 			}
-		}*/
+		}
 		
 		apply_move(board,moves[i],undo);
 		
@@ -232,11 +232,11 @@ int quiescence_search(Board * board, int alpha, int beta, int height){
 				
 				
 				// Delta Pruning
-				/*if (!in_check && initial_alpha+1 == beta){
+				if (!in_check && initial_alpha+1 == beta){
 					value = opt_value + PieceValues[PIECE_TYPE(board->squares[MOVE_TO(moves[i])])];
 					if (value <= alpha)
 						continue;
-				}*/
+				}
 			
 				apply_move(board,moves[i],undo);
 				
