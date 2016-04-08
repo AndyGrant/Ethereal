@@ -3,6 +3,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "bitboards.h"
 #include "bitutils.h"
 #include "board.h"
 #include "castle.h"
@@ -23,7 +24,8 @@ time_t EndTime;
 long NodesSearched;
 int EvaluatingPlayer;
 
-uint16_t KillerMoves[MaxHeight][MaxKillers];
+uint16_t KillerMoves[MaxHeight][2];
+uint16_t KillerCaptures[MaxHeight][2];
 
 TranspositionTable Table;
 
@@ -64,6 +66,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
 	int i, value, size = 0, best = -Mate;
 	int in_check, opt_value;
 	int initial_alpha = alpha;
+	int table_turn_matches = 0;
 	int used_table_entry = 0;
 	uint16_t table_move, best_move, moves[256];
 	Undo undo[1];
@@ -88,6 +91,10 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
 	TranspositionEntry * entry = get_transposition_entry(&Table, board->hash);
 	if (entry != NULL){
 		table_move = entry->best_move;
+		
+		if (board->turn == entry->turn)
+			table_turn_matches = 1;
+		
 		if (entry->depth >= depth && board->turn == entry->turn){
 			if (entry->type == PVNODE)
 				return entry->value;
@@ -104,13 +111,9 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
 	}
 	
 	// Null Move Pruning
-	if (depth > 3 && evaluate_board(board) >= beta && is_not_in_check(board,board->turn)){
+	if (depth > 3 && table_move == 0 && evaluate_board(board) >= beta && is_not_in_check(board,board->turn)){
 		board->turn = !board->turn;
-		int eval;
-		if (node_type == CUTNODE)
-			eval = -alpha_beta_prune(board,-beta,-beta-1,depth-3,height,ALLNODE);
-		else
-			eval = -alpha_beta_prune(board,-beta,-beta-1,depth-3,height,CUTNODE);
+		int eval = -alpha_beta_prune(board,-beta,-beta+1,depth-3,height,ALLNODE);
 		board->turn = !board->turn;
 			
 		if (eval >= beta)
@@ -118,10 +121,10 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
 	}
 	
 	// Internal Iterative Deepening
-	if (depth >= 3 && table_move == NoneMove){
-		value = alpha_beta_prune(board,alpha,beta,depth-2,height,node_type);
+	if (depth >= 3 && !table_turn_matches){
+		value = alpha_beta_prune(board,alpha,beta,depth-3,height,node_type);
 		if (value <= alpha)
-			value = alpha_beta_prune(board,-Mate,beta,depth-2,height,node_type);
+			value = alpha_beta_prune(board,-Mate,beta,depth-3,height,node_type);
 		
 		TranspositionEntry * entry = get_transposition_entry(&Table, board->hash);
 		if (entry != NULL)
@@ -137,7 +140,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
 	
 	for (i = 0; i < size; i++){
 		
-		// Futility Pruning
+		//Futility Pruning
 		if (depth == 1 && !in_check && MOVE_TYPE(moves[i]) == NormalMove){
 			if (board->squares[MOVE_TO(moves[i])] == Empty){
 				if (opt_value == Mate)
@@ -160,15 +163,14 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
 		}
 		
 		// Principle Variation Search
-		if (i == 0 || table_move == NoneMove)
+		if (i == 0)
 			value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1,PVNODE);
 		else {
-			if (i > 16 && depth >= 6 && used_table_entry && !in_check && MOVE_TYPE(moves[i]) == NormalMove && undo[0].capture_piece == Empty)
-				value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-3,height+1,CUTNODE);
-			else if (i > 4 && depth >= 4 && !in_check && MOVE_TYPE(moves[i]) == NormalMove && undo[0].capture_piece == Empty)
+			if (i > 8 && depth >= 4 && !in_check && MOVE_TYPE(moves[i]) == NormalMove && undo[0].capture_piece == Empty)
 				value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-2,height+1,CUTNODE);
 			else
 				value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-1,height+1,CUTNODE);
+			
 			if (value > alpha)
 				value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1,PVNODE);
 		}
@@ -186,9 +188,14 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
 		}
 		
 		if (alpha >= beta){
-			KillerMoves[height][2] = KillerMoves[height][1];
-			KillerMoves[height][1] = KillerMoves[height][0];
-			KillerMoves[height][0] = moves[i];
+			if (undo->capture_piece == Empty || MOVE_TYPE(moves[i]) != NormalMove){
+				KillerMoves[height][1] = KillerMoves[height][0];
+				KillerMoves[height][0] = moves[i];
+			} else {
+				KillerCaptures[height][1] = KillerCaptures[height][0];
+				KillerCaptures[height][0] = moves[i];
+			}
+		
 			break;
 		}
 	}
@@ -239,14 +246,6 @@ int quiescence_search(Board * board, int alpha, int beta, int height){
 		if (MOVE_TYPE(moves[i]) == NormalMove){
 			if (enemy & (1ull << (MOVE_TO(moves[i])))){
 				
-				
-				// Delta Pruning
-				if (!in_check && initial_alpha+1 == beta){
-					value = opt_value + PieceValues[PIECE_TYPE(board->squares[MOVE_TO(moves[i])])];
-					if (value <= alpha)
-						continue;
-				}
-			
 				apply_move(board,moves[i],undo);
 				
 				if (!is_not_in_check(board,!board->turn)){
@@ -263,9 +262,8 @@ int quiescence_search(Board * board, int alpha, int beta, int height){
 				if (best > alpha)
 					alpha = best;
 				if (alpha > beta){
-					KillerMoves[height][2] = KillerMoves[height][1];
-					KillerMoves[height][1] = KillerMoves[height][0];
-					KillerMoves[height][0] = moves[i];
+					KillerCaptures[height][1] = KillerCaptures[height][0];
+					KillerCaptures[height][0] = moves[i];
 					break;
 				}
 			}
@@ -284,15 +282,17 @@ void sort_moves(Board * board, uint16_t * moves, int size, int depth, int height
 	
 	uint16_t killer1 = KillerMoves[height][0];
 	uint16_t killer2 = KillerMoves[height][1];
-	uint16_t killer3 = KillerMoves[height][2];
+	uint16_t killer3 = KillerCaptures[height][0];
+	uint16_t killer4 = KillerCaptures[height][1];
 	
 	for (i = 0; i < size; i++){
-		value  = 16392 * ( best_move == moves[i]);
-		value +=  8096 * (   killer1 == moves[i]);
-		value +=  4048 * (   killer2 == moves[i]);
-		value +=  2024 * (   killer3 == moves[i]);
-		value += PieceValues[PIECE_TYPE(board->squares[MOVE_TO(moves[i])])];
-		value -= PieceValues[PIECE_TYPE(board->squares[MOVE_FROM(moves[i])])];
+		value  = 8192 * ( best_move == moves[i]);
+		value +=  512 * (   killer1 == moves[i]);
+		value +=  256 * (   killer2 == moves[i]);
+		value +=  512 * (   killer3 == moves[i]);
+		value +=  256 * (   killer4 == moves[i]);
+		value += (100 * PieceValues[PIECE_TYPE(board->squares[MOVE_TO(moves[i])])]) 
+					/ PieceValues[PIECE_TYPE(board->squares[MOVE_FROM(moves[i])])];
 		values[i] = value;
 	}
 	
@@ -315,9 +315,83 @@ void sort_moves(Board * board, uint16_t * moves, int size, int depth, int height
 int evaluate_board(Board * board){
 	uint64_t pieces = board->colourBitBoards[0] | board->colourBitBoards[1];
 	int num = count_set_bits(pieces);
+	int value = 0;
 	
-	if (num > 12)
-		return board->turn == ColourWhite ? board->opening : -board->opening;
-	else
+	if (num > 14){		
+		uint64_t white = board->colourBitBoards[ColourWhite];
+		uint64_t black = board->colourBitBoards[ColourBlack];
+		uint64_t empty = ~ (white | black);
+		uint64_t pawns = board->pieceBitBoards[0];
+		uint64_t rooks = board->pieceBitBoards[3];
+		
+		uint64_t whitePawn = white & pawns;
+		uint64_t blackPawn = black & pawns;
+		
+		uint64_t whiteRook = white & rooks;
+		uint64_t blackRook = black & rooks;
+		
+		uint64_t wa = whitePawn & FILE_A;
+		uint64_t wb = whitePawn & FILE_B;
+		uint64_t wc = whitePawn & FILE_C;
+		uint64_t wd = whitePawn & FILE_D;
+		uint64_t we = whitePawn & FILE_E;
+		uint64_t wf = whitePawn & FILE_F;
+		uint64_t wg = whitePawn & FILE_G;
+		uint64_t wh = whitePawn & FILE_H;
+		
+		uint64_t ba = blackPawn & FILE_A;
+		uint64_t bb = blackPawn & FILE_B;
+		uint64_t bc = blackPawn & FILE_C;
+		uint64_t bd = blackPawn & FILE_D;
+		uint64_t be = blackPawn & FILE_E;
+		uint64_t bf = blackPawn & FILE_F;
+		uint64_t bg = blackPawn & FILE_G;
+		uint64_t bh = blackPawn & FILE_H;
+		
+		#define PAWN_STACKED_PENATLY  ( 50)
+		#define PAWN_ISOLATED_PENALTY ( 30)
+		#define ROOK_7TH_RANK_VALUE	  ( 45)
+		#define ROOK_8TH_RANK_VALUE	  ( 55)
+		
+		value -= PAWN_STACKED_PENATLY * (
+			((wa & (wa-1)) != 0) + ((wb & (wb-1)) != 0) + 
+			((wc & (wc-1)) != 0) + ((wd & (wd-1)) != 0) +
+			((we & (we-1)) != 0) + ((wf & (wf-1)) != 0) +
+			((wg & (wg-1)) != 0) + ((wh & (wh-1)) != 0) -
+			
+			((ba & (ba-1)) != 0) - ((bb & (bb-1)) != 0) - 
+			((bc & (bc-1)) != 0) - ((bd & (bd-1)) != 0) -
+			((be & (be-1)) != 0) - ((bf & (bf-1)) != 0) -
+			((bg & (bg-1)) != 0) - ((bh & (bh-1)) != 0)
+		);
+		
+		value -= PAWN_ISOLATED_PENALTY * (
+			(wa && !wb)        + (wb && !wa && !wc) +
+			(wc && !wb && !wd) + (wd && !wc && !we) +
+			(we && !wd && !wf) + (wf && !we && !wg) +
+			(wg && !wf && !wh) + (wh && !wg)		-
+			
+			(ba && !bb) 	   - (bb && !ba && !bc) -
+			(bc && !bb && !bd) - (bd && !bc && !be) -
+			(be && !bd && !bf) - (bf && !be && !bg) -
+			(bg && !bf && !bh) - (bh && !bg)
+		);
+		
+		value += ROOK_7TH_RANK_VALUE * (
+			count_set_bits(whiteRook & RANK_7) - 
+			count_set_bits(blackRook & RANK_2) 
+		);
+		
+		value += ROOK_8TH_RANK_VALUE * (
+			count_set_bits(whiteRook & RANK_8) - 
+			count_set_bits(blackRook & RANK_1) 
+		);
+		
+		return board->turn == ColourWhite ? board->opening + value : -board->opening - value;
+		return board->turn == ColourWhite ? board->opening + value : -board->opening - value;
+		
+	}
+	else{
 		return board->turn == ColourWhite ? board->endgame : -board->endgame;
+	}
 }
