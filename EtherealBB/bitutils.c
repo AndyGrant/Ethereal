@@ -12,9 +12,8 @@ int count_set_bits(uint64_t bb){
 	
 	int count = 0;
 	while(bb){
-		int lsb = get_lsb(bb);
+		bb ^= (1ull << get_lsb(bb));
 		count += 1;
-		bb ^= (1ull << lsb);
 	}
 	return count;
 }
