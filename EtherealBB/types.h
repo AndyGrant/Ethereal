@@ -4,8 +4,8 @@
 #include <stdint.h>
 
 #define Mate		(100000)
-#define MaxDepth	(32)
-#define MaxHeight	(64)
+#define MaxDepth	(64)
+#define MaxHeight	(128)
 
 typedef struct Board {
 	
