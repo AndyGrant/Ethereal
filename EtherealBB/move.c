@@ -43,6 +43,8 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
     undo->endgame = board->endgame;
     undo->hash = board->hash;
     
+    board->history[board->move_num++] = board->hash;
+    
     if (MOVE_TYPE(move) == NormalMove){
         to = MOVE_TO(move);
         from = MOVE_FROM(move);
@@ -228,6 +230,8 @@ void revert_move(Board * board, uint16_t move, Undo * undo){
     uint64_t shiftfrom, shiftto;
     uint64_t rshiftfrom, rshiftto;
     uint64_t shiftep;
+    
+    board->move_num--;
     
     if (MOVE_TYPE(move) == NormalMove){
         to = MOVE_TO(move);

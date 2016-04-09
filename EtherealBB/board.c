@@ -147,6 +147,8 @@ void init_board(Board * board, char * fen){
         board->opening += PSQTopening[board->squares[i]][i];
         board->endgame += PSQTendgame[board->squares[i]][i];
     }
+    
+    board->move_num = 0;
 }
 
 /*

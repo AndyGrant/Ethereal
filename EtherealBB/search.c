@@ -87,6 +87,15 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
     // Updated Node Counter
     NodesSearched += 1;
     
+    // Determine 3-Fold Repetition
+    int reps = 0;
+    for (i = 0; i < board->move_num; i++)
+        if (board->history[i] == board->hash)
+            reps += 1;
+        
+    if (reps >= 3)
+        return 0;
+    
     // Perform Transposition Table Lookup
     TranspositionEntry * entry = get_transposition_entry(&Table, board->hash);
     if (entry != NULL){
@@ -133,6 +142,13 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
     
     // Generate and Sort Moves
     gen_all_moves(board,moves,&size);   
+    
+    if (size == 0){
+        if (is_not_in_check(board,board->turn))
+            return 0;
+        return -Mate;
+    }
+    
     sort_moves(board,moves,size,depth,height,table_move);
     
     in_check = !is_not_in_check(board,board->turn);
