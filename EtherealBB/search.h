@@ -6,7 +6,7 @@
 #include "types.h"
 
 
-#define MaxKillers	(3)
+#define MaxKillers  (3)
 
 /* Prototypes */
 uint16_t get_best_move(Board * board, int seconds);

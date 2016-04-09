@@ -4,9 +4,9 @@
 #include <stdint.h>
 
 /* Node Types */
-#define PVNODE	(1)
-#define CUTNODE	(2)
-#define ALLNODE	(3)
+#define PVNODE  (1)
+#define CUTNODE (2)
+#define ALLNODE (3)
 
 /* Prototypes */
 void init_transposition_table(TranspositionTable * table, int key_size);
