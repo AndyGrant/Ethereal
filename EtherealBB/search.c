@@ -87,15 +87,6 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
     // Updated Node Counter
     NodesSearched += 1;
     
-    // Determine 3-Fold Repetition
-    int reps = 0;
-    for (i = 0; i < board->move_num; i++)
-        if (board->history[i] == board->hash)
-            reps += 1;
-        
-    if (reps >= 3)
-        return 0;
-    
     // Perform Transposition Table Lookup
     TranspositionEntry * entry = get_transposition_entry(&Table, board->hash);
     if (entry != NULL){
@@ -117,6 +108,17 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
             
             used_table_entry = 1;
         }       
+    }
+    
+    // Determine 3-Fold Repetition
+    int reps = 0;
+    for (i = 0; i < board->move_num; i++)
+        if (board->history[i] == board->hash)
+            reps += 1;
+        
+    if (reps >= 2){
+        store_transposition_entry(&Table, depth, board->turn, PVNODE, 0, best_move, board->hash);
+        return 0;
     }
     
     // Null Move Pruning
@@ -144,9 +146,13 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
     gen_all_moves(board,moves,&size);   
     
     if (size == 0){
-        if (is_not_in_check(board,board->turn))
+        if (is_not_in_check(board,board->turn)){
+            store_transposition_entry(&Table, depth, board->turn, PVNODE, 0, best_move, board->hash);
             return 0;
-        return -Mate;
+        } else {
+            store_transposition_entry(&Table, depth, board->turn, PVNODE, -Mate, best_move, board->hash);
+            return -Mate;
+        }
     }
     
     sort_moves(board,moves,size,depth,height,table_move);
