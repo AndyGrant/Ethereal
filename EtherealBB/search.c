@@ -232,7 +232,7 @@ int quiescence_search(Board * board, int alpha, int beta, int height){
     
     int best = value;
     
-    gen_all_moves(board,moves,&size);
+    gen_all_non_quiet(board,moves,&size);
     
     sort_moves(board,moves,size,0,height,NoneMove);
     
@@ -243,30 +243,25 @@ int quiescence_search(Board * board, int alpha, int beta, int height){
     int opt_value = value + 50;
     
     for(i = 0; i < size; i++){
-        if (MOVE_TYPE(moves[i]) == NormalMove){
-            if (enemy & (1ull << (MOVE_TO(moves[i])))){
-                
-                apply_move(board,moves[i],undo);
-                
-                if (!is_not_in_check(board,!board->turn)){
-                    revert_move(board,moves[i],undo);
-                    continue;
-                }
-                
-                value = -quiescence_search(board,-beta,-alpha,height+1);
-                
-                revert_move(board,moves[i],undo);
-                
-                if (value > best)
-                    best = value;
-                if (best > alpha)
-                    alpha = best;
-                if (alpha > beta){
-                    KillerCaptures[height][1] = KillerCaptures[height][0];
-                    KillerCaptures[height][0] = moves[i];
-                    break;
-                }
-            }
+        apply_move(board,moves[i],undo);
+        
+        if (!is_not_in_check(board,!board->turn)){
+            revert_move(board,moves[i],undo);
+            continue;
+        }
+        
+        value = -quiescence_search(board,-beta,-alpha,height+1);
+        
+        revert_move(board,moves[i],undo);
+        
+        if (value > best)
+            best = value;
+        if (best > alpha)
+            alpha = best;
+        if (alpha > beta){
+            KillerCaptures[height][1] = KillerCaptures[height][0];
+            KillerCaptures[height][0] = moves[i];
+            break;
         }
     }
     
