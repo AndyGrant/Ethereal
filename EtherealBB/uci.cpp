@@ -24,7 +24,7 @@ std::string convert_move_to_string(uint16_t move){
 	str += '1' + (to/8);
     
     if (MOVE_TYPE(move) == PromotionMove){
-        char arr[4] = {'K','B','R','Q'};
+        char arr[4] = {'k','b','r','q'};
         printf("MOVE_T %d \n",MOVE_PROMO_TYPE(move) >> 14);
         str += arr[MOVE_PROMO_TYPE(move) >> 14];
     }
