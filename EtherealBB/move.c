@@ -163,12 +163,12 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
         
         board->turn = !board->turn;
         
-        board->opening -= PSQTopening[frompiece][from]
-                        + PSQTopening[promopiece][to]
+        board->opening += PSQTopening[promopiece][to]
+                        - PSQTopening[frompiece][from] 
                         - PSQTopening[topiece][to];
                         
-        board->endgame -= PSQTendgame[frompiece][from]
-                        + PSQTendgame[promopiece][to]
+        board->endgame += PSQTendgame[promopiece][to]
+                        - PSQTendgame[frompiece][from]
                         - PSQTendgame[topiece][to];
         
         board->hash ^= ZorbistKeys[frompiece][from]
@@ -205,17 +205,17 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
         
         board->turn = !board->turn;
         
-        board->opening -= PSQTopening[frompiece][from]
-                        + PSQTopening[frompiece][to]
+        board->opening += PSQTopening[frompiece][to]
+                        - PSQTopening[frompiece][from]
                         - PSQTopening[enpasspiece][ep];
                         
-        board->endgame -= PSQTendgame[frompiece][from]
-                        + PSQTendgame[frompiece][to]
+        board->endgame += PSQTendgame[frompiece][to]
+                        - PSQTendgame[frompiece][from]
                         - PSQTendgame[enpasspiece][ep];
         
         board->hash ^= ZorbistKeys[frompiece][from]
-                    ^ ZorbistKeys[frompiece][to]
-                    ^ ZorbistKeys[enpasspiece][ep];
+                    ^  ZorbistKeys[frompiece][to]
+                    ^  ZorbistKeys[enpasspiece][ep];
         
         board->epsquare = -1;
         return;
