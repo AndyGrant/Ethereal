@@ -57,6 +57,9 @@ uint16_t get_best_move(Board * board, int seconds){
         printf(" |\n");
         if (time(NULL) - StartTime > seconds)
             break;
+        
+        if ((time(NULL) - StartTime) * 3 > seconds)
+            break;
     }
     
     dump_transposition_table(&Table);
