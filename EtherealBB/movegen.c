@@ -251,7 +251,7 @@ void gen_all_moves(Board * board, uint16_t * moves, int * size){
 
 
 void gen_all_non_quiet(Board * board, uint16_t * moves, int * size){
-  uint64_t blockers;
+    uint64_t blockers;
     uint64_t attackable;
     
     uint64_t pawnforwardone;
@@ -449,12 +449,12 @@ int square_is_attacked(Board * board, int turn, int sq){
     uint64_t enemy = board->colourBitBoards[!turn];
     uint64_t notempty = friendly | enemy;
     
-    uint64_t enemypawns = enemy & board->pieceBitBoards[0];
+    uint64_t enemypawns   = enemy & board->pieceBitBoards[0];
     uint64_t enemyknights = enemy & board->pieceBitBoards[1];
     uint64_t enemybishops = enemy & board->pieceBitBoards[2];
-    uint64_t enemyrooks = enemy & board->pieceBitBoards[3];
-    uint64_t enemyqueens = enemy & board->pieceBitBoards[4];
-    uint64_t enemykings = enemy & board->pieceBitBoards[5];
+    uint64_t enemyrooks   = enemy & board->pieceBitBoards[3];
+    uint64_t enemyqueens  = enemy & board->pieceBitBoards[4];
+    uint64_t enemykings   = enemy & board->pieceBitBoards[5];
     
     enemybishops |= enemyqueens;
     enemyrooks |= enemyqueens;

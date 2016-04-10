@@ -14,7 +14,7 @@
 #include "movegentest.h"
 #include "zorbist.h"
 
-int main2(){
+int main(){
     //move_gen_test();
     //return 0;
     
