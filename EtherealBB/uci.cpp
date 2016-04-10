@@ -22,6 +22,12 @@ std::string convert_move_to_string(uint16_t move){
 	str += '1' + (from/8);
 	str += 'a' + (to%8);
 	str += '1' + (to/8);
+    
+    if (MOVE_TYPE(move) == PromotionMove){
+        char arr[4] = {'K','B','R','Q'};
+        printf("MOVE_T %d \n",MOVE_PROMO_TYPE(move) >> 14);
+        str += arr[MOVE_PROMO_TYPE(move) >> 14];
+    }
 	
 	return str;
 }
@@ -110,9 +116,17 @@ int main(){
 			if (contains(line,"startpos"))
 				init_board(&board,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 			
-			//if (contains(line,"fen"))
-				//init_board(&board,line.substr(line.find("fen")+4,std::string::npos));
-					
+			if (contains(line,"fen")){
+                
+                std::string fen = line.substr(line.find("fen")+4,std::string::npos);
+                char cfen[fen.length()];
+                
+                for (unsigned int i = 0; i < fen.length(); i++)
+                    cfen[i] = fen.at(i);
+                
+				init_board(&board,cfen);
+            }
+
 			std::vector<std::string> moves = parse_moves(line);
 			for(unsigned int i = 0; i < moves.size(); i++)
 				make_move_from_string(&board,moves[i]);			
