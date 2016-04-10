@@ -18,6 +18,8 @@
 #include "movegentest.h"
 #include "zorbist.h"
 
+uint16_t BestMove;
+
 time_t StartTime;
 time_t EndTime;
 
@@ -51,19 +53,18 @@ uint16_t get_best_move(Board * board, int seconds){
     for (depth = 1; depth < MaxDepth; depth++){
         value = alpha_beta_prune(board,-Mate,Mate,depth,0,PVNODE);
         printf("|%9d|%9d|%11d|%9d| ",depth,value,NodesSearched,time(NULL)-StartTime);       
-        print_move(get_transposition_entry(&Table, board->hash)->best_move);
+        print_move(BestMove);
         printf(" |\n");
         if (time(NULL) - StartTime > seconds)
             break;
     }
     
-    uint16_t best_move = get_transposition_entry(&Table, board->hash)->best_move;
     dump_transposition_table(&Table);
-    return best_move;
+    return BestMove;
 }
 
 int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, int node_type){
-    int i, value, size = 0, best = -Mate;
+    int i, value, size = 0, best = -Mate+height;
     int in_check, opt_value;
     int initial_alpha = alpha;
     int table_turn_matches = 0;
@@ -114,17 +115,31 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
     int reps = 0;
     for (i = 0; i < board->move_num; i++)
         if (board->history[i] == board->hash)
-            reps += 1;
-        
-    if (reps >= 2){
-        store_transposition_entry(&Table, depth, board->turn, PVNODE, 0, best_move, board->hash);
+            reps += 1;    
+    if (reps >= 2)
         return 0;
+    
+    
+    // Generate Moves
+    gen_all_moves(board,moves,&size);   
+    
+    // Check for StaleMate and CheckMate
+    if (size == 0){
+        if (is_not_in_check(board,board->turn)){
+            store_transposition_entry(&Table, depth, board->turn, PVNODE, 0, NoneMove, board->hash);
+            return 0;
+        } else {
+            store_transposition_entry(&Table, depth, board->turn, PVNODE, -Mate, NoneMove, board->hash);
+            return -Mate - height;
+        }
     }
     
     // Null Move Pruning
     if (depth > 3 && !table_turn_matches && evaluate_board(board) >= beta && is_not_in_check(board,board->turn)){
         board->turn = !board->turn;
+        board->history[board->move_num++] = NoneMove;
         int eval = -alpha_beta_prune(board,-beta,-beta+1,depth-3,height,ALLNODE);
+        board->move_num -= 1;
         board->turn = !board->turn;
             
         if (eval >= beta)
@@ -142,19 +157,8 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
             table_move = entry->best_move;
     }
     
-    // Generate and Sort Moves
-    gen_all_moves(board,moves,&size);   
-    
-    if (size == 0){
-        if (is_not_in_check(board,board->turn)){
-            store_transposition_entry(&Table, depth, board->turn, PVNODE, 0, best_move, board->hash);
-            return 0;
-        } else {
-            store_transposition_entry(&Table, depth, board->turn, PVNODE, -Mate, best_move, board->hash);
-            return -Mate;
-        }
-    }
-    
+   
+    // Sort Moves
     sort_moves(board,moves,size,depth,height,table_move);
     
     in_check = !is_not_in_check(board,board->turn);
@@ -230,6 +234,9 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
         else if (best <= initial_alpha)
             store_transposition_entry(&Table, depth, board->turn, ALLNODE, best, best_move, board->hash);
     }
+    
+    if (height == 0)
+        BestMove = best_move;
     
     return best;
 }
