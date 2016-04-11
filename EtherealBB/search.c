@@ -67,7 +67,7 @@ uint16_t get_best_move(Board * board, int seconds){
 }
 
 int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, int node_type){
-    int i, value, valid = 0, size = 0, best = -Mate;
+    int i, value, valid = 0, size = 0, best = -2*Mate;
     int in_check, opt_value;
     int initial_alpha = alpha;
     int table_turn_matches = 0;
@@ -81,8 +81,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
     
     // Max Depth Reached
     if (depth == 0)
-        return evaluate_board(board);
-        //return quiescence_search(board,alpha,beta,height);
+        return quiescence_search(board,alpha,beta,height);
     
     // Max Height Reached
     if (height >= MaxHeight)
@@ -223,7 +222,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
             return 0;
         } else {
             store_transposition_entry(&Table, depth, board->turn, PVNODE, -Mate-height, NoneMove, board->hash);
-            return -Mate - height;
+            return -Mate-height;
         }
     }
     
@@ -325,7 +324,7 @@ void sort_moves(Board * board, uint16_t * moves, int size, int depth, int height
         int from_val = PieceValues[PIECE_TYPE(board->squares[MOVE_FROM(moves[i])])];
         
         value += 5 * to_val;
-        value -= from_val;
+        value -= 1 * from_val;
 
         if (MOVE_TYPE(moves[i]) == EnpassMove)
             value += PawnValue;
