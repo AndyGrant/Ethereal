@@ -8,12 +8,12 @@
 #define BishopValue ( 300)
 #define RookValue   ( 500)
 #define QueenValue  ( 900)
-#define KingValue   (1000)
+#define KingValue   (  50)
 
 #define PAWN_STACKED_PENALTY   ( 30)
 #define PAWN_ISOLATED_PENALTY  ( 20)
 #define PAWN_7TH_RANK_VALUE    ( 95)
-#define PAWN_MAY_ADVANCE_VALUE (  8)
+
 #define ROOK_7TH_RANK_VALUE    ( 35)
 #define ROOK_8TH_RANK_VALUE    ( 45)
 

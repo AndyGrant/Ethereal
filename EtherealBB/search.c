@@ -353,7 +353,7 @@ void sort_moves(Board * board, uint16_t * moves, int size, int depth, int height
         int from_val = PieceValues[PIECE_TYPE(board->squares[MOVE_FROM(moves[i])])];
         
         value += 5 * to_val;
-        //value -= 1 * from_val;
+        value -= 1 * from_val;
 
         if (MOVE_TYPE(moves[i]) == EnpassMove)
             value += PawnValue;
