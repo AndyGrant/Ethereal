@@ -12,7 +12,6 @@
 
 #define PAWN_STACKED_PENALTY  ( 30)
 #define PAWN_ISOLATED_PENALTY ( 20)
-#define PAWN_PASSED_BONUS     ( 15)
 #define ROOK_7TH_RANK_VALUE   ( 35)
 #define ROOK_8TH_RANK_VALUE   ( 45)
 
