@@ -84,26 +84,6 @@ int evaluate_board(Board * board){
         (bg && !bf && !bh) - (bh && !bg)
     );
     
-    value += PAWN_PASSED_BONUS * (
-        ((wa > ba) && (wa  << 1 >= bb)) + 
-        ((wb > bb) && (wb  << 1 >= bc) && (wb >> 1 >= ba)) +
-        ((wc > bc) && (wc  << 1 >= bd) && (wc >> 1 >= bb)) +
-        ((wd > bd) && (wd  << 1 >= be) && (wd >> 1 >= bc)) +
-        ((we > be) && (we  << 1 >= bf) && (we >> 1 >= bd)) +
-        ((wf > bf) && (wf  << 1 >= bg) && (wf >> 1 >= be)) +
-        ((wg > bg) && (wg  << 1 >= bh) && (wg >> 1 >= bf)) +
-        ((wh > bh) && (wh  >> 1 >= bh)) -
-        
-        ((lba < lwa) && (lba << 1 <= lwb)) - 
-        ((lbb < lwb) && (lbb << 1 <= lwc) && (lbb >> 1 <= lwa)) -
-        ((lbc < lwc) && (lbc << 1 <= lwd) && (lbc >> 1 <= lwb)) -
-        ((lbd < lwd) && (lbd << 1 <= lwe) && (lbd >> 1 <= lwc)) -
-        ((lbe < lwe) && (lbe << 1 <= lwf) && (lbe >> 1 <= lwd)) -
-        ((lbf < lwf) && (lbf << 1 <= lwg) && (lbf >> 1 <= lwe)) -
-        ((lbg < lwg) && (lbg << 1 <= lwh) && (lbg >> 1 <= lwf)) -
-        ((lbh < lwh) && (lbh >> 1 <= lwh))
-    );
-    
     value += ROOK_7TH_RANK_VALUE * (
         count_set_bits(whiteRook & RANK_7) - 
         count_set_bits(blackRook & RANK_2) 

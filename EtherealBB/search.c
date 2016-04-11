@@ -318,9 +318,13 @@ void sort_moves(Board * board, uint16_t * moves, int size, int depth, int height
         value +=  256 * (   killer2 == moves[i]);
         value +=  512 * (   killer3 == moves[i]);
         value +=  256 * (   killer4 == moves[i]);
-        value += (100 * PieceValues[PIECE_TYPE(board->squares[MOVE_TO(moves[i])])]) 
-                      / PieceValues[PIECE_TYPE(board->squares[MOVE_FROM(moves[i])])];
-                      
+        
+        int to_val = PieceValues[PIECE_TYPE(board->squares[MOVE_TO(moves[i])])];
+        int from_val = PieceValues[PIECE_TYPE(board->squares[MOVE_FROM(moves[i])])];
+        
+        value += 5 * to_val;
+        value -= from_val;
+
         if (MOVE_TYPE(moves[i]) == EnpassMove)
             value += PawnValue;
         

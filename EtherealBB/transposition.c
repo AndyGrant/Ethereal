@@ -45,7 +45,7 @@ TranspositionEntry * get_transposition_entry(TranspositionTable * table, uint64_
 void store_transposition_entry(TranspositionTable * table, int8_t depth, int8_t turn, int8_t type, int value, uint16_t best_move, uint64_t hash){
     TranspositionEntry * entry = &(table->entries[hash % table->max_size]);
     
-    if (entry->type == 0 || depth == MaxDepth){
+    if (entry->type == 0){
         entry->depth = depth;
         entry->turn = turn;
         entry->type = type;
