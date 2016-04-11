@@ -123,7 +123,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
         
     int USE_NULL_MOVE_PRUNING            = 1;
     int USE_INTERNAL_ITERATIVE_DEEPENING = 1;
-    int USE_FUTILITY_PRUNING             = 1;
+    int USE_FUTILITY_PRUNING             = 0;
     int USE_LATE_MOVE_REDUCTIONS         = 1;
     
     // Null Move Pruning
