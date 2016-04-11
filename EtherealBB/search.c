@@ -67,7 +67,7 @@ uint16_t get_best_move(Board * board, int seconds){
 }
 
 int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, int node_type){
-    int i, value, size = 0, best = -Mate+height;
+    int i, value, valid = 0, size = 0, best = -Mate;
     int in_check, opt_value;
     int initial_alpha = alpha;
     int table_turn_matches = 0;
@@ -81,8 +81,8 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
     
     // Max Depth Reached
     if (depth == 0)
-        return quiescence_search(board,alpha,beta,height);
-    
+        return evaluate_board(board);
+        //return quiescence_search(board,alpha,beta,height);
     
     // Max Height Reached
     if (height >= MaxHeight)
@@ -122,21 +122,6 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
     if (reps >= 2)
         return 0;
     
-    
-    // Generate Moves
-    gen_all_moves(board,moves,&size);   
-    
-    // Check for StaleMate and CheckMate
-    if (size == 0){
-        if (is_not_in_check(board,board->turn)){
-            store_transposition_entry(&Table, depth, board->turn, PVNODE, 0, NoneMove, board->hash);
-            return 0;
-        } else {
-            store_transposition_entry(&Table, depth, board->turn, PVNODE, -Mate, NoneMove, board->hash);
-            return -Mate - height;
-        }
-    }
-    
     // Null Move Pruning
     if (depth > 3 && !table_turn_matches && evaluate_board(board) >= beta && is_not_in_check(board,board->turn)){
         board->turn = !board->turn;
@@ -160,10 +145,9 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
             table_move = entry->best_move;
     }
     
-   
-    // Sort Moves
+    // Generate Moves & Sort Moves
+    gen_all_moves(board,moves,&size);
     sort_moves(board,moves,size,depth,height,table_move);
-    
     in_check = !is_not_in_check(board,board->turn);
     opt_value = Mate;
     
@@ -190,6 +174,8 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
             revert_move(board,moves[i],undo);
             continue;
         }
+        
+        valid++;
         
         // Principle Variation Search
         if (i == 0)
@@ -229,6 +215,18 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
         }
     }
     
+        
+    // Check for Stalemate and CheckMate
+    if (valid == 0){
+        if (is_not_in_check(board,board->turn)){
+            store_transposition_entry(&Table, depth, board->turn, PVNODE, 0, NoneMove, board->hash);
+            return 0;
+        } else {
+            store_transposition_entry(&Table, depth, board->turn, PVNODE, -Mate-height, NoneMove, board->hash);
+            return -Mate - height;
+        }
+    }
+    
     // Store in Transposition Table    
     if (best > initial_alpha && best < beta)
         store_transposition_entry(&Table, depth, board->turn,  PVNODE, best, best_move, board->hash);
@@ -240,6 +238,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
                 store_transposition_entry(&Table, depth, board->turn, ALLNODE, best, best_move, board->hash);
         }
     }
+
     
     if (height == 0)
         BestMove = best_move;
