@@ -52,14 +52,20 @@ uint16_t get_best_move(Board * board, int seconds){
     
     for (depth = 1; depth < MaxDepth; depth++){
         value = alpha_beta_prune(board,-Mate,Mate,depth,0,PVNODE);
-        printf("|%9d|%9d|%11d|%9d| ",depth,value,NodesSearched,time(NULL)-StartTime);       
+        printf("|%9d|%9d|%11d|%9d| ",depth,value,NodesSearched,(time(NULL)-StartTime));       
         print_move(BestMove);
         printf(" |\n");
         if (time(NULL) - StartTime > seconds)
             break;
         
-        if ((time(NULL) - StartTime) * 3 > seconds)
-            break;
+        if (value > evaluate_board(board)){
+			if ((time(NULL) - StartTime) * 4 > seconds)
+				break;
+		}
+		else {
+			if ((time(NULL) - StartTime) * 3 > seconds)
+				break;
+		}
     }
     
     //dump_transposition_table(&Table);
@@ -241,10 +247,10 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
     // Check for Stalemate and CheckMate
     if (valid == 0){
         if (is_not_in_check(board,board->turn)){
-            store_transposition_entry(&Table, depth, board->turn, PVNODE, 0, NoneMove, board->hash);
+            store_transposition_entry(&Table, MaxDepth-1, board->turn, PVNODE, 0, NoneMove, board->hash);
             return 0;
         } else {
-            store_transposition_entry(&Table, depth, board->turn, PVNODE, -Mate+height, NoneMove, board->hash);
+            store_transposition_entry(&Table, MaxDepth-1, board->turn, PVNODE, -Mate+height, NoneMove, board->hash);
             return -Mate+height;
         }
     }
