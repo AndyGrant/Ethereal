@@ -42,24 +42,6 @@ int evaluate_board(Board * board){
     uint64_t bg = blackPawn & FILE_G;
     uint64_t bh = blackPawn & FILE_H;
     
-    uint64_t lwa = 1 << get_lsb(wa);
-    uint64_t lwb = 1 << get_lsb(wb);
-    uint64_t lwc = 1 << get_lsb(wc);
-    uint64_t lwd = 1 << get_lsb(wd);
-    uint64_t lwe = 1 << get_lsb(we);
-    uint64_t lwf = 1 << get_lsb(wf);
-    uint64_t lwg = 1 << get_lsb(wg);
-    uint64_t lwh = 1 << get_lsb(wh);
-    
-    uint64_t lba = 1 << get_lsb(ba);
-    uint64_t lbb = 1 << get_lsb(bb);
-    uint64_t lbc = 1 << get_lsb(bc);
-    uint64_t lbd = 1 << get_lsb(bd);
-    uint64_t lbe = 1 << get_lsb(be);
-    uint64_t lbf = 1 << get_lsb(bf);
-    uint64_t lbg = 1 << get_lsb(bg);
-    uint64_t lbh = 1 << get_lsb(bh);
-    
     value -= PAWN_STACKED_PENALTY * (
         ((wa & (wa-1)) != 0) + ((wb & (wb-1)) != 0) + 
         ((wc & (wc-1)) != 0) + ((wd & (wd-1)) != 0) +
@@ -84,6 +66,11 @@ int evaluate_board(Board * board){
         (bg && !bf && !bh) - (bh && !bg)
     );
     
+    value += PAWN_7TH_RANK_VALUE * (
+        count_set_bits(whitePawn & RANK_7) -
+        count_set_bits(blackPawn & RANK_2)
+    );
+    
     value += ROOK_7TH_RANK_VALUE * (
         count_set_bits(whiteRook & RANK_7) - 
         count_set_bits(blackRook & RANK_2) 
@@ -93,7 +80,12 @@ int evaluate_board(Board * board){
         count_set_bits(whiteRook & RANK_8) - 
         count_set_bits(blackRook & RANK_1) 
     );
-        
+    
+    value += PAWN_MAY_ADVANCE_VALUE * (
+        count_set_bits((whitePawn << 8) & empty) - 
+        count_set_bits((blackPawn >> 8) & empty)
+    );
+    
     if (num > 14)
         return board->turn == ColourWhite ? board->opening + value : -board->opening - value;
     else

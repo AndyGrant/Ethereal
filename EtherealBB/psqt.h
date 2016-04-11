@@ -17,7 +17,7 @@ static int InversionTable[64] = {
 
 static int PawnOpeningMap32[32] = {
   0,   0,   0,   0,
--10,   0,   0,   0,
+-10,   0,   0,  -5,
 -10,   0,   7,  11,
 -10,   0,  10,  21,
 -10,   0,   6,  10,
