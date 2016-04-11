@@ -83,10 +83,6 @@ int evaluate_board(Board * board){
         count_set_bits(blackRook & RANK_1) 
     );
     
-    value += PAWN_MAY_ADVANCE_VALUE * (
-        count_set_bits((whitePawn << 8) & empty) - 
-        count_set_bits((blackPawn >> 8) & empty)
-    );
     
     if (num > 14)
         return board->turn == ColourWhite ? board->opening + value : -board->opening - value;
