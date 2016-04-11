@@ -229,13 +229,16 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
         }
     }
     
-    if (!used_table_entry){
-        if (best > initial_alpha && best < beta)
-            store_transposition_entry(&Table, depth, board->turn,  PVNODE, best, best_move, board->hash);
-        else if (best >= beta)
-            store_transposition_entry(&Table, depth, board->turn, CUTNODE, best, best_move, board->hash);
-        else if (best <= initial_alpha)
-            store_transposition_entry(&Table, depth, board->turn, ALLNODE, best, best_move, board->hash);
+    // Store in Transposition Table    
+    if (best > initial_alpha && best < beta)
+        store_transposition_entry(&Table, depth, board->turn,  PVNODE, best, best_move, board->hash);
+    else {
+        if (!used_table_entry){
+            if (best >= beta)
+                store_transposition_entry(&Table, depth, board->turn, CUTNODE, best, best_move, board->hash);
+            else if (best <= initial_alpha)
+                store_transposition_entry(&Table, depth, board->turn, ALLNODE, best, best_move, board->hash);
+        }
     }
     
     if (height == 0)
