@@ -9,7 +9,7 @@
 #define MaxKillers  (3)
 
 /* Prototypes */
-uint16_t get_best_move(Board * board, int seconds);
+uint16_t get_best_move(Board * board, int seconds, int send_results);
 int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, int node_type);
 int quiescence_search(Board * board, int alpha, int beta, int height);
 void sort_moves(Board * board, uint16_t * moves, int size, int depth, int height, uint16_t best_move);

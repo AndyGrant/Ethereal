@@ -30,5 +30,5 @@ int main(){
     //init_board(&board,"8/7p/7P/6p1/8/4kr2/8/4K3 b - - 1 63");
     
     
-    get_best_move(&board,12);
+    get_best_move(&board,12,0);
 }
