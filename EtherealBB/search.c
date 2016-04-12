@@ -201,7 +201,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
             value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1,PVNODE);
         else {
 			if (USE_LATE_MOVE_REDUCTIONS){
-				if (valid > 5 && 
+				if (valid > 8 && 
 					depth >= 4 && 
 					!in_check && 
 					MOVE_TYPE(moves[i]) == NormalMove &&
