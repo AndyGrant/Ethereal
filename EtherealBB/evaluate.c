@@ -14,14 +14,61 @@ int evaluate_board(Board * board){
     int num = count_set_bits(pieces);
     int value = 0;
     
-    uint64_t white = board->colourBitBoards[ColourWhite];
-    uint64_t black = board->colourBitBoards[ColourBlack];
-    uint64_t empty = ~ (white | black);
-    uint64_t pawns = board->pieceBitBoards[0];
-    uint64_t rooks = board->pieceBitBoards[3];
+    uint64_t white    = board->colourBitBoards[ColourWhite];
+    uint64_t black    = board->colourBitBoards[ColourBlack];
+    uint64_t empty    = ~ (white | black);
+    
+    uint64_t pawns    = board->pieceBitBoards[0];
+    uint64_t knights  = board->pieceBitBoards[1];
+    uint64_t bishops  = board->pieceBitBoards[2];
+    uint64_t rooks    = board->pieceBitBoards[3];
+    uint64_t queens   = board->pieceBitBoards[4];
     
     uint64_t whitePawn = white & pawns;
     uint64_t blackPawn = black & pawns;
+    
+    // Check for recognized draws. This includes the most basic
+    // King versus King endgame, as well as impossible mates with
+    // only a knight, or only a bishop, versus a sole king. Also,
+    // Situations like K+B+N v K in which mate is possible, but not 
+    // forced. Finally, the similar situation of K+2N in which mate
+    // cannot be forced. This check does not find sitations where
+    // one side has two bishops, but both on the same colour, which
+    // would result in a draw, and also dead-lock situations
+    if (pawns == 0 && rooks == 0 && queens == 0){
+        
+        // K v K
+        if (num == 2)
+            return 0;
+        
+        // K+B v K and K+N v K
+        if (count_set_bits(white & (knights | bishops)) <= 1 && 
+            count_set_bits(black) == 1)
+            return 0;
+        else if (count_set_bits(black & (knights | bishops)) <= 1 && 
+            count_set_bits(white) == 1)
+            return 0;
+         
+        // K+B+N v K 
+        if (count_set_bits(black) == 1 &&
+            count_set_bits(white & bishops) == 1 &&
+            count_set_bits(white & knights) == 1)
+            return 0;
+        else if (count_set_bits(white) == 1 &&
+            count_set_bits(black & bishops) == 1 &&
+            count_set_bits(black & knights) == 1)
+            return 0;
+        
+        // K+N+N v K
+        if (count_set_bits(black) == 1 &&
+            count_set_bits(white & knights) == 2 &&
+            count_set_bits(white & bishops) == 0)
+            return 0;
+        else if (count_set_bits(white) == 1 &&
+            count_set_bits(black & knights) == 2 &&
+            count_set_bits(black & bishops) == 0)
+            return 0;
+    }
     
     uint64_t whiteRook = white & rooks;
     uint64_t blackRook = black & rooks;
