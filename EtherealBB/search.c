@@ -31,7 +31,7 @@ uint16_t KillerCaptures[MaxHeight][2];
 
 TranspositionTable Table;
 
-uint16_t get_best_move(Board * board, int seconds){
+uint16_t get_best_move(Board * board, int seconds, int send_results){
     
     int value, depth, i, size=0;
     uint16_t PV[MaxHeight];
@@ -52,9 +52,16 @@ uint16_t get_best_move(Board * board, int seconds){
     
     for (depth = 1; depth < MaxDepth; depth++){
         value = alpha_beta_prune(board,-Mate,Mate,depth,0,PVNODE);
-        printf("|%9d|%9d|%11d|%9d| ",depth,value,NodesSearched,(time(NULL)-StartTime));       
+        printf("|%9d|%9d|%11d|%9d| ",depth,value,NodesSearched,(time(NULL)-StartTime));
         print_move(BestMove);
         printf(" |\n");
+        
+        if (send_results){
+            printf("info depth %d score cp %d time %d pv ",depth,value,time(NULL)-StartTime);
+            print_move(BestMove);
+            printf("\n");
+        }
+        
         if (time(NULL) - StartTime > seconds)
             break;
         
@@ -68,7 +75,7 @@ uint16_t get_best_move(Board * board, int seconds){
 		}
     }
     
-    //dump_transposition_table(&Table);
+    dump_transposition_table(&Table);
     return BestMove;
 }
 
