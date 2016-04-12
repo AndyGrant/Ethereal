@@ -32,6 +32,6 @@ Ethereal is a UCI compliant Chess Engine based on the minimax search algorithm. 
 
   20 Minute Unlimited
   
-    Ethereal (Commit #462) vs TSCP (http://www.tckerrigan.com/Chess/TSCP/) ~1700 ELO :: 1.5 .5
+    Ethereal (Commit #551) vs MicroMax4.8 :: 5.5 3.5
   
   
