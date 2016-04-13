@@ -1,0 +1,349 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+ 46.16      5.35     5.35  4578070     0.00     0.00  sort_moves
+  8.80      6.37     1.02                             _mcount_private
+  7.85      7.28     0.91 15435715     0.00     0.00  evaluate_board
+  6.30      8.01     0.73  1508476     0.00     0.00  gen_all_moves
+  4.75      8.56     0.55                             __fentry__
+  4.66      9.10     0.54 26843175     0.00     0.00  square_is_attacked
+  4.57      9.63     0.53 20731067     0.00     0.00  apply_move
+  3.36     10.02     0.39  2056318     0.00     0.00  get_transposition_entry
+  2.76     10.34     0.32 20731067     0.00     0.00  revert_move
+  2.59     10.64     0.30  3069594     0.00     0.00  gen_all_non_quiet
+  1.86     10.86     0.22  7143678     0.00     0.00  quiescence_search
+  1.51     11.03     0.17       11     0.02     0.89  alpha_beta_prune
+  1.47     11.20     0.17 26843175     0.00     0.00  is_not_in_check
+  1.47     11.37     0.17        1     0.17     0.17  init_transposition_table
+  1.04     11.49     0.12 92614547     0.00     0.00  count_set_bits
+  0.69     11.57     0.08        1     0.08     0.08  dump_transposition_table
+  0.09     11.58     0.01   107776     0.00     0.00  get_set_bits
+  0.09     11.59     0.01        1     0.01     0.01  generate_occupancy_mask_rook
+  0.00     11.59     0.00  1499782     0.00     0.00  store_transposition_entry
+  0.00     11.59     0.00      768     0.00     0.00  gen_random_bitstring
+  0.00     11.59     0.00       11     0.00     0.00  print_move
+  0.00     11.59     0.00        1     0.00     0.00  generate_king_map
+  0.00     11.59     0.00        1     0.00     0.00  generate_knight_map
+  0.00     11.59     0.00        1     0.00     0.00  generate_move_database_bishop
+  0.00     11.59     0.00        1     0.00     0.00  generate_move_database_rook
+  0.00     11.59     0.00        1     0.00     0.00  generate_occupancy_mask_bishop
+  0.00     11.59     0.00        1     0.00     0.00  generate_occupancy_variations_bishop
+  0.00     11.59     0.00        1     0.00     0.01  generate_occupancy_variations_rook
+  0.00     11.59     0.00        1     0.00    10.00  get_best_move
+  0.00     11.59     0.00        1     0.00     0.02  init_board
+  0.00     11.59     0.00        1     0.00     0.02  init_magics
+  0.00     11.59     0.00        1     0.00     0.00  init_psqt
+  0.00     11.59     0.00        1     0.00     0.00  init_zorbist
+  0.00     11.59     0.00        1     0.00     0.00  print_board
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+ 
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this 
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012-2014 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 4 byte(s) for 0.09% of 11.59 seconds
+
+index % time    self  children    called     name
+                                                 <spontaneous>
+[1]     86.5    0.00   10.02                 main [1]
+                0.00   10.00       1/1           get_best_move [2]
+                0.00    0.02       1/1           init_board [19]
+-----------------------------------------------
+                0.00   10.00       1/1           main [1]
+[2]     86.3    0.00   10.00       1         get_best_move [2]
+                0.17    9.57      11/11          alpha_beta_prune [3]
+                0.17    0.00       1/1           init_transposition_table [16]
+                0.08    0.00       1/1           dump_transposition_table [18]
+                0.00    0.00      11/15435715     evaluate_board [6]
+                0.00    0.00      11/11          print_move [29]
+                0.00    0.00       1/1           print_board [35]
+-----------------------------------------------
+                             9193845             alpha_beta_prune [3]
+                0.17    9.57      11/11          get_best_move [2]
+[3]     84.1    0.17    9.57      11+9193845 alpha_beta_prune [3]
+                0.22    5.66 7143678/7143678     quiescence_search [4]
+                1.76    0.00 1508476/4578070     sort_moves [5]
+                0.73    0.04 1508476/1508476     gen_all_moves [8]
+                0.39    0.00 2056318/2056318     get_transposition_entry [13]
+                0.08    0.25 12443361/26843175     is_not_in_check [9]
+                0.28    0.00 10909323/20731067     apply_move [12]
+                0.17    0.00 10909323/20731067     revert_move [14]
+                0.00    0.00   35649/15435715     evaluate_board [6]
+                0.00    0.00 1499782/1499782     store_transposition_entry [27]
+                             9193845             alpha_beta_prune [3]
+-----------------------------------------------
+                             8256377             quiescence_search [4]
+                0.22    5.66 7143678/7143678     alpha_beta_prune [3]
+[4]     50.7    0.22    5.66 7143678+8256377 quiescence_search [4]
+                3.59    0.00 3069594/4578070     sort_moves [5]
+                0.91    0.12 15400055/15435715     evaluate_board [6]
+                0.08    0.26 12891338/26843175     is_not_in_check [9]
+                0.30    0.00 3069594/3069594     gen_all_non_quiet [15]
+                0.25    0.00 9821744/20731067     apply_move [12]
+                0.15    0.00 9821744/20731067     revert_move [14]
+                             8256377             quiescence_search [4]
+-----------------------------------------------
+                1.76    0.00 1508476/4578070     alpha_beta_prune [3]
+                3.59    0.00 3069594/4578070     quiescence_search [4]
+[5]     46.2    5.35    0.00 4578070         sort_moves [5]
+-----------------------------------------------
+                0.00    0.00      11/15435715     get_best_move [2]
+                0.00    0.00   35649/15435715     alpha_beta_prune [3]
+                0.91    0.12 15400055/15435715     quiescence_search [4]
+[6]      8.9    0.91    0.12 15435715         evaluate_board [6]
+                0.12    0.00 92614290/92614547     count_set_bits [17]
+-----------------------------------------------
+                                                 <spontaneous>
+[7]      8.8    1.02    0.00                 _mcount_private [7]
+-----------------------------------------------
+                0.73    0.04 1508476/1508476     alpha_beta_prune [3]
+[8]      6.6    0.73    0.04 1508476         gen_all_moves [8]
+                0.01    0.03 1508476/26843175     is_not_in_check [9]
+-----------------------------------------------
+                0.01    0.03 1508476/26843175     gen_all_moves [8]
+                0.08    0.25 12443361/26843175     alpha_beta_prune [3]
+                0.08    0.26 12891338/26843175     quiescence_search [4]
+[9]      6.1    0.17    0.54 26843175         is_not_in_check [9]
+                0.54    0.00 26843175/26843175     square_is_attacked [11]
+-----------------------------------------------
+                                                 <spontaneous>
+[10]     4.7    0.55    0.00                 __fentry__ [10]
+-----------------------------------------------
+                0.54    0.00 26843175/26843175     is_not_in_check [9]
+[11]     4.7    0.54    0.00 26843175         square_is_attacked [11]
+-----------------------------------------------
+                0.25    0.00 9821744/20731067     quiescence_search [4]
+                0.28    0.00 10909323/20731067     alpha_beta_prune [3]
+[12]     4.6    0.53    0.00 20731067         apply_move [12]
+-----------------------------------------------
+                0.39    0.00 2056318/2056318     alpha_beta_prune [3]
+[13]     3.4    0.39    0.00 2056318         get_transposition_entry [13]
+-----------------------------------------------
+                0.15    0.00 9821744/20731067     quiescence_search [4]
+                0.17    0.00 10909323/20731067     alpha_beta_prune [3]
+[14]     2.8    0.32    0.00 20731067         revert_move [14]
+-----------------------------------------------
+                0.30    0.00 3069594/3069594     quiescence_search [4]
+[15]     2.6    0.30    0.00 3069594         gen_all_non_quiet [15]
+-----------------------------------------------
+                0.17    0.00       1/1           get_best_move [2]
+[16]     1.5    0.17    0.00       1         init_transposition_table [16]
+-----------------------------------------------
+                0.00    0.00       1/92614547     init_board [19]
+                0.00    0.00      64/92614547     generate_occupancy_variations_rook [23]
+                0.00    0.00      64/92614547     generate_occupancy_variations_bishop [24]
+                0.00    0.00      64/92614547     generate_move_database_rook [26]
+                0.00    0.00      64/92614547     generate_move_database_bishop [25]
+                0.12    0.00 92614290/92614547     evaluate_board [6]
+[17]     1.0    0.12    0.00 92614547         count_set_bits [17]
+-----------------------------------------------
+                0.08    0.00       1/1           get_best_move [2]
+[18]     0.7    0.08    0.00       1         dump_transposition_table [18]
+-----------------------------------------------
+                0.00    0.02       1/1           main [1]
+[19]     0.2    0.00    0.02       1         init_board [19]
+                0.00    0.02       1/1           init_magics [20]
+                0.00    0.00       1/92614547     count_set_bits [17]
+                0.00    0.00       1/1           init_zorbist [34]
+                0.00    0.00       1/1           init_psqt [33]
+-----------------------------------------------
+                0.00    0.02       1/1           init_board [19]
+[20]     0.2    0.00    0.02       1         init_magics [20]
+                0.01    0.00       1/1           generate_occupancy_mask_rook [22]
+                0.00    0.01       1/1           generate_occupancy_variations_rook [23]
+                0.00    0.00       1/1           generate_occupancy_variations_bishop [24]
+                0.00    0.00       1/1           generate_move_database_rook [26]
+                0.00    0.00       1/1           generate_move_database_bishop [25]
+                0.00    0.00       1/1           generate_knight_map [31]
+                0.00    0.00       1/1           generate_king_map [30]
+                0.00    0.00       1/1           generate_occupancy_mask_bishop [32]
+-----------------------------------------------
+                0.00    0.00    5312/107776      generate_occupancy_variations_bishop [24]
+                0.01    0.00  102464/107776      generate_occupancy_variations_rook [23]
+[21]     0.1    0.01    0.00  107776         get_set_bits [21]
+-----------------------------------------------
+                0.01    0.00       1/1           init_magics [20]
+[22]     0.1    0.01    0.00       1         generate_occupancy_mask_rook [22]
+-----------------------------------------------
+                0.00    0.01       1/1           init_magics [20]
+[23]     0.1    0.00    0.01       1         generate_occupancy_variations_rook [23]
+                0.01    0.00  102464/107776      get_set_bits [21]
+                0.00    0.00      64/92614547     count_set_bits [17]
+-----------------------------------------------
+                0.00    0.00       1/1           init_magics [20]
+[24]     0.0    0.00    0.00       1         generate_occupancy_variations_bishop [24]
+                0.00    0.00    5312/107776      get_set_bits [21]
+                0.00    0.00      64/92614547     count_set_bits [17]
+-----------------------------------------------
+                0.00    0.00       1/1           init_magics [20]
+[25]     0.0    0.00    0.00       1         generate_move_database_bishop [25]
+                0.00    0.00      64/92614547     count_set_bits [17]
+-----------------------------------------------
+                0.00    0.00       1/1           init_magics [20]
+[26]     0.0    0.00    0.00       1         generate_move_database_rook [26]
+                0.00    0.00      64/92614547     count_set_bits [17]
+-----------------------------------------------
+                0.00    0.00 1499782/1499782     alpha_beta_prune [3]
+[27]     0.0    0.00    0.00 1499782         store_transposition_entry [27]
+-----------------------------------------------
+                0.00    0.00     768/768         init_zorbist [34]
+[28]     0.0    0.00    0.00     768         gen_random_bitstring [28]
+-----------------------------------------------
+                0.00    0.00      11/11          get_best_move [2]
+[29]     0.0    0.00    0.00      11         print_move [29]
+-----------------------------------------------
+                0.00    0.00       1/1           init_magics [20]
+[30]     0.0    0.00    0.00       1         generate_king_map [30]
+-----------------------------------------------
+                0.00    0.00       1/1           init_magics [20]
+[31]     0.0    0.00    0.00       1         generate_knight_map [31]
+-----------------------------------------------
+                0.00    0.00       1/1           init_magics [20]
+[32]     0.0    0.00    0.00       1         generate_occupancy_mask_bishop [32]
+-----------------------------------------------
+                0.00    0.00       1/1           init_board [19]
+[33]     0.0    0.00    0.00       1         init_psqt [33]
+-----------------------------------------------
+                0.00    0.00       1/1           init_board [19]
+[34]     0.0    0.00    0.00       1         init_zorbist [34]
+                0.00    0.00     768/768         gen_random_bitstring [28]
+-----------------------------------------------
+                0.00    0.00       1/1           get_best_move [2]
+[35]     0.0    0.00    0.00       1         print_board [35]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function is in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+Copyright (C) 2012-2014 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Index by function name
+
+  [10] __fentry__             [25] generate_move_database_bishop [16] init_transposition_table
+   [7] _mcount_private        [26] generate_move_database_rook [34] init_zorbist
+   [3] alpha_beta_prune       [32] generate_occupancy_mask_bishop [9] is_not_in_check
+  [12] apply_move             [22] generate_occupancy_mask_rook [35] print_board
+  [17] count_set_bits         [24] generate_occupancy_variations_bishop [29] print_move
+  [18] dump_transposition_table [23] generate_occupancy_variations_rook [4] quiescence_search
+   [6] evaluate_board          [2] get_best_move          [14] revert_move
+   [8] gen_all_moves          [21] get_set_bits            [5] sort_moves
+  [15] gen_all_non_quiet      [13] get_transposition_entry [11] square_is_attacked
+  [28] gen_random_bitstring   [19] init_board             [27] store_transposition_entry
+  [30] generate_king_map      [20] init_magics
+  [31] generate_knight_map    [33] init_psqt

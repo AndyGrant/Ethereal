@@ -12,7 +12,6 @@
 int evaluate_board(Board * board){
     
     uint64_t pieces = board->colourBitBoards[0] | board->colourBitBoards[1];
-    //int num = count_set_bits(pieces);
     int num = board->num_pieces;
     int value = 0;
     

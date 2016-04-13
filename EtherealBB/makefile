@@ -1,6 +1,6 @@
 CC = gcc
 
-CFLAGS = -m64 -march=native -O3
+CFLAGS = -m64 -march=native -O3 -DNDEBUG
 
 PFLAGS = -p -g -pg
 
@@ -21,7 +21,7 @@ SRC = bitutils.c		\
 	  
 EXE = foo
 
-ifeq (True, $(profile))
+ifeq (true, $(profile))
 	FLAGS = $(CFLAGS) $(PFLAGS)
 else
 	FLAGS = $(CFLAGS)
