@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "movegen.h"
 #include "types.h"
@@ -11,7 +12,8 @@
 int evaluate_board(Board * board){
     
     uint64_t pieces = board->colourBitBoards[0] | board->colourBitBoards[1];
-    int num = count_set_bits(pieces);
+    //int num = count_set_bits(pieces);
+    int num = board->num_pieces;
     int value = 0;
     
     uint64_t white    = board->colourBitBoards[ColourWhite];

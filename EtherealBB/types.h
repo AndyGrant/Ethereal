@@ -31,8 +31,12 @@ typedef struct Board {
     int opening;
     int endgame;
     
+    // Move history
     uint64_t history[2048];
     int move_num;
+    
+    // Keep Track of number of pieces
+    int num_pieces;
     
 } Board;
 
@@ -55,6 +59,9 @@ typedef struct Undo {
     
     // Previous Zorbist key
     uint64_t hash;
+    
+    // Keep Track of number of pieces
+    int num_pieces;
     
 } Undo;
 
