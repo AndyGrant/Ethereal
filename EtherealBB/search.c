@@ -19,7 +19,7 @@
 #include "movegentest.h"
 #include "zorbist.h"
 
-
+int USE_RAZOR_PRUNING				 = 1;
 int USE_NULL_MOVE_PRUNING            = 1;
 int USE_INTERNAL_ITERATIVE_DEEPENING = 1;
 int USE_FUTILITY_PRUNING             = 1;
@@ -162,6 +162,18 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
             reps += 1;    
     if (reps >= 2)
         return 0;
+        
+	// Razor Pruning
+    if (USE_RAZOR_PRUNING){
+		if (depth == 2 && alpha == beta - 1 && board->num_pieces >= 10){
+			if (evaluate_board(board) + 3.1*PawnValue < beta){
+				value = quiescence_search(board,alpha,beta,height);
+				
+				if (value < beta)
+					return value;
+			}
+		}
+	}	
     
     // Null Move Pruning
     if (USE_NULL_MOVE_PRUNING){
@@ -220,7 +232,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
 			if (valid >= 1 && depth == 1 && !in_check && MOVE_TYPE(moves[i]) == NormalMove){
 				if (board->squares[MOVE_TO(moves[i])] == Empty){
 					if (opt_value == Mate)
-						opt_value = evaluate_board(board) + PawnValue;
+						opt_value = evaluate_board(board) + 100;
 					
 					value = opt_value;
 					
