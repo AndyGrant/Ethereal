@@ -10,9 +10,6 @@
 #include "piece.h"
 
 int evaluate_board(Board * board){
-    
-    uint64_t pieces = board->colourBitBoards[0] | board->colourBitBoards[1];
-    int num = board->num_pieces;
     int value = 0;
     
     uint64_t white    = board->colourBitBoards[ColourWhite];
@@ -39,7 +36,7 @@ int evaluate_board(Board * board){
     if (pawns == 0 && rooks == 0 && queens == 0){
         
         // K v K
-        if (num == 2)
+        if (board->num_pieces == 2)
             return 0;
         
         // K+B v K and K+N v K
@@ -132,7 +129,7 @@ int evaluate_board(Board * board){
     );
     
     
-    if (num > 14)
+    if (board->num_pieces > 14)
         return board->turn == ColourWhite ? board->opening + value : -board->opening - value;
     else
         return board->turn == ColourWhite ? board->endgame + value : -board->endgame - value;
