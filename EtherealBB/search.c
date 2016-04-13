@@ -19,6 +19,16 @@
 #include "movegentest.h"
 #include "zorbist.h"
 
+
+int USE_NULL_MOVE_PRUNING            = 1;
+int USE_INTERNAL_ITERATIVE_DEEPENING = 1;
+int USE_FUTILITY_PRUNING             = 1;
+int USE_LATE_MOVE_REDUCTIONS         = 1;
+
+int IID_FAILURE;
+int IID_SUCCESS;
+int IID_NWASTED;
+
 uint16_t BestMove;
 
 time_t StartTime;
@@ -33,6 +43,10 @@ uint16_t KillerCaptures[MaxHeight][2];
 TranspositionTable Table;
 
 uint16_t get_best_move(Board * board, int seconds, int send_results){
+    
+    IID_FAILURE = 0;
+    IID_SUCCESS = 0;
+    IID_NWASTED = 0;
     
     int value, depth, i, size=0;
     uint16_t PV[MaxHeight];
@@ -77,6 +91,11 @@ uint16_t get_best_move(Board * board, int seconds, int send_results){
     }
     
     dump_transposition_table(&Table);
+    
+    printf("SUCCESS IID %d\n",IID_SUCCESS);
+    printf("FAILURE IID %d\n",IID_FAILURE);
+    printf("NWASTED IID %d\n",IID_NWASTED);
+    
     return BestMove;
 }
 
@@ -134,11 +153,6 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
             reps += 1;    
     if (reps >= 2)
         return 0;
-        
-    int USE_NULL_MOVE_PRUNING            = 1;
-    int USE_INTERNAL_ITERATIVE_DEEPENING = 1;
-    int USE_FUTILITY_PRUNING             = 1;
-    int USE_LATE_MOVE_REDUCTIONS         = 1;
     
     // Null Move Pruning
     if (USE_NULL_MOVE_PRUNING){
@@ -160,13 +174,19 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
     // Internal Iterative Deepening
     if (USE_INTERNAL_ITERATIVE_DEEPENING){
 		if (depth >= 3 && !table_turn_matches){
+            int temp = NodesSearched;
 			value = alpha_beta_prune(board,alpha,beta,depth-3,height,node_type);
 			if (value <= alpha)
 				value = alpha_beta_prune(board,-Mate,beta,depth-3,height,node_type);
 			
 			TranspositionEntry * entry = get_transposition_entry(&Table, board->hash);
-			if (entry != NULL)
+			if (entry != NULL){
+                IID_SUCCESS++;
 				table_move = entry->best_move;
+            } else {
+                IID_NWASTED += NodesSearched - temp;
+                IID_FAILURE++;
+            }
 		}
 	}
     
@@ -209,9 +229,8 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
             value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1,PVNODE);
         else {
 			if (USE_LATE_MOVE_REDUCTIONS){
-				if (
-                    (height != 0  || valid > 8) && 
-                    valid > 4 && 
+				if (table_turn_matches && 
+                    valid > 8 && 
 					depth >= 4 && 
 					!in_check && 
 					MOVE_TYPE(moves[i]) == NormalMove &&
@@ -303,16 +322,8 @@ int quiescence_search(Board * board, int alpha, int beta, int height){
     uint16_t moves[256];
     
     int best = value;
-    
     gen_all_non_quiet(board,moves,&size);
-    
     sort_moves(board,moves,size,0,height,NoneMove);
-    
-    uint64_t enemy = board->colourBitBoards[!board->turn];
-    
-    int in_check = !is_not_in_check(board,board->turn);
-    int initial_alpha = alpha;
-    int opt_value = value + 50;
     
     for(i = 0; i < size; i++){
         apply_move(board,moves[i],undo);
