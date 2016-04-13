@@ -10,6 +10,7 @@
 #include "evaluate.h"
 #include "magics.h"
 #include "piece.h"
+#include "psqt.h"
 #include "search.h"
 #include "transposition.h"
 #include "types.h"
@@ -136,7 +137,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
         
     int USE_NULL_MOVE_PRUNING            = 1;
     int USE_INTERNAL_ITERATIVE_DEEPENING = 1;
-    int USE_FUTILITY_PRUNING             = 0;
+    int USE_FUTILITY_PRUNING             = 1;
     int USE_LATE_MOVE_REDUCTIONS         = 1;
     
     // Null Move Pruning
@@ -179,7 +180,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
         
         //Futility Pruning
         if (USE_FUTILITY_PRUNING){
-			if (depth == 1 && !in_check && MOVE_TYPE(moves[i]) == NormalMove){
+			if (value >= 1 && depth == 1 && !in_check && MOVE_TYPE(moves[i]) == NormalMove){
 				if (board->squares[MOVE_TO(moves[i])] == Empty){
 					if (opt_value == Mate)
 						opt_value = evaluate_board(board) + PawnValue;
@@ -208,7 +209,9 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
             value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1,PVNODE);
         else {
 			if (USE_LATE_MOVE_REDUCTIONS){
-				if (valid > 8 && 
+				if (
+                    (height != 0  || valid > 8) && 
+                    valid > 4 && 
 					depth >= 4 && 
 					!in_check && 
 					MOVE_TYPE(moves[i]) == NormalMove &&
@@ -367,6 +370,7 @@ void sort_moves(Board * board, uint16_t * moves, int size, int depth, int height
         
         if (MOVE_TYPE(moves[i]) == PromotionMove)
             value += 32 << (MOVE_PROMO_TYPE(moves[i]) >> 14);
+        
         values[i] = value;
     }
     
