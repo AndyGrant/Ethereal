@@ -29,6 +29,10 @@ int IID_FAILURE;
 int IID_SUCCESS;
 int IID_NWASTED;
 
+int NMP_FAILURE;
+int NMP_SUCCESS;
+int NMP_NWASTED;
+
 uint16_t BestMove;
 
 time_t StartTime;
@@ -96,6 +100,11 @@ uint16_t get_best_move(Board * board, int seconds, int send_results){
     printf("FAILURE IID %d\n",IID_FAILURE);
     printf("NWASTED IID %d\n",IID_NWASTED);
     
+    printf("FAILURE NMP %d\n",NMP_FAILURE);
+    printf("SUCCESS NMP %d\n",NMP_SUCCESS);
+    printf("NWASTED NMP %d\n",NMP_NWASTED);
+
+
     return BestMove;
 }
 
@@ -160,14 +169,21 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
 			evaluate_board(board) >= beta &&
 			is_not_in_check(board,board->turn)){
 				
+			int temp = NodesSearched;
+				
 			board->turn = !board->turn;
 			board->history[board->move_num++] = NoneMove;
 			int eval = -alpha_beta_prune(board,-beta,-beta+1,depth-3,height,ALLNODE);
 			board->move_num -= 1;
 			board->turn = !board->turn;
 				
-			if (eval >= beta)
+			if (eval >= beta){
+				NMP_SUCCESS++;
 				return eval;
+			}
+			
+			NMP_FAILURE++;
+			NMP_NWASTED += NodesSearched - temp;
 		}
 	}
 	
