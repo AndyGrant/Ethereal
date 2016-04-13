@@ -180,7 +180,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
         
         //Futility Pruning
         if (USE_FUTILITY_PRUNING){
-			if (value >= 1 && depth == 1 && !in_check && MOVE_TYPE(moves[i]) == NormalMove){
+			if (valid >= 1 && depth == 1 && !in_check && MOVE_TYPE(moves[i]) == NormalMove){
 				if (board->squares[MOVE_TO(moves[i])] == Empty){
 					if (opt_value == Mate)
 						opt_value = evaluate_board(board) + PawnValue;
