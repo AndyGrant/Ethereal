@@ -166,6 +166,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
     // Null Move Pruning
     if (USE_NULL_MOVE_PRUNING){
 		if (depth > 3 &&
+			board->history[board->move_num] != NoneMove &&
 			evaluate_board(board) >= beta &&
 			is_not_in_check(board,board->turn)){
 				
@@ -189,7 +190,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
 	
     // Internal Iterative Deepening
     if (USE_INTERNAL_ITERATIVE_DEEPENING){
-		if (depth >= 3 && !table_turn_matches){
+		if (depth >= 4 && !table_turn_matches){
             int temp = NodesSearched;
 			value = alpha_beta_prune(board,alpha,beta,depth-3,height,node_type);
 			if (value <= alpha)
@@ -246,7 +247,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
         else {
 			if (USE_LATE_MOVE_REDUCTIONS){
 				if (table_turn_matches && 
-                    valid > 8 && 
+                    valid > 4 && 
 					depth >= 4 && 
 					!in_check && 
 					MOVE_TYPE(moves[i]) == NormalMove &&
