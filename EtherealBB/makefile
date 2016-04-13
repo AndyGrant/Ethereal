@@ -1,6 +1,6 @@
 CC = gcc
 
-CFLAGS = -m64 -march=native -DNDEBUG -O3
+CFLAGS = -m64 -march=native -O3
 
 PFLAGS = -p -g -pg
 

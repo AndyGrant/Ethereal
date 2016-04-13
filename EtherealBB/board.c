@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include "bitutils.h"
 #include "board.h"
 #include "castle.h"
 #include "magics.h"
@@ -149,6 +150,8 @@ void init_board(Board * board, char * fen){
     }
     
     board->move_num = 0;
+    
+    board->num_pieces = count_set_bits(board->colourBitBoards[0] | board->colourBitBoards[1]);
 }
 
 /*

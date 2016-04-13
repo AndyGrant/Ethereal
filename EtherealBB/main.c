@@ -22,7 +22,7 @@ int main(){
     //init_board(&board,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     
     //init_board(&board,"4k3/3ppp2/8/8/8/8/3PPP2/4K3 w - - 0 1");
-    //init_board(&board,"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w - - 0 1");
+    init_board(&board,"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w - - 0 1");
     //init_board(&board,"1k6/5Q2/1K6/8/8/8/8/8 w - - 0 1");
     
     
@@ -31,7 +31,10 @@ int main(){
     
     
     // TEST FOR THROWING SUFFICIENT MATERIAL
-    init_board(&board,"8/2k5/3N4/PP1K4/8/4b3/8/8 w - - 7 104");
+    //init_board(&board,"8/2k5/3N4/PP1K4/8/4b3/8/8 w - - 7 104");
     
-    get_best_move(&board,12,0);
+    // TESTING FOR PROMOTION
+    //init_board(&board,"8/8/2PPP3/K7/8/8/8/k7 w - - 0 0");
+    
+    get_best_move(&board,24,0);
 }

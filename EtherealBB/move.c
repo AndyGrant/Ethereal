@@ -42,6 +42,7 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
     undo->opening = board->opening;
     undo->endgame = board->endgame;
     undo->hash = board->hash;
+    undo->num_pieces = board->num_pieces;
     
     board->history[board->move_num++] = board->hash;
     
@@ -84,6 +85,7 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
                     ^  ZorbistKeys[topiece][to];
         
         board->epsquare = ((!fromtype) & (abs(to-from) == 16)) * (from + ((to-from)>>1));
+        board->num_pieces -= (topiece != Empty);
         return;
     }
     
@@ -175,7 +177,8 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
                     ^  ZorbistKeys[promopiece][to]
                     ^  ZorbistKeys[topiece][to];
         
-        board->epsquare = -1;       
+        board->epsquare = -1;
+        board->num_pieces -= (topiece != Empty);
         return;
     }
     
@@ -218,6 +221,7 @@ void apply_move(Board * board, uint16_t move, Undo * undo){
                     ^  ZorbistKeys[enpasspiece][ep];
         
         board->epsquare = -1;
+        board->num_pieces -= 1;
         return;
     }
 }
@@ -258,6 +262,7 @@ void revert_move(Board * board, uint16_t move, Undo * undo){
         board->opening = undo->opening;
         board->endgame = undo->endgame;
         board->hash = undo->hash;
+        board->num_pieces = undo->num_pieces;
         return;
     }
     
@@ -290,6 +295,7 @@ void revert_move(Board * board, uint16_t move, Undo * undo){
         board->opening = undo->opening;
         board->endgame = undo->endgame;
         board->hash = undo->hash;
+        board->num_pieces = undo->num_pieces;
         return;
     }
     
@@ -319,6 +325,7 @@ void revert_move(Board * board, uint16_t move, Undo * undo){
         board->opening = undo->opening;
         board->endgame = undo->endgame;
         board->hash = undo->hash;
+        board->num_pieces = undo->num_pieces;
         return;
     }
     
@@ -346,6 +353,7 @@ void revert_move(Board * board, uint16_t move, Undo * undo){
         board->opening = undo->opening;
         board->endgame = undo->endgame;
         board->hash = undo->hash;
+        board->num_pieces = undo->num_pieces;
         return;
     }
 }
