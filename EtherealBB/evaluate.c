@@ -3,6 +3,7 @@
 #include <assert.h>
 
 #include "movegen.h"
+#include "magics.h"
 #include "types.h"
 #include "bitboards.h"
 #include "bitutils.h"
@@ -22,8 +23,10 @@ int evaluate_board(Board * board){
     uint64_t rooks    = board->pieceBitBoards[3];
     uint64_t queens   = board->pieceBitBoards[4];
     
-    uint64_t whitePawn = white & pawns;
-    uint64_t blackPawn = black & pawns;
+    uint64_t whitePawns = white & pawns;
+    uint64_t blackPawns = black & pawns;
+    uint64_t whiteRooks = white & rooks;
+    uint64_t blackRooks = black & rooks;
     
     // Check for recognized draws. This includes the most basic
     // King versus King endgame, as well as impossible mates with
@@ -71,23 +74,23 @@ int evaluate_board(Board * board){
     uint64_t whiteRook = white & rooks;
     uint64_t blackRook = black & rooks;
     
-    uint64_t wa = whitePawn & FILE_A;
-    uint64_t wb = whitePawn & FILE_B;
-    uint64_t wc = whitePawn & FILE_C;
-    uint64_t wd = whitePawn & FILE_D;
-    uint64_t we = whitePawn & FILE_E;
-    uint64_t wf = whitePawn & FILE_F;
-    uint64_t wg = whitePawn & FILE_G;
-    uint64_t wh = whitePawn & FILE_H;
+    uint64_t wa = whitePawns & FILE_A;
+    uint64_t wb = whitePawns & FILE_B;
+    uint64_t wc = whitePawns & FILE_C;
+    uint64_t wd = whitePawns & FILE_D;
+    uint64_t we = whitePawns & FILE_E;
+    uint64_t wf = whitePawns & FILE_F;
+    uint64_t wg = whitePawns & FILE_G;
+    uint64_t wh = whitePawns & FILE_H;
     
-    uint64_t ba = blackPawn & FILE_A;
-    uint64_t bb = blackPawn & FILE_B;
-    uint64_t bc = blackPawn & FILE_C;
-    uint64_t bd = blackPawn & FILE_D;
-    uint64_t be = blackPawn & FILE_E;
-    uint64_t bf = blackPawn & FILE_F;
-    uint64_t bg = blackPawn & FILE_G;
-    uint64_t bh = blackPawn & FILE_H;
+    uint64_t ba = blackPawns & FILE_A;
+    uint64_t bb = blackPawns & FILE_B;
+    uint64_t bc = blackPawns & FILE_C;
+    uint64_t bd = blackPawns & FILE_D;
+    uint64_t be = blackPawns & FILE_E;
+    uint64_t bf = blackPawns & FILE_F;
+    uint64_t bg = blackPawns & FILE_G;
+    uint64_t bh = blackPawns & FILE_H;
     
     value -= PAWN_STACKED_PENALTY * (
         ((wa & (wa-1)) != 0) + ((wb & (wb-1)) != 0) + 
@@ -102,20 +105,20 @@ int evaluate_board(Board * board){
     );
     
     value -= PAWN_ISOLATED_PENALTY * (
-        (wa && !wb)        + (wb && !wa && !wc) +
+        /*(wa && !wb)*/    + (wb && !wa && !wc) +
         (wc && !wb && !wd) + (wd && !wc && !we) +
         (we && !wd && !wf) + (wf && !we && !wg) +
-        (wg && !wf && !wh) + (wh && !wg)        -
+        (wg && !wf && !wh) + /*(wh && !wg)*/    -
         
-        (ba && !bb)        - (bb && !ba && !bc) -
+        /*(ba && !bb)*/    - (bb && !ba && !bc) -
         (bc && !bb && !bd) - (bd && !bc && !be) -
         (be && !bd && !bf) - (bf && !be && !bg) -
-        (bg && !bf && !bh) - (bh && !bg)
+        (bg && !bf && !bh) /*- (bh && !bg)*/
     );
     
     value += PAWN_7TH_RANK_VALUE * (
-        count_set_bits(whitePawn & RANK_7) -
-        count_set_bits(blackPawn & RANK_2)
+        count_set_bits(whitePawns & RANK_7) -
+        count_set_bits(blackPawns & RANK_2)
     );
     
     value += ROOK_7TH_RANK_VALUE * (
@@ -127,6 +130,51 @@ int evaluate_board(Board * board){
         count_set_bits(whiteRook & RANK_8) - 
         count_set_bits(blackRook & RANK_1) 
     );
+    
+    uint64_t whiteKnights = white & knights;
+    while (whiteKnights != 0){
+		int lsb = get_lsb(whiteKnights);
+		whiteKnights ^= 1ull << lsb;
+		uint64_t targets = KnightMap[lsb];
+		
+		value += KNIGHT_ATTACK_VALUE * count_set_bits(targets & black);
+		value += KNIGHT_DEFEND_VALUE * count_set_bits(targets & white);
+	}
+	
+	uint64_t blackKnights = black & knights;
+    while (blackKnights != 0){
+		int lsb = get_lsb(blackKnights);
+		blackKnights ^= 1ull << lsb;
+		uint64_t targets = KnightMap[lsb];
+		
+		value -= KNIGHT_ATTACK_VALUE * count_set_bits(targets & white);
+		value -= KNIGHT_DEFEND_VALUE * count_set_bits(targets & black);
+	}
+	
+	value += PAWN_DEFEND_PAWN_VALUE * (
+		count_set_bits(((whitePawns << 7) & ~FILE_A) & whitePawns) +
+		count_set_bits(((whitePawns << 9) & ~FILE_H) & whitePawns) +
+		
+		count_set_bits(((blackPawns >> 7) & ~FILE_H) & blackPawns) -
+	    count_set_bits(((blackPawns >> 9) & ~FILE_A) & blackPawns)
+	);
+	
+	if (count_set_bits(whiteRooks) == 2){
+		int r1 = get_lsb(whiteRooks);
+		int r2 = get_lsb(whiteRooks ^ (1ull << r1));
+		
+		if (r1 % 8 == r2 % 8)
+			value += ROOK_ON_SAME_FILE_VALUE;
+	}
+	
+	if (count_set_bits(blackRooks) == 2){
+		int r1 = get_lsb(blackRooks);
+		int r2 = get_lsb(blackRooks ^ (1ull << r1));
+		
+		if (r1 % 8 == r2 % 8)
+			value -= ROOK_ON_SAME_FILE_VALUE;
+	}
+	
     
     
     if (board->num_pieces > 14)
