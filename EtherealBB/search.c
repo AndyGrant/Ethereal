@@ -76,7 +76,7 @@ uint16_t get_best_move(Board * board, int seconds, int send_results){
         printf(" |\n");
         
         if (send_results){
-            printf("info depth %d score cp %d time %d pv ",depth,value,time(NULL)-StartTime);
+            printf("info depth %d score cp %d time %d pv ",depth,value,(int)(time(NULL)-StartTime));
             print_move(BestMove);
             printf("\n");
         }
@@ -84,7 +84,7 @@ uint16_t get_best_move(Board * board, int seconds, int send_results){
         if (time(NULL) - StartTime > seconds)
             break;
         
-        if (value > evaluate_board(board)){
+        if (value > evaluate_board(board) + 20){
 			if ((time(NULL) - StartTime) * 4 > seconds)
 				break;
 		}
@@ -260,7 +260,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
         else {
 			if (USE_LATE_MOVE_REDUCTIONS){
 				if (table_turn_matches && 
-                    valid > 4 && 
+                    valid > 10 && 
 					depth >= 4 && 
 					!in_check && 
 					MOVE_TYPE(moves[i]) == NormalMove &&
