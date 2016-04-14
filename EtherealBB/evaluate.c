@@ -11,11 +11,12 @@
 #include "piece.h"
 
 int evaluate_board(Board * board){
-    int value = 0;
+    
+    int i, num, mid = 0, end = 0;
+    int curPhase, mid_eval, end_eval, eval;
     
     uint64_t white    = board->colourBitBoards[ColourWhite];
     uint64_t black    = board->colourBitBoards[ColourBlack];
-    uint64_t empty    = ~ (white | black);
     
     uint64_t pawns    = board->pieceBitBoards[0];
     uint64_t knights  = board->pieceBitBoards[1];
@@ -23,19 +24,7 @@ int evaluate_board(Board * board){
     uint64_t rooks    = board->pieceBitBoards[3];
     uint64_t queens   = board->pieceBitBoards[4];
     
-    uint64_t whitePawns = white & pawns;
-    uint64_t blackPawns = black & pawns;
-    uint64_t whiteRooks = white & rooks;
-    uint64_t blackRooks = black & rooks;
-    
-    // Check for recognized draws. This includes the most basic
-    // King versus King endgame, as well as impossible mates with
-    // only a knight, or only a bishop, versus a sole king. Also,
-    // Situations like K+B+N v K in which mate is possible, but not 
-    // forced. Finally, the similar situation of K+2N in which mate
-    // cannot be forced. This check does not find sitations where
-    // one side has two bishops, but both on the same colour, which
-    // would result in a draw, and also dead-lock situations
+    // Check for Recognized Draws
     if (pawns == 0 && rooks == 0 && queens == 0){
         
         // K v K
@@ -71,87 +60,180 @@ int evaluate_board(Board * board){
             return 0;
     }
     
-    uint64_t whiteRook = white & rooks;
-    uint64_t blackRook = black & rooks;
+    uint64_t whitePawns = white & pawns;
+    uint64_t blackPawns = black & pawns;
     
-    uint64_t wa = whitePawns & FILE_A;
-    uint64_t wb = whitePawns & FILE_B;
-    uint64_t wc = whitePawns & FILE_C;
-    uint64_t wd = whitePawns & FILE_D;
-    uint64_t we = whitePawns & FILE_E;
-    uint64_t wf = whitePawns & FILE_F;
-    uint64_t wg = whitePawns & FILE_G;
-    uint64_t wh = whitePawns & FILE_H;
+    uint64_t whiteBishops = white & bishops;
+    uint64_t blackBishops = black & bishops;
     
-    uint64_t ba = blackPawns & FILE_A;
-    uint64_t bb = blackPawns & FILE_B;
-    uint64_t bc = blackPawns & FILE_C;
-    uint64_t bd = blackPawns & FILE_D;
-    uint64_t be = blackPawns & FILE_E;
-    uint64_t bf = blackPawns & FILE_F;
-    uint64_t bg = blackPawns & FILE_G;
-    uint64_t bh = blackPawns & FILE_H;
+    uint64_t whiteRooks = white & rooks;
+    uint64_t blackRooks = black & rooks;
     
-    value -= PAWN_STACKED_PENALTY * (
-        ((wa & (wa-1)) != 0) + ((wb & (wb-1)) != 0) + 
-        ((wc & (wc-1)) != 0) + ((wd & (wd-1)) != 0) +
-        ((we & (we-1)) != 0) + ((wf & (wf-1)) != 0) +
-        ((wg & (wg-1)) != 0) + ((wh & (wh-1)) != 0) -
+    uint64_t wa = whitePawns & FILE_A, wb = whitePawns & FILE_B;
+    uint64_t wc = whitePawns & FILE_C, wd = whitePawns & FILE_D;
+    uint64_t we = whitePawns & FILE_E, wf = whitePawns & FILE_F;
+    uint64_t wg = whitePawns & FILE_G, wh = whitePawns & FILE_H;
+    
+    uint64_t ba = blackPawns & FILE_A, bb = blackPawns & FILE_B;
+    uint64_t bc = blackPawns & FILE_C, bd = blackPawns & FILE_D;
+    uint64_t be = blackPawns & FILE_E, bf = blackPawns & FILE_F;
+    uint64_t bg = blackPawns & FILE_G, bh = blackPawns & FILE_H;
+    
+    
+    
+    // STACKED PAWNS
+    if ((wa & (wa-1)) != 0){ mid -=  5; end -= 14;}
+    if ((wb & (wb-1)) != 0){ mid -=  9; end -= 21;} 
+    if ((wc & (wc-1)) != 0){ mid -= 11; end -= 21;}
+    if ((wd & (wd-1)) != 0){ mid -= 11; end -= 21;}
+    if ((we & (we-1)) != 0){ mid -= 11; end -= 21;} 
+    if ((wf & (wf-1)) != 0){ mid -= 11; end -= 21;}
+    if ((wg & (wg-1)) != 0){ mid -=  9; end -= 21;} 
+    if ((wh & (wh-1)) != 0){ mid -=  5; end -= 14;}
+    
+    if ((ba & (ba-1)) != 0){ mid +=  5; end += 14;}
+    if ((bb & (bb-1)) != 0){ mid +=  9; end += 21;} 
+    if ((bc & (bc-1)) != 0){ mid += 11; end += 21;}
+    if ((bd & (bd-1)) != 0){ mid += 11; end += 21;}
+    if ((be & (be-1)) != 0){ mid += 11; end += 21;}
+    if ((bf & (bf-1)) != 0){ mid += 11; end += 21;}
+    if ((bg & (bg-1)) != 0){ mid +=  9; end += 21;}
+    if ((bh & (bh-1)) != 0){ mid +=  5; end += 14;}
+    
+    
+    // ISOLATED PAWNS
+    if (wa && !wb       ){ mid -= 14; end -= 10;}       
+    if (wb && !wa && !wc){ mid -= 21; end -= 13;}
+    if (wc && !wb && !wd){ mid -= 27; end -= 16;}
+    if (wd && !wc && !we){ mid -= 27; end -= 16;}
+    if (we && !wd && !wf){ mid -= 27; end -= 16;}
+    if (wf && !we && !wg){ mid -= 27; end -= 16;}
+    if (wg && !wf && !wh){ mid -= 21; end -= 13;}
+    if (wh && !wg       ){ mid -= 14; end -= 10;}       
+    
+    if (ba && !bb       ){ mid += 14; end += 10;}       
+    if (bb && !ba && !bc){ mid += 21; end += 13;}
+    if (bc && !bb && !bd){ mid += 27; end += 16;}
+    if (bd && !bc && !be){ mid += 27; end += 16;}
+    if (be && !bd && !bf){ mid += 27; end += 16;}
+    if (bf && !be && !bg){ mid += 27; end += 16;}
+    if (bg && !bf && !bh){ mid += 21; end += 13;}
+    if (bh && !bg       ){ mid += 14; end += 10;}
+    ;
+    
+    /* PASSED PAWNS */
+    /* BACKWARDS PAWNS */    
+    
+    
+    int wrooks[16], brooks[16];
+    get_set_bits(whiteRooks, wrooks);
+    get_set_bits(blackRooks, brooks);
+    
+    for (i = 0; wrooks[i] != -1; i++){
         
-        ((ba & (ba-1)) != 0) - ((bb & (bb-1)) != 0) - 
-        ((bc & (bc-1)) != 0) - ((bd & (bd-1)) != 0) -
-        ((be & (be-1)) != 0) - ((bf & (bf-1)) != 0) -
-        ((bg & (bg-1)) != 0) - ((bh & (bh-1)) != 0)
-    );
-    
-    value -= PAWN_ISOLATED_PENALTY * (
-        /*(wa && !wb)*/    + (wb && !wa && !wc) +
-        (wc && !wb && !wd) + (wd && !wc && !we) +
-        (we && !wd && !wf) + (wf && !we && !wg) +
-        (wg && !wf && !wh) + /*(wh && !wg)*/    -
+        // Rooks Open File and Semi Open file
+        if (whitePawns & FILES[wrooks[i] % 8] == 0){
+            if (blackPawns & FILES[wrooks[i] % 8] == 0){
+                mid += 35;
+                end += 20;
+            }
+            else{
+                mid += 35;
+                end += 20;
+            }
+        }
         
-        /*(ba && !bb)*/    - (bb && !ba && !bc) -
-        (bc && !bb && !bd) - (bd && !bc && !be) -
-        (be && !bd && !bf) - (bf && !be && !bg) -
-        (bg && !bf && !bh) /*- (bh && !bg)*/
-    );
+        // Rook on 7th
+        if ((wrooks[i] >> 3) == 6){
+            mid += 25;
+            end += 37;
+        }
+    }
     
-    value += PAWN_7TH_RANK_VALUE * (
-        count_set_bits(whitePawns & RANK_7) -
-        count_set_bits(blackPawns & RANK_2)
-    );
-    
-    value += ROOK_7TH_RANK_VALUE * (
-        count_set_bits(whiteRook & RANK_7) - 
-        count_set_bits(blackRook & RANK_2) 
-    );
-    
-    value += ROOK_8TH_RANK_VALUE * (
-        count_set_bits(whiteRook & RANK_8) - 
-        count_set_bits(blackRook & RANK_1) 
-    );
-	
-	if (count_set_bits(whiteRooks) == 2){
-		int r1 = get_lsb(whiteRooks);
-		int r2 = get_lsb(whiteRooks ^ (1ull << r1));
-		
-		if (r1 % 8 == r2 % 8)
-			value += ROOK_ON_SAME_FILE_VALUE;
-	}
-	
-	if (count_set_bits(blackRooks) == 2){
-		int r1 = get_lsb(blackRooks);
-		int r2 = get_lsb(blackRooks ^ (1ull << r1));
-		
-		if (r1 % 8 == r2 % 8)
-			value -= ROOK_ON_SAME_FILE_VALUE;
-	}
-	
+    for (i = 0; brooks[i] != -1; i++){
+        
+        // Rooks Open File and Semi Open file
+        if (blackPawns & FILES[brooks[i] % 8] == 0){
+            if (whitePawns & FILES[brooks[i] % 8] == 0){
+                mid -= 35;
+                end -= 20;
+            }
+            else{
+                mid -= 35;
+                end -= 20;
+            }
+        }
+        
+        // Rook on 7th
+        if ((brooks[i] >> 3) == 1){
+            mid -= 25;
+            end -= 37;
+        }
+    }
     
     
-    if (board->num_pieces > 14)
-        return board->turn == ColourWhite ? board->opening + value : -board->opening - value;
-    else
-        return board->turn == ColourWhite ? board->endgame + value : -board->endgame - value;
+    int wbishops[16], bbishops[16];
+    get_set_bits(whiteBishops, wbishops);
+    get_set_bits(blackBishops, bbishops);
     
+    // Bishop Pair
+    if (wbishops[0] != -1 && wbishops[1] != -1){
+        mid += 35;
+        end += 55;
+    }
+    if (bbishops[0] != -1 && bbishops[1] != -1){
+        mid -= 35;
+        end -= 55;
+    }
+    
+    // Bishop has Pawn Wings
+    if (whiteBishops != 0 && 
+       (whitePawns & (FILE_A|FILE_B|FILE_C)) != 0 &&
+       (whitePawns & (FILE_F|FILE_G|FILE_H)) != 0){
+       
+       mid += 16;
+       end += 32;
+    }
+       
+    if (blackBishops != 0 && 
+       (blackPawns & (FILE_A|FILE_B|FILE_C)) != 0 &&
+       (blackPawns & (FILE_F|FILE_G|FILE_H)) != 0){
+           
+       mid -= 16;
+       end -= 32;
+    }
+       
+       
+    // Lone bishop with pawn blocking
+    if (wbishops[0] != -1 && wbishops[1] == -1){
+        if (whiteBishops & WHITE_SQUARES)
+            num = count_set_bits(whitePawns & WHITE_SQUARES);
+        else
+            num = count_set_bits(whitePawns & BLACK_SQUARES);
+        
+        mid -= 4 * num;
+        end -= 7 * num;
+    }
+    
+    if (bbishops[0] != -1 && bbishops[1] == -1){
+        if (blackBishops & WHITE_SQUARES)
+            num = count_set_bits(blackPawns & WHITE_SQUARES);
+        else
+            num = count_set_bits(blackPawns & BLACK_SQUARES);
+        
+        mid += 4 * num;
+        end += 7 * num;
+    }
+    
+    curPhase = 24 - (1 * count_set_bits(knights | bishops))
+                  - (2 * count_set_bits(rooks))
+                  - (4 * count_set_bits(queens));
+    curPhase = (curPhase * 256 + 12) / 24;
+    
+    mid_eval = board->opening + mid;
+    end_eval = board->endgame + end;
+    
+    eval = ((mid_eval * (256 - curPhase)) + (end_eval * curPhase)) / 256;
+    
+    return board->turn == ColourWhite ? eval : -eval;    
 }

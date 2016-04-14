@@ -25,14 +25,6 @@ int USE_INTERNAL_ITERATIVE_DEEPENING = 1;
 int USE_FUTILITY_PRUNING             = 1;
 int USE_LATE_MOVE_REDUCTIONS         = 1;
 
-int IID_FAILURE;
-int IID_SUCCESS;
-int IID_NWASTED;
-
-int NMP_FAILURE;
-int NMP_SUCCESS;
-int NMP_NWASTED;
-
 uint16_t BestMove;
 
 time_t StartTime;
@@ -48,10 +40,6 @@ TranspositionTable Table;
 
 uint16_t get_best_move(Board * board, int seconds, int send_results){
     
-    IID_FAILURE = 0;
-    IID_SUCCESS = 0;
-    IID_NWASTED = 0;
-    
     int value, depth, i, size=0;
     uint16_t PV[MaxHeight];
     
@@ -63,20 +51,25 @@ uint16_t get_best_move(Board * board, int seconds, int send_results){
     
     init_transposition_table(&Table, 24);
     
-    printf("Starting Search.....\n");
-    print_board(board);
-    printf("\n\n");
-    printf("<-----------------SEARCH RESULTS----------------->\n");
-    printf("|  Depth  |  Score  |   Nodes   | Elapsed | Best |\n");
+    if (!send_results){
+        printf("Starting Search.....\n");
+        print_board(board);
+        printf("\n\n");
+        printf("<-----------------SEARCH RESULTS----------------->\n");
+        printf("|  Depth  |  Score  |   Nodes   | Elapsed | Best |\n");
+    }
     
     for (depth = 1; depth < MaxDepth; depth++){
         value = alpha_beta_prune(board,-Mate,Mate,depth,0,PVNODE);
-        printf("|%9d|%9d|%11d|%9d| ",depth,value,NodesSearched,(time(NULL)-StartTime));
-        print_move(BestMove);
-        printf(" |\n");
+        
+        if (!send_results){
+            printf("|%9d|%9d|%11d|%9d| ",depth,value,NodesSearched,(time(NULL)-StartTime));
+            print_move(BestMove);
+            printf(" |\n");
+        }
         
         if (send_results){
-            printf("info depth %d score cp %d time %d pv ",depth,value,(int)(time(NULL)-StartTime));
+            printf("info depth %d score cp %d nodes %d time %d pv ",depth,value,NodesSearched,(int)(time(NULL)-StartTime));
             print_move(BestMove);
             printf("\n");
         }
@@ -95,16 +88,6 @@ uint16_t get_best_move(Board * board, int seconds, int send_results){
     }
     
     dump_transposition_table(&Table);
-    
-    printf("SUCCESS IID %d\n",IID_SUCCESS);
-    printf("FAILURE IID %d\n",IID_FAILURE);
-    printf("NWASTED IID %d\n",IID_NWASTED);
-    
-    printf("FAILURE NMP %d\n",NMP_FAILURE);
-    printf("SUCCESS NMP %d\n",NMP_SUCCESS);
-    printf("NWASTED NMP %d\n",NMP_NWASTED);
-
-
     return BestMove;
 }
 
@@ -179,11 +162,8 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
     if (USE_NULL_MOVE_PRUNING){
 		if (depth > 3 &&
 			board->history[board->move_num] != NoneMove &&
-            node_type != PVNODE &&
 			evaluate_board(board) >= beta + PawnValue &&
 			is_not_in_check(board,board->turn)){
-				
-			int temp = NodesSearched;
 				
 			board->turn = !board->turn;
 			board->history[board->move_num++] = NoneMove;
@@ -191,32 +171,22 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
 			board->move_num -= 1;
 			board->turn = !board->turn;
 				
-			if (eval >= beta){
-				NMP_SUCCESS++;
+			if (eval >= beta)
 				return eval;
-			}
-			
-			NMP_FAILURE++;
-			NMP_NWASTED += NodesSearched - temp;
 		}
 	}
 	
     // Internal Iterative Deepening
     if (USE_INTERNAL_ITERATIVE_DEEPENING){
 		if (depth >= 4 && !table_turn_matches){
-            int temp = NodesSearched;
+
 			value = alpha_beta_prune(board,alpha,beta,depth-3,height,node_type);
 			if (value <= alpha)
 				value = alpha_beta_prune(board,-Mate,beta,depth-3,height,node_type);
 			
 			TranspositionEntry * entry = get_transposition_entry(&Table, board->hash);
-			if (entry != NULL){
-                IID_SUCCESS++;
+			if (entry != NULL)
 				table_move = entry->best_move;
-            } else {
-                IID_NWASTED += NodesSearched - temp;
-                IID_FAILURE++;
-            }
 		}
 	}
     
@@ -233,7 +203,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
 			if (valid >= 1 && depth == 1 && !in_check && MOVE_TYPE(moves[i]) == NormalMove){
 				if (board->squares[MOVE_TO(moves[i])] == Empty){
 					if (opt_value == Mate)
-						opt_value = evaluate_board(board) + 100;
+						opt_value = evaluate_board(board) + 50;
 					
 					value = opt_value;
 					
