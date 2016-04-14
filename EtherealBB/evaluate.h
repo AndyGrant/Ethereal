@@ -5,21 +5,17 @@
 
 #define PawnValue   ( 100)
 #define KnightValue ( 300)
-#define BishopValue ( 310)
+#define BishopValue ( 300)
 #define RookValue   ( 500)
 #define QueenValue  ( 925)
 #define KingValue   (  50)
 
-#define PAWN_STACKED_PENALTY   	( 45)
-#define PAWN_ISOLATED_PENALTY  	( 20)
-#define PAWN_7TH_RANK_VALUE    	( 95)
-	
-#define ROOK_7TH_RANK_VALUE    	( 35)
-#define ROOK_8TH_RANK_VALUE    	( 40)
-#define ROOK_ON_SAME_FILE_VALUE	( 65)
-
 static int PieceValues[8] = {PawnValue, KnightValue, BishopValue, RookValue, QueenValue, KingValue, 0, 0};
 
+static int PAWN_PASSED_VALUES[8] = {0, 0, 0, 2, 7, 15, 23, 0};
+
 int evaluate_board(Board * board);
+int evaluate_board_midgame(Board * board);
+int evaluate_board_endgame(Board * board);
 
 #endif
