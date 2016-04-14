@@ -157,7 +157,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
     
     // Determine 3-Fold Repetition
     int reps = 0;
-    for (i = board->move_num-1; i >= 0; i-=2)
+    for (i = 0; i < board->move_num; i++)
         if (board->history[i] == board->hash)
             reps += 1;    
     if (reps >= 2)
