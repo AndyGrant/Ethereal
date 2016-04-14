@@ -157,7 +157,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
     
     // Determine 3-Fold Repetition
     int reps = 0;
-    for (i = 0; i < board->move_num; i++)
+    for (i = board->move_num-1; i >= 0; i-=2)
         if (board->history[i] == board->hash)
             reps += 1;    
     if (reps >= 2)
@@ -179,7 +179,8 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
     if (USE_NULL_MOVE_PRUNING){
 		if (depth > 3 &&
 			board->history[board->move_num] != NoneMove &&
-			evaluate_board(board) >= beta &&
+            node_type != PVNODE &&
+			evaluate_board(board) >= beta + PawnValue &&
 			is_not_in_check(board,board->turn)){
 				
 			int temp = NodesSearched;
