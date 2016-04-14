@@ -130,34 +130,6 @@ int evaluate_board(Board * board){
         count_set_bits(whiteRook & RANK_8) - 
         count_set_bits(blackRook & RANK_1) 
     );
-    
-    uint64_t whiteKnights = white & knights;
-    while (whiteKnights != 0){
-		int lsb = get_lsb(whiteKnights);
-		whiteKnights ^= 1ull << lsb;
-		uint64_t targets = KnightMap[lsb];
-		
-		value += KNIGHT_ATTACK_VALUE * count_set_bits(targets & black);
-		value += KNIGHT_DEFEND_VALUE * count_set_bits(targets & white);
-	}
-	
-	uint64_t blackKnights = black & knights;
-    while (blackKnights != 0){
-		int lsb = get_lsb(blackKnights);
-		blackKnights ^= 1ull << lsb;
-		uint64_t targets = KnightMap[lsb];
-		
-		value -= KNIGHT_ATTACK_VALUE * count_set_bits(targets & white);
-		value -= KNIGHT_DEFEND_VALUE * count_set_bits(targets & black);
-	}
-	
-	value += PAWN_DEFEND_PAWN_VALUE * (
-		count_set_bits(((whitePawns << 7) & ~FILE_A) & whitePawns) +
-		count_set_bits(((whitePawns << 9) & ~FILE_H) & whitePawns) +
-		
-		count_set_bits(((blackPawns >> 7) & ~FILE_H) & blackPawns) -
-	    count_set_bits(((blackPawns >> 9) & ~FILE_A) & blackPawns)
-	);
 	
 	if (count_set_bits(whiteRooks) == 2){
 		int r1 = get_lsb(whiteRooks);

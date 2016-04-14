@@ -133,7 +133,7 @@ int main(){
 		}
 
 		if (contains(line,"go")){
-			std::cout << "bestmove " << convert_move_to_string(get_best_move(&board,20,1)) << "\n";
+			std::cout << "bestmove " << convert_move_to_string(get_best_move(&board,24,1)) << "\n";
 		}
 
 		if (line == "quit")

@@ -17,11 +17,6 @@
 #define ROOK_7TH_RANK_VALUE    	( 35)
 #define ROOK_8TH_RANK_VALUE    	( 40)
 #define ROOK_ON_SAME_FILE_VALUE	( 65)
-	
-#define KNIGHT_ATTACK_VALUE	   	( 13)
-#define KNIGHT_DEFEND_VALUE	   	(  7)
-	
-#define PAWN_DEFEND_PAWN_VALUE 	(  9)
 
 static int PieceValues[8] = {PawnValue, KnightValue, BishopValue, RookValue, QueenValue, KingValue, 0, 0};
 
