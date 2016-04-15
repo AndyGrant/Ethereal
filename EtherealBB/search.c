@@ -143,11 +143,12 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
 		if (depth > 3 &&
             abs(beta) < Mate - MaxHeight &&
             node_type != PVNODE &&
+            board->history[board->move_num] != NullMove &&
 			evaluate_board(board) >= beta &&
 			is_not_in_check(board,board->turn)){
 				
 			board->turn = !board->turn;
-			board->history[board->move_num++] = NoneMove;
+			board->history[board->move_num++] = NullMove;
 			int eval = -alpha_beta_prune(board,-beta,-beta+1,depth-3,height,ALLNODE);
 			board->move_num -= 1;
 			board->turn = !board->turn;
@@ -193,7 +194,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
             value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1,PVNODE);
         else {
 			if (USE_LATE_MOVE_REDUCTIONS){
-				if (valid > 8 && 
+				if (valid > 8 &&
 					depth >= 4 && 
 					!in_check && 
 					MOVE_TYPE(moves[i]) == NormalMove &&
@@ -337,9 +338,9 @@ void sort_moves(Board * board, uint16_t * moves, int size, int depth, int height
     for (i = 0; i < size; i++){
         value  = 8192 * ( best_move == moves[i]);
         value +=  512 * (   killer1 == moves[i]);
-        value +=  256 * (   killer2 == moves[i]);
+        value +=  512 * (   killer2 == moves[i]);
         value +=  512 * (   killer3 == moves[i]);
-        value +=  256 * (   killer4 == moves[i]);
+        value +=  512 * (   killer4 == moves[i]);
         
         int to_val = PieceValues[PIECE_TYPE(board->squares[MOVE_TO(moves[i])])];
         int from_val = PieceValues[PIECE_TYPE(board->squares[MOVE_FROM(moves[i])])];
