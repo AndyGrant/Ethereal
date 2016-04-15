@@ -82,44 +82,53 @@ int evaluate_board(Board * board){
     
     
     // STACKED PAWNS
-    if ((wa & (wa-1)) != 0){ mid -= 15; end -= 14;}
-    if ((wb & (wb-1)) != 0){ mid -= 19; end -= 31;} 
-    if ((wc & (wc-1)) != 0){ mid -= 21; end -= 31;}
-    if ((wd & (wd-1)) != 0){ mid -= 21; end -= 31;}
-    if ((we & (we-1)) != 0){ mid -= 21; end -= 31;} 
-    if ((wf & (wf-1)) != 0){ mid -= 21; end -= 31;}
-    if ((wg & (wg-1)) != 0){ mid -= 19; end -= 31;} 
-    if ((wh & (wh-1)) != 0){ mid -= 15; end -= 14;}
+    int net_stacked = (
+        ((wa & (wa-1)) != 0) +
+        ((wb & (wb-1)) != 0) +
+        ((wc & (wc-1)) != 0) +
+        ((wd & (wd-1)) != 0) +
+        ((we & (we-1)) != 0) +
+        ((wf & (wf-1)) != 0) +
+        ((wg & (wg-1)) != 0) +
+        ((wh & (wh-1)) != 0) -
     
-    if ((ba & (ba-1)) != 0){ mid += 15; end += 14;}
-    if ((bb & (bb-1)) != 0){ mid += 19; end += 31;} 
-    if ((bc & (bc-1)) != 0){ mid += 21; end += 31;}
-    if ((bd & (bd-1)) != 0){ mid += 21; end += 31;}
-    if ((be & (be-1)) != 0){ mid += 21; end += 31;}
-    if ((bf & (bf-1)) != 0){ mid += 21; end += 31;}
-    if ((bg & (bg-1)) != 0){ mid += 19; end += 31;}
-    if ((bh & (bh-1)) != 0){ mid += 15; end += 14;}
+        ((ba & (ba-1)) != 0) -
+        ((bb & (bb-1)) != 0) -
+        ((bc & (bc-1)) != 0) -
+        ((bd & (bd-1)) != 0) -
+        ((be & (be-1)) != 0) -
+        ((bf & (bf-1)) != 0) -
+        ((bg & (bg-1)) != 0) -
+        ((bh & (bh-1)) != 0)
+    );
+    
+    mid -= net_stacked * PAWN_STACKED_MID;
+    end -= net_stacked * PAWN_STACKED_END;
     
     
     // ISOLATED PAWNS
-    if (wa && !wb       ){ mid -= 14; end -= 10;}       
-    if (wb && !wa && !wc){ mid -= 21; end -= 13;}
-    if (wc && !wb && !wd){ mid -= 27; end -= 16;}
-    if (wd && !wc && !we){ mid -= 27; end -= 16;}
-    if (we && !wd && !wf){ mid -= 27; end -= 16;}
-    if (wf && !we && !wg){ mid -= 27; end -= 16;}
-    if (wg && !wf && !wh){ mid -= 21; end -= 13;}
-    if (wh && !wg       ){ mid -= 14; end -= 10;}       
+    int net_isolated = (
+        (wa && !wb       ) +
+        (wb && !wa && !wc) +
+        (wc && !wb && !wd) +
+        (wd && !wc && !we) +
+        (we && !wd && !wf) +
+        (wf && !we && !wg) +
+        (wg && !wf && !wh) +
+        (wh && !wg       ) -
+        
+        (ba && !bb       ) -
+        (bb && !ba && !bc) -
+        (bc && !bb && !bd) -
+        (bd && !bc && !be) -
+        (be && !bd && !bf) -
+        (bf && !be && !bg) -
+        (bg && !bf && !bh) -
+        (bh && !bg       )
+    );
     
-    if (ba && !bb       ){ mid += 14; end += 10;}       
-    if (bb && !ba && !bc){ mid += 21; end += 13;}
-    if (bc && !bb && !bd){ mid += 27; end += 16;}
-    if (bd && !bc && !be){ mid += 27; end += 16;}
-    if (be && !bd && !bf){ mid += 27; end += 16;}
-    if (bf && !be && !bg){ mid += 27; end += 16;}
-    if (bg && !bf && !bh){ mid += 21; end += 13;}
-    if (bh && !bg       ){ mid += 14; end += 10;}
-    ;
+    mid -= net_isolated * PAWN_ISOLATED_MID;
+    end -= net_isolated * PAWN_ISOLATED_END;
     
     /* PASSED PAWNS */
     /* BACKWARDS PAWNS */    
@@ -134,19 +143,19 @@ int evaluate_board(Board * board){
         // Rooks Open File and Semi Open file
         if (whitePawns & FILES[wrooks[i] % 8] == 0){
             if (blackPawns & FILES[wrooks[i] % 8] == 0){
-                mid += 35;
-                end += 20;
+                mid += ROOK_OPEN_FILE_MID;
+                end += ROOK_OPEN_FILE_END;
             }
             else{
-                mid += 10;
-                end += 10;
+                mid += ROOK_SEMI_FILE_MID;
+                end += ROOK_SEMI_FILE_END;
             }
         }
         
         // Rook on 7th
         if ((wrooks[i] >> 3) == 6){
-            mid += 37;
-            end += 25;
+            mid += ROOK_ON_7TH_MID;
+            end += ROOK_ON_7TH_END;
         }
     }
     
@@ -155,19 +164,19 @@ int evaluate_board(Board * board){
         // Rooks Open File and Semi Open file
         if (blackPawns & FILES[brooks[i] % 8] == 0){
             if (whitePawns & FILES[brooks[i] % 8] == 0){
-                mid -= 35;
-                end -= 20;
+                mid -= ROOK_OPEN_FILE_MID;
+                end -= ROOK_OPEN_FILE_END;
             }
             else{
-                mid -= 10;
-                end -= 10;
+                mid -= ROOK_SEMI_FILE_MID;
+                end -= ROOK_SEMI_FILE_END;
             }
         }
         
         // Rook on 7th
         if ((brooks[i] >> 3) == 1){
-            mid -= 37;
-            end -= 25;
+            mid -= ROOK_ON_7TH_MID;
+            end -= ROOK_ON_7TH_END;
         }
     }
     
@@ -178,12 +187,12 @@ int evaluate_board(Board * board){
     
     // Bishop Pair
     if (wbishops[0] != -1 && wbishops[1] != -1){
-        mid += 18;
-        end += 55;
+        mid += BISHOP_PAIR_MID;
+        end += BISHOP_PAIR_END;
     }
     if (bbishops[0] != -1 && bbishops[1] != -1){
-        mid -= 18;
-        end -= 55;
+        mid -= BISHOP_PAIR_MID;
+        end -= BISHOP_PAIR_END;
     }
     
     // Bishop has Pawn Wings
@@ -191,38 +200,16 @@ int evaluate_board(Board * board){
        (whitePawns & (FILE_A|FILE_B|FILE_C)) != 0 &&
        (whitePawns & (FILE_F|FILE_G|FILE_H)) != 0){
        
-       mid += 11;
-       end += 32;
+       mid += BISHOP_HAS_WINGS_MID;
+       end += BISHOP_HAS_WINGS_END;
     }
        
     if (blackBishops != 0 && 
        (blackPawns & (FILE_A|FILE_B|FILE_C)) != 0 &&
        (blackPawns & (FILE_F|FILE_G|FILE_H)) != 0){
            
-       mid -= 11;
-       end -= 32;
-    }
-       
-       
-    // Lone bishop with pawn blocking
-    if (wbishops[0] != -1 && wbishops[1] == -1){
-        if (whiteBishops & WHITE_SQUARES)
-            num = count_set_bits(whitePawns & WHITE_SQUARES);
-        else
-            num = count_set_bits(whitePawns & BLACK_SQUARES);
-        
-        mid -= 4 * num;
-        end -= 3 * num;
-    }
-    
-    if (bbishops[0] != -1 && bbishops[1] == -1){
-        if (blackBishops & WHITE_SQUARES)
-            num = count_set_bits(blackPawns & WHITE_SQUARES);
-        else
-            num = count_set_bits(blackPawns & BLACK_SQUARES);
-        
-        mid += 4 * num;
-        end += 3 * num;
+       mid -= BISHOP_HAS_WINGS_MID;
+       end -= BISHOP_HAS_WINGS_END;
     }
     
     curPhase = 24 - (1 * count_set_bits(knights | bishops))
