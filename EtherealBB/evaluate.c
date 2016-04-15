@@ -82,23 +82,23 @@ int evaluate_board(Board * board){
     
     
     // STACKED PAWNS
-    if ((wa & (wa-1)) != 0){ mid -=  5; end -= 14;}
-    if ((wb & (wb-1)) != 0){ mid -=  9; end -= 21;} 
-    if ((wc & (wc-1)) != 0){ mid -= 11; end -= 21;}
-    if ((wd & (wd-1)) != 0){ mid -= 11; end -= 21;}
-    if ((we & (we-1)) != 0){ mid -= 11; end -= 21;} 
-    if ((wf & (wf-1)) != 0){ mid -= 11; end -= 21;}
-    if ((wg & (wg-1)) != 0){ mid -=  9; end -= 21;} 
-    if ((wh & (wh-1)) != 0){ mid -=  5; end -= 14;}
+    if ((wa & (wa-1)) != 0){ mid -= 15; end -= 14;}
+    if ((wb & (wb-1)) != 0){ mid -= 19; end -= 31;} 
+    if ((wc & (wc-1)) != 0){ mid -= 21; end -= 31;}
+    if ((wd & (wd-1)) != 0){ mid -= 21; end -= 31;}
+    if ((we & (we-1)) != 0){ mid -= 21; end -= 31;} 
+    if ((wf & (wf-1)) != 0){ mid -= 21; end -= 31;}
+    if ((wg & (wg-1)) != 0){ mid -= 19; end -= 31;} 
+    if ((wh & (wh-1)) != 0){ mid -= 15; end -= 14;}
     
-    if ((ba & (ba-1)) != 0){ mid +=  5; end += 14;}
-    if ((bb & (bb-1)) != 0){ mid +=  9; end += 21;} 
-    if ((bc & (bc-1)) != 0){ mid += 11; end += 21;}
-    if ((bd & (bd-1)) != 0){ mid += 11; end += 21;}
-    if ((be & (be-1)) != 0){ mid += 11; end += 21;}
-    if ((bf & (bf-1)) != 0){ mid += 11; end += 21;}
-    if ((bg & (bg-1)) != 0){ mid +=  9; end += 21;}
-    if ((bh & (bh-1)) != 0){ mid +=  5; end += 14;}
+    if ((ba & (ba-1)) != 0){ mid += 15; end += 14;}
+    if ((bb & (bb-1)) != 0){ mid += 19; end += 31;} 
+    if ((bc & (bc-1)) != 0){ mid += 21; end += 31;}
+    if ((bd & (bd-1)) != 0){ mid += 21; end += 31;}
+    if ((be & (be-1)) != 0){ mid += 21; end += 31;}
+    if ((bf & (bf-1)) != 0){ mid += 21; end += 31;}
+    if ((bg & (bg-1)) != 0){ mid += 19; end += 31;}
+    if ((bh & (bh-1)) != 0){ mid += 15; end += 14;}
     
     
     // ISOLATED PAWNS
@@ -138,15 +138,15 @@ int evaluate_board(Board * board){
                 end += 20;
             }
             else{
-                mid += 35;
-                end += 20;
+                mid += 10;
+                end += 10;
             }
         }
         
         // Rook on 7th
         if ((wrooks[i] >> 3) == 6){
-            mid += 25;
-            end += 37;
+            mid += 37;
+            end += 25;
         }
     }
     
@@ -159,15 +159,15 @@ int evaluate_board(Board * board){
                 end -= 20;
             }
             else{
-                mid -= 35;
-                end -= 20;
+                mid -= 10;
+                end -= 10;
             }
         }
         
         // Rook on 7th
         if ((brooks[i] >> 3) == 1){
-            mid -= 25;
-            end -= 37;
+            mid -= 37;
+            end -= 25;
         }
     }
     
@@ -178,11 +178,11 @@ int evaluate_board(Board * board){
     
     // Bishop Pair
     if (wbishops[0] != -1 && wbishops[1] != -1){
-        mid += 35;
+        mid += 18;
         end += 55;
     }
     if (bbishops[0] != -1 && bbishops[1] != -1){
-        mid -= 35;
+        mid -= 18;
         end -= 55;
     }
     
@@ -191,7 +191,7 @@ int evaluate_board(Board * board){
        (whitePawns & (FILE_A|FILE_B|FILE_C)) != 0 &&
        (whitePawns & (FILE_F|FILE_G|FILE_H)) != 0){
        
-       mid += 16;
+       mid += 11;
        end += 32;
     }
        
@@ -199,7 +199,7 @@ int evaluate_board(Board * board){
        (blackPawns & (FILE_A|FILE_B|FILE_C)) != 0 &&
        (blackPawns & (FILE_F|FILE_G|FILE_H)) != 0){
            
-       mid -= 16;
+       mid -= 11;
        end -= 32;
     }
        
@@ -212,7 +212,7 @@ int evaluate_board(Board * board){
             num = count_set_bits(whitePawns & BLACK_SQUARES);
         
         mid -= 4 * num;
-        end -= 7 * num;
+        end -= 3 * num;
     }
     
     if (bbishops[0] != -1 && bbishops[1] == -1){
@@ -222,7 +222,7 @@ int evaluate_board(Board * board){
             num = count_set_bits(blackPawns & BLACK_SQUARES);
         
         mid += 4 * num;
-        end += 7 * num;
+        end += 3 * num;
     }
     
     curPhase = 24 - (1 * count_set_bits(knights | bishops))
