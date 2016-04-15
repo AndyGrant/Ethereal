@@ -10,7 +10,6 @@
 #include "evaluate.h"
 #include "magics.h"
 #include "piece.h"
-#include "psqt.h"
 #include "search.h"
 #include "transposition.h"
 #include "types.h"
@@ -18,12 +17,6 @@
 #include "movegen.h"
 #include "movegentest.h"
 #include "zorbist.h"
-
-int USE_RAZOR_PRUNING				 = 1;
-int USE_NULL_MOVE_PRUNING            = 1;
-int USE_INTERNAL_ITERATIVE_DEEPENING = 1;
-int USE_FUTILITY_PRUNING             = 1;
-int USE_LATE_MOVE_REDUCTIONS         = 1;
 
 uint16_t BestMove;
 
@@ -51,25 +44,20 @@ uint16_t get_best_move(Board * board, int seconds, int send_results){
     
     init_transposition_table(&Table, 24);
     
-    if (!send_results){
-        printf("Starting Search.....\n");
-        print_board(board);
-        printf("\n\n");
-        printf("<-----------------SEARCH RESULTS----------------->\n");
-        printf("|  Depth  |  Score  |   Nodes   | Elapsed | Best |\n");
-    }
+    printf("Starting Search.....\n");
+    print_board(board);
+    printf("\n\n");
+    printf("<-----------------SEARCH RESULTS----------------->\n");
+    printf("|  Depth  |  Score  |   Nodes   | Elapsed | Best |\n");
     
     for (depth = 1; depth < MaxDepth; depth++){
         value = alpha_beta_prune(board,-Mate,Mate,depth,0,PVNODE);
-        
-        if (!send_results){
-            printf("|%9d|%9d|%11d|%9d| ",depth,value,NodesSearched,(time(NULL)-StartTime));
-            print_move(BestMove);
-            printf(" |\n");
-        }
+        printf("|%9d|%9d|%11d|%9d| ",depth,value,NodesSearched,(time(NULL)-StartTime));
+        print_move(BestMove);
+        printf(" |\n");
         
         if (send_results){
-            printf("info depth %d score cp %d nodes %d time %d pv ",depth,value,NodesSearched,(int)(time(NULL)-StartTime));
+            printf("info depth %d score cp %d time %d pv ",depth,value,time(NULL)-StartTime);
             print_move(BestMove);
             printf("\n");
         }
@@ -77,7 +65,7 @@ uint16_t get_best_move(Board * board, int seconds, int send_results){
         if (time(NULL) - StartTime > seconds)
             break;
         
-        if (value > evaluate_board(board) + 20){
+        if (value > evaluate_board(board)){
 			if ((time(NULL) - StartTime) * 4 > seconds)
 				break;
 		}
@@ -146,23 +134,16 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
     if (reps >= 2)
         return 0;
         
-	// Razor Pruning
-    if (USE_RAZOR_PRUNING){
-		if (depth == 2 && alpha == beta - 1 && board->num_pieces >= 10){
-			if (evaluate_board(board) + 3.1*PawnValue < beta){
-				value = quiescence_search(board,alpha,beta,height);
-				
-				if (value < beta)
-					return value;
-			}
-		}
-	}	
+    int USE_NULL_MOVE_PRUNING            = 1;
+    int USE_INTERNAL_ITERATIVE_DEEPENING = 1;
+    int USE_LATE_MOVE_REDUCTIONS         = 1;
     
     // Null Move Pruning
     if (USE_NULL_MOVE_PRUNING){
 		if (depth > 3 &&
-			board->history[board->move_num] != NoneMove &&
-			evaluate_board(board) >= beta + PawnValue &&
+            abs(beta) < Mate - MaxHeight &&
+            node_type != PVNODE &&
+			evaluate_board(board) >= beta &&
 			is_not_in_check(board,board->turn)){
 				
 			board->turn = !board->turn;
@@ -178,8 +159,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
 	
     // Internal Iterative Deepening
     if (USE_INTERNAL_ITERATIVE_DEEPENING){
-		if (depth >= 4 && !table_turn_matches){
-
+		if (depth >= 3 && !table_turn_matches && node_type == PVNODE){
 			value = alpha_beta_prune(board,alpha,beta,depth-3,height,node_type);
 			if (value <= alpha)
 				value = alpha_beta_prune(board,-Mate,beta,depth-3,height,node_type);
@@ -198,22 +178,6 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
     
     for (i = 0; i < size; i++){
         
-        //Futility Pruning
-        if (USE_FUTILITY_PRUNING){
-			if (valid >= 1 && depth == 1 && !in_check && MOVE_TYPE(moves[i]) == NormalMove){
-				if (board->squares[MOVE_TO(moves[i])] == Empty){
-					if (opt_value == Mate)
-						opt_value = evaluate_board(board) + 50;
-					
-					value = opt_value;
-					
-					if (value <= alpha){
-						continue;
-					}
-				}
-			}
-		}
-        
         apply_move(board,moves[i],undo);
         
         // Ensure move is Legal
@@ -229,8 +193,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
             value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1,PVNODE);
         else {
 			if (USE_LATE_MOVE_REDUCTIONS){
-				if (table_turn_matches && 
-                    valid > 10 && 
+				if (valid > 8 && 
 					depth >= 4 && 
 					!in_check && 
 					MOVE_TYPE(moves[i]) == NormalMove &&
@@ -322,8 +285,16 @@ int quiescence_search(Board * board, int alpha, int beta, int height){
     uint16_t moves[256];
     
     int best = value;
+    
     gen_all_non_quiet(board,moves,&size);
+    
     sort_moves(board,moves,size,0,height,NoneMove);
+    
+    uint64_t enemy = board->colourBitBoards[!board->turn];
+    
+    int in_check = !is_not_in_check(board,board->turn);
+    int initial_alpha = alpha;
+    int opt_value = value + 50;
     
     for(i = 0; i < size; i++){
         apply_move(board,moves[i],undo);
@@ -381,7 +352,6 @@ void sort_moves(Board * board, uint16_t * moves, int size, int depth, int height
         
         if (MOVE_TYPE(moves[i]) == PromotionMove)
             value += 32 << (MOVE_PROMO_TYPE(moves[i]) >> 14);
-        
         values[i] = value;
     }
     
