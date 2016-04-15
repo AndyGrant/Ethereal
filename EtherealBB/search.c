@@ -23,6 +23,8 @@ uint16_t BestMove;
 time_t StartTime;
 time_t EndTime;
 
+int SKIPPED_VALIDATIONS;
+
 long NodesSearched;
 int EvaluatingPlayer;
 
@@ -40,6 +42,7 @@ uint16_t get_best_move(Board * board, int seconds, int send_results){
     EndTime = StartTime + seconds;
     
     NodesSearched = 0;
+    SKIPPED_VALIDATIONS = 0;
     EvaluatingPlayer = board->turn;
     
     init_transposition_table(&Table, 24);
@@ -85,6 +88,7 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
     int initial_alpha = alpha;
     int table_turn_matches = 0;
     int used_table_entry = 0;
+    int values[256];
     uint16_t table_move, best_move, moves[256];
     Undo undo[1];
     
@@ -144,12 +148,12 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
             abs(beta) < Mate - MaxHeight &&
             node_type != PVNODE &&
             board->history[board->move_num] != NullMove &&
-			evaluate_board(board) >= beta &&
-			is_not_in_check(board,board->turn)){
+            is_not_in_check(board,board->turn) &&
+			evaluate_board(board) >= beta){
 				
 			board->turn = !board->turn;
 			board->history[board->move_num++] = NullMove;
-			int eval = -alpha_beta_prune(board,-beta,-beta+1,depth-3,height,ALLNODE);
+			int eval = -alpha_beta_prune(board,-beta,-beta+1,depth-3,height+1,ALLNODE);
 			board->move_num -= 1;
 			board->turn = !board->turn;
 				
@@ -173,17 +177,19 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
     
     // Generate Moves & Sort Moves
     gen_all_moves(board,moves,&size);
-    sort_moves(board,moves,size,depth,height,table_move);
+    heuristic_eval_moves(board,values,moves,size,height,table_move);
     in_check = !is_not_in_check(board,board->turn);
     opt_value = Mate;
     
     for (i = 0; i < size; i++){
         
-        apply_move(board,moves[i],undo);
+        uint16_t cur_move = get_next_move(moves,values,i,size);
+        
+        apply_move(board,cur_move,undo);
         
         // Ensure move is Legal
         if (!is_not_in_check(board,!board->turn)){
-            revert_move(board,moves[i],undo);
+            revert_move(board,cur_move,undo);
             continue;
         }
         
@@ -191,13 +197,13 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
         
         // Principle Variation Search
         if (valid == 1)
-            value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1,PVNODE);
+            value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1,node_type);
         else {
 			if (USE_LATE_MOVE_REDUCTIONS){
 				if (valid > 8 &&
 					depth >= 4 && 
 					!in_check && 
-					MOVE_TYPE(moves[i]) == NormalMove &&
+					MOVE_TYPE(cur_move) == NormalMove &&
 					undo[0].capture_piece == Empty)
 					
 					value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-2,height+1,CUTNODE);
@@ -211,12 +217,12 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
                 value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1,PVNODE);
         }
         
-        revert_move(board,moves[i],undo);
+        revert_move(board,cur_move,undo);
         
         // Update Search Bounds
         if (value > best){              
             best = value;
-            best_move = moves[i];
+            best_move = cur_move;
     
             if (best > alpha){
                 alpha = best;   
@@ -224,14 +230,15 @@ int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, 
         }
         
         if (alpha >= beta){
-            if (undo->capture_piece == Empty || MOVE_TYPE(moves[i]) != NormalMove){
+            if (undo->capture_piece == Empty || MOVE_TYPE(cur_move) != NormalMove){
                 KillerMoves[height][1] = KillerMoves[height][0];
-                KillerMoves[height][0] = moves[i];
+                KillerMoves[height][0] = cur_move;
             } else {
                 KillerCaptures[height][1] = KillerCaptures[height][0];
-                KillerCaptures[height][0] = moves[i];
+                KillerCaptures[height][0] = cur_move;
             }
         
+            SKIPPED_VALIDATIONS += size - i;
             break;
         }
     }
@@ -284,12 +291,13 @@ int quiescence_search(Board * board, int alpha, int beta, int height){
     Undo undo[1];
     int i, size = 0;
     uint16_t moves[256];
+    int values[256];
     
     int best = value;
     
     gen_all_non_quiet(board,moves,&size);
     
-    sort_moves(board,moves,size,0,height,NoneMove);
+    heuristic_eval_moves(board,values,moves,size,height,NoneMove);
     
     uint64_t enemy = board->colourBitBoards[!board->turn];
     
@@ -298,16 +306,18 @@ int quiescence_search(Board * board, int alpha, int beta, int height){
     int opt_value = value + 50;
     
     for(i = 0; i < size; i++){
-        apply_move(board,moves[i],undo);
+        
+        uint16_t cur_move = get_next_move(moves,values,i,size);
+        apply_move(board,cur_move,undo);
         
         if (!is_not_in_check(board,!board->turn)){
-            revert_move(board,moves[i],undo);
+            revert_move(board,cur_move,undo);
             continue;
         }
         
         value = -quiescence_search(board,-beta,-alpha,height+1);
         
-        revert_move(board,moves[i],undo);
+        revert_move(board,cur_move,undo);
         
         if (value > best)
             best = value;
@@ -315,7 +325,7 @@ int quiescence_search(Board * board, int alpha, int beta, int height){
             alpha = best;
         if (alpha > beta){
             KillerCaptures[height][1] = KillerCaptures[height][0];
-            KillerCaptures[height][0] = moves[i];
+            KillerCaptures[height][0] = cur_move;
             break;
         }
     }
@@ -323,12 +333,8 @@ int quiescence_search(Board * board, int alpha, int beta, int height){
     return best;
 }
 
-void sort_moves(Board * board, uint16_t * moves, int size, int depth, int height, uint16_t best_move){
-    int values[size], value;
-    int i, j;
-    
-    int temp_value;
-    uint16_t temp_move;
+void heuristic_eval_moves(Board * board, int * values, uint16_t * moves, int size, int height, uint16_t best_move){
+    int i, value;
     
     uint16_t killer1 = KillerMoves[height][0];
     uint16_t killer2 = KillerMoves[height][1];
@@ -355,19 +361,16 @@ void sort_moves(Board * board, uint16_t * moves, int size, int depth, int height
             value += 32 << (MOVE_PROMO_TYPE(moves[i]) >> 14);
         values[i] = value;
     }
+}
+
+uint16_t get_next_move(uint16_t * moves, int * values, int index, int size){
+    int i, best_index = 0;
     
-    for (i = 0; i < size; i++){
-        for (j = i + 1; j < size; j++){
-            if (values[j] > values[i]){
-                temp_value = values[j];
-                temp_move = moves[j];
-                
-                values[j] = values[i];
-                moves[j] = moves[i];
-                
-                values[i] = temp_value;
-                moves[i] = temp_move;
-            }
-        }
-    }
+    for (i = 1; i < size; i++)
+        if (values[i] > values[best_index])
+            best_index = i;
+        
+    values[best_index] = -3 * Mate;
+   
+    return moves[best_index];
 }
