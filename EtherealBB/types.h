@@ -89,7 +89,7 @@ typedef struct TranspositionTable {
 typedef struct MoveList {
     uint16_t moves[256];
     int values[256];
-    int nodes[256];
+    uint16_t bestMove;
     int size;
     
 } MoveList;

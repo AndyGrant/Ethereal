@@ -23,10 +23,12 @@ int main(){
     
     //init_board(&board,"6k1/pp4b1/b6p/2n2Np1/1PP3R1/8/P2rBPPP/6K1 w - - 1 31");
     
-    init_board(&board,"4k3/3ppp2/8/8/8/8/3PPP2/4K3 w - - 0 1");
-    //init_board(&board,"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w - - 0 1");
+    //init_board(&board,"4k3/3ppp2/8/8/8/8/3PPP2/4K3 w - - 0 1");
+    init_board(&board,"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w - - 0 1");
     //init_board(&board,"1k6/5Q2/1K6/8/8/8/8/8 w - - 0 1");
     
+    // STALEMATE
+    //init_board(&board,"8/1P2R3/7k/3N1K2/8/6P1/8/8 w - - 9 62");
     
     // TEST FOR FINDIND MATES EARLIER   
     //init_board(&board,"8/7p/7P/6p1/8/4kr2/8/4K3 b - - 1 63");

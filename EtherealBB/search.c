@@ -57,18 +57,17 @@ uint16_t get_best_move(Board * board, int seconds, int logging){
         // PERFORM FULL SEARCH ON ROOT
         value = full_search(board,&rootMoveList,depth);
         
-        
-        // LOG RESULTS TO CONSOLE
+        // LOG RESULTS TO INTERFACE
         if (logging){
-            printf("indo depth %d score cp %d time %d nodes %d pv ",depth,value,time(NULL)-StartTime,TotalNodes);
-            print_move(rootMoveList.moves[0]);
+            printf("info depth %d score cp %d time %d nodes %d pv ",depth,value,time(NULL)-StartTime,TotalNodes);
+            print_move(rootMoveList.bestMove);
             printf("\n");
         }
         
-        // LOG RESULTS TO INTERFACE
+        // LOG RESULTS TO CONSOLE
         else {
             printf("|%9d|%9d|%11d|%9d| ",depth,value,TotalNodes,(time(NULL)-StartTime));
-            print_move(rootMoveList.moves[0]);
+            print_move(rootMoveList.bestMove);
             printf(" |\n");
         }
         
@@ -80,7 +79,7 @@ uint16_t get_best_move(Board * board, int seconds, int logging){
     
     dump_transposition_table(&Table);
     
-    return rootMoveList.moves[0];    
+    return rootMoveList.bestMove;    
 }
 
 int full_search(Board * board, MoveList * moveList, int depth){
@@ -135,6 +134,7 @@ int full_search(Board * board, MoveList * moveList, int depth){
         if (value > best){
             best = value;
             bestIndex = i;
+            moveList->bestMove = moveList->moves[i];
             
             // IMPROVED CURRENT LOWER VALUE
             if (value > alpha)
@@ -152,7 +152,7 @@ int full_search(Board * board, MoveList * moveList, int depth){
 }
 
 int search(Board * board, int alpha, int beta, int depth, int height, int node_type){
-    int i, valid, value, size = 0, best=-2*Mate, repeated = 0, newDepth;
+    int i, valid = 0, value, size = 0, best=-2*Mate, repeated = 0, newDepth;
     int oldAlpha = alpha, usedTableEntry = 0, inCheck, values[256];
     uint16_t moves[256], bestMove, currentMove, tableMove = NoneMove;
     TranspositionEntry * entry;
@@ -208,13 +208,15 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
             repeated++;
         
     // 3-FOLD REPITION FOUND
-    if (repeated >= 2)
+    if (repeated >= 2){
         return 0;
+    }
     
     // RAZOR PRUNING
     if (depth <= 2 
+        && node_type != PVNODE
         && alpha == beta - 1
-        && evaluate_board(board) + QueenValue < beta){
+        && evaluate_board(board) + 10 * PawnValue < beta){
         
         value = qsearch(board, alpha, beta, height);
         
@@ -291,9 +293,12 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
         if (valid > 8
             && depth >= 4
             && !inCheck
+            && node_type != PVNODE
+            && (board->squares[MOVE_TO(currentMove)] > 1)
             && MOVE_TYPE(currentMove) != PromotionMove
             && MOVE_TYPE(currentMove) != EnpassMove
-            && undo[0].capture_piece == Empty)
+            && undo[0].capture_piece == Empty
+            && is_not_in_check(board, board->turn))
             newDepth = depth-2;
         else
             newDepth = depth-1;
@@ -409,7 +414,7 @@ int qsearch(Board * board, int alpha, int beta, int height){
         alpha = value;
     
     // BOUNDS NOW OVERLAP?
-    if (alpha > beta)
+    if (alpha >= beta)
         return value;
     
     // INCREMENT TOTAL NODE COUNTER
