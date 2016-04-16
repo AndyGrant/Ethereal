@@ -18,314 +18,420 @@
 #include "movegentest.h"
 #include "zorbist.h"
 
-uint16_t BestMove;
-
 time_t StartTime;
 time_t EndTime;
 
-int SKIPPED_VALIDATIONS;
+int TotalNodes;
 
-long NodesSearched;
 int EvaluatingPlayer;
 
-uint16_t KillerMoves[MaxHeight][2];
-uint16_t KillerCaptures[MaxHeight][2];
+uint16_t KillerMoves[MaxHeight][3];
+uint16_t KillerCaptures[MaxHeight][3];
 
 TranspositionTable Table;
 
-uint16_t get_best_move(Board * board, int seconds, int send_results){
+
+uint16_t get_best_move(Board * board, int seconds, int logging){
     
-    int value, depth, i, size=0;
-    uint16_t PV[MaxHeight];
-    
+    // INITALIZE SEARCH GLOBALS
     StartTime = time(NULL);
     EndTime = StartTime + seconds;
-    
-    NodesSearched = 0;
-    SKIPPED_VALIDATIONS = 0;
+    TotalNodes = 0;    
     EvaluatingPlayer = board->turn;
-    
     init_transposition_table(&Table, 24);
     
-    printf("Starting Search.....\n");
-    print_board(board);
-    printf("\n\n");
-    printf("<-----------------SEARCH RESULTS----------------->\n");
-    printf("|  Depth  |  Score  |   Nodes   | Elapsed | Best |\n");
+    // POPULATE ROOT'S MOVELIST
+    MoveList rootMoveList;
+    rootMoveList.size = 0;
+    gen_all_moves(board,rootMoveList.moves,&(rootMoveList.size));
     
+    // PRINT SEARCH DATA TABLE HEADER TO CONSOLE
+    if (!logging){
+        print_board(board);
+        printf("|  Depth  |  Score  |   Nodes   | Elapsed | Best |\n");
+    }
+    
+    int depth, value;
     for (depth = 1; depth < MaxDepth; depth++){
-        value = alpha_beta_prune(board,-Mate,Mate,depth,0,PVNODE);
-        printf("|%9d|%9d|%11d|%9d| ",depth,value,NodesSearched,(time(NULL)-StartTime));
-        print_move(BestMove);
-        printf(" |\n");
         
-        if (send_results){
-            printf("info depth %d score cp %d time %d pv ",depth,value,time(NULL)-StartTime);
-            print_move(BestMove);
+        // PERFORM FULL SEARCH ON ROOT
+        value = full_search(board,&rootMoveList,depth);
+        
+        
+        // LOG RESULTS TO CONSOLE
+        if (logging){
+            printf("indo depth %d score cp %d time %d nodes %d pv ",depth,value,time(NULL)-StartTime,TotalNodes);
+            print_move(rootMoveList.moves[0]);
             printf("\n");
         }
         
-        if (time(NULL) - StartTime > seconds)
-            break;
+        // LOG RESULTS TO INTERFACE
+        else {
+            printf("|%9d|%9d|%11d|%9d| ",depth,value,TotalNodes,(time(NULL)-StartTime));
+            print_move(rootMoveList.moves[0]);
+            printf(" |\n");
+        }
         
-        if (value > evaluate_board(board)){
-			if ((time(NULL) - StartTime) * 4 > seconds)
-				break;
-		}
-		else {
-			if ((time(NULL) - StartTime) * 3 > seconds)
-				break;
-		}
+        // END THE SEARCH IF THE NEXT DEPTH IS EXPECTED
+        // TO TAKE LONGER THAN THE TOTAL ALLOTED TIME
+        if ((time(NULL) - StartTime) * 3 > seconds)
+            break;        
     }
     
     dump_transposition_table(&Table);
-    return BestMove;
+    
+    return rootMoveList.moves[0];    
 }
 
-int alpha_beta_prune(Board * board, int alpha, int beta, int depth, int height, int node_type){
-    int i, value, valid = 0, size = 0, best = -2*Mate;
-    int in_check, opt_value;
-    int initial_alpha = alpha;
-    int table_turn_matches = 0;
-    int used_table_entry = 0;
-    int values[256];
-    uint16_t table_move, best_move, moves[256];
+int full_search(Board * board, MoveList * moveList, int depth){
+    
+    int alpha = -2*Mate, beta = 2*Mate;
+    int i, valid, best =-2*Mate, value;
+    int currentNodes;
     Undo undo[1];
     
-    // Alloted Time has Expired
-    if (EndTime < time(NULL))
-        return board->turn == EvaluatingPlayer ? -Mate : Mate;
-    
-    // Max Depth Reached
-    if (depth == 0)
-        return quiescence_search(board,alpha,beta,height);
-    
-    // Max Height Reached
-    if (height >= MaxHeight)
-        return quiescence_search(board,alpha,beta,height);
-    
-    // Updated Node Counter
-    NodesSearched += 1;
-    
-    // Perform Transposition Table Lookup
-    TranspositionEntry * entry = get_transposition_entry(&Table, board->hash);
-    if (entry != NULL){
-        table_move = entry->best_move;
+    int bestIndex;
+   
+    for (i = 0; i < moveList->size; i++){
         
-        if (board->turn == entry->turn)
-            table_turn_matches = 1;
+        currentNodes = TotalNodes;
         
-        if (entry->depth >= depth && board->turn == entry->turn){
-            if (entry->type == PVNODE)
-                return entry->value;
-            else if (entry->type == CUTNODE && entry->value > alpha)
-                alpha = entry->value;
-            else if (entry->type == ALLNODE && entry->value < beta)
-                beta = entry->value;
-            
-            if (alpha >= beta)
-                return entry->value;
-            
-            used_table_entry = 1;
-        }       
-    }
-    
-    // Determine 3-Fold Repetition
-    int reps = 0;
-    for (i = 0; i < board->move_num; i++)
-        if (board->history[i] == board->hash)
-            reps += 1;    
-    if (reps >= 2)
-        return 0;
-        
-    int USE_NULL_MOVE_PRUNING            = 1;
-    int USE_INTERNAL_ITERATIVE_DEEPENING = 1;
-    int USE_LATE_MOVE_REDUCTIONS         = 1;
-    
-    // Null Move Pruning
-    if (USE_NULL_MOVE_PRUNING){
-		if (depth > 3 &&
-            abs(beta) < Mate - MaxHeight &&
-            node_type != PVNODE &&
-            board->history[board->move_num] != NullMove &&
-            is_not_in_check(board,board->turn) &&
-			evaluate_board(board) >= beta){
-				
-			board->turn = !board->turn;
-			board->history[board->move_num++] = NullMove;
-			int eval = -alpha_beta_prune(board,-beta,-beta+1,depth-3,height+1,ALLNODE);
-			board->move_num -= 1;
-			board->turn = !board->turn;
-				
-			if (eval >= beta)
-				return eval;
-		}
-	}
-	
-    // Internal Iterative Deepening
-    if (USE_INTERNAL_ITERATIVE_DEEPENING){
-		if (depth >= 3 && !table_turn_matches && node_type == PVNODE){
-			value = alpha_beta_prune(board,alpha,beta,depth-3,height,node_type);
-			if (value <= alpha)
-				value = alpha_beta_prune(board,-Mate,beta,depth-3,height,node_type);
-			
-			TranspositionEntry * entry = get_transposition_entry(&Table, board->hash);
-			if (entry != NULL)
-				table_move = entry->best_move;
-		}
-	}
-    
-    // Generate Moves & Sort Moves
-    gen_all_moves(board,moves,&size);
-    heuristic_eval_moves(board,values,moves,size,height,table_move);
-    in_check = !is_not_in_check(board,board->turn);
-    opt_value = Mate;
-    
-    for (i = 0; i < size; i++){
-        
-        uint16_t cur_move = get_next_move(moves,values,i,size);
-        
-        apply_move(board,cur_move,undo);
-        
-        // Ensure move is Legal
-        if (!is_not_in_check(board,!board->turn)){
-            revert_move(board,cur_move,undo);
+        // APPLY AND VALIDATE MOVE BEFORE SEARCHING
+        apply_move(board, moveList->moves[i], undo);
+        if (!is_not_in_check(board, !board->turn)){
+            revert_move(board, moveList->moves[i], undo);
+            moveList->values[i] = -6 * Mate;
             continue;
         }
         
+        // INCREMENT COUNTER OF VALID MOVES FOUND
         valid++;
         
-        // Principle Variation Search
+        // FULL WINDOW SEARCH ON FIRST MOVE
         if (valid == 1)
-            value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1,node_type);
-        else {
-			if (USE_LATE_MOVE_REDUCTIONS){
-				if (valid > 8 &&
-					depth >= 4 && 
-					!in_check && 
-					MOVE_TYPE(cur_move) == NormalMove &&
-					undo[0].capture_piece == Empty)
-					
-					value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-2,height+1,CUTNODE);
-				else
-					value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-1,height+1,CUTNODE);
-			} else {
-				value = -alpha_beta_prune(board,-alpha-1,-alpha,depth-1,height+1,CUTNODE);
-			}
+            value = -search(board, -beta, -alpha, depth-1, 1, PVNODE);
+        
+        // NULL WINDOW SEARCH ON NON-FIRST MOVES
+        else{
+            value = -search(board, -alpha-1, -alpha, depth-1, 1, CUTNODE);
             
+            // NULL WINDOW FAILED HIGH, RESEARCH
             if (value > alpha)
-                value = -alpha_beta_prune(board,-beta,-alpha,depth-1,height+1,PVNODE);
+                value = -search(board, -beta, -alpha, depth-1, 1, CUTNODE);
         }
         
-        revert_move(board,cur_move,undo);
+        // REVERT MOVE FROM BOARD
+        revert_move(board, moveList->moves[i], undo);
         
-        // Update Search Bounds
-        if (value > best){              
+        if (value <= alpha)
+            moveList->values[i] = -beta; // UPPER VALUE
+        else if (value >= beta)
+            moveList->values[i] = beta;  // LOWER VALUE
+        else
+            moveList->values[i] = value; // EXACT VALUE
+        
+        
+        // IMPROVED CURRENT VALUE
+        if (value > best){
             best = value;
-            best_move = cur_move;
-    
-            if (best > alpha){
-                alpha = best;   
-            }
+            bestIndex = i;
+            
+            // IMPROVED CURRENT LOWER VALUE
+            if (value > alpha)
+                alpha = value;
         }
         
-        if (alpha >= beta){
-            if (undo->capture_piece == Empty || MOVE_TYPE(cur_move) != NormalMove){
-                KillerMoves[height][1] = KillerMoves[height][0];
-                KillerMoves[height][0] = cur_move;
-            } else {
-                KillerCaptures[height][1] = KillerCaptures[height][0];
-                KillerCaptures[height][0] = cur_move;
-            }
+        // IMPROVED AND FAILED HIGH
+        if (alpha >= beta)
+            break;        
+    }
+    
+    // SORT MOVELIST FOR NEXT ITERATION
+    sort_move_list(moveList);
+    return best;
+}
+
+int search(Board * board, int alpha, int beta, int depth, int height, int node_type){
+    int i, valid, value, size = 0, best=-2*Mate, repeated = 0;
+    int oldAlpha = alpha, usedTableEntry = 0, inCheck, values[256];
+    uint16_t moves[256], bestMove, currentMove, tableMove = NoneMove;
+    TranspositionEntry * entry;
+    Undo undo[1];
+    
+    // SEARCH TIME HAS EXPIRED
+    if (EndTime < time(NULL))
+        return board->turn == EvaluatingPlayer ? -Mate : Mate;
+    
+    // SEARCH HORIZON REACHED, QSEARCH
+    if (depth == 0)
+        return qsearch(board, alpha, beta, height);    
+    
+    // INCREMENT TOTAL NODE COUNTER
+    TotalNodes++;
+    
+    // LOOKUP CURRENT POSITION IN TRANSPOSITION TABLE
+    entry = get_transposition_entry(&Table, board->hash);
+    if (entry != NULL && board->turn == entry->turn){
         
-            SKIPPED_VALIDATIONS += size - i;
-            break;
+        // ENTRY MOVE MAY BE CANDIDATE
+        tableMove = entry->best_move;
+        
+        // ENTRY MAY IMPROVE BOUNDS
+        if (entry->depth >= depth){
+            
+            // EXACT VALUE STORED
+            if (entry->type == PVNODE)
+                return entry->value;
+            
+            // LOWER BOUND STORED
+            else if (entry->type == CUTNODE && entry->value > alpha)
+                alpha = entry->value;
+            
+            // UPPER BOUND STORED
+            else if (entry->type == ALLNODE && entry->value < beta)
+                beta = entry->value;
+            
+            // BOUNDS NOW OVERLAP?
+            if (alpha >= beta)
+                return entry->value;
+            
+            usedTableEntry = 1;
+        }        
+    }
+    
+    // DETERMINE 3-FOLD REPITION
+    // COMPAREING HISTORY TO NULLMOVE IS A HACK
+    // TO AVOID CALLING TREES WITH 3-NULL MOVES 
+    // APPLIED 3-FOLD REPITITIONS
+    for (i = 0; i < board->move_num; i++)
+        if (board->history[i] == board->hash && board->history[i] != NullMove)
+            repeated++;
+        
+    // 3-FOLD REPITION FOUND
+    if (repeated >= 2)
+        return 0;
+    
+    // USE NULL MOVE PRUNING
+    if (depth > 3 
+        && abs(beta) < Mate - MaxHeight
+        && node_type != PVNODE
+        && board->history[board->move_num-1] != NullMove
+        && evaluate_board(board) >= beta
+        && is_not_in_check(board, board->turn)){
+            
+        // APPLY NULL MOVE
+        board->turn = !board->turn;
+        board->history[board->move_num++] == NullMove;
+        
+        // PERFORM NULL MOVE SEARCH
+        value = -search(board, -beta, -beta+1, depth-3, height+1, ALLNODE);
+        
+        // REVERT NULL MOVE
+        board->move_num--;
+        board->turn = !board->turn;
+        
+        if (value >= beta){
+            best = value;
+            goto Cut;
         }
     }
     
+    // INTERNAL ITERATIVE DEEPING
+    if (depth >= 3
+        && tableMove == NoneMove
+        && node_type == PVNODE){
         
-    // Check for Stalemate and CheckMate
+        // SEARCH AT A LOWER DEPTH
+        value = search(board, alpha, beta, depth-3, height, PVNODE);
+        if (value <= alpha)
+            value = search(board, -Mate, beta, depth-3, height, PVNODE);
+        
+        // GET TABLE MOVE FROM TRANSPOSITION TABLE
+        entry = get_transposition_entry(&Table, board->hash);
+        if (entry != NULL)
+            tableMove = entry->best_move;
+    }
+    
+    // GENERATE AND PREPARE MOVE ORDERING
+    gen_all_moves(board, moves, &size);
+    evaluate_moves(board, values, moves, size, height, tableMove);
+    
+    // DETERMINE CHECK STATUS FOR LATE MOVE REDUCTIONS
+    inCheck = !is_not_in_check(board, board->turn);
+    
+    for (i = 0; i < size; i++){
+        
+        currentMove = get_next_move(moves, values, i, size);
+        
+        // APPLY AND VALIDATE MOVE BEFORE SEARCHING
+        apply_move(board, currentMove, undo);
+        if (!is_not_in_check(board, !board->turn)){
+            revert_move(board, currentMove, undo);
+            continue;
+        }   
+    
+        // INCREMENT COUNTER OF VALID MOVES FOUND
+        valid++;
+            
+        // FULL WINDOW SEARCH ON FIRST MOVE
+        if (valid == 1)
+            value = -search(board, -beta, -alpha, depth-1, height+1, node_type);
+        
+        // NULL WINDOW SEARCH ON NON-FIRST MOVES
+        else{
+            
+            // USE LATE MOVE REDUCTIONS
+            if (valid > 8
+                && depth >= 4
+                && !inCheck
+                && MOVE_TYPE(currentMove) != PromotionMove
+                && MOVE_TYPE(currentMove) != EnpassMove
+                && undo[0].capture_piece == Empty)
+                value = -search(board, -alpha-1, -alpha, depth-2, height+1, CUTNODE);
+            
+            else
+                value = -search(board, -alpha-1, -alpha, depth-1, height+1, CUTNODE);
+            
+            // NULL WINDOW FAILED HIGH, RESEARCH
+            if (value > alpha)
+                value = -search(board, -beta, -alpha, depth-1, height+1, PVNODE);
+        }
+        
+        // REVERT MOVE FROM BOARD
+        revert_move(board, currentMove, undo);
+        
+        // IMPROVED CURRENT VALUE
+        if (value > best){
+            best = value;
+            bestMove = currentMove;
+            
+            // IMPROVED CURRENT LOWER VALUE
+            if (value > alpha)
+                alpha = value;
+        }
+        
+        // IMPROVED AND FAILED HIGH
+        if (alpha >= beta){
+            
+            // UPDATE QUIET-KILLER MOVES
+            if (undo[0].capture_piece == Empty || MOVE_TYPE(currentMove) != NormalMove){
+                KillerMoves[height][2] = KillerMoves[height][1];
+                KillerMoves[height][1] = KillerMoves[height][0];
+                KillerMoves[height][0] = currentMove;
+            }
+            
+            // UPDATE NOISY-KILLER MOVES
+            else {
+                KillerCaptures[height][2] = KillerCaptures[height][1];
+                KillerCaptures[height][1] = KillerCaptures[height][0];
+                KillerCaptures[height][0] = currentMove;
+            }
+            
+            goto Cut;
+        }
+    }
+    
+    // BOARD IS STALEMATE OR CHECKMATE
     if (valid == 0){
-        if (is_not_in_check(board,board->turn)){
+        
+        // BOARD IS STALEMATE
+        if (is_not_in_check(board, board->turn)){
             store_transposition_entry(&Table, MaxDepth-1, board->turn, PVNODE, 0, NoneMove, board->hash);
             return 0;
-        } else {
+        }
+        
+        // BOARD IS CHECKMATE
+        else {
             store_transposition_entry(&Table, MaxDepth-1, board->turn, PVNODE, -Mate+height, NoneMove, board->hash);
             return -Mate+height;
         }
     }
     
-    // Store in Transposition Table    
-    if (best > initial_alpha && best < beta)
-        store_transposition_entry(&Table, depth, board->turn,  PVNODE, best, best_move, board->hash);
-    else {
-        if (!used_table_entry){
-            if (best >= beta)
-                store_transposition_entry(&Table, depth, board->turn, CUTNODE, best, best_move, board->hash);
-            else if (best <= initial_alpha)
-                store_transposition_entry(&Table, depth, board->turn, ALLNODE, best, best_move, board->hash);
-        }
+    Cut:
+    
+    // STORE RESULTS IN TRANSPOSITION TABLE
+    
+    // EXACT NODE FOUND, REPLACE EVEN IF WE USED AN ENTRY HERE
+    if (best > oldAlpha && best < beta)
+        store_transposition_entry(&Table, depth, board->turn, PVNODE, best, bestMove, board->hash);
+    
+    // CUT OR ALL NODE, REPLACE ONLY IF WE DID NOT USE AN ENTRY HERE
+    else if (!usedTableEntry){
+        
+        // UPPER BOUND
+        if (best >= beta)
+            store_transposition_entry(&Table, depth, board->turn, CUTNODE, best, bestMove, board->hash);
+        
+        // LOWER BOUND
+        else if (best <= oldAlpha)
+            store_transposition_entry(&Table, depth, board->turn, ALLNODE, best, bestMove, board->hash);
     }
-
     
-    if (height == 0)
-        BestMove = best_move;
-    
-    return best;
+    return best;    
 }
 
-int quiescence_search(Board * board, int alpha, int beta, int height){
+int qsearch(Board * board, int alpha, int beta, int height){
+    int i, size = 0, value, best = -2*Mate, values[256];
+    uint16_t moves[256], bestMove, currentMove;
+    Undo undo[1];
+    
+    // MAX HEIGHT REACHED, STOP HERE
     if (height >= MaxHeight)
         return evaluate_board(board);
     
-    int value = evaluate_board(board);
+    // GET A STANDING-EVAL OF THE CURRENT BOARD
+    value = evaluate_board(board);
     
+    // UPDATE LOWER BOUND
     if (value > alpha)
         alpha = value;
     
+    // BOUNDS NOW OVERLAP?
     if (alpha > beta)
         return value;
     
-    NodesSearched += 1;
+    // INCREMENT TOTAL NODE COUNTER
+    TotalNodes++;
     
-    Undo undo[1];
-    int i, size = 0;
-    uint16_t moves[256];
-    int values[256];
+    // GENERATE AND PREPARE QUIET MOVE ORDERING
+    gen_all_non_quiet(board, moves, &size);
+    evaluate_moves(board, values, moves, size, height, NoneMove);
     
-    int best = value;
+    best = value;
     
-    gen_all_non_quiet(board,moves,&size);
-    
-    heuristic_eval_moves(board,values,moves,size,height,NoneMove);
-    
-    uint64_t enemy = board->colourBitBoards[!board->turn];
-    
-    int in_check = !is_not_in_check(board,board->turn);
-    int initial_alpha = alpha;
-    int opt_value = value + 50;
-    
-    for(i = 0; i < size; i++){
+    for (i = 0; i < size; i++){
+        currentMove = get_next_move(moves, values, i, size);
         
-        uint16_t cur_move = get_next_move(moves,values,i,size);
-        apply_move(board,cur_move,undo);
-        
-        if (!is_not_in_check(board,!board->turn)){
-            revert_move(board,cur_move,undo);
+        // APPLY AND VALIDATE MOVE BEFORE SEARCHING
+        apply_move(board, currentMove, undo);
+        if (!is_not_in_check(board, !board->turn)){
+            revert_move(board, currentMove, undo);
             continue;
         }
         
-        value = -quiescence_search(board,-beta,-alpha,height+1);
+        // SEARCH NEXT DEPTH
+        value = -qsearch(board, -beta, -alpha, height+1);
         
-        revert_move(board,cur_move,undo);
+        // REVERT MOVE FROM BOARD
+        revert_move(board, currentMove, undo);
         
-        if (value > best)
+        // IMPROVED CURRENT VALUE
+        if (value > best){
             best = value;
-        if (best > alpha)
-            alpha = best;
-        if (alpha > beta){
+            
+            // IMPROVED CURRENT LOWER VALUE
+            if (value > alpha)
+                alpha = value;
+        }
+        
+        // IMPROVED AND FAILED HIGH
+        if (alpha >= beta){
+            
+            // UPDATE NOISY-KILLER MOVES
+            KillerCaptures[height][2] = KillerCaptures[height][1];
             KillerCaptures[height][1] = KillerCaptures[height][0];
-            KillerCaptures[height][0] = cur_move;
+            KillerCaptures[height][0] = currentMove;
+            
             break;
         }
     }
@@ -333,44 +439,90 @@ int quiescence_search(Board * board, int alpha, int beta, int height){
     return best;
 }
 
-void heuristic_eval_moves(Board * board, int * values, uint16_t * moves, int size, int height, uint16_t best_move){
+void evaluate_moves(Board * board, int * values, uint16_t * moves, int size, int height, uint16_t tableMove){
     int i, value;
+    int from_type, to_type;
+    int from_val, to_val;
     
+    // GET KILLER MOVES
     uint16_t killer1 = KillerMoves[height][0];
     uint16_t killer2 = KillerMoves[height][1];
-    uint16_t killer3 = KillerCaptures[height][0];
-    uint16_t killer4 = KillerCaptures[height][1];
+    uint16_t killer3 = KillerMoves[height][2];
+    
+    uint16_t killer4 = KillerCaptures[height][0];
+    uint16_t killer5 = KillerCaptures[height][1];
+    uint16_t killer6 = KillerCaptures[height][2];
     
     for (i = 0; i < size; i++){
-        value  = 8192 * ( best_move == moves[i]);
-        value +=  512 * (   killer1 == moves[i]);
-        value +=  512 * (   killer2 == moves[i]);
-        value +=  512 * (   killer3 == moves[i]);
-        value +=  512 * (   killer4 == moves[i]);
         
-        int to_val = PieceValues[PIECE_TYPE(board->squares[MOVE_TO(moves[i])])];
-        int from_val = PieceValues[PIECE_TYPE(board->squares[MOVE_FROM(moves[i])])];
+        // TABLEMOVE FIRST
+        value  = 8192 * ( tableMove == moves[i]);
         
+        // THEN KILLERS, UNLESS OTHER GOOD CAPTURE
+        value += 128  * (   killer1 == moves[i]);
+        value += 128  * (   killer2 == moves[i]);
+        value += 128  * (   killer3 == moves[i]);
+        value += 256  * (   killer4 == moves[i]);
+        value += 256  * (   killer5 == moves[i]);
+        value += 256  * (   killer6 == moves[i]);
+        
+        // INFO FOR POSSIBLE CAPTURE
+        from_type = PIECE_TYPE(board->squares[MOVE_FROM(moves[i])]);
+        to_type = PIECE_TYPE(board->squares[MOVE_TO(moves[i])]);
+        from_val = PieceValues[from_type];
+        to_val = PieceValues[to_type];
+        
+        // ENCOURAGE CAPTURING HIGH VALUE WITH LOW VALUE
         value += 5 * to_val;
         value -= 1 * from_val;
-
-        if (MOVE_TYPE(moves[i]) == EnpassMove)
-            value += PawnValue;
         
+        // ENPASS CAPTURE IS TREATED SEPERATLY
+        if (MOVE_TYPE(moves[i]) == EnpassMove)
+            value += 2*PawnValue;
+        
+        // WE ARE ONLY CONCERED WITH QUEEN PROMOTIONS
         if (MOVE_TYPE(moves[i]) == PromotionMove)
-            value += 32 << (MOVE_PROMO_TYPE(moves[i]) >> 14);
+            value += QueenValue * (moves[i] & PromoteToQueen);
+        
         values[i] = value;
     }
 }
 
 uint16_t get_next_move(uint16_t * moves, int * values, int index, int size){
-    int i, best_index = 0;
+    int i, best = 0;
+    uint16_t bestMove;
     
-    for (i = 1; i < size; i++)
-        if (values[i] > values[best_index])
-            best_index = i;
+    // FIND GREATEST VALUE
+    for (i = 1; i < size-index; i++)
+        if (values[i] > values[best])
+            best = i;
         
-    values[best_index] = -3 * Mate;
-   
-    return moves[best_index];
+    bestMove = moves[best];
+    
+    // MOVE LAST PAIR TO BEST SO WE
+    // CAN REDUCE THE EFFECTIVE LIST SIZE
+    moves[best] = moves[size-index-1];
+    values[best] = values[size-index-1];
+    
+    return bestMove;
+}
+
+void sort_move_list(MoveList * moveList){
+    int i, j, temp_val;
+    uint16_t temp_move;
+    
+    for (i = 0; i < moveList->size; i++){
+        for (j = i+1; j < moveList->size; j++){
+            if (moveList->values[j] > moveList->values[i]){
+                temp_val = moveList->values[j];
+                temp_move = moveList->moves[j];
+                
+                moveList->values[j] = moveList->values[i];
+                moveList->moves[j] = moveList->moves[i];
+                
+                moveList->values[i] = temp_val;
+                moveList->moves[i] = temp_move;
+            }
+        }
+    }    
 }

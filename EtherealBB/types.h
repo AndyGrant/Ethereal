@@ -86,4 +86,12 @@ typedef struct TranspositionTable {
     
 } TranspositionTable;
 
+typedef struct MoveList {
+    uint16_t moves[256];
+    int values[256];
+    int nodes[256];
+    int size;
+    
+} MoveList;
+
 #endif
