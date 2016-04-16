@@ -274,7 +274,7 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
         valid++;
             
         // FULL WINDOW SEARCH ON FIRST MOVE
-        if (valid == 1)
+        if (valid == 1 || node_type != PVNODE)
             value = -search(board, -beta, -alpha, depth-1, height+1, node_type);
         
         // NULL WINDOW SEARCH ON NON-FIRST MOVES
