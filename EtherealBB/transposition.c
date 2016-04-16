@@ -57,7 +57,7 @@ void store_transposition_entry(TranspositionTable * table, int8_t depth, int8_t 
     } 
     
     else if (entry->type != PVNODE){
-        if (depth > entry->depth || type == PVNODE){
+        if (depth >= entry->depth || type == PVNODE){
             entry->depth = depth;
             entry->turn = turn;
             entry->type = type;

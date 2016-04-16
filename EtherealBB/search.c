@@ -356,7 +356,7 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
         store_transposition_entry(&Table, depth, board->turn, PVNODE, best, bestMove, board->hash);
     
     // CUT OR ALL NODE, REPLACE ONLY IF WE DID NOT USE AN ENTRY HERE
-    else if (!usedTableEntry){
+    else {
         
         // UPPER BOUND
         if (best >= beta)
