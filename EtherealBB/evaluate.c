@@ -205,16 +205,16 @@ int evaluate_board(Board * board){
     
     // Bishop has Pawn Wings
     if (whiteBishops != 0 && 
-       (whitePawns & (FILE_A|FILE_B|FILE_C)) != 0 &&
-       (whitePawns & (FILE_F|FILE_G|FILE_H)) != 0){
+       (whitePawns & (FILE_A|FILE_B)) != 0 &&
+       (whitePawns & (FILE_G|FILE_H)) != 0){
        
        mid += BISHOP_HAS_WINGS_MID;
        end += BISHOP_HAS_WINGS_END;
     }
        
     if (blackBishops != 0 && 
-       (blackPawns & (FILE_A|FILE_B|FILE_C)) != 0 &&
-       (blackPawns & (FILE_F|FILE_G|FILE_H)) != 0){
+       (blackPawns & (FILE_A|FILE_B)) != 0 &&
+       (blackPawns & (FILE_G|FILE_H)) != 0){
            
        mid -= BISHOP_HAS_WINGS_MID;
        end -= BISHOP_HAS_WINGS_END;
@@ -230,5 +230,5 @@ int evaluate_board(Board * board){
     
     eval = ((mid_eval * (256 - curPhase)) + (end_eval * curPhase)) / 256;
     
-    return board->turn == ColourWhite ? eval : -eval;    
+    return board->turn == ColourWhite ? eval+10 : -(eval+10);    
 }
