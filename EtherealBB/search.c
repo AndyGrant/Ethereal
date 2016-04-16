@@ -152,7 +152,7 @@ int full_search(Board * board, MoveList * moveList, int depth){
 }
 
 int search(Board * board, int alpha, int beta, int depth, int height, int node_type){
-    int i, valid, value, size = 0, best=-2*Mate, repeated = 0;
+    int i, valid, value, size = 0, best=-2*Mate, repeated = 0, newDepth;
     int oldAlpha = alpha, usedTableEntry = 0, inCheck, values[256];
     uint16_t moves[256], bestMove, currentMove, tableMove = NoneMove;
     TranspositionEntry * entry;
@@ -211,8 +211,22 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
     if (repeated >= 2)
         return 0;
     
+    // RAZOR PRUNING
+    if (depth <= 2 
+        && alpha == beta - 1
+        && evaluate_board(board) + QueenValue < beta){
+        
+        value = qsearch(board, alpha, beta, height);
+        
+        // EVEN GAINING A QUEEN WOULD FAIL LOW
+        if (value < beta){
+            best = value;
+            goto Cut;
+        }
+    }        
+    
     // USE NULL MOVE PRUNING
-    if (depth > 3 
+    if (depth >= 4 
         && abs(beta) < Mate - MaxHeight
         && node_type != PVNODE
         && board->history[board->move_num-1] != NullMove
@@ -224,7 +238,7 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
         board->history[board->move_num++] == NullMove;
         
         // PERFORM NULL MOVE SEARCH
-        value = -search(board, -beta, -beta+1, depth-3, height+1, ALLNODE);
+        value = -search(board, -beta, -beta+1, depth-4, height+1, ALLNODE);
         
         // REVERT NULL MOVE
         board->move_num--;
@@ -272,25 +286,33 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
     
         // INCREMENT COUNTER OF VALID MOVES FOUND
         valid++;
+        
+        // DETERMINE IF WE CAN USE LATE MOVE REDUCTIONS
+        if (valid > 8
+            && depth >= 4
+            && !inCheck
+            && MOVE_TYPE(currentMove) != PromotionMove
+            && MOVE_TYPE(currentMove) != EnpassMove
+            && undo[0].capture_piece == Empty)
+            newDepth = depth-2;
+        else
+            newDepth = depth-1;
+        
             
         // FULL WINDOW SEARCH ON FIRST MOVE
-        if (valid == 1 || node_type != PVNODE)
-            value = -search(board, -beta, -alpha, depth-1, height+1, node_type);
+        if (valid == 1 || node_type != PVNODE){
+            value = -search(board, -beta, -alpha, newDepth, height+1, node_type);
+            
+            // IMPROVED BOUND, BUT WAS REDUCED DEPTH?
+            if (value > alpha
+                && newDepth == depth-2)
+                value = -search(board, -beta, -alpha, depth-1, height+1, node_type);
+            
+        }
         
-        // NULL WINDOW SEARCH ON NON-FIRST MOVES
+        // NULL WINDOW SEARCH ON NON-FIRST / PV MOVES
         else{
-            
-            // USE LATE MOVE REDUCTIONS
-            if (valid > 8
-                && depth >= 4
-                && !inCheck
-                && MOVE_TYPE(currentMove) != PromotionMove
-                && MOVE_TYPE(currentMove) != EnpassMove
-                && undo[0].capture_piece == Empty)
-                value = -search(board, -alpha-1, -alpha, depth-2, height+1, CUTNODE);
-            
-            else
-                value = -search(board, -alpha-1, -alpha, depth-1, height+1, CUTNODE);
+            value = -search(board, -alpha-1, -alpha, newDepth, height+1, CUTNODE);
             
             // NULL WINDOW FAILED HIGH, RESEARCH
             if (value > alpha)
