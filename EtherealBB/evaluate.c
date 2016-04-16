@@ -130,6 +130,14 @@ int evaluate_board(Board * board){
     mid -= net_isolated * PAWN_ISOLATED_MID;
     end -= net_isolated * PAWN_ISOLATED_END;
     
+    int net_7th = (
+        count_set_bits(whitePawns & RANK_7) -
+        count_set_bits(blackPawns & RANK_2)
+    );
+    
+    mid += net_7th * PAWN_7TH_RANK_MID;
+    end += net_7th * PAWN_7TH_RANK_END;
+    
     /* PASSED PAWNS */
     /* BACKWARDS PAWNS */    
     
