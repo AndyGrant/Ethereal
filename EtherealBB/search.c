@@ -38,7 +38,7 @@ uint16_t get_best_move(Board * board, int seconds, int logging){
     EndTime = StartTime + seconds;
     TotalNodes = 0;    
     EvaluatingPlayer = board->turn;
-    init_transposition_table(&Table, 26);
+    init_transposition_table(&Table, 23);
     
     // POPULATE ROOT'S MOVELIST
     MoveList rootMoveList;
@@ -59,9 +59,10 @@ uint16_t get_best_move(Board * board, int seconds, int logging){
         
         // LOG RESULTS TO INTERFACE
         if (logging){
-            printf("info depth %d score cp %d time %d nodes %d pv ",depth,value,time(NULL)-StartTime,TotalNodes);
+            printf("info depth %d score cp %d time %d nodes %d pv ",depth,value,1000*(time(NULL)-StartTime),TotalNodes);
             print_move(rootMoveList.bestMove);
             printf("\n");
+            fflush(stdout);
         }
         
         // LOG RESULTS TO CONSOLE
