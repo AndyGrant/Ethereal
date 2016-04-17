@@ -38,7 +38,7 @@ uint16_t get_best_move(Board * board, int seconds, int logging){
     EndTime = StartTime + seconds;
     TotalNodes = 0;    
     EvaluatingPlayer = board->turn;
-    init_transposition_table(&Table, 24);
+    init_transposition_table(&Table, 26);
     
     // POPULATE ROOT'S MOVELIST
     MoveList rootMoveList;
@@ -171,17 +171,20 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
     
     // LOOKUP CURRENT POSITION IN TRANSPOSITION TABLE
     entry = get_transposition_entry(&Table, board->hash);
-    if (entry != NULL && board->turn == entry->turn){
+        
+    if (entry != NULL
+        && board->turn == entry->turn){
         
         // ENTRY MOVE MAY BE CANDIDATE
         tableMove = entry->best_move;
         
         // ENTRY MAY IMPROVE BOUNDS
-        if (entry->depth >= depth){
+        if (entry->depth >= depth
+            && node_type == PVNODE){
             
             // EXACT VALUE STORED
             if (entry->type == PVNODE)
-                return entry->value;
+                return entry->value;            
             
             // LOWER BOUND STORED
             else if (entry->type == CUTNODE && entry->value > alpha)
@@ -196,16 +199,20 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
                 return entry->value;
             
             usedTableEntry = 1;
-        }        
-    }
+            oldAlpha = alpha;
+        }
+    }   
     
     // DETERMINE 3-FOLD REPITION
     // COMPAREING HISTORY TO NULLMOVE IS A HACK
     // TO AVOID CALLING TREES WITH 3-NULL MOVES 
     // APPLIED 3-FOLD REPITITIONS
-    for (i = 0; i < board->move_num; i++)
-        if (board->history[i] == board->hash && board->history[i] != NullMove)
+    for (i = 0; i < board->move_num; i++){
+        if (board->history[i] == board->hash
+            && board->history[i] != NullMove){
             repeated++;
+        }
+    }
         
     // 3-FOLD REPITION FOUND
     if (repeated >= 2){
@@ -213,43 +220,42 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
     }
     
     // RAZOR PRUNING
-    if (depth <= 2 
+    if (USE_RAZOR_PRUNING
+        && depth <= 2
         && node_type != PVNODE
         && alpha == beta - 1
-        && evaluate_board(board) + 10 * PawnValue < beta){
+        && evaluate_board(board) + 9 * PawnValue < beta){
         
         value = qsearch(board, alpha, beta, height);
         
         // EVEN GAINING A QUEEN WOULD FAIL LOW
-        if (value < beta){
-            best = value;
-            goto Cut;
-        }
+        if (value < beta)
+            return value;
     }        
     
     // USE NULL MOVE PRUNING
-    if (depth >= 4 
+    if (USE_NULL_MOVE_PRUNING
+        && depth >= 4 
+        && alpha == beta - 1
         && abs(beta) < Mate - MaxHeight
         && node_type != PVNODE
         && board->history[board->move_num-1] != NullMove
-        && evaluate_board(board) >= beta
-        && is_not_in_check(board, board->turn)){
+        && is_not_in_check(board, board->turn)
+        && evaluate_board(board) >= beta){
             
         // APPLY NULL MOVE
         board->turn = !board->turn;
         board->history[board->move_num++] == NullMove;
         
         // PERFORM NULL MOVE SEARCH
-        value = -search(board, -beta, -beta+1, depth-4, height+1, ALLNODE);
+        value = -search(board, -beta, -beta+1, depth-4, height+1, CUTNODE);
         
         // REVERT NULL MOVE
         board->move_num--;
         board->turn = !board->turn;
         
-        if (value >= beta){
-            best = value;
-            goto Cut;
-        }
+        if (value >= beta)
+            return value;
     }
     
     // INTERNAL ITERATIVE DEEPING
@@ -275,6 +281,8 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
     // DETERMINE CHECK STATUS FOR LATE MOVE REDUCTIONS
     inCheck = !is_not_in_check(board, board->turn);
     
+    int hasFailedHigh = 0;
+    
     for (i = 0; i < size; i++){
         
         currentMove = get_next_move(moves, values, i, size);
@@ -290,11 +298,12 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
         valid++;
         
         // DETERMINE IF WE CAN USE LATE MOVE REDUCTIONS
-        if (valid > 8
-            && depth >= 4
+        if (USE_LATE_MOVE_REDUCTIONS
+            && !hasFailedHigh
+            && valid > 4
+            && depth >= 3
             && !inCheck
             && node_type != PVNODE
-            && (board->squares[MOVE_TO(currentMove)] > 1)
             && MOVE_TYPE(currentMove) != PromotionMove
             && MOVE_TYPE(currentMove) != EnpassMove
             && undo[0].capture_piece == Empty
@@ -310,9 +319,11 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
             
             // IMPROVED BOUND, BUT WAS REDUCED DEPTH?
             if (value > alpha
-                && newDepth == depth-2)
+                && newDepth == depth-2){
+                    
                 value = -search(board, -beta, -alpha, depth-1, height+1, node_type);
-            
+                hasFailedHigh = 1;
+            }
         }
         
         // NULL WINDOW SEARCH ON NON-FIRST / PV MOVES
@@ -320,8 +331,10 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
             value = -search(board, -alpha-1, -alpha, newDepth, height+1, CUTNODE);
             
             // NULL WINDOW FAILED HIGH, RESEARCH
-            if (value > alpha)
+            if (value > alpha){
                 value = -search(board, -beta, -alpha, depth-1, height+1, PVNODE);
+                hasFailedHigh = 1;
+            }
         }
         
         // REVERT MOVE FROM BOARD
@@ -362,16 +375,13 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
     if (valid == 0){
         
         // BOARD IS STALEMATE
-        if (is_not_in_check(board, board->turn)){
-            store_transposition_entry(&Table, MaxDepth-1, board->turn, PVNODE, 0, NoneMove, board->hash);
+        if (is_not_in_check(board, board->turn))
             return 0;
-        }
         
         // BOARD IS CHECKMATE
-        else {
-            store_transposition_entry(&Table, MaxDepth-1, board->turn, PVNODE, -Mate+height, NoneMove, board->hash);
+        else 
             return -Mate+height;
-        }
+        
     }
     
     Cut:
@@ -416,6 +426,11 @@ int qsearch(Board * board, int alpha, int beta, int height){
     // BOUNDS NOW OVERLAP?
     if (alpha >= beta)
         return value;
+    
+    // DELTA PRUNING IN THE MID GAME
+    if (board->num_pieces > 16)
+        if (value + QueenValue < alpha)
+            return alpha;
     
     // INCREMENT TOTAL NODE COUNTER
     TotalNodes++;
