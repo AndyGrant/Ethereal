@@ -238,6 +238,7 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
     if (USE_NULL_MOVE_PRUNING
         && depth >= 4 
         && abs(beta) < Mate - MaxHeight
+        && alpha == beta - 1
         && node_type != PVNODE
         && board->history[board->move_num-1] != NullMove
         && is_not_in_check(board, board->turn)
@@ -428,7 +429,7 @@ int qsearch(Board * board, int alpha, int beta, int height){
         return value;
     
     // DELTA PRUNING IN THE MID GAME
-    if (board->num_pieces > 12)
+    if (board->num_pieces > 16)
         if (value + QueenValue < alpha)
             return alpha;
     
