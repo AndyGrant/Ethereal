@@ -124,7 +124,7 @@ int full_search(Board * board, MoveList * moveList, int depth){
         revert_move(board, moveList->moves[i], undo);
         
         if (value <= alpha)
-            moveList->values[i] = -beta; // UPPER VALUE
+            moveList->values[i] = -beta - (TotalNodes - currentNodes); // UPPER VALUE
         else if (value >= beta)
             moveList->values[i] = beta;  // LOWER VALUE
         else
@@ -164,7 +164,7 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
         return board->turn == EvaluatingPlayer ? -Mate : Mate;
     
     // SEARCH HORIZON REACHED, QSEARCH
-    if (depth == 0)
+    if (depth <= 0)
         return qsearch(board, alpha, beta, height);    
     
     // INCREMENT TOTAL NODE COUNTER
@@ -225,7 +225,7 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
         && depth <= 2
         && node_type != PVNODE
         && alpha == beta - 1
-        && evaluate_board(board) + 9 * PawnValue < beta){
+        && evaluate_board(board) + QueenValue < beta){
         
         value = qsearch(board, alpha, beta, height);
         
@@ -236,7 +236,7 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
     
     // USE NULL MOVE PRUNING
     if (USE_NULL_MOVE_PRUNING
-        && depth >= 4 
+        && depth >= 3 
         && abs(beta) < Mate - MaxHeight
         && alpha == beta - 1
         && node_type != PVNODE

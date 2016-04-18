@@ -230,5 +230,5 @@ int evaluate_board(Board * board){
     
     eval = ((mid_eval * (256 - curPhase)) + (end_eval * curPhase)) / 256;
     
-    return board->turn == ColourWhite ? eval+10 : -(eval+10);    
+    return board->turn == ColourWhite ? eval+20 : -(eval+10);    
 }
