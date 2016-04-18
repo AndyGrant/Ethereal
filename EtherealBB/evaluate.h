@@ -11,14 +11,14 @@
 #define KingValue   (   50)
 
 #define PAWN_STACKED_MID     (15)
-#define PAWN_STACKED_END     (35)
+#define PAWN_STACKED_END     (25)
 #define PAWN_ISOLATED_MID    (20)
 #define PAWN_ISOLATED_END    (10)
 #define PAWN_7TH_RANK_MID    (35)
 #define PAWN_7TH_RANK_END    (55)
 
-#define ROOK_OPEN_FILE_MID   (55)
-#define ROOK_OPEN_FILE_END   (45)
+#define ROOK_OPEN_FILE_MID   (45)
+#define ROOK_OPEN_FILE_END   (35)
 #define ROOK_SEMI_FILE_MID   (25)
 #define ROOK_SEMI_FILE_END   (25)
 #define ROOK_ON_7TH_MID      (35)
