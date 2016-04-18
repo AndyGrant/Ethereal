@@ -124,7 +124,7 @@ int full_search(Board * board, MoveList * moveList, int depth){
         revert_move(board, moveList->moves[i], undo);
         
         if (value <= alpha)
-            moveList->values[i] = -beta - (TotalNodes - currentNodes); // UPPER VALUE
+            moveList->values[i] = -beta + (TotalNodes - currentNodes); // UPPER VALUE
         else if (value >= beta)
             moveList->values[i] = beta;  // LOWER VALUE
         else
