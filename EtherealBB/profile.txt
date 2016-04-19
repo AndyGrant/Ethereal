@@ -3,35 +3,37 @@ Flat profile:
 Each sample counts as 0.01 seconds.
   %   cumulative   self              self     total           
  time   seconds   seconds    calls   s/call   s/call  name    
- 18.59      1.58     1.58                             _mcount_private
- 14.94      2.85     1.27       11     0.12     0.54  alpha_beta_prune
- 13.65      4.01     1.16 21249289     0.00     0.00  evaluate_board
- 11.41      4.98     0.97 14692197     0.00     0.00  heuristic_eval_moves
-  9.53      5.79     0.81                             __fentry__
-  6.24      6.32     0.53  2470498     0.00     0.00  gen_all_moves
-  4.71      6.72     0.40 63748124     0.00     0.00  count_set_bits
-  4.12      7.07     0.35 29784983     0.00     0.00  apply_move
-  3.76      7.39     0.32  3210214     0.00     0.00  get_transposition_entry
-  3.53      7.69     0.30 85104932     0.00     0.00  get_set_bits
-  2.59      7.91     0.22 35329253     0.00     0.00  is_not_in_check
-  2.35      8.11     0.20 29784983     0.00     0.00  revert_move
-  1.76      8.26     0.15  3040475     0.00     0.00  gen_all_non_quiet
-  1.29      8.37     0.11        1     0.11     0.11  init_transposition_table
-  0.71      8.43     0.06  2456601     0.00     0.00  store_transposition_entry
-  0.47      8.47     0.04  2470498     0.00     0.00  square_is_attacked
-  0.35      8.50     0.03        1     0.03     0.03  dump_transposition_table
-  0.00      8.50     0.00       11     0.00     0.00  print_move
-  0.00      8.50     0.00        1     0.00     0.00  generate_king_map
-  0.00      8.50     0.00        1     0.00     0.00  generate_knight_map
-  0.00      8.50     0.00        1     0.00     0.00  generate_move_database_bishop
-  0.00      8.50     0.00        1     0.00     0.00  generate_move_database_rook
-  0.00      8.50     0.00        1     0.00     0.00  generate_occupancy_mask_bishop
-  0.00      8.50     0.00        1     0.00     6.11  get_best_move
-  0.00      8.50     0.00        1     0.00     0.00  init_board
-  0.00      8.50     0.00        1     0.00     0.00  init_magics
-  0.00      8.50     0.00        1     0.00     0.00  init_psqt
-  0.00      8.50     0.00        1     0.00     0.00  init_zorbist
-  0.00      8.50     0.00        1     0.00     0.00  print_board
+ 21.20      3.98     3.98 38927062     0.00     0.00  evaluate_board
+ 15.02      6.80     2.82                             _mcount_private
+ 11.40      8.94     2.14 13602780     0.00     0.00  evaluate_moves
+  9.64     10.75     1.81      565     0.00     0.03  search
+  8.58     12.36     1.61  7553087     0.00     0.00  gen_all_moves
+  7.73     13.81     1.45                             __fentry__
+  5.06     14.76     0.95 116781443     0.00     0.00  count_set_bits
+  4.53     15.61     0.85 53009639     0.00     0.00  apply_move
+  4.32     16.42     0.81  8116264     0.00     0.00  get_transposition_entry
+  3.04     16.99     0.57 63123832     0.00     0.00  is_not_in_check
+  2.61     17.48     0.49 155816024     0.00     0.00  get_set_bits
+  2.24     17.90     0.42  6049694     0.00     0.00  gen_all_non_quiet
+  2.08     18.29     0.39 20772606     0.00     0.00  qsearch
+  1.60     18.59     0.30 53009639     0.00     0.00  revert_move
+  0.32     18.65     0.06  7552270     0.00     0.00  store_transposition_entry
+  0.27     18.70     0.05  7553087     0.00     0.00  square_is_attacked
+  0.27     18.75     0.05        1     0.05     0.05  init_transposition_table
+  0.05     18.76     0.01        1     0.01     0.01  dump_transposition_table
+  0.05     18.77     0.01        1     0.01     0.01  generate_knight_map
+  0.00     18.77     0.00  4692034     0.00     0.00  get_msb_special
+  0.00     18.77     0.00       12     0.00     0.00  print_move
+  0.00     18.77     0.00        1     0.00     0.00  generate_king_map
+  0.00     18.77     0.00        1     0.00     0.00  generate_move_database_bishop
+  0.00     18.77     0.00        1     0.00     0.00  generate_move_database_rook
+  0.00     18.77     0.00        1     0.00     0.00  generate_occupancy_mask_bishop
+  0.00     18.77     0.00        1     0.00    14.49  get_best_move
+  0.00     18.77     0.00        1     0.00     0.01  init_board
+  0.00     18.77     0.00        1     0.00     0.01  init_magics
+  0.00     18.77     0.00        1     0.00     0.00  init_psqt
+  0.00     18.77     0.00        1     0.00     0.00  init_zorbist
+  0.00     18.77     0.00        1     0.00     0.00  print_board
 
  %         the percentage of the total running time of the
 time       program used by this function.
@@ -69,149 +71,165 @@ notice and this notice are preserved.
 		     Call graph (explanation follows)
 
 
-granularity: each sample hit covers 4 byte(s) for 0.12% of 8.50 seconds
+granularity: each sample hit covers 4 byte(s) for 0.05% of 18.77 seconds
 
 index % time    self  children    called     name
                                                  <spontaneous>
-[1]     71.9    0.00    6.11                 main [1]
-                0.00    6.11       1/1           get_best_move [2]
-                0.00    0.00       1/1           init_board [20]
+[1]     77.3    0.00   14.50                 main [1]
+                0.00   14.49       1/1           get_best_move [2]
+                0.00    0.01       1/1           init_board [20]
 -----------------------------------------------
-                0.00    6.11       1/1           main [1]
-[2]     71.9    0.00    6.11       1         get_best_move [2]
-                1.27    4.70      11/11          alpha_beta_prune [3]
-                0.11    0.00       1/1           init_transposition_table [16]
-                0.03    0.00       1/1           dump_transposition_table [19]
-                0.00    0.00      11/21249289     evaluate_board [5]
-                0.00    0.00      11/11          print_move [24]
-                0.00    0.00       1/1           print_board [30]
+                0.00   14.49       1/1           main [1]
+[2]     77.2    0.00   14.49       1         get_best_move [2]
+                1.81   12.62     565/565         search [3]
+                0.05    0.00       1/1           init_transposition_table [19]
+                0.01    0.00       1/1           dump_transposition_table [22]
+                0.00    0.00     552/53009639     apply_move [11]
+                0.00    0.00     552/63123832     is_not_in_check [13]
+                0.00    0.00     552/53009639     revert_move [16]
+                0.00    0.00       1/7553087     gen_all_moves [8]
+                0.00    0.00      12/12          print_move [27]
+                0.00    0.00       1/1           print_board [32]
 -----------------------------------------------
-                             15431900             alpha_beta_prune [3]
-                1.27    4.70      11/11          get_best_move [2]
-[3]     70.2    1.27    4.70      11+15431900 alpha_beta_prune [3]
-                0.97    2.29 14692197/14692197     heuristic_eval_moves [4]
-                0.53    0.04 2470498/2470498     gen_all_moves [8]
-                0.32    0.00 3210214/3210214     get_transposition_entry [11]
-                0.22    0.00 18904925/29784983     apply_move [10]
-                0.13    0.00 21408720/35329253     is_not_in_check [13]
-                0.13    0.00 18904925/29784983     revert_move [14]
-                0.06    0.00 2456601/2456601     store_transposition_entry [17]
-                0.00    0.00   30918/21249289     evaluate_board [5]
-                             15431900             alpha_beta_prune [3]
+                             28476466             search [3]
+                1.81   12.62     565/565         get_best_move [2]
+[3]     76.9    1.81   12.62     565+28476466 search [3]
+                0.39    6.97 20772606/20772606     qsearch [4]
+                1.61    0.05 7553086/7553087     gen_all_moves [8]
+                1.19    0.00 7553086/13602780     evaluate_moves [7]
+                0.81    0.00 8116264/8116264     get_transposition_entry [12]
+                0.56    0.00 34696340/53009639     apply_move [11]
+                0.40    0.00 44810533/63123832     is_not_in_check [13]
+                0.29    0.10 2794068/38927062     evaluate_board [5]
+                0.20    0.00 34696340/53009639     revert_move [16]
+                0.06    0.00 7552270/7552270     store_transposition_entry [17]
+                             28476466             search [3]
 -----------------------------------------------
-                             12037136             heuristic_eval_moves [4]
-                0.97    2.29 14692197/14692197     alpha_beta_prune [3]
-[4]     38.4    0.97    2.29 14692197+12037136 heuristic_eval_moves [4]
-                1.16    0.70 21218360/21249289     evaluate_board [5]
-                0.15    0.00 3040475/3040475     gen_all_non_quiet [15]
-                0.13    0.00 10880058/29784983     apply_move [10]
-                0.09    0.00 13920533/35329253     is_not_in_check [13]
-                0.07    0.00 10880058/29784983     revert_move [14]
-                             12037136             heuristic_eval_moves [4]
+                             15360388             qsearch [4]
+                0.39    6.97 20772606/20772606     search [3]
+[4]     39.2    0.39    6.97 20772606+15360388 qsearch [4]
+                3.69    1.34 36132994/38927062     evaluate_board [5]
+                0.95    0.00 6049694/13602780     evaluate_moves [7]
+                0.42    0.00 6049694/6049694     gen_all_non_quiet [15]
+                0.29    0.00 18312747/53009639     apply_move [11]
+                0.17    0.00 18312747/63123832     is_not_in_check [13]
+                0.10    0.00 18312747/53009639     revert_move [16]
+                             15360388             qsearch [4]
 -----------------------------------------------
-                0.00    0.00      11/21249289     get_best_move [2]
-                0.00    0.00   30918/21249289     alpha_beta_prune [3]
-                1.16    0.70 21218360/21249289     heuristic_eval_moves [4]
-[5]     21.9    1.16    0.70 21249289         evaluate_board [5]
-                0.40    0.00 63747867/63748124     count_set_bits [9]
-                0.30    0.00 84997156/85104932     get_set_bits [12]
+                0.29    0.10 2794068/38927062     search [3]
+                3.69    1.34 36132994/38927062     qsearch [4]
+[5]     28.9    3.98    1.44 38927062         evaluate_board [5]
+                0.95    0.00 116781186/116781443     count_set_bits [10]
+                0.49    0.00 155708248/155816024     get_set_bits [14]
+                0.00    0.00 4692034/4692034     get_msb_special [26]
 -----------------------------------------------
                                                  <spontaneous>
-[6]     18.6    1.58    0.00                 _mcount_private [6]
+[6]     15.0    2.82    0.00                 _mcount_private [6]
+-----------------------------------------------
+                0.95    0.00 6049694/13602780     qsearch [4]
+                1.19    0.00 7553086/13602780     search [3]
+[7]     11.4    2.14    0.00 13602780         evaluate_moves [7]
+-----------------------------------------------
+                0.00    0.00       1/7553087     get_best_move [2]
+                1.61    0.05 7553086/7553087     search [3]
+[8]      8.8    1.61    0.05 7553087         gen_all_moves [8]
+                0.05    0.00 7553087/7553087     square_is_attacked [18]
 -----------------------------------------------
                                                  <spontaneous>
-[7]      9.5    0.81    0.00                 __fentry__ [7]
+[9]      7.7    1.45    0.00                 __fentry__ [9]
 -----------------------------------------------
-                0.53    0.04 2470498/2470498     alpha_beta_prune [3]
-[8]      6.7    0.53    0.04 2470498         gen_all_moves [8]
-                0.04    0.00 2470498/2470498     square_is_attacked [18]
+                0.00    0.00       1/116781443     init_board [20]
+                0.00    0.00      64/116781443     generate_move_database_rook [25]
+                0.00    0.00      64/116781443     generate_move_database_bishop [24]
+                0.00    0.00     128/116781443     init_magics [21]
+                0.95    0.00 116781186/116781443     evaluate_board [5]
+[10]     5.1    0.95    0.00 116781443         count_set_bits [10]
 -----------------------------------------------
-                0.00    0.00       1/63748124     init_board [20]
-                0.00    0.00      64/63748124     generate_move_database_rook [23]
-                0.00    0.00      64/63748124     generate_move_database_bishop [22]
-                0.00    0.00     128/63748124     init_magics [21]
-                0.40    0.00 63747867/63748124     evaluate_board [5]
-[9]      4.7    0.40    0.00 63748124         count_set_bits [9]
+                0.00    0.00     552/53009639     get_best_move [2]
+                0.29    0.00 18312747/53009639     qsearch [4]
+                0.56    0.00 34696340/53009639     search [3]
+[11]     4.5    0.85    0.00 53009639         apply_move [11]
 -----------------------------------------------
-                0.13    0.00 10880058/29784983     heuristic_eval_moves [4]
-                0.22    0.00 18904925/29784983     alpha_beta_prune [3]
-[10]     4.1    0.35    0.00 29784983         apply_move [10]
+                0.81    0.00 8116264/8116264     search [3]
+[12]     4.3    0.81    0.00 8116264         get_transposition_entry [12]
 -----------------------------------------------
-                0.32    0.00 3210214/3210214     alpha_beta_prune [3]
-[11]     3.8    0.32    0.00 3210214         get_transposition_entry [11]
+                0.00    0.00     552/63123832     get_best_move [2]
+                0.17    0.00 18312747/63123832     qsearch [4]
+                0.40    0.00 44810533/63123832     search [3]
+[13]     3.0    0.57    0.00 63123832         is_not_in_check [13]
 -----------------------------------------------
-                0.00    0.00  107776/85104932     init_magics [21]
-                0.30    0.00 84997156/85104932     evaluate_board [5]
-[12]     3.5    0.30    0.00 85104932         get_set_bits [12]
+                0.00    0.00  107776/155816024     init_magics [21]
+                0.49    0.00 155708248/155816024     evaluate_board [5]
+[14]     2.6    0.49    0.00 155816024         get_set_bits [14]
 -----------------------------------------------
-                0.09    0.00 13920533/35329253     heuristic_eval_moves [4]
-                0.13    0.00 21408720/35329253     alpha_beta_prune [3]
-[13]     2.6    0.22    0.00 35329253         is_not_in_check [13]
+                0.42    0.00 6049694/6049694     qsearch [4]
+[15]     2.2    0.42    0.00 6049694         gen_all_non_quiet [15]
 -----------------------------------------------
-                0.07    0.00 10880058/29784983     heuristic_eval_moves [4]
-                0.13    0.00 18904925/29784983     alpha_beta_prune [3]
-[14]     2.4    0.20    0.00 29784983         revert_move [14]
+                0.00    0.00     552/53009639     get_best_move [2]
+                0.10    0.00 18312747/53009639     qsearch [4]
+                0.20    0.00 34696340/53009639     search [3]
+[16]     1.6    0.30    0.00 53009639         revert_move [16]
 -----------------------------------------------
-                0.15    0.00 3040475/3040475     heuristic_eval_moves [4]
-[15]     1.8    0.15    0.00 3040475         gen_all_non_quiet [15]
+                0.06    0.00 7552270/7552270     search [3]
+[17]     0.3    0.06    0.00 7552270         store_transposition_entry [17]
 -----------------------------------------------
-                0.11    0.00       1/1           get_best_move [2]
-[16]     1.3    0.11    0.00       1         init_transposition_table [16]
+                0.05    0.00 7553087/7553087     gen_all_moves [8]
+[18]     0.3    0.05    0.00 7553087         square_is_attacked [18]
 -----------------------------------------------
-                0.06    0.00 2456601/2456601     alpha_beta_prune [3]
-[17]     0.7    0.06    0.00 2456601         store_transposition_entry [17]
+                0.05    0.00       1/1           get_best_move [2]
+[19]     0.3    0.05    0.00       1         init_transposition_table [19]
 -----------------------------------------------
-                0.04    0.00 2470498/2470498     gen_all_moves [8]
-[18]     0.5    0.04    0.00 2470498         square_is_attacked [18]
+                0.00    0.01       1/1           main [1]
+[20]     0.1    0.00    0.01       1         init_board [20]
+                0.00    0.01       1/1           init_magics [21]
+                0.00    0.00       1/116781443     count_set_bits [10]
+                0.00    0.00       1/1           init_zorbist [31]
+                0.00    0.00       1/1           init_psqt [30]
 -----------------------------------------------
-                0.03    0.00       1/1           get_best_move [2]
-[19]     0.4    0.03    0.00       1         dump_transposition_table [19]
+                0.00    0.01       1/1           init_board [20]
+[21]     0.1    0.00    0.01       1         init_magics [21]
+                0.01    0.00       1/1           generate_knight_map [23]
+                0.00    0.00  107776/155816024     get_set_bits [14]
+                0.00    0.00     128/116781443     count_set_bits [10]
+                0.00    0.00       1/1           generate_move_database_rook [25]
+                0.00    0.00       1/1           generate_move_database_bishop [24]
+                0.00    0.00       1/1           generate_king_map [28]
+                0.00    0.00       1/1           generate_occupancy_mask_bishop [29]
 -----------------------------------------------
-                0.00    0.00       1/1           main [1]
-[20]     0.0    0.00    0.00       1         init_board [20]
+                0.01    0.00       1/1           get_best_move [2]
+[22]     0.1    0.01    0.00       1         dump_transposition_table [22]
+-----------------------------------------------
+                0.01    0.00       1/1           init_magics [21]
+[23]     0.1    0.01    0.00       1         generate_knight_map [23]
+-----------------------------------------------
                 0.00    0.00       1/1           init_magics [21]
-                0.00    0.00       1/63748124     count_set_bits [9]
-                0.00    0.00       1/1           init_zorbist [29]
-                0.00    0.00       1/1           init_psqt [28]
+[24]     0.0    0.00    0.00       1         generate_move_database_bishop [24]
+                0.00    0.00      64/116781443     count_set_bits [10]
+-----------------------------------------------
+                0.00    0.00       1/1           init_magics [21]
+[25]     0.0    0.00    0.00       1         generate_move_database_rook [25]
+                0.00    0.00      64/116781443     count_set_bits [10]
+-----------------------------------------------
+                0.00    0.00 4692034/4692034     evaluate_board [5]
+[26]     0.0    0.00    0.00 4692034         get_msb_special [26]
+-----------------------------------------------
+                0.00    0.00      12/12          get_best_move [2]
+[27]     0.0    0.00    0.00      12         print_move [27]
+-----------------------------------------------
+                0.00    0.00       1/1           init_magics [21]
+[28]     0.0    0.00    0.00       1         generate_king_map [28]
+-----------------------------------------------
+                0.00    0.00       1/1           init_magics [21]
+[29]     0.0    0.00    0.00       1         generate_occupancy_mask_bishop [29]
 -----------------------------------------------
                 0.00    0.00       1/1           init_board [20]
-[21]     0.0    0.00    0.00       1         init_magics [21]
-                0.00    0.00  107776/85104932     get_set_bits [12]
-                0.00    0.00     128/63748124     count_set_bits [9]
-                0.00    0.00       1/1           generate_move_database_rook [23]
-                0.00    0.00       1/1           generate_move_database_bishop [22]
-                0.00    0.00       1/1           generate_knight_map [26]
-                0.00    0.00       1/1           generate_king_map [25]
-                0.00    0.00       1/1           generate_occupancy_mask_bishop [27]
------------------------------------------------
-                0.00    0.00       1/1           init_magics [21]
-[22]     0.0    0.00    0.00       1         generate_move_database_bishop [22]
-                0.00    0.00      64/63748124     count_set_bits [9]
------------------------------------------------
-                0.00    0.00       1/1           init_magics [21]
-[23]     0.0    0.00    0.00       1         generate_move_database_rook [23]
-                0.00    0.00      64/63748124     count_set_bits [9]
------------------------------------------------
-                0.00    0.00      11/11          get_best_move [2]
-[24]     0.0    0.00    0.00      11         print_move [24]
------------------------------------------------
-                0.00    0.00       1/1           init_magics [21]
-[25]     0.0    0.00    0.00       1         generate_king_map [25]
------------------------------------------------
-                0.00    0.00       1/1           init_magics [21]
-[26]     0.0    0.00    0.00       1         generate_knight_map [26]
------------------------------------------------
-                0.00    0.00       1/1           init_magics [21]
-[27]     0.0    0.00    0.00       1         generate_occupancy_mask_bishop [27]
+[30]     0.0    0.00    0.00       1         init_psqt [30]
 -----------------------------------------------
                 0.00    0.00       1/1           init_board [20]
-[28]     0.0    0.00    0.00       1         init_psqt [28]
------------------------------------------------
-                0.00    0.00       1/1           init_board [20]
-[29]     0.0    0.00    0.00       1         init_zorbist [29]
+[31]     0.0    0.00    0.00       1         init_zorbist [31]
 -----------------------------------------------
                 0.00    0.00       1/1           get_best_move [2]
-[30]     0.0    0.00    0.00       1         print_board [30]
+[32]     0.0    0.00    0.00       1         print_board [32]
 -----------------------------------------------
 
  This table describes the call tree of the program, and was sorted by
@@ -304,13 +322,14 @@ notice and this notice are preserved.
 
 Index by function name
 
-   [7] __fentry__             [26] generate_knight_map    [28] init_psqt
-   [6] _mcount_private        [22] generate_move_database_bishop [16] init_transposition_table
-   [3] alpha_beta_prune       [23] generate_move_database_rook [29] init_zorbist
-  [10] apply_move             [27] generate_occupancy_mask_bishop [13] is_not_in_check
-   [9] count_set_bits          [2] get_best_move          [30] print_board
-  [19] dump_transposition_table [12] get_set_bits         [24] print_move
-   [5] evaluate_board         [11] get_transposition_entry [14] revert_move
-   [8] gen_all_moves           [4] heuristic_eval_moves   [18] square_is_attacked
-  [15] gen_all_non_quiet      [20] init_board             [17] store_transposition_entry
-  [25] generate_king_map      [21] init_magics
+   [9] __fentry__             [24] generate_move_database_bishop [31] init_zorbist
+   [6] _mcount_private        [25] generate_move_database_rook [13] is_not_in_check
+  [11] apply_move             [29] generate_occupancy_mask_bishop [32] print_board
+  [10] count_set_bits          [2] get_best_move          [27] print_move
+  [22] dump_transposition_table [26] get_msb_special       [4] qsearch
+   [5] evaluate_board         [14] get_set_bits           [16] revert_move
+   [7] evaluate_moves         [12] get_transposition_entry [3] search
+   [8] gen_all_moves          [20] init_board             [18] square_is_attacked
+  [15] gen_all_non_quiet      [21] init_magics            [17] store_transposition_entry
+  [28] generate_king_map      [30] init_psqt
+  [23] generate_knight_map    [19] init_transposition_table
