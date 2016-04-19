@@ -117,14 +117,14 @@ int full_search(Board * board, MoveList * moveList, int depth){
             
             // NULL WINDOW FAILED HIGH, RESEARCH
             if (value > alpha)
-                value = -search(board, -beta, -alpha, depth-1, 1, CUTNODE);
+                value = -search(board, -beta, -alpha, depth-1, 1, PVNODE);
         }
         
         // REVERT MOVE FROM BOARD
         revert_move(board, moveList->moves[i], undo);
         
         if (value <= alpha)
-            moveList->values[i] = -beta + (TotalNodes - currentNodes); // UPPER VALUE
+            moveList->values[i] = -(1<<28) + (TotalNodes - currentNodes); // UPPER VALUE
         else if (value >= beta)
             moveList->values[i] = beta;  // LOWER VALUE
         else
@@ -172,7 +172,7 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
     
     // LOOKUP CURRENT POSITION IN TRANSPOSITION TABLE
     entry = get_transposition_entry(&Table, board->hash);
-        
+    
     if (entry != NULL
         && board->turn == entry->turn){
         
@@ -180,8 +180,9 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
         tableMove = entry->best_move;
         
         // ENTRY MAY IMPROVE BOUNDS
-        if (entry->depth >= depth
-            && node_type == PVNODE){
+        if (USE_TRANSPOSITION_TABLE
+            && entry->depth >= depth
+            && node_type != PVNODE){
             
             // EXACT VALUE STORED
             if (entry->type == PVNODE)
@@ -260,7 +261,8 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
     }
     
     // INTERNAL ITERATIVE DEEPING
-    if (depth >= 3
+    if (USE_INTERNAL_ITERATIVE_DEEPENING
+        && depth >= 3
         && tableMove == NoneMove
         && node_type == PVNODE){
         
@@ -300,13 +302,12 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
         
         // DETERMINE IF WE CAN USE LATE MOVE REDUCTIONS
         if (USE_LATE_MOVE_REDUCTIONS
-            && !hasFailedHigh
-            && valid > 4
+            && usedTableEntry
+            && valid >= 4
             && depth >= 3
             && !inCheck
             && node_type != PVNODE
-            && MOVE_TYPE(currentMove) != PromotionMove
-            && MOVE_TYPE(currentMove) != EnpassMove
+            && MOVE_TYPE(currentMove) == NormalMove
             && undo[0].capture_piece == Empty
             && is_not_in_check(board, board->turn))
             newDepth = depth-2;
@@ -323,7 +324,6 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
                 && newDepth == depth-2){
                     
                 value = -search(board, -beta, -alpha, depth-1, height+1, node_type);
-                hasFailedHigh = 1;
             }
         }
         
@@ -334,7 +334,7 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
             // NULL WINDOW FAILED HIGH, RESEARCH
             if (value > alpha){
                 value = -search(board, -beta, -alpha, depth-1, height+1, PVNODE);
-                hasFailedHigh = 1;
+
             }
         }
         
