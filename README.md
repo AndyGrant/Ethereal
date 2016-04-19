@@ -32,6 +32,10 @@ Ethereal is a UCI compliant Chess Engine based on the minimax search algorithm. 
 
   20 Minute Unlimited
   
-    Ethereal (Commit #551) vs MicroMax4.8 :: 5.5 3.5
+                                             WIN LOSS DRAW
+                                             
+    Ethereal (Commit #551) vs MicroMax4.8 |   5    3    1
+    
+    Ethereal (Commit #585) vs MicroMax4.8 |   6    1    3
   
   
