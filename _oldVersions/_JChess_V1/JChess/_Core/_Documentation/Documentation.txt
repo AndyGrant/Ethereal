@@ -1,0 +1,63 @@
+Chess.c Documentation
+
+Chess Engine
+	
+	The Chess Engine works to create moves using an algorithms involving what is call move mappings. a move mapping is two integers that tell a piece how to move. for example the move map (1,1) can be applied to a queen, which will move it Diagonally to the left. For pieces like queens that can move many squares, unlike knights and kings, this move map is applied to the queens position repeatedly until the position is out of the board, or a piece stops the queen from moving. This difference in number of times applied is made simple with two very similar functions, findMappedIters, and findMappedNoIters. The move maps are contained in sets which correspond to a certain piece. They are defined below.
+	
+		moveMapKnight[8][2] = {{2,1}, {2,-1}, {-2,1}, {-2,-1},{1,2}, {1,-2}, {-1,2}, {-1,-2}};
+		moveMapBishop[4][2] = {{1,1}, {-1,-1}, {1,-1}, {-1,1},};
+		moveMapRook[4][2] = {{0,1}, {1,0}, {0,-1}, {-1,0}};
+		moveMapQueen[8][2] = {{1,1}, {-1,-1}, {1,-1}, {-1,1},{0,1}, {1,0}, {0,-1}, {-1,0}};
+		moveMapKing[8][2] = {{1,1}, {-1,-1}, {1,-1}, {-1,1},{0,1}, {1,0}, {0,-1}, {-1,0}};
+	
+	For cases like pawns and kings where the moves cannot always be determined using a set move map, functions specifically for pawns, and for castles, are used. Pawns attempt to move one forward, or one forward and to the side to capture, at all times promotion is taken into account by checking the ending position of the pawn. The main reason for the moved[8][8] contained in the Board structure is to keep track of the pawns movements, so the function can know if the pawn has the option to move two ahead. The same idea is used for castling, the movements of the rooks/king are tracked. This solution is nasty and causes many unnecessary array manipulations. It could be better implemented by keeping track of which castles (queen side, king side) are still valid options for a certain colour.
+	
+	The moves found and described above are then stored as a seven integer sequence. not all moves require seven integers to describe, but keeping the data size uniform is much more clean. The structure of these is shown below.
+		
+		Normal Move =  [type, start, end, capturedT, capturedC	, capturedM , hasMoved]
+		Castle Move =  [type, start, end, rookStart, rookEnd	, null		, null]
+		Promotion	=  [type, start, end, capturedT, capturedC	, capturedM , promotionType]
+		Enpassent	=  [type, start, end, captured , null		, null		, null]
+	
+	
+	These move sequences can be applied and removed from a given Board. The move sequences must be applied first so that the engine can check if the move is valid based on check or checkmate, and then reverted. With this strategy only one Board structure is needed at a time, making the memory usage for the Engine extremely low.
+	
+	The final component of the Engine is it's function to verify moves. This function is the bottle neck of the engine, and in many test cases uses up to 70% of runtime for the program. The method used is to take the king of the colour to whom the turn belongs, and then pretend the king is each piece individually and see if it can capture a piece of the same type, meaning the king is temporarily a queen, and then if the 'king' can capture the opponents queen, then the 'king' is in check and the move is invalid.
+	
+	Future changes involve removing the moved array from the Board structure and subsequently removing many needless changes to arrays. Furthermore, as the slowest part of the engine is most definitely the move validation, a better, faster, and most likely less clean algorithm for move verification should be found. Some ideas are already in the works, but will not be implemented for some time.
+	
+	
+	
+	Functions : 
+	
+		[1] createBoard
+				Create and return a Board structure using a given Board Encoding. Board Encodings are integer[8][8] where the type and colour and encode as the value / 10 and value % 10 respectively, The kingLocations[2] array is created by iterating through the board to find the kings, the integer moved[8][8] array default set to all 1's, but any piece that is seen out of place is set to 0.
+
+		[2] findAllValidMoves
+				Iterate through board and find all moves for pieces that have the same colour as the turn and return a reference to an integer array containing all of the move sequences. Also set the passed by reference integer movesFound equal to the number of moves found.
+					
+		[3] findPawnMoves
+				Attempt to add a pawns moves to the moves found stack by checking for captures to either side in the appropriate direction, as well as moving one, or in some cases two, squares ahead in the appropriate direction. Also check for any cases of en passant.
+				
+		[4] findMappedIters
+				Iterate through the passed in move map set and apply each move map to the given piece until either the location breaks the bounds of the chess board, or the given piece comes in contact with another piece.
+				
+		[5] findMappedNoIters
+				Iterate through the passed in move set and apply each move map to the given piece once. This function is used on kings and knights.
+			
+		[6] findCastles
+				Check the queen side and king side castles for a piece and verify the the king is not castling out of or through a check from the opponent. 
+				
+		[7] checkMove
+				Pretend the king is every other type of piece, and see if the 'king' can capture a corresponding opposing piece. In this case the move is invalid and the move sequence is not added to the stack of moves.
+
+				
+		[8-11] createNormalMove, createCastleMove, createPromotionMove, createEnpassMove
+				Create Move sequence and add it to the stack if it is a valid move
+
+		
+		[12-16] applyGenericMove, applyNormalMove, applyCastleMove, applyPromotionMove, applyEnpassMove
+				Apply the given Move Sequence to a given Board
+				
+		[17-22] revertGenericMove, revertNormalMove, revertCastleMove, revertPromotionMove, revertEnpassMove
+				Revert the given Move Sequence from a given Board

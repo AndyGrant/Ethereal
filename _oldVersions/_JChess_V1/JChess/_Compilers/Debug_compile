@@ -1,0 +1,5 @@
+#!/bin/sh
+
+cd ../_Core
+gcc -g -m32 _Scripts/Engine.c _Scripts/Moves.c _Scripts/ChessAI.c _Scripts/BinTable.c engineFromJava.c -o engineFromJava.exe
+cd ../_Compilers
