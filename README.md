@@ -37,5 +37,8 @@ In the beginnings of my computer science education I attempted to create a graph
     Ethereal (Commit #551) vs MicroMax4.8 |   5    3    1
     
     Ethereal (Commit #585) vs MicroMax4.8 |   6    1    3
-  
-  
+    
+    
+# Special Thanks
+
+  I would like to thank my previous instructor, Zachary Littrell, for all of his help in my endeavors. When I entered the Computer Science program he was my teacher. When I left he became one of the most important people in my life. His help, insight, and motivation made me the programmer and person I am today. He provided the guidance I needed at such a crucial time in my life, and for that I am forever thankful, whether he knows it or not.
