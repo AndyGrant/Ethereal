@@ -94,4 +94,10 @@ typedef struct MoveList {
     
 } MoveList;
 
+typedef struct PrincipleVariation {
+    uint16_t line[256];
+    int length;
+    
+} PrincipleVariation;
+
 #endif
