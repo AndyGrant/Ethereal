@@ -441,7 +441,7 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
 }
 
 int qsearch(Board * board, int alpha, int beta, int height){
-    int i, size = 0, value, best = -2*Mate, values[256];
+    int i, delta, size = 0, value, best = -2*Mate, values[256];
     uint16_t moves[256], bestMove, currentMove;
     Undo undo[1];
     
@@ -460,10 +460,15 @@ int qsearch(Board * board, int alpha, int beta, int height){
     if (alpha >= beta)
         return value;
     
-    // DELTA PRUNING IN THE MID GAME
-    if (board->num_pieces > 16)
-        if (value + QueenValue < alpha)
-            return alpha;
+    // DETERMINE DELTA VALUE
+    delta = QueenValue;
+    if (board->pieceBitBoards[0] & board->colourBitBoards[0] & RANK_8
+        || board->pieceBitBoards[0] & board->colourBitBoards[1] & RANK_1)
+        delta += QueenValue - PawnValue;
+
+    // DELTA PRUNING
+    if (value + delta < alpha)
+        return alpha;
     
     // INCREMENT TOTAL NODE COUNTER
     TotalNodes++;
