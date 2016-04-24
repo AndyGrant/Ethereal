@@ -297,10 +297,8 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
         if (value <= alpha)
             value = search(board, &localpv, -Mate, beta, depth-3, height, PVNODE);
         
-        // GET TABLE MOVE FROM TRANSPOSITION TABLE
-        entry = get_transposition_entry(&Table, board->hash);
-        if (entry != NULL)
-            tableMove = entry->best_move;
+        // GET CANDIDATE MOVE FROM LOCAL PRINCIPLE VARIATION
+        tableMove = localpv.line[0];
     }
     
     // GENERATE AND PREPARE MOVE ORDERING
