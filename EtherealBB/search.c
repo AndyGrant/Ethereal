@@ -305,7 +305,7 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
     
     // GENERATE AND PREPARE MOVE ORDERING
     gen_all_moves(board, moves, &size);
-    evaluate_moves(board, values, moves, size, height, tableMove, pv->line[height+1]);
+    evaluate_moves(board, values, moves, size, height, tableMove, pv->line[height]);
     
     // DETERMINE CHECK STATUS FOR LATE MOVE REDUCTIONS
     inCheck = !is_not_in_check(board, board->turn);
