@@ -1,0 +1,24 @@
+CC = arm-linux-gnueabi-gcc
+
+CFLAGS = -static -march=armv5
+
+LIBS = -lstdc++
+
+SRC = bitutils.c        \
+      board.c           \
+      evaluate.c        \
+      magics.c          \
+      move.c            \
+      movegen.c         \
+      movegentest.c     \
+      psqt.c            \
+      search.c          \
+      transposition.c   \
+      uci.cpp           \
+      zorbist.c         \
+
+EXE = EtherealBitBoardAndroid
+
+all:
+	$(CC) $(CFLAGS) $(SRC) -o $(EXE) $(LIBS)
+	
