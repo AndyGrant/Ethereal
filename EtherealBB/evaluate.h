@@ -17,8 +17,8 @@
 #define ROOK_ON_7TH_MID      (15)
 #define ROOK_ON_7TH_END      ( 6)
 
-#define BISHOP_PAIR_MID      ( 9)
-#define BISHOP_PAIR_END      (17)
+#define BISHOP_PAIR_MID      (27)
+#define BISHOP_PAIR_END      (51)
 #define BISHOP_HAS_WINGS_MID ( 7)
 #define BISHOP_HAS_WINGS_END (32)
 
