@@ -30,15 +30,9 @@ void init_transposition_table(TranspositionTable * table, int key_size){
 TranspositionEntry * get_transposition_entry(TranspositionTable * table, uint64_t hash){
     TranspositionEntry * entry = &(table->entries[hash % table->max_size]);
     
-    if (entry->hash != hash){
-        if (entry->type != 0)
-            table->key_collisions++;
-        else
-            table->misses++;
+    if (entry->hash != hash)
         return NULL;
-    }
     
-    table->hits++;  
     return entry;
 }
 
@@ -52,7 +46,6 @@ void store_transposition_entry(TranspositionTable * table, int8_t depth, int8_t 
         entry->value = value;
         entry->best_move = best_move;
         entry->hash = hash;
-        table->num_entries++;
         return;
     } 
     
