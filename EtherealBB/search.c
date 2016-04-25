@@ -177,7 +177,8 @@ int full_search(Board * board, PrincipleVariation * pv, MoveList * moveList, int
 }
 
 int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int depth, int height, int node_type){
-    int i, valid = 0, value, size = 0, best=-2*Mate, repeated = 0, newDepth;
+    int i, valid = 0, value, size = 0, best=-2*Mate;
+    int repeated = 0, newDepth, optimalValue = -Mate; // HACK
     int oldAlpha = alpha, usedTableEntry = 0, inCheck, values[256];
     uint16_t moves[256], bestMove, currentMove, tableMove = NoneMove;
     PrincipleVariation localpv = {.length = 0};
@@ -315,6 +316,26 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
         
         currentMove = get_next_move(moves, values, i, size);
         
+        if (USE_FUTILITY_PRUNING
+            && node_type != PVNODE
+            && valid >= 1
+            && depth == 1
+            && !inCheck
+            && MOVE_TYPE(currentMove) == NormalMove
+            && board->squares[MOVE_TO(currentMove)] == Empty){
+         
+            if (optimalValue == -Mate)
+                optimalValue = evaluate_board(board) + PawnValue/2;
+                
+            value = optimalValue;
+            
+            if (value <= alpha){
+                if (value > best)
+                    best = value;
+                continue;
+            }
+        }
+        
         // APPLY AND VALIDATE MOVE BEFORE SEARCHING
         apply_move(board, currentMove, undo);
         if (!is_not_in_check(board, !board->turn)){
@@ -450,6 +471,9 @@ int qsearch(Board * board, int alpha, int beta, int height){
     // MAX HEIGHT REACHED, STOP HERE
     if (height >= MaxHeight)
         return evaluate_board(board);
+        
+    // INCREMENT TOTAL NODE COUNTER
+    TotalNodes++;
     
     // GET A STANDING-EVAL OF THE CURRENT BOARD
     value = evaluate_board(board);
@@ -471,9 +495,6 @@ int qsearch(Board * board, int alpha, int beta, int height){
     // DELTA PRUNING
     if (value + delta < alpha)
         return alpha;
-    
-    // INCREMENT TOTAL NODE COUNTER
-    TotalNodes++;
     
     // GENERATE AND PREPARE QUIET MOVE ORDERING
     gen_all_non_quiet(board, moves, &size);
