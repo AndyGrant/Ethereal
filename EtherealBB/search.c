@@ -442,7 +442,7 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
 
 int qsearch(Board * board, int alpha, int beta, int height){
     int i, delta, size = 0, value, best = -2*Mate, values[256];
-    uint16_t moves[256], bestMove, currentMove, tableMove = NoneMove;
+    uint16_t moves[256], bestMove, currentMove;
     TranspositionEntry * entry;
     Undo undo[1];
     
@@ -474,14 +474,9 @@ int qsearch(Board * board, int alpha, int beta, int height){
     // INCREMENT TOTAL NODE COUNTER
     TotalNodes++;
     
-    // LOOKUP CURRENT POSITION IN TRANSPOSITION TABLE
-    entry = get_transposition_entry(&Table, board->hash);
-    if (entry != NULL)
-        tableMove = entry->best_move;
-    
     // GENERATE AND PREPARE QUIET MOVE ORDERING
     gen_all_non_quiet(board, moves, &size);
-    evaluate_moves(board, values, moves, size, height, tableMove, NoneMove);
+    evaluate_moves(board, values, moves, size, height, NoneMove, NoneMove);
     
     best = value;
     
