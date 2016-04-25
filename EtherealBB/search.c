@@ -90,6 +90,9 @@ uint16_t get_best_move(Board * board, int seconds, int logging){
         // TO TAKE LONGER THAN THE TOTAL ALLOTED TIME
         if ((time(NULL) - StartTime) * 4 >= seconds && value + 25 > currentValue)
             break;        
+        
+        if ((time(NULL) - StartTime) * 2 >= seconds)
+            break;        
     }
     
     dump_transposition_table(&Table);
