@@ -249,7 +249,7 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
     
     // RAZOR PRUNING
     if (USE_RAZOR_PRUNING
-        && depth <= 2
+        && depth <= 3
         && node_type != PVNODE
         && alpha == beta - 1
         && evaluate_board(board) + QueenValue < beta){
@@ -307,8 +307,6 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
     
     // DETERMINE CHECK STATUS FOR LATE MOVE REDUCTIONS
     inCheck = !is_not_in_check(board, board->turn);
-    
-    int hasFailedHigh = 0;
     
     for (i = 0; i < size; i++){
         
