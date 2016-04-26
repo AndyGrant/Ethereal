@@ -259,7 +259,7 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
         && depth <= 3
         && node_type != PVNODE
         && alpha == beta - 1
-        && evaluate_board(board) + get_most_valuable_piece(board, !board->turn) < beta){
+        && evaluate_board(board) + 3 * PawnValue < beta){
         
         value = qsearch(board, alpha, beta, height);
         
