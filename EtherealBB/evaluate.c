@@ -101,8 +101,20 @@ int evaluate_board(Board * board){
         else if (count_set_bits(white) == 1 &&
             count_set_bits(black & knights) == 2 &&
             count_set_bits(black & bishops) == 0)
+            return 0;   
+            
+    } else if (pawns == 0 && queens == 0){
+        
+        // K+R+B v K+R or K+R+N v K+R
+        if (count_set_bits(white & rooks) == 1
+            && count_set_bits(black & rooks) == 1
+            && count_set_bits(white & (bishops | knights)) == 1)
             return 0;
-    }    
+        else if (count_set_bits(white & rooks) == 1
+            && count_set_bits(black & rooks) == 1
+            && count_set_bits(black & (bishops | knights)) == 1)
+            return 0;
+    }
     
     // DETERMINE IF STACKED PAWN ON GIVEN FILE
     pawnIsStacked[0][0] = ((wa & (wa-1)) != 0);
