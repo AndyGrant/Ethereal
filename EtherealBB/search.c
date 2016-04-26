@@ -259,7 +259,7 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
         && depth <= 3
         && node_type != PVNODE
         && alpha == beta - 1
-        && evaluate_board(board) + 3 * PawnValue < beta){
+        && evaluate_board(board) + KnightValue < beta){
         
         value = qsearch(board, alpha, beta, height);
         
@@ -328,7 +328,7 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
             && board->squares[MOVE_TO(currentMove)] == Empty){
          
             if (optimalValue == -Mate)
-                optimalValue = evaluate_board(board) + 10 + PawnValue/2;
+                optimalValue = evaluate_board(board) + PawnValue/2;
                 
             value = optimalValue;
             
@@ -356,8 +356,7 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
             && depth >= 3
             && !inCheck
             && node_type != PVNODE
-            && MOVE_TYPE(currentMove) != EnpassMove
-            && MOVE_TYPE(currentMove) != CastleMove
+            && PIECE_TYPE(board->squares[MOVE_TO(currentMove)]) != PawnFlag
             && (currentMove & PromoteToQueen) == 0
             && undo[0].capture_piece == Empty
             && is_not_in_check(board, board->turn))
@@ -372,10 +371,9 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
             
             // IMPROVED BOUND, BUT WAS REDUCED DEPTH?
             if (value > alpha
-                && newDepth == depth-2){
+                && newDepth == depth-2)
                     
                 value = -search(board, &localpv, -beta, -alpha, depth-1, height+1, node_type);
-            }
         }
         
         // NULL WINDOW SEARCH ON NON-FIRST / PV MOVES
@@ -383,10 +381,8 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
             value = -search(board, &localpv, -alpha-1, -alpha, newDepth, height+1, CUTNODE);
             
             // NULL WINDOW FAILED HIGH, RESEARCH
-            if (value > alpha){
+            if (value > alpha)
                 value = -search(board, &localpv, -beta, -alpha, depth-1, height+1, PVNODE);
-
-            }
         }
         
         // REVERT MOVE FROM BOARD

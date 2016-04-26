@@ -4,10 +4,10 @@
 #include "types.h"
 
 #define PawnValue   (  100)
-#define KnightValue (  300)
-#define BishopValue (  300)
-#define RookValue   (  500)
-#define QueenValue  (  900)
+#define KnightValue (  400)
+#define BishopValue (  400)
+#define RookValue   (  600)
+#define QueenValue  ( 1200)
 #define KingValue   (   50)
 
 #define ROOK_OPEN_FILE_MID   (25)
@@ -28,7 +28,7 @@ static int PawnStackedMid[8]  = {10, 14, 17, 18, 18, 17, 14, 10};
 static int PawnStackedEnd[8]  = {15, 19, 22, 23, 23, 22, 19, 15};
 
 static int PawnIsolatedMid[8] = {14, 20, 26, 26, 26, 26, 20, 14};
-static int PawnIsolatedEnd[8] = {10, 16, 18, 18, 18, 18, 16, 10};
+static int PawnIsolatedEnd[8] = { 4,  8, 12, 14, 14, 12,  8,  4};
 
 static int PawnPassedMid[8]   = { 0,  0,  0, 12, 17, 27, 35,  0};
 static int PawnPassedEnd[8]   = { 0,  0,  0, 12, 17, 27, 35,  0};
