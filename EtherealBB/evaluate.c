@@ -216,6 +216,15 @@ int evaluate_board(Board * board){
         }
     }
     
+    // EVALUATE STACKED WHITE ROOKS
+    if (wrooks[0] != -1
+        && wrooks[1] != -1
+        && wrooks[0] % 8 == wrooks[1] % 8){
+        
+        mid += ROOK_STACKED_MID;
+        end += ROOK_STACKED_END;
+    }
+    
     // EVALUATE BLACK ROOKS FOR FILE AND RANK BONUSES
     for (i = 0; brooks[i] != -1; i++){
         if (blackPawns & FILES[brooks[i] % 8] == 0){
@@ -233,6 +242,15 @@ int evaluate_board(Board * board){
             mid -= ROOK_ON_7TH_MID;
             end -= ROOK_ON_7TH_END;
         }
+    }
+    
+    // EVALUATE STACKED BLACK ROOKS
+    if (brooks[0] != -1
+        && brooks[1] != -1
+        && brooks[0] % 8 == brooks[1] % 8){
+        
+        mid -= ROOK_STACKED_MID;
+        end -= ROOK_STACKED_END;
     }
     
     
