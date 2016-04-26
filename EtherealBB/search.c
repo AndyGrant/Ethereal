@@ -183,6 +183,7 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
     int i, valid = 0, value, size = 0, best=-2*Mate;
     int repeated = 0, newDepth, optimalValue = -Mate; // HACK
     int oldAlpha = alpha, usedTableEntry = 0, inCheck, values[256];
+    int razorMargin;
     uint16_t moves[256], bestMove, currentMove, tableMove = NoneMove;
     PrincipleVariation localpv = {.length = 0};
     TranspositionEntry * entry;
@@ -254,12 +255,15 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
         return 0;
     }
     
+    
+    razorMargin = (depth == 3) ? QueenValue : ((depth == 2) ? RookValue : KnightValue);
+    
     // RAZOR PRUNING
     if (USE_RAZOR_PRUNING
         && depth <= 3
         && node_type != PVNODE
         && alpha == beta - 1
-        && evaluate_board(board) + KnightValue < beta){
+        && evaluate_board(board) + razorMargin < beta){
         
         value = qsearch(board, alpha, beta, height);
         
@@ -356,8 +360,7 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
             && depth >= 3
             && !inCheck
             && node_type != PVNODE
-            && PIECE_TYPE(board->squares[MOVE_TO(currentMove)]) != PawnFlag
-            && (currentMove & PromoteToQueen) == 0
+            && MOVE_TYPE(currentMove) == NormalMove
             && undo[0].capture_piece == Empty
             && is_not_in_check(board, board->turn))
             newDepth = depth-2;
@@ -489,8 +492,8 @@ int qsearch(Board * board, int alpha, int beta, int height){
     
     // DETERMINE DELTA VALUE
     delta = get_most_valuable_piece(board, !board->turn);
-    if (board->pieceBitBoards[0] & board->colourBitBoards[0] & RANK_7
-        || board->pieceBitBoards[0] & board->colourBitBoards[1] & RANK_2)
+    if ((board->pieceBitBoards[0] & board->colourBitBoards[0] & RANK_7) != 0ull
+        || (board->pieceBitBoards[0] & board->colourBitBoards[1] & RANK_2) != 0ull)
         delta += QueenValue - PawnValue;
 
     // DELTA PRUNING
@@ -563,7 +566,7 @@ void evaluate_moves(Board * board, int * values, uint16_t * moves, int size, int
         value  = 8192 * ( tableMove == moves[i]);
         
         // PRINCIPLE VARIATION NEXT
-        value += 4096 * (    pvMove == moves[i]);
+        //value += 4096 * (    pvMove == moves[i]);
         
         // THEN KILLERS, UNLESS OTHER GOOD CAPTURE
         value += 128  * (   killer1 == moves[i]);
