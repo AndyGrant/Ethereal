@@ -296,3 +296,13 @@ int evaluate_board(Board * board){
     
     return board->turn == ColourWhite ? eval+10 : -(eval+10);    
 }
+
+int get_most_valuable_piece(Board * board, int turn){
+    uint64_t friendly = board->colourBitBoards[turn];
+    
+    if (friendly & board->pieceBitBoards[4]) return QueenValue;
+    if (friendly & board->pieceBitBoards[3]) return RookValue;
+    if (friendly & board->pieceBitBoards[2]) return BishopValue;
+    if (friendly & board->pieceBitBoards[1]) return KnightValue;
+    return PawnValue;
+}
