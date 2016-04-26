@@ -33,9 +33,6 @@ static int PawnPassedEnd[8]   = { 0,  0,  0,  8, 12, 20, 28,  0};
 
 static int PieceValues[8] = {PawnValue, KnightValue, BishopValue, RookValue, QueenValue, KingValue, 0, 0};
 
-
 int evaluate_board(Board * board);
-
-int get_most_valuable_piece(Board * board, int turn);
 
 #endif
