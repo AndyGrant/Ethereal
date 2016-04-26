@@ -37,4 +37,6 @@ static int PieceValues[8] = {PawnValue, KnightValue, BishopValue, RookValue, Que
 
 int evaluate_board(Board * board);
 
+int get_most_valuable_piece(Board * board, int turn);
+
 #endif

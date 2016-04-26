@@ -259,7 +259,7 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
         && depth <= 3
         && node_type != PVNODE
         && alpha == beta - 1
-        && evaluate_board(board) + QueenValue < beta){
+        && evaluate_board(board) + get_most_valuable_piece(board, !board->turn) < beta){
         
         value = qsearch(board, alpha, beta, height);
         
@@ -492,7 +492,7 @@ int qsearch(Board * board, int alpha, int beta, int height){
         return value;
     
     // DETERMINE DELTA VALUE
-    delta = QueenValue;
+    delta = get_most_valuable_piece(board, !board->turn);
     if (board->pieceBitBoards[0] & board->colourBitBoards[0] & RANK_7
         || board->pieceBitBoards[0] & board->colourBitBoards[1] & RANK_2)
         delta += QueenValue - PawnValue;
