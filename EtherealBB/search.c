@@ -40,9 +40,6 @@ uint16_t get_best_move(Board * board, int seconds, int logging){
     EvaluatingPlayer = board->turn;
     init_transposition_table(&Table, 23);
     
-    seconds = board->num_pieces > 16 ? 24 : 1.75*board->num_pieces;
-    EndTime = StartTime + seconds;
-    
     // POPULATE ROOT'S MOVELIST
     MoveList rootMoveList;
     rootMoveList.size = 0;
@@ -51,27 +48,19 @@ uint16_t get_best_move(Board * board, int seconds, int logging){
     // PRINT SEARCH DATA TABLE HEADER TO CONSOLE
     if (!logging){
         print_board(board);
-        printf("|  Depth  |  Score  |   Nodes   | Elapsed | PV \n");
+        printf("|  Depth  |  Score  |   Nodes   | Elapsed | Best |\n");
     }
     
-    int depth, value, i, currentValue = evaluate_board(board);
+    int depth, value;
     for (depth = 1; depth < MaxDepth; depth++){
         
-        PrincipleVariation localpv = {.length = 0};
-        
         // PERFORM FULL SEARCH ON ROOT
-        value = full_search(board,&localpv,&rootMoveList,depth);
+        value = full_search(board,&rootMoveList,depth);
         
         // LOG RESULTS TO INTERFACE
         if (logging){
             printf("info depth %d score cp %d time %d nodes %d pv ",depth,value,1000*(time(NULL)-StartTime),TotalNodes);
-            
-            // PRINT THE PRINCIPLE VARIATION
-            for (i = 0; i < localpv.length; i++){
-                print_move(localpv.line[i]);
-                printf(" ");
-            } 
-            
+            print_move(rootMoveList.bestMove);
             printf("\n");
             fflush(stdout);
         }
@@ -79,22 +68,13 @@ uint16_t get_best_move(Board * board, int seconds, int logging){
         // LOG RESULTS TO CONSOLE
         else {
             printf("|%9d|%9d|%11d|%9d| ",depth,value,TotalNodes,(time(NULL)-StartTime));
-            
-            // PRINT THE PRINCIPLE VARIATION
-            for (i = 0; i < localpv.length; i++){
-                print_move(localpv.line[i]);
-                printf(" ");
-            } 
-            
-            printf("\n");
+            print_move(rootMoveList.bestMove);
+            printf(" |\n");
         }
         
         // END THE SEARCH IF THE NEXT DEPTH IS EXPECTED
         // TO TAKE LONGER THAN THE TOTAL ALLOTED TIME
-        if ((time(NULL) - StartTime) * 4 >= seconds && value + 25 > currentValue)
-            break;        
-        
-        if ((time(NULL) - StartTime) * 2 >= seconds)
+        if ((time(NULL) - StartTime) * 5 > seconds)
             break;        
     }
     
@@ -103,13 +83,14 @@ uint16_t get_best_move(Board * board, int seconds, int logging){
     return rootMoveList.bestMove;    
 }
 
-int full_search(Board * board, PrincipleVariation * pv, MoveList * moveList, int depth){
+int full_search(Board * board, MoveList * moveList, int depth){
     
     int alpha = -2*Mate, beta = 2*Mate;
     int i, valid, best =-2*Mate, value;
-    int currentNodes, bestIndex;
-    PrincipleVariation localpv = {.length = 0};
-    Undo undo[1];    
+    int currentNodes;
+    Undo undo[1];
+    
+    int bestIndex;
    
     for (i = 0; i < moveList->size; i++){
         
@@ -128,15 +109,15 @@ int full_search(Board * board, PrincipleVariation * pv, MoveList * moveList, int
         
         // FULL WINDOW SEARCH ON FIRST MOVE
         if (valid == 1)
-            value = -search(board, &localpv, -beta, -alpha, depth-1, 1, PVNODE);
+            value = -search(board, -beta, -alpha, depth-1, 1, PVNODE);
         
         // NULL WINDOW SEARCH ON NON-FIRST MOVES
         else{
-            value = -search(board, &localpv, -alpha-1, -alpha, depth-1, 1, CUTNODE);
+            value = -search(board, -alpha-1, -alpha, depth-1, 1, CUTNODE);
             
             // NULL WINDOW FAILED HIGH, RESEARCH
             if (value > alpha)
-                value = -search(board, &localpv, -beta, -alpha, depth-1, 1, PVNODE);
+                value = -search(board, -beta, -alpha, depth-1, 1, PVNODE);
         }
         
         // REVERT MOVE FROM BOARD
@@ -157,16 +138,8 @@ int full_search(Board * board, PrincipleVariation * pv, MoveList * moveList, int
             moveList->bestMove = moveList->moves[i];
             
             // IMPROVED CURRENT LOWER VALUE
-            if (value > alpha){
+            if (value > alpha)
                 alpha = value;
-                
-                // UPDATE THE PRINCIPLE VARIATION
-                if (localpv.length != -1){
-                    pv->line[0] = moveList->moves[i];
-                    memcpy(pv->line + 1, localpv.line, sizeof(uint16_t) * localpv.length);
-                    pv->length = localpv.length + 1;
-                }
-            }
         }
         
         // IMPROVED AND FAILED HIGH
@@ -179,27 +152,20 @@ int full_search(Board * board, PrincipleVariation * pv, MoveList * moveList, int
     return best;
 }
 
-int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int depth, int height, int node_type){
-    int i, valid = 0, value, size = 0, best=-2*Mate;
-    int repeated = 0, newDepth, optimalValue = -Mate; // HACK
+int search(Board * board, int alpha, int beta, int depth, int height, int node_type){
+    int i, valid = 0, value, size = 0, best=-2*Mate, repeated = 0, newDepth;
     int oldAlpha = alpha, usedTableEntry = 0, inCheck, values[256];
-    int razorMargin;
     uint16_t moves[256], bestMove, currentMove, tableMove = NoneMove;
-    PrincipleVariation localpv = {.length = 0};
     TranspositionEntry * entry;
     Undo undo[1];
     
     // SEARCH TIME HAS EXPIRED
-    if (EndTime < time(NULL)){
-        pv->length = -1;
+    if (EndTime < time(NULL))
         return board->turn == EvaluatingPlayer ? -Mate : Mate;
-    }
     
     // SEARCH HORIZON REACHED, QSEARCH
-    if (depth <= 0){
-        pv->length = -1;
+    if (depth <= 0)
         return qsearch(board, alpha, beta, height);    
-    }
     
     // INCREMENT TOTAL NODE COUNTER
     TotalNodes++;
@@ -240,7 +206,7 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
     }   
     
     // DETERMINE 3-FOLD REPITION
-    // COMPARING HISTORY TO NULLMOVE IS A HACK
+    // COMPAREING HISTORY TO NULLMOVE IS A HACK
     // TO AVOID CALLING TREES WITH 3-NULL MOVES 
     // APPLIED 3-FOLD REPITITIONS
     for (i = 0; i < board->move_num; i++){
@@ -255,14 +221,12 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
         return 0;
     }
     
-    razorMargin = (depth == 3) ? QueenValue : ((depth == 2) ? RookValue : KnightValue);
-    
     // RAZOR PRUNING
     if (USE_RAZOR_PRUNING
-        && depth <= 3
+        && depth <= 2
         && node_type != PVNODE
         && alpha == beta - 1
-        && evaluate_board(board) + razorMargin < beta){
+        && evaluate_board(board) + QueenValue < beta){
         
         value = qsearch(board, alpha, beta, height);
         
@@ -286,7 +250,7 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
         board->history[board->move_num++] == NullMove;
         
         // PERFORM NULL MOVE SEARCH
-        value = -search(board, &localpv, -beta, -beta+1, depth-4, height+1, CUTNODE);
+        value = -search(board, -beta, -beta+1, depth-4, height+1, CUTNODE);
         
         // REVERT NULL MOVE
         board->move_num--;
@@ -303,44 +267,28 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
         && node_type == PVNODE){
         
         // SEARCH AT A LOWER DEPTH
-        value = search(board, &localpv, alpha, beta, depth-3, height, PVNODE);
+        value = search(board, alpha, beta, depth-3, height, PVNODE);
         if (value <= alpha)
-            value = search(board, &localpv, -Mate, beta, depth-3, height, PVNODE);
+            value = search(board, -Mate, beta, depth-3, height, PVNODE);
         
-        // GET CANDIDATE MOVE FROM LOCAL PRINCIPLE VARIATION
-        tableMove = localpv.line[0];
+        // GET TABLE MOVE FROM TRANSPOSITION TABLE
+        entry = get_transposition_entry(&Table, board->hash);
+        if (entry != NULL)
+            tableMove = entry->best_move;
     }
     
     // GENERATE AND PREPARE MOVE ORDERING
     gen_all_moves(board, moves, &size);
-    evaluate_moves(board, values, moves, size, height, tableMove, pv->line[height]);
+    evaluate_moves(board, values, moves, size, height, tableMove);
     
     // DETERMINE CHECK STATUS FOR LATE MOVE REDUCTIONS
     inCheck = !is_not_in_check(board, board->turn);
     
+    int hasFailedHigh = 0;
+    
     for (i = 0; i < size; i++){
         
         currentMove = get_next_move(moves, values, i, size);
-        
-        if (USE_FUTILITY_PRUNING
-            && node_type != PVNODE
-            && valid >= 1
-            && depth == 1
-            && !inCheck
-            && MOVE_TYPE(currentMove) == NormalMove
-            && board->squares[MOVE_TO(currentMove)] == Empty){
-         
-            if (optimalValue == -Mate)
-                optimalValue = evaluate_board(board) + PawnValue/2;
-                
-            value = optimalValue;
-            
-            if (value <= alpha){
-                if (value > best)
-                    best = value;
-                continue;
-            }
-        }
         
         // APPLY AND VALIDATE MOVE BEFORE SEARCHING
         apply_move(board, currentMove, undo);
@@ -369,22 +317,25 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
             
         // FULL WINDOW SEARCH ON FIRST MOVE
         if (valid == 1 || node_type != PVNODE){
-            value = -search(board, &localpv, -beta, -alpha, newDepth, height+1, node_type);
+            value = -search(board, -beta, -alpha, newDepth, height+1, node_type);
             
             // IMPROVED BOUND, BUT WAS REDUCED DEPTH?
             if (value > alpha
-                && newDepth == depth-2)
+                && newDepth == depth-2){
                     
-                value = -search(board, &localpv, -beta, -alpha, depth-1, height+1, node_type);
+                value = -search(board, -beta, -alpha, depth-1, height+1, node_type);
+            }
         }
         
         // NULL WINDOW SEARCH ON NON-FIRST / PV MOVES
         else{
-            value = -search(board, &localpv, -alpha-1, -alpha, newDepth, height+1, CUTNODE);
+            value = -search(board, -alpha-1, -alpha, newDepth, height+1, CUTNODE);
             
             // NULL WINDOW FAILED HIGH, RESEARCH
-            if (value > alpha)
-                value = -search(board, &localpv, -beta, -alpha, depth-1, height+1, PVNODE);
+            if (value > alpha){
+                value = -search(board, -beta, -alpha, depth-1, height+1, PVNODE);
+
+            }
         }
         
         // REVERT MOVE FROM BOARD
@@ -396,16 +347,8 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
             bestMove = currentMove;
             
             // IMPROVED CURRENT LOWER VALUE
-            if (value > alpha){
+            if (value > alpha)
                 alpha = value;
-                
-                // UPDATE THE PRINCIPLE VARIATION
-                if (localpv.length != -1){
-                    pv->line[0] = currentMove;
-                    memcpy(pv->line + 1, localpv.line, sizeof(uint16_t) * localpv.length);
-                    pv->length = localpv.length + 1;
-                }
-            }
         }
         
         // IMPROVED AND FAILED HIGH
@@ -466,17 +409,13 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
 }
 
 int qsearch(Board * board, int alpha, int beta, int height){
-    int i, delta, size = 0, value, best = -2*Mate, values[256];
+    int i, size = 0, value, best = -2*Mate, values[256];
     uint16_t moves[256], bestMove, currentMove;
-    TranspositionEntry * entry;
     Undo undo[1];
     
     // MAX HEIGHT REACHED, STOP HERE
     if (height >= MaxHeight)
         return evaluate_board(board);
-        
-    // INCREMENT TOTAL NODE COUNTER
-    TotalNodes++;
     
     // GET A STANDING-EVAL OF THE CURRENT BOARD
     value = evaluate_board(board);
@@ -489,19 +428,17 @@ int qsearch(Board * board, int alpha, int beta, int height){
     if (alpha >= beta)
         return value;
     
-    // DETERMINE DELTA VALUE
-    delta = get_most_valuable_piece(board, !board->turn);
-    if ((board->pieceBitBoards[0] & board->colourBitBoards[0] & RANK_7) != 0ull
-        || (board->pieceBitBoards[0] & board->colourBitBoards[1] & RANK_2) != 0ull)
-        delta += QueenValue - PawnValue;
-
-    // DELTA PRUNING
-    if (value + delta < alpha)
-        return alpha;
+    // DELTA PRUNING IN THE MID GAME
+    if (board->num_pieces > 16)
+        if (value + QueenValue < alpha)
+            return alpha;
+    
+    // INCREMENT TOTAL NODE COUNTER
+    TotalNodes++;
     
     // GENERATE AND PREPARE QUIET MOVE ORDERING
     gen_all_non_quiet(board, moves, &size);
-    evaluate_moves(board, values, moves, size, height, NoneMove, NoneMove);
+    evaluate_moves(board, values, moves, size, height, NoneMove);
     
     best = value;
     
@@ -545,7 +482,7 @@ int qsearch(Board * board, int alpha, int beta, int height){
     return best;
 }
 
-void evaluate_moves(Board * board, int * values, uint16_t * moves, int size, int height, uint16_t tableMove, uint16_t pvMove){
+void evaluate_moves(Board * board, int * values, uint16_t * moves, int size, int height, uint16_t tableMove){
     int i, value;
     int from_type, to_type;
     int from_val, to_val;
@@ -563,9 +500,6 @@ void evaluate_moves(Board * board, int * values, uint16_t * moves, int size, int
         
         // TABLEMOVE FIRST
         value  = 8192 * ( tableMove == moves[i]);
-        
-        // PRINCIPLE VARIATION NEXT
-        //value += 4096 * (    pvMove == moves[i]);
         
         // THEN KILLERS, UNLESS OTHER GOOD CAPTURE
         value += 128  * (   killer1 == moves[i]);
@@ -587,7 +521,7 @@ void evaluate_moves(Board * board, int * values, uint16_t * moves, int size, int
         
         // ENPASS CAPTURE IS TREATED SEPERATLY
         if (MOVE_TYPE(moves[i]) == EnpassMove)
-            value += 3*PawnValue;
+            value += 2*PawnValue;
         
         // WE ARE ONLY CONCERED WITH QUEEN PROMOTIONS
         if (MOVE_TYPE(moves[i]) == PromotionMove)
