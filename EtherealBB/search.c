@@ -191,13 +191,13 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
     
     // SEARCH TIME HAS EXPIRED
     if (EndTime < time(NULL)){
-        localpv.length = -1;
+        pv->length = -1;
         return board->turn == EvaluatingPlayer ? -Mate : Mate;
     }
     
     // SEARCH HORIZON REACHED, QSEARCH
     if (depth <= 0){
-        localpv.length = -1;
+        pv->length = -1;
         return qsearch(board, alpha, beta, height);    
     }
     
@@ -254,7 +254,6 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
     if (repeated >= 2){
         return 0;
     }
-    
     
     razorMargin = (depth == 3) ? QueenValue : ((depth == 2) ? RookValue : KnightValue);
     
