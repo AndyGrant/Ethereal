@@ -348,7 +348,7 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
         
         // DETERMINE IF WE CAN USE LATE MOVE REDUCTIONS
         if (USE_LATE_MOVE_REDUCTIONS
-            && usedTableEntry
+            && tableMove != NoneMove
             && valid >= 4
             && depth >= 3
             && !inCheck
@@ -488,8 +488,8 @@ int qsearch(Board * board, int alpha, int beta, int height){
     
     // DETERMINE DELTA VALUE
     delta = QueenValue;
-    if (board->pieceBitBoards[0] & board->colourBitBoards[0] & RANK_8
-        || board->pieceBitBoards[0] & board->colourBitBoards[1] & RANK_1)
+    if (board->pieceBitBoards[0] & board->colourBitBoards[0] & RANK_7
+        || board->pieceBitBoards[0] & board->colourBitBoards[1] & RANK_2)
         delta += QueenValue - PawnValue;
 
     // DELTA PRUNING
