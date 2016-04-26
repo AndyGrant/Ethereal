@@ -40,6 +40,9 @@ uint16_t get_best_move(Board * board, int seconds, int logging){
     EvaluatingPlayer = board->turn;
     init_transposition_table(&Table, 23);
     
+    seconds = board->num_pieces > 16 ? 24 : 1.75*board->num_pieces;
+    EndTime = StartTime + seconds;
+    
     // POPULATE ROOT'S MOVELIST
     MoveList rootMoveList;
     rootMoveList.size = 0;
