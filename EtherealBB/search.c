@@ -325,7 +325,7 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
             && board->squares[MOVE_TO(currentMove)] == Empty){
          
             if (optimalValue == -Mate)
-                optimalValue = evaluate_board(board) + PawnValue/2;
+                optimalValue = evaluate_board(board) + 10 + PawnValue/2;
                 
             value = optimalValue;
             
@@ -348,12 +348,14 @@ int search(Board * board, PrincipleVariation * pv, int alpha, int beta, int dept
         
         // DETERMINE IF WE CAN USE LATE MOVE REDUCTIONS
         if (USE_LATE_MOVE_REDUCTIONS
-            && tableMove != NoneMove
+            && usedTableEntry
             && valid >= 4
             && depth >= 3
             && !inCheck
             && node_type != PVNODE
-            && MOVE_TYPE(currentMove) == NormalMove
+            && MOVE_TYPE(currentMove) != EnpassMove
+            && MOVE_TYPE(currentMove) != CastleMove
+            && (currentMove & PromoteToQueen) == 0
             && undo[0].capture_piece == Empty
             && is_not_in_check(board, board->turn))
             newDepth = depth-2;
@@ -584,7 +586,7 @@ void evaluate_moves(Board * board, int * values, uint16_t * moves, int size, int
         
         // ENPASS CAPTURE IS TREATED SEPERATLY
         if (MOVE_TYPE(moves[i]) == EnpassMove)
-            value += 2*PawnValue;
+            value += 3*PawnValue;
         
         // WE ARE ONLY CONCERED WITH QUEEN PROMOTIONS
         if (MOVE_TYPE(moves[i]) == PromotionMove)
