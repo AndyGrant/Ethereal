@@ -101,20 +101,8 @@ int evaluate_board(Board * board){
         else if (count_set_bits(white) == 1 &&
             count_set_bits(black & knights) == 2 &&
             count_set_bits(black & bishops) == 0)
-            return 0;   
-            
-    } else if (pawns == 0 && queens == 0){
-        
-        // K+R+B v K+R or K+R+N v K+R
-        if (count_set_bits(white & rooks) == 1
-            && count_set_bits(black & rooks) == 1
-            && count_set_bits(white & (bishops | knights)) == 1)
             return 0;
-        else if (count_set_bits(white & rooks) == 1
-            && count_set_bits(black & rooks) == 1
-            && count_set_bits(black & (bishops | knights)) == 1)
-            return 0;
-    }
+    }    
     
     // DETERMINE IF STACKED PAWN ON GIVEN FILE
     pawnIsStacked[0][0] = ((wa & (wa-1)) != 0);
@@ -245,7 +233,8 @@ int evaluate_board(Board * board){
             mid -= ROOK_ON_7TH_MID;
             end -= ROOK_ON_7TH_END;
         }
-    }    
+    }
+    
     
     // WHITE HAS A BISHOP PAIR
     if (wbishops[0] != -1 && wbishops[1] != -1){
@@ -288,14 +277,4 @@ int evaluate_board(Board * board){
     eval = ((mid_eval * (256 - curPhase)) + (end_eval * curPhase)) / 256;
     
     return board->turn == ColourWhite ? eval+10 : -(eval+10);    
-}
-
-int get_most_valuable_piece(Board * board, int turn){
-    uint64_t friendly = board->colourBitBoards[turn];
-    
-    if ((friendly & board->pieceBitBoards[4]) != 0ull) return QueenValue;
-    if ((friendly & board->pieceBitBoards[3]) != 0ull) return RookValue;
-    if ((friendly & board->pieceBitBoards[2]) != 0ull) return BishopValue;
-    if ((friendly & board->pieceBitBoards[1]) != 0ull) return KnightValue;
-    return PawnValue;
 }
