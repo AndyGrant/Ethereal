@@ -154,7 +154,7 @@ int full_search(Board * board, MoveList * moveList, int depth){
 
 int search(Board * board, int alpha, int beta, int depth, int height, int node_type){
     int i, valid = 0, value, size = 0, best=-2*Mate, repeated = 0, newDepth;
-    int oldAlpha = alpha, usedTableEntry = 0, inCheck, values[256];
+    int oldAlpha = alpha, usedTableEntry = 0, inCheck, values[256], optimalValue = -Mate;
     uint16_t moves[256], bestMove, currentMove, tableMove = NoneMove;
     TranspositionEntry * entry;
     Undo undo[1];
@@ -223,10 +223,10 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
     
     // RAZOR PRUNING
     if (USE_RAZOR_PRUNING
-        && depth <= 2
+        && depth <= 3
         && node_type != PVNODE
         && alpha == beta - 1
-        && evaluate_board(board) + QueenValue < beta){
+        && evaluate_board(board) + KnightValue < beta){
         
         value = qsearch(board, alpha, beta, height);
         
@@ -289,6 +289,24 @@ int search(Board * board, int alpha, int beta, int depth, int height, int node_t
     for (i = 0; i < size; i++){
         
         currentMove = get_next_move(moves, values, i, size);
+        
+        // USE FUTILITY PRUNING
+        if (USE_FUTILITY_PRUNING
+            && node_type != PVNODE
+            && valid >= 1
+            && depth == 1
+            && !inCheck
+            && MOVE_TYPE(currentMove) == NormalMove
+            && board->squares[MOVE_TO(currentMove)] == Empty){
+         
+            if (optimalValue == -Mate)
+                optimalValue = evaluate_board(board) + PawnValue;
+                
+            value = optimalValue;
+            
+            if (value <= alpha)
+                continue;
+        }
         
         // APPLY AND VALIDATE MOVE BEFORE SEARCHING
         apply_move(board, currentMove, undo);
@@ -417,6 +435,9 @@ int qsearch(Board * board, int alpha, int beta, int height){
     if (height >= MaxHeight)
         return evaluate_board(board);
     
+    // INCREMENT TOTAL NODE COUNTER
+    TotalNodes++;
+    
     // GET A STANDING-EVAL OF THE CURRENT BOARD
     value = evaluate_board(board);
     
@@ -428,13 +449,12 @@ int qsearch(Board * board, int alpha, int beta, int height){
     if (alpha >= beta)
         return value;
     
-    // DELTA PRUNING IN THE MID GAME
-    if (board->num_pieces > 16)
-        if (value + QueenValue < alpha)
-            return alpha;
-    
-    // INCREMENT TOTAL NODE COUNTER
-    TotalNodes++;
+    // DELTA PRUNING IN WHEN NO PROMOTIONS AND NOT EXTREME LATE GAME
+    if (value + QueenValue < alpha
+        && board->num_pieces >= 6 
+        && !(board->colourBitBoards[0] & board->pieceBitBoards[0] & RANK_7)
+        && !(board->colourBitBoards[1] & board->pieceBitBoards[0] & RANK_2))
+        return alpha;
     
     // GENERATE AND PREPARE QUIET MOVE ORDERING
     gen_all_non_quiet(board, moves, &size);

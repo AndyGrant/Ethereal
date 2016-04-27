@@ -6,6 +6,7 @@
 #include "types.h"
 
 #define USE_RAZOR_PRUNING                   (1)
+#define USE_FUTILITY_PRUNING                (1)
 #define USE_NULL_MOVE_PRUNING               (1)
 #define USE_LATE_MOVE_REDUCTIONS            (1)
 #define USE_INTERNAL_ITERATIVE_DEEPENING    (1)
