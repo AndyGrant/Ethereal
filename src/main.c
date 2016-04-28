@@ -39,5 +39,5 @@ int main(){
     // TESTING FOR PROMOTION
     //init_board(&board,"8/8/2PPP3/K7/8/8/8/k7 w - - 0 0");
     
-    get_best_move(&board,80,0);
+    getBestMove(&board,80,0);
 }
