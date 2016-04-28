@@ -30,18 +30,11 @@ In the beginnings of my computer science education I attempted to create a graph
   
 # Noteable Results:
 
-                                               WIN LOSS DRAW
+                                             WIN LOSS DRAW
                                                
-  20 Minute Unlimited
-                                             
-    Ethereal (Commit #551) vs MicroMax4.8 |   5    3    1
-    
-    Ethereal (Commit #585) vs MicroMax4.8 |   6    1    3
-    
-    
   40 Moves in 4 Minutes
   
-    Ethereal (Commit #619) vs MicroMax4.8 |   5   10    5
+    Ethereal (Commit #621) vs MicroMax4.8 |   48   29   23
     
     
 # Special Thanks
