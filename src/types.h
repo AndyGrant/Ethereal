@@ -70,19 +70,15 @@ typedef struct TranspositionEntry {
     int8_t turn;
     int8_t type;
     int value;
-    uint16_t best_move;
+    uint16_t bestMove;
     uint64_t hash;  
     
 } TranspositionEntry;
 
 typedef struct TranspositionTable {
     TranspositionEntry * entries;
-    int max_size;
-    int key_size;
-    int num_entries;
-    int hits;
-    int misses;
-    int key_collisions;
+    int maxSize;
+    int keySize;
     
 } TranspositionTable;
 
