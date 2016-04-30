@@ -17,7 +17,7 @@
  *  Initialized when a struct Board is created via 
  *  init_board(...) (board.h)
  */
-void init_zorbist(){
+void initalizeZorbist(){
     if (INITALIZED_ZORBIST)
         return;
     
@@ -33,8 +33,8 @@ void init_zorbist(){
         
     for(p = 0; p <= 5; p++){
         for(s = 0; s < 64; s++){
-            ZorbistKeys[(p*4) + 0][s] = gen_random_bitstring();
-            ZorbistKeys[(p*4) + 1][s] = gen_random_bitstring();
+            ZorbistKeys[(p*4) + 0][s] = genRandomBitstring();
+            ZorbistKeys[(p*4) + 1][s] = genRandomBitstring();
         }
     }
     
@@ -46,7 +46,7 @@ void init_zorbist(){
  *  ZorbistKeys (zorbist.h). XORs 64 randomly generated
  *  Integers whose bit-lengths are not defined by rand()
  */
-uint64_t gen_random_bitstring(){
+uint64_t genRandomBitstring(){
     uint64_t str = 0;
     int i;
     

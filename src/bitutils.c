@@ -9,13 +9,13 @@
  *  Determine number of set bits in a given 
  *  unsigned 64-bit integer BitBoard
  */
-int count_set_bits(uint64_t bb){
+int countSetBits(uint64_t bb){
     if (!bb)
         return 0;
     
     int count = 0;
     while(bb){
-        bb ^= (1ull << get_lsb(bb));
+        bb ^= (1ull << getLSB(bb));
         count += 1;
     }
     return count;
@@ -25,10 +25,10 @@ int count_set_bits(uint64_t bb){
  * Fill given int array with bit locations of
  * set bits in a given unsigned 64-bit integer BitBoard
  */
-void get_set_bits(uint64_t bb, int * arr){
+void getSetBits(uint64_t bb, int * arr){
     int count = 0;
     while(bb){
-        int lsb = get_lsb(bb);
+        int lsb = getLSB(bb);
         arr[count] = lsb;
         count += 1;
         bb ^= 1ull << lsb;
@@ -43,7 +43,7 @@ void get_set_bits(uint64_t bb, int * arr){
  * This can ONLY be used when we know that
  * all bits will be in the same column, (FILE)
  */
-int get_msb_special(uint64_t bb){
+int getMSBSpecial(uint64_t bb){
     if (bb & RANK_7) return 48;
     if (bb & RANK_6) return 40;
     if (bb & RANK_5) return 32;

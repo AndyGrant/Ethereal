@@ -13,36 +13,35 @@ extern "C" {
 	#include "movegen.h"	
 };
 
-std::string convert_move_to_string(uint16_t move){
+std::string convertMoveToString(uint16_t move){
 	std::string str;
-	int from = MOVE_FROM(move);
-	int to = MOVE_TO(move);
+	int from = MoveFrom(move);
+	int to = MoveTo(move);
 	
 	str += 'a' + (from%8);
 	str += '1' + (from/8);
 	str += 'a' + (to%8);
 	str += '1' + (to/8);
     
-    if (MOVE_TYPE(move) == PromotionMove){
+    if (MoveType(move) == PromotionMove){
         char arr[4] = {'k','b','r','q'};
-        printf("MOVE_T %d \n",MOVE_PROMO_TYPE(move) >> 14);
-        str += arr[MOVE_PROMO_TYPE(move) >> 14];
+        printf("MOVE_T %d \n",MovePromoType(move) >> 14);
+        str += arr[MovePromoType(move) >> 14];
     }
 	
 	return str;
 }
 
-void make_move_from_string(Board * board, std::string move){
+void applyMoveFromString(Board * board, std::string move){
 	int size = 0;
 	uint16_t moves[256];
 	
-	gen_all_moves(board,&(moves[0]),&size);
-	
+	genAllMoves(board,&(moves[0]),&size);
 	
 	for (size -= 1; size >= 0; size--){
-		if (move == convert_move_to_string(moves[size])){
+		if (move == convertMoveToString(moves[size])){
 			Undo undo[1];
-			apply_move(board,moves[size],undo);
+			applyMove(board,moves[size],undo);
 			return;
 		}
 	}
@@ -52,7 +51,7 @@ bool contains(std::string a, std::string b){
 	return (a.find(b) != std::string::npos);
 }
 
-std::vector<std::string> parse_moves(std::string line){
+std::vector<std::string> parseMoves(std::string line){
 	unsigned int start = line.find("moves")+6;
 	std::vector<std::string> moves;
 	std::string buff = "";
@@ -114,7 +113,7 @@ int main(){
 		if (contains(line,"position")){		
 		
 			if (contains(line,"startpos"))
-				init_board(&board,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+				initalizeBoard(&board,"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 			
 			if (contains(line,"fen")){
                 
@@ -124,16 +123,16 @@ int main(){
                 for (unsigned int i = 0; i < fen.length(); i++)
                     cfen[i] = fen.at(i);
                 
-				init_board(&board,cfen);
+				initalizeBoard(&board,cfen);
             }
 
-			std::vector<std::string> moves = parse_moves(line);
+			std::vector<std::string> moves = parseMoves(line);
 			for(unsigned int i = 0; i < moves.size(); i++)
-				make_move_from_string(&board,moves[i]);			
+				applyMoveFromString(&board,moves[i]);			
 		}
 
 		if (contains(line,"go")){
-			std::cout << "bestmove " << convert_move_to_string(getBestMove(&board,8,1)) << "\n";
+			std::cout << "bestmove " << convertMoveToString(getBestMove(&board,8,1)) << "\n";
 		}
 
 		if (line == "quit")

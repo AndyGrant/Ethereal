@@ -20,9 +20,9 @@ typedef struct Board {
     
     // Necessary data members
     int turn;
-    int castlerights;
-    int fiftymoverule;
-    int epsquare;
+    int castleRights;
+    int fiftyMoveRule;
+    int epSquare;
     
     // Zorbist Key
     uint64_t hash;
@@ -33,35 +33,35 @@ typedef struct Board {
     
     // Move history
     uint64_t history[2048];
-    int move_num;
+    int numMoves;
     
     // Keep Track of number of pieces
-    int num_pieces;
+    int numPieces;
     
 } Board;
 
 typedef struct Undo {
     
     // Fast undo of captures
-    int capture_sq;
-    int capture_piece;
+    int captureSquare;
+    int capturePiece;
     
     // Previous turn and Castle Rights
     int turn;
-    int castlerights;
+    int castleRights;
     
     // Previous Material + PST values
     int opening;
     int endgame;
     
     // Previous EP Square
-    int epsquare;
+    int epSquare;
     
     // Previous Zorbist key
     uint64_t hash;
     
     // Keep Track of number of pieces
-    int num_pieces;
+    int numPieces;
     
 } Undo;
 

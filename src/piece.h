@@ -26,9 +26,9 @@
 #define QueenFlag   (16)
 #define KingFlag    (20)
 
-#define PIECE_TYPE(piece)       ((piece) >> 2)
-#define PIECE_COLOUR(piece)     ((piece) & 3)
+#define PieceType(piece)       ((piece) >> 2)
+#define PieceColour(piece)     ((piece) & 3)
 
-#define MAKE_PIECE(flag,colour) ((flag) + (colour))
+#define MakePiece(flag,colour) ((flag) + (colour))
 
 #endif

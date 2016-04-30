@@ -3,8 +3,8 @@
 
 #include "types.h"
 
-void init_board(Board * board, char * fen);
-void print_board(Board * board);
+void initalizeBoard(Board * board, char * fen);
+void printBoard(Board * board);
 int perft(Board * board, int depth);
 
 #endif

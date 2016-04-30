@@ -6,15 +6,15 @@
 static int INITIALIZED_MAGICS = 0;
 
 /* Prototypes */
-void init_magics();
-void generate_knight_map();
-void generate_king_map();
-void generate_occupancy_mask_rook();
-void generate_occupancy_mask_bishop();
-void generate_occupancy_variations_rook();
-void generate_occupancy_variations_bishop();
-void generate_move_database_rook();
-void generate_move_database_bishop();
+void initalizeMagics();
+void generateKnightMap();
+void generateKingMap();
+void generateOccupancyMaskRook();
+void generateOccupancyMaskBishop();
+void generateOccupancyVariationsRook();
+void generateOccupancyVariationsBishop();
+void generateMoveDatabaseRook();
+void generateMoveDatabaseBishop();
 
 /* Courtesy of Rival Chess */
 static int MagicShiftsRook[64] = {
