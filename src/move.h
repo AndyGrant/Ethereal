@@ -25,14 +25,14 @@
 #define PromoteToRook   (2 << 14)
 #define PromoteToQueen  (3 << 14)
 
-#define MOVE_FROM(move)         (((move) >> 0) & 63)
-#define MOVE_TO(move)           (((move) >> 6) & 63)
-#define MOVE_TYPE(move)         ((move) & (3 << 12))
-#define MOVE_PROMO_TYPE(move)   ((move) & (3 << 14))
-#define MOVE_MAKE(from,to,flag) ((from) | ((to) << 6) | (flag))
+#define MoveFrom(move)         (((move) >> 0) & 63)
+#define MoveTo(move)           (((move) >> 6) & 63)
+#define MoveType(move)         ((move) & (3 << 12))
+#define MovePromoType(move)    ((move) & (3 << 14))
+#define MoveMake(from,to,flag) ((from) | ((to) << 6) | (flag))
 
-void apply_move(Board * board, uint16_t move, Undo * undo);
-void revert_move(Board * board, uint16_t move, Undo * undo);
-void print_move(uint16_t move);
+void applyMove(Board * board, uint16_t move, Undo * undo);
+void revertMove(Board * board, uint16_t move, Undo * undo);
+void printMove(uint16_t move);
 
 #endif

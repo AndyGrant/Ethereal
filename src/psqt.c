@@ -2,7 +2,7 @@
 #include "piece.h"
 #include "psqt.h"
 
-void init_psqt(){
+void initalizePSQT(){
     int i, j;
     
     for(i = 0; i < 32; i++){

@@ -12,23 +12,23 @@
  *  Sets flag INITIALIZED_MAGICS (magics.h) to indicate
  *  that the lookup-tables have been initalized.
  */
-void init_magics(){
+void initalizeMagics(){
     if (INITIALIZED_MAGICS)
         return;
     
-    generate_knight_map();
-    generate_king_map();
-    generate_occupancy_mask_rook();
-    generate_occupancy_mask_bishop();
-    generate_occupancy_variations_rook();
-    generate_occupancy_variations_bishop();
-    generate_move_database_rook();
-    generate_move_database_bishop();
+    generateKnightMap();
+    generateKingMap();
+    generateOccupancyMaskRook();
+    generateOccupancyMaskBishop();
+    generateOccupancyVariationsRook();
+    generateOccupancyVariationsBishop();
+    generateMoveDatabaseRook();
+    generateMoveDatabaseBishop();
     
     INITIALIZED_MAGICS = 1;
 }
 
-void generate_knight_map(){
+void generateKnightMap(){
     int i;
     uint64_t z = 1;
     
@@ -55,7 +55,7 @@ void generate_knight_map(){
     }
 }
 
-void generate_king_map(){
+void generateKingMap(){
     int i;
     uint64_t z = 1;
     
@@ -79,7 +79,7 @@ void generate_king_map(){
     }
 }
 
-void generate_occupancy_mask_rook(){
+void generateOccupancyMaskRook(){
     int i, bit;
     uint64_t mask;
     
@@ -96,7 +96,7 @@ void generate_occupancy_mask_rook(){
     }
 }
 
-void generate_occupancy_mask_bishop(){  
+void generateOccupancyMaskBishop(){  
     int i, bit; 
     uint64_t mask;
     
@@ -113,19 +113,19 @@ void generate_occupancy_mask_bishop(){
     }
 }
 
-void generate_occupancy_variations_rook(){
+void generateOccupancyVariationsRook(){
     int j, bitRef, variationCount;
     uint64_t mask, i;
     int setBitsInMask[20], setBitsInIndex[20];
     
     for (bitRef = 0; bitRef < 64; bitRef++){
         mask = OccupancyMaskRook[bitRef];
-        get_set_bits(mask,setBitsInMask);
-        variationCount = (int)(1ull << count_set_bits(mask));
+        getSetBits(mask,setBitsInMask);
+        variationCount = (int)(1ull << countSetBits(mask));
         
         for (i = 0; i < variationCount; i++){
             OccupancyVariationsRook[bitRef][i] = 0; 
-            get_set_bits(i,setBitsInIndex);
+            getSetBits(i,setBitsInIndex);
             for (j = 0; setBitsInIndex[j] != -1; j++){
                 OccupancyVariationsRook[bitRef][i] |= (1ull << setBitsInMask[setBitsInIndex[j]]);
             }
@@ -133,26 +133,26 @@ void generate_occupancy_variations_rook(){
     }
 }
 
-void generate_occupancy_variations_bishop(){
+void generateOccupancyVariationsBishop(){
     int j, bitRef, variationCount;
     uint64_t mask, i;
     int setBitsInMask[20], setBitsInIndex[20];
     
     for (bitRef = 0; bitRef < 64; bitRef++){
         mask = OccupancyMaskBishop[bitRef];
-        get_set_bits(mask,setBitsInMask);
-        variationCount = (int)(1ull << count_set_bits(mask));
+        getSetBits(mask,setBitsInMask);
+        variationCount = (int)(1ull << countSetBits(mask));
         
         for (i = 0; i < variationCount; i++){
             OccupancyVariationsBishop[bitRef][i] = 0; 
-            get_set_bits(i,setBitsInIndex);
+            getSetBits(i,setBitsInIndex);
             for (j = 0; setBitsInIndex[j] != -1; j++)
                 OccupancyVariationsBishop[bitRef][i] |= (1ull << setBitsInMask[setBitsInIndex[j]]);
         }
     }
 }
 
-void generate_move_database_rook(){
+void generateMoveDatabaseRook(){
     uint64_t validMoves;
     int variations, bitCount;
     int bitRef, i, j, magicIndex;
@@ -160,7 +160,7 @@ void generate_move_database_rook(){
     MoveDatabaseRook = malloc(sizeof(uint64_t) * 64);
     
     for (bitRef=0; bitRef<=63; bitRef++){
-        bitCount = count_set_bits(OccupancyMaskRook[bitRef]);
+        bitCount = countSetBits(OccupancyMaskRook[bitRef]);
         variations = (int)(1ull << bitCount);
         
         MoveDatabaseRook[bitRef] = malloc(sizeof(uint64_t) * variations);
@@ -198,8 +198,7 @@ void generate_move_database_rook(){
     }
 }
 
-
-void generate_move_database_bishop(){
+void generateMoveDatabaseBishop(){
     uint64_t validMoves;
     int variations, bitCount;
     int bitRef, i, j, magicIndex;
@@ -207,7 +206,7 @@ void generate_move_database_bishop(){
     MoveDatabaseBishop = malloc(sizeof(uint64_t) * 64);
     
     for (bitRef=0; bitRef<=63; bitRef++){
-        bitCount = count_set_bits(OccupancyMaskBishop[bitRef]);
+        bitCount = countSetBits(OccupancyMaskBishop[bitRef]);
         variations = (int)(1ull << bitCount);
         
         MoveDatabaseBishop[bitRef] = malloc(sizeof(uint64_t) * variations);

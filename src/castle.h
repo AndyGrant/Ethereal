@@ -28,7 +28,7 @@ static int CastleMask[64] = {
 static int RookFromLookupTable[5] = {-4,0,0,0,3};
 static int RookToLookupTable[5] = {-1,0,0,0,1};
 
-#define CASTLE_GET_ROOK_FROM(from,to)   (from + RookFromLookupTable[2+to-from])
-#define CASTLE_GET_ROOK_TO(from,to)     (from + RookToLookupTable[2+to-from])
+#define CastleGetRookFrom(from,to)   (from + RookFromLookupTable[2+to-from])
+#define CastleGetRookTo(from,to)     (from + RookToLookupTable[2+to-from])
 
 #endif

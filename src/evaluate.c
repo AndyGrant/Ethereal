@@ -13,7 +13,7 @@
 int evaluate_board(Board * board){
     
     int i, num, mid = 0, end = 0;
-    int curPhase, mid_eval, end_eval, eval;
+    int curPhase, midEval, endEval, eval;
     
     // EXTRACT BASIC BITBOARDS FROM BOARD
     uint64_t white    = board->colourBitBoards[ColourWhite];
@@ -43,15 +43,15 @@ int evaluate_board(Board * board){
     uint64_t bg = blackPawns & FILE_G, bh = blackPawns & FILE_H;
     
     // GET LSB FOR EACH FILE OF PAWNS
-    int lwa = get_lsb(wa), lwb = get_lsb(wb);
-    int lwc = get_lsb(wc), lwd = get_lsb(wd);
-    int lwe = get_lsb(we), lwf = get_lsb(wf);
-    int lwg = get_lsb(wg), lwh = get_lsb(wh);
+    int lwa = getLSB(wa), lwb = getLSB(wb);
+    int lwc = getLSB(wc), lwd = getLSB(wd);
+    int lwe = getLSB(we), lwf = getLSB(wf);
+    int lwg = getLSB(wg), lwh = getLSB(wh);
     
-    int lba = get_lsb(ba), lbb = get_lsb(bb);
-    int lbc = get_lsb(bc), lbd = get_lsb(bd);
-    int lbe = get_lsb(be), lbf = get_lsb(bf);
-    int lbg = get_lsb(bg), lbh = get_lsb(bh);
+    int lba = getLSB(ba), lbb = getLSB(bb);
+    int lbc = getLSB(bc), lbd = getLSB(bd);
+    int lbe = getLSB(be), lbf = getLSB(bf);
+    int lbg = getLSB(bg), lbh = getLSB(bh);
     
     // FOR PAWN EVALUATIONS
     int pawnIsStacked[2][8];
@@ -59,48 +59,48 @@ int evaluate_board(Board * board){
     int pawnIsPassed[2][8];
     
     // GET INDEXES OF EACH COLOUR'S ROOKS
-    int wrooks[16], brooks[16];
-    get_set_bits(whiteRooks, wrooks);
-    get_set_bits(blackRooks, brooks);
+    int wRooks[16], bRooks[16];
+    getSetBits(whiteRooks, wRooks);
+    getSetBits(blackRooks, bRooks);
     
     // GET INDEXES OF EACH COLOUR'S BISHOPS
-    int wbishops[16], bbishops[16];
-    get_set_bits(whiteBishops, wbishops);
-    get_set_bits(blackBishops, bbishops);
+    int wBishops[16], bBishops[16];
+    getSetBits(whiteBishops, wBishops);
+    getSetBits(blackBishops, bBishops);
     
     // CHECK FOR RECOGNIZED DRAWS
     if (pawns == 0 && rooks == 0 && queens == 0){
         
         // K v K
-        if (board->num_pieces == 2)
+        if (board->numPieces == 2)
             return 0;
         
         // K+B v K and K+N v K
-        if (count_set_bits(white & (knights | bishops)) <= 1 && 
-            count_set_bits(black) == 1)
+        if (countSetBits(white & (knights | bishops)) <= 1 && 
+            countSetBits(black) == 1)
             return 0;
-        else if (count_set_bits(black & (knights | bishops)) <= 1 && 
-            count_set_bits(white) == 1)
+        else if (countSetBits(black & (knights | bishops)) <= 1 && 
+            countSetBits(white) == 1)
             return 0;
          
         // K+B+N v K 
-        if (count_set_bits(black) == 1 &&
-            count_set_bits(white & bishops) == 1 &&
-            count_set_bits(white & knights) == 1)
+        if (countSetBits(black) == 1 &&
+            countSetBits(white & bishops) == 1 &&
+            countSetBits(white & knights) == 1)
             return 0;
-        else if (count_set_bits(white) == 1 &&
-            count_set_bits(black & bishops) == 1 &&
-            count_set_bits(black & knights) == 1)
+        else if (countSetBits(white) == 1 &&
+            countSetBits(black & bishops) == 1 &&
+            countSetBits(black & knights) == 1)
             return 0;
         
         // K+N+N v K
-        if (count_set_bits(black) == 1 &&
-            count_set_bits(white & knights) == 2 &&
-            count_set_bits(white & bishops) == 0)
+        if (countSetBits(black) == 1 &&
+            countSetBits(white & knights) == 2 &&
+            countSetBits(white & bishops) == 0)
             return 0;
-        else if (count_set_bits(white) == 1 &&
-            count_set_bits(black & knights) == 2 &&
-            count_set_bits(black & bishops) == 0)
+        else if (countSetBits(white) == 1 &&
+            countSetBits(black & knights) == 2 &&
+            countSetBits(black & bishops) == 0)
             return 0;
     }    
     
@@ -171,7 +171,7 @@ int evaluate_board(Board * board){
         }
         
         if (pawnIsPassed[0][i]){
-            int msb = get_msb_special(whitePawns & FILES[i]);
+            int msb = getMSBSpecial(whitePawns & FILES[i]);
             mid += PawnPassedMid[msb>>3];
             end += PawnPassedEnd[msb>>3];
         }
@@ -191,16 +191,16 @@ int evaluate_board(Board * board){
         }
         
         if (pawnIsPassed[1][i]){
-            int lsb = get_lsb(blackPawns & FILES[i]);
+            int lsb = getLSB(blackPawns & FILES[i]);
             mid -= PawnPassedMid[7-(lsb>>3)];
             end -= PawnPassedEnd[7-(lsb>>3)];
         }
     }
     
     // EVALUATE WHITE ROOKS FOR FILE AND RANK BONUSES
-    for (i = 0; wrooks[i] != -1; i++){
-        if (whitePawns & FILES[wrooks[i] % 8] == 0){
-            if (blackPawns & FILES[wrooks[i] % 8] == 0){
+    for (i = 0; wRooks[i] != -1; i++){
+        if (whitePawns & FILES[wRooks[i] % 8] == 0){
+            if (blackPawns & FILES[wRooks[i] % 8] == 0){
                 mid += ROOK_OPEN_FILE_MID;
                 end += ROOK_OPEN_FILE_END;
             }
@@ -210,16 +210,16 @@ int evaluate_board(Board * board){
             }
         }
         
-        if ((wrooks[i] >> 3) == 6){
+        if ((wRooks[i] >> 3) == 6){
             mid += ROOK_ON_7TH_MID;
             end += ROOK_ON_7TH_END;
         }
     }
     
     // EVALUATE BLACK ROOKS FOR FILE AND RANK BONUSES
-    for (i = 0; brooks[i] != -1; i++){
-        if (blackPawns & FILES[brooks[i] % 8] == 0){
-            if (whitePawns & FILES[brooks[i] % 8] == 0){
+    for (i = 0; bRooks[i] != -1; i++){
+        if (blackPawns & FILES[bRooks[i] % 8] == 0){
+            if (whitePawns & FILES[bRooks[i] % 8] == 0){
                 mid -= ROOK_OPEN_FILE_MID;
                 end -= ROOK_OPEN_FILE_END;
             }
@@ -229,7 +229,7 @@ int evaluate_board(Board * board){
             }
         }
         
-        if ((brooks[i] >> 3) == 1){
+        if ((bRooks[i] >> 3) == 1){
             mid -= ROOK_ON_7TH_MID;
             end -= ROOK_ON_7TH_END;
         }
@@ -237,13 +237,13 @@ int evaluate_board(Board * board){
     
     
     // WHITE HAS A BISHOP PAIR
-    if (wbishops[0] != -1 && wbishops[1] != -1){
+    if (wBishops[0] != -1 && wBishops[1] != -1){
         mid += BISHOP_PAIR_MID;
         end += BISHOP_PAIR_END;
     }
     
     // BLACK HAS A BISHOP PAIR
-    if (bbishops[0] != -1 && bbishops[1] != -1){
+    if (bBishops[0] != -1 && bBishops[1] != -1){
         mid -= BISHOP_PAIR_MID;
         end -= BISHOP_PAIR_END;
     }
@@ -266,15 +266,15 @@ int evaluate_board(Board * board){
        end -= BISHOP_HAS_WINGS_END;
     }
     
-    curPhase = 24 - (1 * count_set_bits(knights | bishops))
-                  - (2 * count_set_bits(rooks))
-                  - (4 * count_set_bits(queens));
+    curPhase = 24 - (1 * countSetBits(knights | bishops))
+                  - (2 * countSetBits(rooks))
+                  - (4 * countSetBits(queens));
     curPhase = (curPhase * 256 + 12) / 24;
     
-    mid_eval = board->opening + mid;
-    end_eval = board->endgame + end;
+    midEval = board->opening + mid;
+    endEval = board->endgame + end;
     
-    eval = ((mid_eval * (256 - curPhase)) + (end_eval * curPhase)) / 256;
+    eval = ((midEval * (256 - curPhase)) + (endEval * curPhase)) / 256;
     
     return board->turn == ColourWhite ? eval+10 : -(eval+10);    
 }

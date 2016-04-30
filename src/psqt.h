@@ -1,6 +1,8 @@
 #ifndef _PSQT_H
 #define _PSQT_H
 
+void initalizePSQT();
+
 int PSQTopening[32][64];
 int PSQTendgame[32][64];
 
@@ -146,8 +148,5 @@ static int KingEndgameMap32[32] = {
 0,   0, -10, -10,
 0,   0, -40, -40,
 };
-
-
-void init_psqt();
 
 #endif

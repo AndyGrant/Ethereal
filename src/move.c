@@ -22,351 +22,351 @@
  *  Updates Rolling-Evaluations using PieceSquareTable
  *  Updates Board hash using ZorbistKeys
  */
-void apply_move(Board * board, uint16_t move, Undo * undo){
+void applyMove(Board * board, uint16_t move, Undo * undo){
     int to, from;
-    int rto, rfrom;
-    int fromtype, totype;
+    int rTo, rFrom;
+    int fromType, toType;
     int promotype, ep;
     
-    int frompiece, topiece;
-    int rfrompiece, enpasspiece;
-    int promopiece;
+    int fromPiece, toPiece;
+    int rFromPiece, enpassPiece;
+    int promoPiece;
     
-    uint64_t shiftfrom, shiftto;
-    uint64_t rshiftfrom, rshiftto;
-    uint64_t shiftep;
+    uint64_t shiftFrom, shiftTo;
+    uint64_t rShiftFrom, rShiftTo;
+    uint64_t shiftEnpass;
     
-    undo->epsquare = board->epsquare;
+    undo->epSquare = board->epSquare;
     undo->turn = board->turn;
-    undo->castlerights = board->castlerights;
+    undo->castleRights = board->castleRights;
     undo->opening = board->opening;
     undo->endgame = board->endgame;
     undo->hash = board->hash;
-    undo->num_pieces = board->num_pieces;
+    undo->numPieces = board->numPieces;
     
-    board->history[board->move_num++] = board->hash;
+    board->history[board->numMoves++] = board->hash;
     
-    if (MOVE_TYPE(move) == NormalMove){
-        to = MOVE_TO(move);
-        from = MOVE_FROM(move);
+    if (MoveType(move) == NormalMove){
+        to = MoveTo(move);
+        from = MoveFrom(move);
         
-        shiftfrom = 1ull << from;
-        shiftto = 1ull << to;
+        shiftFrom = 1ull << from;
+        shiftTo = 1ull << to;
         
-        frompiece = board->squares[from];
-        topiece = board->squares[to];
+        fromPiece = board->squares[from];
+        toPiece = board->squares[to];
         
-        fromtype = PIECE_TYPE(frompiece);
-        totype = PIECE_TYPE(topiece);
+        fromType = PieceType(fromPiece);
+        toType = PieceType(toPiece);
         
-        board->colourBitBoards[board->turn] ^= shiftfrom | shiftto;
-        board->colourBitBoards[PIECE_COLOUR(topiece)] ^= shiftto;
+        board->colourBitBoards[board->turn] ^= shiftFrom | shiftTo;
+        board->colourBitBoards[PieceColour(toPiece)] ^= shiftTo;
         
-        board->pieceBitBoards[totype] ^= shiftto;
-        board->pieceBitBoards[fromtype] ^= shiftfrom | shiftto;     
+        board->pieceBitBoards[toType] ^= shiftTo;
+        board->pieceBitBoards[fromType] ^= shiftFrom | shiftTo;     
         
-        undo->capture_piece = topiece;
-        board->squares[to] = frompiece;
+        undo->capturePiece = toPiece;
+        board->squares[to] = fromPiece;
         board->squares[from] = Empty;
         
-        board->castlerights &= CastleMask[from];
+        board->castleRights &= CastleMask[from];
         board->turn = !board->turn;
         
-        board->opening += PSQTopening[frompiece][to]
-                        - PSQTopening[frompiece][from]
-                        - PSQTopening[topiece][to];
+        board->opening += PSQTopening[fromPiece][to]
+                        - PSQTopening[fromPiece][from]
+                        - PSQTopening[toPiece][to];
                         
-        board->endgame += PSQTendgame[frompiece][to]
-                        - PSQTendgame[frompiece][from]
-                        - PSQTendgame[topiece][to];
+        board->endgame += PSQTendgame[fromPiece][to]
+                        - PSQTendgame[fromPiece][from]
+                        - PSQTendgame[toPiece][to];
         
-        board->hash ^= ZorbistKeys[frompiece][from]
-                    ^  ZorbistKeys[frompiece][to]
-                    ^  ZorbistKeys[topiece][to];
+        board->hash ^= ZorbistKeys[fromPiece][from]
+                    ^  ZorbistKeys[fromPiece][to]
+                    ^  ZorbistKeys[toPiece][to];
         
-        board->epsquare = ((!fromtype) & (abs(to-from) == 16)) * (from + ((to-from)>>1));
-        board->num_pieces -= (topiece != Empty);
+        board->epSquare = ((!fromType) & (abs(to-from) == 16)) * (from + ((to-from)>>1));
+        board->numPieces -= (toPiece != Empty);
         return;
     }
     
-    if (MOVE_TYPE(move) == CastleMove){
-        to = MOVE_TO(move);
-        from = MOVE_FROM(move);
+    if (MoveType(move) == CastleMove){
+        to = MoveTo(move);
+        from = MoveFrom(move);
         
-        rto = CASTLE_GET_ROOK_TO(from,to);
-        rfrom = CASTLE_GET_ROOK_FROM(from,to);
+        rTo = CastleGetRookTo(from,to);
+        rFrom = CastleGetRookFrom(from,to);
         
-        frompiece = WhiteKing + board->turn;
-        rfrompiece = frompiece - 8;
+        fromPiece = WhiteKing + board->turn;
+        rFromPiece = fromPiece - 8;
         
-        shiftfrom = 1ull << from;
-        shiftto = 1ull << to;
-        rshiftfrom = 1ull << rfrom;
-        rshiftto = 1ull << rto;
+        shiftFrom = 1ull << from;
+        shiftTo = 1ull << to;
+        rShiftFrom = 1ull << rFrom;
+        rShiftTo = 1ull << rTo;
         
-        board->colourBitBoards[board->turn] ^= shiftto | shiftfrom | rshiftto | rshiftfrom;
+        board->colourBitBoards[board->turn] ^= shiftTo | shiftFrom | rShiftTo | rShiftFrom;
         
-        board->pieceBitBoards[5] ^= shiftfrom | shiftto;
-        board->pieceBitBoards[3] ^= rshiftfrom | rshiftto;
+        board->pieceBitBoards[5] ^= shiftFrom | shiftTo;
+        board->pieceBitBoards[3] ^= rShiftFrom | rShiftTo;
         
-        board->squares[to] = frompiece;
+        board->squares[to] = fromPiece;
         board->squares[from] = Empty;
         
-        board->squares[rto] = rfrompiece;
-        board->squares[rfrom] = Empty;
+        board->squares[rTo] = rFromPiece;
+        board->squares[rFrom] = Empty;
         
-        board->castlerights &= CastleMask[from];
+        board->castleRights &= CastleMask[from];
         board->turn = !board->turn;
         
-        board->opening += PSQTopening[frompiece][to]
-                        - PSQTopening[frompiece][from]
-                        + PSQTopening[rfrompiece][to]
-                        - PSQTopening[rfrompiece][from];
+        board->opening += PSQTopening[fromPiece][to]
+                        - PSQTopening[fromPiece][from]
+                        + PSQTopening[rFromPiece][to]
+                        - PSQTopening[rFromPiece][from];
                         
-        board->endgame += PSQTendgame[frompiece][to]
-                        - PSQTendgame[frompiece][from]
-                        + PSQTendgame[rfrompiece][to]
-                        - PSQTendgame[rfrompiece][from];
+        board->endgame += PSQTendgame[fromPiece][to]
+                        - PSQTendgame[fromPiece][from]
+                        + PSQTendgame[rFromPiece][to]
+                        - PSQTendgame[rFromPiece][from];
         
-        board->hash ^= ZorbistKeys[frompiece][from]
-                    ^  ZorbistKeys[frompiece][to]
-                    ^  ZorbistKeys[rfrompiece][rfrom]
-                    ^  ZorbistKeys[rfrompiece][rto];
+        board->hash ^= ZorbistKeys[fromPiece][from]
+                    ^  ZorbistKeys[fromPiece][to]
+                    ^  ZorbistKeys[rFromPiece][rFrom]
+                    ^  ZorbistKeys[rFromPiece][rTo];
         
-        board->epsquare = -1;
+        board->epSquare = -1;
         return;
     }
     
-    if (MOVE_TYPE(move) == PromotionMove){
-        to = MOVE_TO(move);
-        from = MOVE_FROM(move);
+    if (MoveType(move) == PromotionMove){
+        to = MoveTo(move);
+        from = MoveFrom(move);
         
-        fromtype = PIECE_TYPE(board->squares[from]);
-        totype = PIECE_TYPE(board->squares[to]);
+        fromType = PieceType(board->squares[from]);
+        toType = PieceType(board->squares[to]);
         promotype = 1 + (move >> 14);
         
-        frompiece = board->squares[from];
-        topiece = board->squares[to];
-        promopiece = (promotype << 2) + board->turn;
+        fromPiece = board->squares[from];
+        toPiece = board->squares[to];
+        promoPiece = (promotype << 2) + board->turn;
         
-        shiftfrom = 1ull << from;
-        shiftto = 1ull << to;
+        shiftFrom = 1ull << from;
+        shiftTo = 1ull << to;
     
-        board->colourBitBoards[board->turn] ^= shiftfrom | shiftto;
-        board->colourBitBoards[PIECE_COLOUR(topiece)] ^= shiftto;
+        board->colourBitBoards[board->turn] ^= shiftFrom | shiftTo;
+        board->colourBitBoards[PieceColour(toPiece)] ^= shiftTo;
         
-        board->pieceBitBoards[0] ^= shiftfrom;
-        board->pieceBitBoards[promotype] ^= shiftto;
-        board->pieceBitBoards[totype] ^= shiftto;
+        board->pieceBitBoards[0] ^= shiftFrom;
+        board->pieceBitBoards[promotype] ^= shiftTo;
+        board->pieceBitBoards[toType] ^= shiftTo;
         
-        undo->capture_piece = topiece;
-        board->squares[to] = promopiece;
+        undo->capturePiece = toPiece;
+        board->squares[to] = promoPiece;
         board->squares[from] = Empty;
         
         board->turn = !board->turn;
         
-        board->opening += PSQTopening[promopiece][to]
-                        - PSQTopening[frompiece][from] 
-                        - PSQTopening[topiece][to];
+        board->opening += PSQTopening[promoPiece][to]
+                        - PSQTopening[fromPiece][from] 
+                        - PSQTopening[toPiece][to];
                         
-        board->endgame += PSQTendgame[promopiece][to]
-                        - PSQTendgame[frompiece][from]
-                        - PSQTendgame[topiece][to];
+        board->endgame += PSQTendgame[promoPiece][to]
+                        - PSQTendgame[fromPiece][from]
+                        - PSQTendgame[toPiece][to];
         
-        board->hash ^= ZorbistKeys[frompiece][from]
-                    ^  ZorbistKeys[promopiece][to]
-                    ^  ZorbistKeys[topiece][to];
+        board->hash ^= ZorbistKeys[fromPiece][from]
+                    ^  ZorbistKeys[promoPiece][to]
+                    ^  ZorbistKeys[toPiece][to];
         
-        board->epsquare = -1;
-        board->num_pieces -= (topiece != Empty);
+        board->epSquare = -1;
+        board->numPieces -= (toPiece != Empty);
         return;
     }
     
-    if (MOVE_TYPE(move) == EnpassMove){
-        to = MOVE_TO(move);
-        from = MOVE_FROM(move);
-        ep = board->epsquare - 8 + (board->turn << 4);
+    if (MoveType(move) == EnpassMove){
+        to = MoveTo(move);
+        from = MoveFrom(move);
+        ep = board->epSquare - 8 + (board->turn << 4);
         
-        frompiece = WhitePawn + board->turn;
-        enpasspiece = WhitePawn + !board->turn;
+        fromPiece = WhitePawn + board->turn;
+        enpassPiece = WhitePawn + !board->turn;
         
-        shiftfrom = 1ull << from;
-        shiftto = 1ull << to;
-        shiftep = 1ull << ep;
+        shiftFrom = 1ull << from;
+        shiftTo = 1ull << to;
+        shiftEnpass = 1ull << ep;
         
-        board->colourBitBoards[!board->turn] ^= shiftep;
-        board->pieceBitBoards[0] ^= shiftep;
+        board->colourBitBoards[!board->turn] ^= shiftEnpass;
+        board->pieceBitBoards[0] ^= shiftEnpass;
         
-        board->colourBitBoards[board->turn] ^= shiftfrom | shiftto;
-        board->pieceBitBoards[0] ^= shiftfrom | shiftto;
+        board->colourBitBoards[board->turn] ^= shiftFrom | shiftTo;
+        board->pieceBitBoards[0] ^= shiftFrom | shiftTo;
         
-        board->squares[to] = frompiece;
+        board->squares[to] = fromPiece;
         board->squares[from] = Empty;
         
-        undo->capture_piece = enpasspiece;
+        undo->capturePiece = enpassPiece;
         board->squares[ep] = Empty;
         
         board->turn = !board->turn;
         
-        board->opening += PSQTopening[frompiece][to]
-                        - PSQTopening[frompiece][from]
-                        - PSQTopening[enpasspiece][ep];
+        board->opening += PSQTopening[fromPiece][to]
+                        - PSQTopening[fromPiece][from]
+                        - PSQTopening[enpassPiece][ep];
                         
-        board->endgame += PSQTendgame[frompiece][to]
-                        - PSQTendgame[frompiece][from]
-                        - PSQTendgame[enpasspiece][ep];
+        board->endgame += PSQTendgame[fromPiece][to]
+                        - PSQTendgame[fromPiece][from]
+                        - PSQTendgame[enpassPiece][ep];
         
-        board->hash ^= ZorbistKeys[frompiece][from]
-                    ^  ZorbistKeys[frompiece][to]
-                    ^  ZorbistKeys[enpasspiece][ep];
+        board->hash ^= ZorbistKeys[fromPiece][from]
+                    ^  ZorbistKeys[fromPiece][to]
+                    ^  ZorbistKeys[enpassPiece][ep];
         
-        board->epsquare = -1;
-        board->num_pieces -= 1;
+        board->epSquare = -1;
+        board->numPieces -= 1;
         return;
     }
 }
 
-void revert_move(Board * board, uint16_t move, Undo * undo){
+void revertMove(Board * board, uint16_t move, Undo * undo){
     int to, from;
-    int rto, rfrom;
-    int fromtype, totype;
+    int rTo, rFrom;
+    int fromType, toType;
     int promotype, ep;
-    uint64_t shiftfrom, shiftto;
-    uint64_t rshiftfrom, rshiftto;
-    uint64_t shiftep;
+    uint64_t shiftFrom, shiftTo;
+    uint64_t rShiftFrom, rShiftTo;
+    uint64_t shiftEnpass;
     
-    board->move_num--;
+    board->numMoves--;
     
-    if (MOVE_TYPE(move) == NormalMove){
-        to = MOVE_TO(move);
-        from = MOVE_FROM(move);
+    if (MoveType(move) == NormalMove){
+        to = MoveTo(move);
+        from = MoveFrom(move);
         
-        fromtype = PIECE_TYPE(board->squares[to]);
-        totype = PIECE_TYPE(undo->capture_piece);
+        fromType = PieceType(board->squares[to]);
+        toType = PieceType(undo->capturePiece);
         
-        shiftfrom = 1ull << from;
-        shiftto = 1ull << to;
+        shiftFrom = 1ull << from;
+        shiftTo = 1ull << to;
         
-        board->colourBitBoards[undo->turn] ^= shiftfrom | shiftto;
-        board->colourBitBoards[PIECE_COLOUR(undo->capture_piece)] |= shiftto;
+        board->colourBitBoards[undo->turn] ^= shiftFrom | shiftTo;
+        board->colourBitBoards[PieceColour(undo->capturePiece)] |= shiftTo;
         
-        board->pieceBitBoards[fromtype] ^= shiftto | shiftfrom;
-        board->pieceBitBoards[totype] |= shiftto;
+        board->pieceBitBoards[fromType] ^= shiftTo | shiftFrom;
+        board->pieceBitBoards[toType] |= shiftTo;
         
         board->squares[from] = board->squares[to];
-        board->squares[to] = undo->capture_piece;
+        board->squares[to] = undo->capturePiece;
         
-        board->castlerights = undo->castlerights;
+        board->castleRights = undo->castleRights;
         board->turn = undo->turn;
-        board->epsquare = undo->epsquare;
+        board->epSquare = undo->epSquare;
         board->opening = undo->opening;
         board->endgame = undo->endgame;
         board->hash = undo->hash;
-        board->num_pieces = undo->num_pieces;
+        board->numPieces = undo->numPieces;
         return;
     }
     
-    if (MOVE_TYPE(move) == CastleMove){
-        to = MOVE_TO(move);
-        from = MOVE_FROM(move);
+    if (MoveType(move) == CastleMove){
+        to = MoveTo(move);
+        from = MoveFrom(move);
 
-        rto = CASTLE_GET_ROOK_TO(from,to);
-        rfrom = CASTLE_GET_ROOK_FROM(from,to);
+        rTo = CastleGetRookTo(from,to);
+        rFrom = CastleGetRookFrom(from,to);
         
-        shiftfrom = 1ull << from;
-        shiftto = 1ull << to;
-        rshiftfrom = 1ull << rfrom;
-        rshiftto = 1ull << rto;
+        shiftFrom = 1ull << from;
+        shiftTo = 1ull << to;
+        rShiftFrom = 1ull << rFrom;
+        rShiftTo = 1ull << rTo;
     
-        board->colourBitBoards[undo->turn] ^= shiftfrom | shiftto | rshiftto | rshiftfrom;
+        board->colourBitBoards[undo->turn] ^= shiftFrom | shiftTo | rShiftTo | rShiftFrom;
         
-        board->pieceBitBoards[5] ^= shiftfrom | shiftto;
-        board->pieceBitBoards[3] ^= rshiftfrom | rshiftto;
+        board->pieceBitBoards[5] ^= shiftFrom | shiftTo;
+        board->pieceBitBoards[3] ^= rShiftFrom | rShiftTo;
         
         board->squares[from] = board->squares[to];
         board->squares[to] = Empty;
         
-        board->squares[rfrom] = board->squares[rto];
-        board->squares[rto] = Empty;
+        board->squares[rFrom] = board->squares[rTo];
+        board->squares[rTo] = Empty;
         
-        board->castlerights = undo->castlerights;
+        board->castleRights = undo->castleRights;
         board->turn = undo->turn;
-        board->epsquare = undo->epsquare;
+        board->epSquare = undo->epSquare;
         board->opening = undo->opening;
         board->endgame = undo->endgame;
         board->hash = undo->hash;
-        board->num_pieces = undo->num_pieces;
+        board->numPieces = undo->numPieces;
         return;
     }
     
-    if (MOVE_TYPE(move) == PromotionMove){
-        to = MOVE_TO(move);
-        from = MOVE_FROM(move);
+    if (MoveType(move) == PromotionMove){
+        to = MoveTo(move);
+        from = MoveFrom(move);
         
-        fromtype = WhitePawn + undo->turn;
-        totype = PIECE_TYPE(undo->capture_piece);
+        fromType = WhitePawn + undo->turn;
+        toType = PieceType(undo->capturePiece);
         promotype = 1 + (move >> 14);
         
-        shiftfrom = 1ull << from;
-        shiftto = 1ull << to;
+        shiftFrom = 1ull << from;
+        shiftTo = 1ull << to;
     
-        board->colourBitBoards[undo->turn] ^= shiftfrom | shiftto;
-        board->colourBitBoards[PIECE_COLOUR(undo->capture_piece)] ^= shiftto;
+        board->colourBitBoards[undo->turn] ^= shiftFrom | shiftTo;
+        board->colourBitBoards[PieceColour(undo->capturePiece)] ^= shiftTo;
         
-        board->pieceBitBoards[0] ^= shiftfrom;
-        board->pieceBitBoards[promotype] ^= shiftto;
-        board->pieceBitBoards[totype] ^= shiftto;
+        board->pieceBitBoards[0] ^= shiftFrom;
+        board->pieceBitBoards[promotype] ^= shiftTo;
+        board->pieceBitBoards[toType] ^= shiftTo;
         
-        board->squares[to] = undo->capture_piece;
+        board->squares[to] = undo->capturePiece;
         board->squares[from] = WhitePawn + undo->turn;
         
         board->turn = undo->turn;
-        board->epsquare = undo->epsquare;
+        board->epSquare = undo->epSquare;
         board->opening = undo->opening;
         board->endgame = undo->endgame;
         board->hash = undo->hash;
-        board->num_pieces = undo->num_pieces;
+        board->numPieces = undo->numPieces;
         return;
     }
     
-    if (MOVE_TYPE(move) == EnpassMove){
-        to = MOVE_TO(move);
-        from = MOVE_FROM(move);
-        ep = undo->epsquare - 8 + (undo->turn << 4);
+    if (MoveType(move) == EnpassMove){
+        to = MoveTo(move);
+        from = MoveFrom(move);
+        ep = undo->epSquare - 8 + (undo->turn << 4);
         
-        shiftfrom = 1ull << from;
-        shiftto = 1ull << to;
-        shiftep = 1ull << ep;
+        shiftFrom = 1ull << from;
+        shiftTo = 1ull << to;
+        shiftEnpass = 1ull << ep;
         
-        board->colourBitBoards[!undo->turn] ^= shiftep;
-        board->pieceBitBoards[0] ^= shiftep;
+        board->colourBitBoards[!undo->turn] ^= shiftEnpass;
+        board->pieceBitBoards[0] ^= shiftEnpass;
         
-        board->colourBitBoards[undo->turn] ^= shiftfrom | shiftto;
-        board->pieceBitBoards[0] ^= shiftfrom | shiftto;
+        board->colourBitBoards[undo->turn] ^= shiftFrom | shiftTo;
+        board->pieceBitBoards[0] ^= shiftFrom | shiftTo;
         
         board->squares[from] = board->squares[to];
         board->squares[to] = Empty;
-        board->squares[ep] = undo->capture_piece;
+        board->squares[ep] = undo->capturePiece;
         
         board->turn = undo->turn;
-        board->epsquare = undo->epsquare;
+        board->epSquare = undo->epSquare;
         board->opening = undo->opening;
         board->endgame = undo->endgame;
         board->hash = undo->hash;
-        board->num_pieces = undo->num_pieces;
+        board->numPieces = undo->numPieces;
         return;
     }
 }
 
-void print_move(uint16_t move){
-    int from = MOVE_FROM(move);
-    int to = MOVE_TO(move);
+void printMove(uint16_t move){
+    int from = MoveFrom(move);
+    int to = MoveTo(move);
     
-    char from_file = '1' + (from/8);
-    char to_file = '1' + (to/8);
+    char fromFile = '1' + (from/8);
+    char toFile = '1' + (to/8);
     
-    char from_rank = 'a' + (from%8);
-    char to_rank = 'a' + (to%8);
+    char fromRank = 'a' + (from%8);
+    char toRank = 'a' + (to%8);
     
-    printf("%c%c%c%c",from_rank,from_file,to_rank,to_file);
+    printf("%c%c%c%c",fromRank,fromFile,toRank,toFile);
 }

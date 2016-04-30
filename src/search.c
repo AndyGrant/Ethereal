@@ -43,11 +43,11 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
     // POPULATE ROOT'S MOVELIST
     MoveList rootMoveList;
     rootMoveList.size = 0;
-    gen_all_moves(board,rootMoveList.moves,&(rootMoveList.size));
+    genAllMoves(board,rootMoveList.moves,&(rootMoveList.size));
     
     // PRINT SEARCH DATA TABLE HEADER TO CONSOLE
     if (!logging){
-        print_board(board);
+        printBoard(board);
         printf("|  Depth  |  Score  |   Nodes   | Elapsed | Best |\n");
     }
     
@@ -60,7 +60,7 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
         // LOG RESULTS TO INTERFACE
         if (logging){
             printf("info depth %d score cp %d time %d nodes %d pv ",depth,value,1000*(time(NULL)-StartTime),TotalNodes);
-            print_move(rootMoveList.bestMove);
+            printMove(rootMoveList.bestMove);
             printf("\n");
             fflush(stdout);
         }
@@ -68,7 +68,7 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
         // LOG RESULTS TO CONSOLE
         else {
             printf("|%9d|%9d|%11d|%9d| ",depth,value,TotalNodes,(time(NULL)-StartTime));
-            print_move(rootMoveList.bestMove);
+            printMove(rootMoveList.bestMove);
             printf(" |\n");
         }
         
@@ -97,9 +97,9 @@ int rootSearch(Board * board, MoveList * moveList, int depth){
         currentNodes = TotalNodes;
         
         // APPLY AND VALIDATE MOVE BEFORE SEARCHING
-        apply_move(board, moveList->moves[i], undo);
-        if (!is_not_in_check(board, !board->turn)){
-            revert_move(board, moveList->moves[i], undo);
+        applyMove(board, moveList->moves[i], undo);
+        if (!isNotInCheck(board, !board->turn)){
+            revertMove(board, moveList->moves[i], undo);
             moveList->values[i] = -6 * Mate;
             continue;
         }
@@ -121,7 +121,7 @@ int rootSearch(Board * board, MoveList * moveList, int depth){
         }
         
         // REVERT MOVE FROM BOARD
-        revert_move(board, moveList->moves[i], undo);
+        revertMove(board, moveList->moves[i], undo);
         
         if (value <= alpha)
             moveList->values[i] = -(1<<28) + (TotalNodes - currentNodes); // UPPER VALUE
@@ -209,7 +209,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     // COMPAREING HISTORY TO NULLMOVE IS A HACK
     // TO AVOID CALLING TREES WITH 3-NULL MOVES 
     // APPLIED 3-FOLD REPITITIONS
-    for (i = 0; i < board->move_num; i++){
+    for (i = 0; i < board->numMoves; i++){
         if (board->history[i] == board->hash
             && board->history[i] != NullMove){
             repeated++;
@@ -241,19 +241,19 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         && abs(beta) < Mate - MaxHeight
         && alpha == beta - 1
         && nodeType != PVNODE
-        && board->history[board->move_num-1] != NullMove
-        && is_not_in_check(board, board->turn)
+        && board->history[board->numMoves-1] != NullMove
+        && isNotInCheck(board, board->turn)
         && evaluate_board(board) >= beta){
             
         // APPLY NULL MOVE
         board->turn = !board->turn;
-        board->history[board->move_num++] == NullMove;
+        board->history[board->numMoves++] == NullMove;
         
         // PERFORM NULL MOVE SEARCH
         value = -alphaBetaSearch(board, -beta, -beta+1, depth-4, height+1, CUTNODE);
         
         // REVERT NULL MOVE
-        board->move_num--;
+        board->numMoves--;
         board->turn = !board->turn;
         
         if (value >= beta)
@@ -278,11 +278,11 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     }
     
     // GENERATE AND PREPARE MOVE ORDERING
-    gen_all_moves(board, moves, &size);
+    genAllMoves(board, moves, &size);
     evaluateMoves(board, values, moves, size, height, tableMove);
     
     // DETERMINE CHECK STATUS FOR LATE MOVE REDUCTIONS
-    inCheck = !is_not_in_check(board, board->turn);
+    inCheck = !isNotInCheck(board, board->turn);
     
     int hasFailedHigh = 0;
     
@@ -296,8 +296,8 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             && valid >= 1
             && depth == 1
             && !inCheck
-            && MOVE_TYPE(currentMove) == NormalMove
-            && board->squares[MOVE_TO(currentMove)] == Empty){
+            && MoveType(currentMove) == NormalMove
+            && board->squares[MoveTo(currentMove)] == Empty){
          
             if (optimalValue == -Mate)
                 optimalValue = evaluate_board(board) + PawnValue;
@@ -309,9 +309,9 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         }
         
         // APPLY AND VALIDATE MOVE BEFORE SEARCHING
-        apply_move(board, currentMove, undo);
-        if (!is_not_in_check(board, !board->turn)){
-            revert_move(board, currentMove, undo);
+        applyMove(board, currentMove, undo);
+        if (!isNotInCheck(board, !board->turn)){
+            revertMove(board, currentMove, undo);
             continue;
         }   
     
@@ -325,9 +325,9 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             && depth >= 3
             && !inCheck
             && nodeType != PVNODE
-            && MOVE_TYPE(currentMove) == NormalMove
-            && undo[0].capture_piece == Empty
-            && is_not_in_check(board, board->turn))
+            && MoveType(currentMove) == NormalMove
+            && undo[0].capturePiece == Empty
+            && isNotInCheck(board, board->turn))
             newDepth = depth-2;
         else
             newDepth = depth-1;
@@ -357,7 +357,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         }
         
         // REVERT MOVE FROM BOARD
-        revert_move(board, currentMove, undo);
+        revertMove(board, currentMove, undo);
         
         // IMPROVED CURRENT VALUE
         if (value > best){
@@ -373,7 +373,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         if (alpha >= beta){
             
             // UPDATE QUIET-KILLER MOVES
-            if (undo[0].capture_piece == Empty || MOVE_TYPE(currentMove) != NormalMove){
+            if (undo[0].capturePiece == Empty || MoveType(currentMove) != NormalMove){
                 KillerMoves[height][2] = KillerMoves[height][1];
                 KillerMoves[height][1] = KillerMoves[height][0];
                 KillerMoves[height][0] = currentMove;
@@ -394,7 +394,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     if (valid == 0){
         
         // BOARD IS STALEMATE
-        if (is_not_in_check(board, board->turn))
+        if (isNotInCheck(board, board->turn))
             return 0;
         
         // BOARD IS CHECKMATE
@@ -451,13 +451,13 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
     
     // DELTA PRUNING IN WHEN NO PROMOTIONS AND NOT EXTREME LATE GAME
     if (value + QueenValue < alpha
-        && board->num_pieces >= 6 
+        && board->numPieces >= 6 
         && !(board->colourBitBoards[0] & board->pieceBitBoards[0] & RANK_7)
         && !(board->colourBitBoards[1] & board->pieceBitBoards[0] & RANK_2))
         return alpha;
     
     // GENERATE AND PREPARE QUIET MOVE ORDERING
-    gen_all_non_quiet(board, moves, &size);
+    genAllNonQuiet(board, moves, &size);
     evaluateMoves(board, values, moves, size, height, NoneMove);
     
     best = value;
@@ -466,9 +466,9 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
         currentMove = getNextMove(moves, values, i, size);
         
         // APPLY AND VALIDATE MOVE BEFORE SEARCHING
-        apply_move(board, currentMove, undo);
-        if (!is_not_in_check(board, !board->turn)){
-            revert_move(board, currentMove, undo);
+        applyMove(board, currentMove, undo);
+        if (!isNotInCheck(board, !board->turn)){
+            revertMove(board, currentMove, undo);
             continue;
         }
         
@@ -476,7 +476,7 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
         value = -quiescenceSearch(board, -beta, -alpha, height+1);
         
         // REVERT MOVE FROM BOARD
-        revert_move(board, currentMove, undo);
+        revertMove(board, currentMove, undo);
         
         // IMPROVED CURRENT VALUE
         if (value > best){
@@ -530,8 +530,8 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
         value += 256  * (   killer6 == moves[i]);
         
         // INFO FOR POSSIBLE CAPTURE
-        from_type = PIECE_TYPE(board->squares[MOVE_FROM(moves[i])]);
-        to_type = PIECE_TYPE(board->squares[MOVE_TO(moves[i])]);
+        from_type = PieceType(board->squares[MoveFrom(moves[i])]);
+        to_type = PieceType(board->squares[MoveTo(moves[i])]);
         from_val = PieceValues[from_type];
         to_val = PieceValues[to_type];
         
@@ -540,11 +540,11 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
         value -= 1 * from_val;
         
         // ENPASS CAPTURE IS TREATED SEPERATLY
-        if (MOVE_TYPE(moves[i]) == EnpassMove)
+        if (MoveType(moves[i]) == EnpassMove)
             value += 2*PawnValue;
         
         // WE ARE ONLY CONCERED WITH QUEEN PROMOTIONS
-        if (MOVE_TYPE(moves[i]) == PromotionMove)
+        if (MoveType(moves[i]) == PromotionMove)
             value += QueenValue * (moves[i] & PromoteToQueen);
         
         values[i] = value;

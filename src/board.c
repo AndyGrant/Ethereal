@@ -28,13 +28,13 @@
  *  Attempts to Validate given FEN String, throws errors when
  *  Parsing Unexpected FEN-strings
  */
-void init_board(Board * board, char * fen){
+void initalizeBoard(Board * board, char * fen){
     int i, j, sq;
     char r, f;
     
-    init_magics();
-    init_zorbist();
-    init_psqt();
+    initalizeMagics();
+    initalizeZorbist();
+    initalizePSQT();
     
     // Init board->squares from fen notation;
     for(i = 0, sq = 56; fen[i] != ' '; i++){
@@ -76,45 +76,45 @@ void init_board(Board * board, char * fen){
     i++; // Skip over space between turn and rights
     
     // Determine Castle Rights
-    board->castlerights = 0;
+    board->castleRights = 0;
     while(fen[++i] != ' '){
         switch(fen[i]){
-            case 'K' : board->castlerights |= WhiteKingRights; break;
-            case 'Q' : board->castlerights |= WhiteQueenRights; break;
-            case 'k' : board->castlerights |= BlackKingRights; break;
-            case 'q' : board->castlerights |= BlackQueenRights; break;
+            case 'K' : board->castleRights |= WhiteKingRights; break;
+            case 'Q' : board->castleRights |= WhiteQueenRights; break;
+            case 'k' : board->castleRights |= BlackKingRights; break;
+            case 'q' : board->castleRights |= BlackQueenRights; break;
             case '-' : break;
             default  : assert("Unable to decode castle rights in init_board()" && 0);
         }
     }
     
     // Determine Enpass Square
-    board->epsquare = -1;
+    board->epSquare = -1;
     if (fen[++i] != '-'){
         r = fen[i];
         f = fen[++i];
         assert("Unable to decode enpass rank in init_board()" && r>='a' && r<='h');
         assert("Unable to decode enpass file in init_board()" && f>='1' && f<='8');
         
-        board->epsquare = (r - 'a') + (8 * (f - '1'));
+        board->epSquare = (r - 'a') + (8 * (f - '1'));
         
-        assert("Incorrectly decoded enpass square in init_board()" && board->epsquare >= 0 && board->epsquare <= 63);
+        assert("Incorrectly decoded enpass square in init_board()" && board->epSquare >= 0 && board->epSquare <= 63);
     }
     
     i++; // Skip over space between ensquare and halfmove count
         
     // Determine Number of half moves into fiftymoverule
-    board->fiftymoverule = 0;
+    board->fiftyMoveRule = 0;
     if (fen[++i] != '-'){
         // Two Digit Number
         if (fen[i+1] != ' ') 
-            board->fiftymoverule = (10 * (fen[i] - '0')) + fen[1+i++] - '0';
+            board->fiftyMoveRule = (10 * (fen[i] - '0')) + fen[1+i++] - '0';
         
         // One Digit Number
         else
-            board->fiftymoverule = fen[i] - '0';
+            board->fiftyMoveRule = fen[i] - '0';
         
-        assert("Incorrectly decoded half-move count in init_board()" && (board->fiftymoverule >=0 && board->fiftymoverule < 100));
+        assert("Incorrectly decoded half-move count in init_board()" && (board->fiftyMoveRule >=0 && board->fiftyMoveRule < 100));
     }
     
     // Set BitBoards to default values
@@ -133,8 +133,8 @@ void init_board(Board * board, char * fen){
     
     // Fill BitBoards
     for(i = 0; i < 64; i++){
-        board->colourBitBoards[PIECE_COLOUR(board->squares[i])] |= (1ull << i);
-        board->pieceBitBoards[PIECE_TYPE(board->squares[i])]    |= (1ull << i);
+        board->colourBitBoards[PieceColour(board->squares[i])] |= (1ull << i);
+        board->pieceBitBoards[PieceType(board->squares[i])]    |= (1ull << i);
     }
     
     // Init Zorbist Hash
@@ -149,9 +149,9 @@ void init_board(Board * board, char * fen){
         board->endgame += PSQTendgame[board->squares[i]][i];
     }
     
-    board->move_num = 0;
+    board->numMoves = 0;
     
-    board->num_pieces = count_set_bits(board->colourBitBoards[0] | board->colourBitBoards[1]);
+    board->numPieces = countSetBits(board->colourBitBoards[0] | board->colourBitBoards[1]);
 }
 
 /*
@@ -159,7 +159,7 @@ void init_board(Board * board, char * fen){
  *  Including an ascii grid, filled with pieces, as well
  *  as Rank and File markings
  */
-void print_board(Board * board){
+void printBoard(Board * board){
     int i, j, f, c, t;
     
     char table[3][7] = {
@@ -172,8 +172,8 @@ void print_board(Board * board){
         printf("\n     |----|----|----|----|----|----|----|----|\n");
         printf("    %d",f);
         for(j = 0; j < 8; j++){
-            c = PIECE_COLOUR(board->squares[i+j]);
-            t = PIECE_TYPE(board->squares[i+j]);
+            c = PieceColour(board->squares[i+j]);
+            t = PieceType(board->squares[i+j]);
             
             switch(c){
                 case ColourWhite: printf("| *%c ",table[c][t]); break;
@@ -195,15 +195,15 @@ int perft(Board * board, int depth){
     
     uint16_t moves[256];
     int size = 0;
-    gen_all_moves(board,moves,&size);
+    genAllMoves(board,moves,&size);
     Undo undo;
     
     int found = 0;
     for(size -= 1; size >= 0; size--){
-        apply_move(board,moves[size],&undo);
-        if (is_not_in_check(board,!board->turn))
+        applyMove(board,moves[size],&undo);
+        if (isNotInCheck(board,!board->turn))
             found += perft(board,depth-1);
-        revert_move(board,moves[size],&undo);
+        revertMove(board,moves[size],&undo);
     }
     
     return found;

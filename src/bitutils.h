@@ -4,10 +4,10 @@
 #include <stdint.h> // For uint64_t
 
 /* Prototypes */
-int count_set_bits(uint64_t bb);
-void get_set_bits(uint64_t bb, int * arr);
+int countSetBits(uint64_t bb);
+void getSetBits(uint64_t bb, int * arr);
 
-int get_msb_special(uint64_t bb);
+int getMSBSpecial(uint64_t bb);
 
 
 /* chessprogramming.wikispaces.com/Bitscan#DeBruijnMultiplation */
@@ -22,6 +22,6 @@ static int LsbLookupTable[64] = {
    13, 18,  8, 12,  7,  6,  5, 63
 };
 
-#define get_lsb(bb) (LsbLookupTable[(((bb) ^ ((bb)-1)) * 0x03f79d71b4cb0a89ull) >> 58])
+#define getLSB(bb) (LsbLookupTable[(((bb) ^ ((bb)-1)) * 0x03f79d71b4cb0a89ull) >> 58])
 
 #endif

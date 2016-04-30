@@ -6,7 +6,7 @@
 #include "board.h"
 #include "types.h"
 
-void move_gen_test(){
+void moveGenTest(){
     int i, depth;
     int passed = 0, failed = 0;
     uint64_t total = 0, found, nodes[128];
@@ -20,7 +20,7 @@ void move_gen_test(){
         Board board;
         for(i = 0;; i++){
             c = fgetc(input);
-            if (c == EOF) goto END_OF_MAIN_LOOP;
+            if (c == EOF) goto EndOfMainLoop;
             if (c == ';') break;
             str[i] = c;
             
@@ -28,7 +28,7 @@ void move_gen_test(){
         
         str[i++] = '\0';
         
-        init_board(&board,str);
+        initalizeBoard(&board,str);
         
         depth = 0;
         nodes[0] = 0;
@@ -69,7 +69,7 @@ void move_gen_test(){
         }
     }
     
-    END_OF_MAIN_LOOP:
+    EndOfMainLoop:
     
     end = clock();
     
