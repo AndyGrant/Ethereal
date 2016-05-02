@@ -40,4 +40,6 @@ int main(){
     //initalizeBoard(&board,"8/8/2PPP3/K7/8/8/8/k7 w - - 0 0");
     
     getBestMove(&board,10,0);
+    getBestMove(&board,10,0);
+    getBestMove(&board,10,0);
 }
