@@ -56,7 +56,7 @@ void storeTranspositionEntry(TranspositionTable * table, int8_t depth, int8_t tu
     if (entry1->type == 0)
         useDepthFirst = 1;
     
-    else if (entry1->age != 0)
+    else if (entry1->age != 0 && hash != entry1->hash)
         useDepthFirst = 1;
     
     else if (entry1->type != PVNODE){
