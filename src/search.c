@@ -78,7 +78,7 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
             break;        
     }
     
-    updateTranspositionTable(&Table);
+    dumpTranspositionTable(&Table);
     
     return rootMoveList.bestMove;    
 }
