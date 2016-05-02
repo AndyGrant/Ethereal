@@ -36,6 +36,8 @@ In the beginnings of my computer science education I attempted to create a graph
   
     Ethereal (Commit #621) vs MicroMax4.8 |   48   29   23
     
+    Ethereal (Commit #624) vs TSCP1.81    |   13    3    4
+    
     
 # Special Thanks
 
