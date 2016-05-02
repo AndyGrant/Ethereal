@@ -15,4 +15,6 @@ void storeTranspositionEntry(TranspositionTable * table, int8_t depth, int8_t tu
 
 void dumpTranspositionTable(TranspositionTable * table);
 
+void updateTranspositionTable(TranspositionTable * table);
+
 #endif 

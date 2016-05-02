@@ -38,7 +38,7 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
     EndTime = StartTime + seconds;
     TotalNodes = 0;    
     EvaluatingPlayer = board->turn;
-    initalizeTranspositionTable(&Table, 23);
+    initalizeTranspositionTable(&Table, 21);
     
     // POPULATE ROOT'S MOVELIST
     MoveList rootMoveList;
@@ -78,7 +78,7 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
             break;        
     }
     
-    dumpTranspositionTable(&Table);
+    updateTranspositionTable(&Table);
     
     return rootMoveList.bestMove;    
 }

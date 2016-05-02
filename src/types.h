@@ -66,6 +66,7 @@ typedef struct Undo {
 } Undo;
 
 typedef struct TranspositionEntry {
+    int8_t age;
     int8_t depth;
     int8_t turn;
     int8_t type;
@@ -75,8 +76,14 @@ typedef struct TranspositionEntry {
     
 } TranspositionEntry;
 
+typedef struct TranspositionBucket {
+    TranspositionEntry entry1;
+    TranspositionEntry entry2;
+    
+} TranspositionBucket;
+
 typedef struct TranspositionTable {
-    TranspositionEntry * entries;
+    TranspositionBucket * buckets;
     int maxSize;
     int keySize;
     
