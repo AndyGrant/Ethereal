@@ -216,6 +216,14 @@ int evaluate_board(Board * board){
         }
     }
     
+    // EVALUATE STACKED WHITE ROOKS
+    if (i == 2){
+        if (wRooks[0] % 8 == wRooks[1] % 8){
+            mid += ROOK_STACKED_MID;
+            end += ROOK_STACKED_END;
+        }
+    }
+    
     // EVALUATE BLACK ROOKS FOR FILE AND RANK BONUSES
     for (i = 0; bRooks[i] != -1; i++){
         if (blackPawns & FILES[bRooks[i] % 8] == 0){
@@ -235,6 +243,13 @@ int evaluate_board(Board * board){
         }
     }
     
+    // EVALUATE STACKED BLACK ROOKS
+    if (i == 2){
+        if (bRooks[0] % 8 == bRooks[1] % 8){
+            mid -= ROOK_STACKED_MID;
+            end -= ROOK_STACKED_END;
+        }
+    }
     
     // WHITE HAS A BISHOP PAIR
     if (wBishops[0] != -1 && wBishops[1] != -1){
@@ -276,5 +291,5 @@ int evaluate_board(Board * board){
     
     eval = ((midEval * (256 - curPhase)) + (endEval * curPhase)) / 256;
     
-    return board->turn == ColourWhite ? eval+10 : -(eval+10);    
+    return board->turn == ColourWhite ? eval+10 : -(eval+10);
 }
