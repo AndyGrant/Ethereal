@@ -242,7 +242,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         && alpha == beta - 1
         && nodeType != PVNODE
         && board->history[board->numMoves-1] != NullMove
-        //&& canDoNull(board)
+        && canDoNull(board)
         && isNotInCheck(board, board->turn)
         && evaluate_board(board) >= beta){
             
