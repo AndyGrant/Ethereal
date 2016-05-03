@@ -27,4 +27,6 @@ uint16_t getNextMove(uint16_t * moves, int * values, int index, int size);
 
 void sortMoveList(MoveList * moveList);
 
+int canDoNull(Board * board);
+
 #endif

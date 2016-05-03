@@ -86,7 +86,7 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
 int rootSearch(Board * board, MoveList * moveList, int depth){
     
     int alpha = -2*Mate, beta = 2*Mate;
-    int i, valid, best =-2*Mate, value;
+    int i, valid = 0, best =-2*Mate, value;
     int currentNodes;
     Undo undo[1];
     
@@ -242,6 +242,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         && alpha == beta - 1
         && nodeType != PVNODE
         && board->history[board->numMoves-1] != NullMove
+        //&& canDoNull(board)
         && isNotInCheck(board, board->turn)
         && evaluate_board(board) >= beta){
             
@@ -589,4 +590,11 @@ void sortMoveList(MoveList * moveList){
             }
         }
     }    
+}
+
+int canDoNull(Board * board){
+    uint64_t friendly = board->colourBitBoards[board->turn];
+    uint64_t kings = board->pieceBitBoards[5];
+    
+    return (friendly & kings) != friendly;
 }
