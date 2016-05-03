@@ -3,11 +3,11 @@
 
 #include "types.h"
 
-#define PawnValue   (  100)
-#define KnightValue (  400)
-#define BishopValue (  400)
-#define RookValue   (  600)
-#define QueenValue  ( 1200)
+#define PawnValue   (  200)
+#define KnightValue (  800)
+#define BishopValue (  800)
+#define RookValue   ( 1200)
+#define QueenValue  ( 2400)
 #define KingValue   (   50)
 
 #define ROOK_OPEN_FILE_MID   (27)
