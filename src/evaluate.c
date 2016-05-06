@@ -247,7 +247,7 @@ int evaluate_board(Board * board){
     // EVALUATE STACKED BLACK ROOKS
     if (i == 2){
         if (bRooks[0] % 8 == bRooks[1] % 8
-            && blackPawns & FILES[wRooks[i] % 8] == 0){
+            && blackPawns & FILES[bRooks[i] % 8] == 0){
             mid -= ROOK_STACKED_MID;
             end -= ROOK_STACKED_END;
         }
