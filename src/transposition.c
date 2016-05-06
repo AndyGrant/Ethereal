@@ -39,9 +39,6 @@ TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash){
     else if (bucket->always.hash == hashComp)
         toReturn = &(bucket->always);
     
-    if (toReturn != NULL)
-        toReturn->info = (table->age << 3) | (toReturn->info & 0b111);
-    
     return toReturn;
 }
 
@@ -49,8 +46,7 @@ void storeTranspositionEntry(TransTable * table, int8_t depth, int8_t turn, int8
     int i, j, hashComp = (uint32_t)(hash >> 32);
     TransBucket * bucket = &(table->buckets[hash % table->maxSize]);
     TransEntry * toReplace = NULL;
-    TransEntry * candidateOne;
-    TransEntry * candidateTwo;
+    TransEntry * candidate;
     TransEntry * entries[5] = {
         &(bucket->slot1[0]),
         &(bucket->slot1[1]),
@@ -67,6 +63,9 @@ void storeTranspositionEntry(TransTable * table, int8_t depth, int8_t turn, int8
                 toReplace = entries[i];
                 goto Replace;
             }
+            
+            // 
+            return;
         }
         
         if (entries[i]->info == 0){
@@ -75,33 +74,29 @@ void storeTranspositionEntry(TransTable * table, int8_t depth, int8_t turn, int8
         }
     }
     
-    // GRAB THE ENTRIES IN THE PROPER SLOT
-    j = 2 * (hash & 1);
-    candidateOne = entries[j];
-    candidateTwo = entries[j+1];
-    
-    // SEARCH FOR A LOWER DEPTH ENTRY TO REPLACE
-    toReplace = candidateOne->depth > candidateTwo->depth ? candidateTwo : candidateOne;
-    toReplace = depth >= toReplace->depth ? toReplace : NULL;
-    if (toReplace != NULL)
-        goto Replace;
-    
-    // SEARCH FOR OLD ENTRY WITH LOWEST DEPTH TO REPLACE
-    candidateOne = EntryAge(candidateOne) != table->age ? candidateOne : NULL;
-    candidateTwo = EntryAge(candidateTwo) != table->age ? candidateTwo : NULL;
-    if (candidateOne != NULL || candidateTwo != NULL){
-        if (candidateOne != NULL && candidateTwo != NULL)
-            toReplace = candidateOne->depth < candidateTwo->depth ? candidateOne : candidateTwo;
-        else
-            toReplace = candidateOne == NULL ? candidateTwo : candidateOne;
+    // FIND AND COMPARE LOWEST ENTRY TO NEW ONE
+    candidate = entries[0];
+    for (i = 1; i < 4; i++){
+        if (entries[i]->depth < candidate->depth)
+            candidate = entries[i];
+    }
+    if (depth > candidate->depth){
+        toReplace = candidate;
         goto Replace;
     }
     
-    // NO ENTRY FOUND TO REPLACE, USE THE ALWAYS REPLACE
-    toReplace = entries[4];
+    // FIND AND COMPARE LOWEST OLD ENTRY TO NEW ONE
+    // IF NO OLD ENTRIES TO REPLACE WE WILL BE
+    // LEFT WITH THE ALWAYS REPLACE ENTRY
+    candidate = entries[4];
+    for (i = 3; i >= 0; i--){
+        if (EntryAge(entries[i]) != table->age
+            && entries[i]->depth < candidate->depth)
+            candidate = entries[i];
+    } toReplace = candidate;
     
     // PERFORM THE REPLACEMENT
-    Replace:
+    Replace:    
         toReplace->depth = depth;
         toReplace->info  = (table->age << 3) | (type << 1) | (turn);
         toReplace->value = (int16_t)value;
@@ -110,15 +105,21 @@ void storeTranspositionEntry(TransTable * table, int8_t depth, int8_t turn, int8
 }
 
 void dumpTranspositionTable(TransTable * table){
-    /*
     int i, j, data[MaxHeight][4];
+    TransBucket bucket;
     
     for (i = 0; i < MaxHeight; i++)
         for (j = 0; j < 4; j++)
             data[i][j] = 0;
         
-    for (i = 0; i < table->maxSize; i++)
-        data[table->entries[i].depth][table->entries[i].type]++;
+    for (i = 0; i < table->maxSize; i++){
+        bucket = table->buckets[i];
+        data[bucket.slot1[0].depth][EntryType(&(bucket.slot1[0]))]++;
+        data[bucket.slot1[1].depth][EntryType(&(bucket.slot1[1]))]++;
+        data[bucket.slot2[0].depth][EntryType(&(bucket.slot2[0]))]++;
+        data[bucket.slot2[1].depth][EntryType(&(bucket.slot2[1]))]++;
+        data[bucket.always  .depth][EntryType(&(bucket.always  ))]++;
+    }
     
     printf("\n\n");
     printf("<-----------TRANSPOSITION TABLE---------->\n");
@@ -126,5 +127,5 @@ void dumpTranspositionTable(TransTable * table){
     for (i = 0; i < MaxHeight; i++)
         if (data[i][1] || data[i][2] || data[i][3])
             printf("|%8d|%9d|%11d|%9d|\n",i,data[i][1],data[i][2],data[i][3]);
-    printf("\n\n");*/
+    printf("\n\n");
 }

@@ -7,9 +7,9 @@
 #define CUTNODE (2)
 #define ALLNODE (3)
 
-#define EntryTurn(e) (e->info  & 0b1)
-#define EntryType(e) ((e->info & 0b110) >> 1)
-#define EntryAge(e)  (e->info >> 3)
+#define EntryTurn(e) ((e)->info  & 0b1)
+#define EntryType(e) (((e)->info & 0b110) >> 1)
+#define EntryAge(e)  ((e)->info >> 3)
 
 void initalizeTranspositionTable(TransTable * table, int keySize);
 
