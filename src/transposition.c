@@ -64,13 +64,8 @@ void storeTranspositionEntry(TransTable * table, int8_t depth, int8_t turn, int8
                 goto Replace;
             }
             
-            // 
+            entries[i]->info  = (table->age << 3) | (entries[i]->info & 0b111);
             return;
-        }
-        
-        if (entries[i]->info == 0){
-            toReplace = entries[i];
-            goto Replace;
         }
     }
     
