@@ -218,7 +218,8 @@ int evaluate_board(Board * board){
     
     // EVALUATE STACKED WHITE ROOKS
     if (i == 2){
-        if (wRooks[0] % 8 == wRooks[1] % 8){
+        if (wRooks[0] % 8 == wRooks[1] % 8
+            && whitePawns & FILES[wRooks[0] % 8] == 0){
             mid += ROOK_STACKED_MID;
             end += ROOK_STACKED_END;
         }
@@ -245,7 +246,8 @@ int evaluate_board(Board * board){
     
     // EVALUATE STACKED BLACK ROOKS
     if (i == 2){
-        if (bRooks[0] % 8 == bRooks[1] % 8){
+        if (bRooks[0] % 8 == bRooks[1] % 8
+            && blackPawns & FILES[wRooks[i] % 8] == 0){
             mid -= ROOK_STACKED_MID;
             end -= ROOK_STACKED_END;
         }
@@ -265,8 +267,8 @@ int evaluate_board(Board * board){
     
     // WHITE HAS A SOLE BISHOP WITH WINGED PAWNS
     if (whiteBishops != 0 && 
-       (whitePawns & (FILE_A|FILE_B)) != 0 &&
-       (whitePawns & (FILE_G|FILE_H)) != 0){
+       (whitePawns & (FILE_A|FILE_B|FILE_C)) != 0 &&
+       (whitePawns & (FILE_F|FILE_G|FILE_H)) != 0){
            
        mid += BISHOP_HAS_WINGS_MID;
        end += BISHOP_HAS_WINGS_END;
@@ -274,8 +276,8 @@ int evaluate_board(Board * board){
     
     // BLACK HAS A SOLE BISHOP WITH WINGED PAWNS
     if (blackBishops != 0 && 
-       (blackPawns & (FILE_A|FILE_B)) != 0 &&
-       (blackPawns & (FILE_G|FILE_H)) != 0){
+       (blackPawns & (FILE_A|FILE_B|FILE_C)) != 0 &&
+       (blackPawns & (FILE_F|FILE_G|FILE_H)) != 0){
            
        mid -= BISHOP_HAS_WINGS_MID;
        end -= BISHOP_HAS_WINGS_END;

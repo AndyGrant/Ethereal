@@ -70,14 +70,12 @@ typedef struct TransEntry {
     uint8_t  info;
     int16_t value;
     uint16_t best;
-    uint32_t hash;
+    uint64_t hash;
     
 } TransEntry;
 
 typedef struct TransBucket {
-    TransEntry slot1[2];
-    TransEntry slot2[2];
-    TransEntry always;
+    TransEntry entries[4];
     
 } TransBucket;
 

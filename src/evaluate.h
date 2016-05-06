@@ -16,8 +16,8 @@
 #define ROOK_SEMI_FILE_END   (12)
 #define ROOK_ON_7TH_MID      (15)
 #define ROOK_ON_7TH_END      ( 6)
-#define ROOK_STACKED_MID     ( 7)
-#define ROOK_STACKED_END     ( 7)
+#define ROOK_STACKED_MID     (15)
+#define ROOK_STACKED_END     (15)
 
 #define BISHOP_PAIR_MID      (36)
 #define BISHOP_PAIR_END      (63)
