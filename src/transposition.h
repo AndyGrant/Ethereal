@@ -15,7 +15,7 @@ void initalizeTranspositionTable(TransTable * table, int keySize);
 
 TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash);
 
-void storeTranspositionEntry(TransTable * table, int8_t depth, int8_t turn, int8_t type, int value, uint16_t bestMove, uint64_t hash);
+void storeTranspositionEntry(TransTable * table, int depth, int turn, int type, int value, uint16_t bestMove, uint64_t hash);
 
 void dumpTranspositionTable(TransTable * table);
 
