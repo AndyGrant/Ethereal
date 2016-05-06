@@ -321,8 +321,8 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         
         // DETERMINE IF WE CAN USE LATE MOVE REDUCTIONS
         if (USE_LATE_MOVE_REDUCTIONS
-            && usedTableEntry
-            && valid >= 4
+            && tableMove != NoneMove
+            && valid >= 6
             && depth >= 3
             && !inCheck
             && nodeType != PVNODE
