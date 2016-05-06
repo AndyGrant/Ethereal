@@ -7,12 +7,16 @@
 #define CUTNODE (2)
 #define ALLNODE (3)
 
-void initalizeTranspositionTable(TranspositionTable * table, int keySize);
+#define EntryTurn(e) (e->info  & 0b1)
+#define EntryType(e) ((e->info & 0b110) >> 1)
+#define EntryAge(e)  (e->info >> 3)
 
-TranspositionEntry * getTranspositionEntry(TranspositionTable * table, uint64_t hash);
+void initalizeTranspositionTable(TransTable * table, int keySize);
 
-void storeTranspositionEntry(TranspositionTable * table, int8_t depth, int8_t turn, int8_t type, int value, uint16_t bestMove, uint64_t hash);
+TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash);
 
-void dumpTranspositionTable(TranspositionTable * table);
+void storeTranspositionEntry(TransTable * table, int8_t depth, int8_t turn, int8_t type, int value, uint16_t bestMove, uint64_t hash);
+
+void dumpTranspositionTable(TransTable * table);
 
 #endif 

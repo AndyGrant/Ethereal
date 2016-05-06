@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#define Mate        (100000)
-#define MaxDepth    (32)
+#define Mate        (16000)
+#define MaxDepth    (128)
 #define MaxHeight   (128)
 
 typedef struct Board {
@@ -65,22 +65,29 @@ typedef struct Undo {
     
 } Undo;
 
-typedef struct TranspositionEntry {
-    int8_t depth;
-    int8_t turn;
-    int8_t type;
-    int value;
-    uint16_t bestMove;
-    uint64_t hash;  
+typedef struct TransEntry {
+    uint8_t depth;
+    uint8_t  info;
+    int16_t value;
+    uint16_t best;
+    uint32_t hash;
     
-} TranspositionEntry;
+} TransEntry;
 
-typedef struct TranspositionTable {
-    TranspositionEntry * entries;
-    int maxSize;
-    int keySize;
+typedef struct TransBucket {
+    TransEntry slot1[2];
+    TransEntry slot2[2];
+    TransEntry always;
     
-} TranspositionTable;
+} TransBucket;
+
+typedef struct TransTable {
+    TransBucket * buckets;
+    uint32_t keySize;
+    uint32_t maxSize;
+    uint8_t age;
+    
+} TransTable;
 
 typedef struct MoveList {
     uint16_t moves[256];

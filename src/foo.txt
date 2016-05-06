@@ -1,0 +1,6 @@
+position startpos moves
+go
+
+position startpos moves e2e4 b8c6
+go
+
