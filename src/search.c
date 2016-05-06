@@ -173,6 +173,20 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     // INCREMENT TOTAL NODE COUNTER
     TotalNodes++;
     
+    // DETERMINE 3-FOLD REPITION
+    // COMPAREING HISTORY TO NULLMOVE IS A HACK
+    // TO AVOID CULLING TREES WITH 3-NULL MOVES 
+    for (i = 0; i < board->numMoves; i++){
+        if (board->history[i] == board->hash
+            && board->history[i] != NullMove){
+            repeated++;
+        }
+    }
+    
+    // 3-FOLD REPITION FOUND
+    if (repeated >= 2)
+        return 0;
+    
     // LOOKUP CURRENT POSITION IN TRANSPOSITION TABLE
     entry = getTranspositionEntry(&Table, board->hash);
     
@@ -206,22 +220,6 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             usedTableEntry = 1;
             oldAlpha = alpha;
         }
-    }   
-    
-    // DETERMINE 3-FOLD REPITION
-    // COMPAREING HISTORY TO NULLMOVE IS A HACK
-    // TO AVOID CALLING TREES WITH 3-NULL MOVES 
-    // APPLIED 3-FOLD REPITITIONS
-    for (i = 0; i < board->numMoves; i++){
-        if (board->history[i] == board->hash
-            && board->history[i] != NullMove){
-            repeated++;
-        }
-    }
-        
-    // 3-FOLD REPITION FOUND
-    if (repeated >= 2){
-        return 0;
     }
     
     // RAZOR PRUNING
