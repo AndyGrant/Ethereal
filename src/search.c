@@ -549,6 +549,9 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
         if (MoveType(moves[i]) == PromotionMove)
             value += QueenValue * (moves[i] & PromoteToQueen);
         
+        if (MoveType(moves[i]) == CastleMove)
+            value += 128;
+        
         values[i] = value;
     }
 }
