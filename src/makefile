@@ -2,6 +2,8 @@ CC = gcc
 
 CFLAGS = -m64 -march=native -O3 -DNDEBUG
 
+WFLAGS = -Wall -Wno-unused-variable -Wno-format
+
 PFLAGS = -p -g -pg
 
 profile = False
@@ -22,9 +24,9 @@ SRC = bitutils.c		\
 EXE = foo
 
 ifeq (true, $(profile))
-	FLAGS = $(CFLAGS) $(PFLAGS)
+	FLAGS = $(WFLAGS) $(CFLAGS) $(PFLAGS)
 else
-	FLAGS = $(CFLAGS)
+	FLAGS = $(WFLAGS) $(CFLAGS)
 endif
 
 all:
