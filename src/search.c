@@ -59,7 +59,7 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
         
         // LOG RESULTS TO INTERFACE
         if (logging){
-            printf("info depth %d score cp %d time %d nodes %d pv ",depth,value/2,1000*(time(NULL)-StartTime),TotalNodes);
+            printf("info depth %d score cp %d time %d nodes %d pv ",depth,value,1000*(time(NULL)-StartTime),TotalNodes);
             printMove(rootMoveList.bestMove);
             printf("\n");
             fflush(stdout);
@@ -520,12 +520,12 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
         value  = 16384 * ( tableMove == moves[i]);
         
         // THEN KILLERS, UNLESS OTHER GOOD CAPTURE
-        value += 256   * (   killer1 == moves[i]);
-        value += 256   * (   killer2 == moves[i]);
-        value += 256   * (   killer3 == moves[i]);
-        value += 512   * (   killer4 == moves[i]);
-        value += 512   * (   killer5 == moves[i]);
-        value += 512   * (   killer6 == moves[i]);
+        value += 128   * (   killer1 == moves[i]);
+        value += 128   * (   killer2 == moves[i]);
+        value += 128   * (   killer3 == moves[i]);
+        value += 256   * (   killer4 == moves[i]);
+        value += 256   * (   killer5 == moves[i]);
+        value += 256   * (   killer6 == moves[i]);
         
         // INFO FOR POSSIBLE CAPTURE
         from_type = PieceType(board->squares[MoveFrom(moves[i])]);
