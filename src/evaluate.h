@@ -16,13 +16,13 @@
 #define ROOK_SEMI_FILE_END   (12)
 #define ROOK_ON_7TH_MID      (15)
 #define ROOK_ON_7TH_END      ( 6)
-#define ROOK_STACKED_MID     (15)
-#define ROOK_STACKED_END     (15)
+#define ROOK_STACKED_MID     (19)
+#define ROOK_STACKED_END     (19)
 
 #define BISHOP_PAIR_MID      (36)
 #define BISHOP_PAIR_END      (63)
-#define BISHOP_HAS_WINGS_MID (17)
-#define BISHOP_HAS_WINGS_END (37)
+#define BISHOP_HAS_WINGS_MID ( 7)
+#define BISHOP_HAS_WINGS_END (32)
 
 static int PawnStackedMid[8]  = { 5,  9, 12, 13, 13, 12,  9,  5};
 static int PawnStackedEnd[8]  = {15, 19, 22, 23, 23, 22, 19, 15};

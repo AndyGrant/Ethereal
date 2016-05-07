@@ -89,8 +89,6 @@ int rootSearch(Board * board, MoveList * moveList, int depth){
     int i, valid = 0, best =-2*Mate, value;
     int currentNodes;
     Undo undo[1];
-    
-    int bestIndex;
    
     for (i = 0; i < moveList->size; i++){
         
@@ -134,7 +132,6 @@ int rootSearch(Board * board, MoveList * moveList, int depth){
         // IMPROVED CURRENT VALUE
         if (value > best){
             best = value;
-            bestIndex = i;
             moveList->bestMove = moveList->moves[i];
             
             // IMPROVED CURRENT LOWER VALUE
@@ -158,7 +155,7 @@ int rootSearch(Board * board, MoveList * moveList, int depth){
 int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, int nodeType){
     int i, valid = 0, value, size = 0, best=-2*Mate, repeated = 0, newDepth;
     int oldAlpha = alpha, usedTableEntry = 0, inCheck, values[256], optimalValue = -Mate;
-    uint16_t moves[256], bestMove, currentMove, tableMove = NoneMove;
+    uint16_t moves[256], bestMove = NoneMove, currentMove, tableMove = NoneMove;
     TransEntry * entry;
     Undo undo[1];
     
@@ -203,7 +200,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             
             // EXACT VALUE STORED
             if (EntryType(entry) == PVNODE)
-                return entry->value;            
+                return entry->value;
             
             // LOWER BOUND STORED
             else if (EntryType(entry) == CUTNODE)
@@ -249,7 +246,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             
         // APPLY NULL MOVE
         board->turn = !board->turn;
-        board->history[board->numMoves++] == NullMove;
+        board->history[board->numMoves++] = NullMove;
         
         // PERFORM NULL MOVE SEARCH
         value = -alphaBetaSearch(board, -beta, -beta+1, depth-4, height+1, CUTNODE);

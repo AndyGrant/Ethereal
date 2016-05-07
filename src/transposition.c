@@ -56,29 +56,28 @@ void storeTranspositionEntry(TransTable * table, int depth, int turn, int type, 
         }
     }
     
-    // FIND AND COMPARE LOWEST ENTRY TO NEW ONE
-    candidate = &(bucket->entries[0]);
-    for (i = 1; i < 4; i++){
-        if (bucket->entries[i].depth < candidate->depth)
-            candidate = &(bucket->entries[i]);
-    }
-    if (depth > candidate->depth){
-        toReplace = candidate;
-        goto Replace;
-    }
-    
-    // FIND AND COMPARE LOWEST OLD ENTRY TO NEW ONE
-    // IF NO OLD ENTRIES TO REPLACE WE WILL BE
-    // LEFT WITH THE ALWAYS REPLACE ENTRY
-    candidate = &(bucket->entries[3]);
+    // SEARCH FOR LOWEST DRAFT + OLD ENTRY
+    toReplace = &(bucket->entries[3]);
     for (i = 2; i >= 0; i--){
         if (EntryAge(&(bucket->entries[i])) != table->age
-            && bucket->entries[i].depth <= candidate->depth)
-            candidate = &(bucket->entries[i]);
-    } toReplace = candidate;
+            && bucket->entries[i].depth < toReplace->depth)
+            toReplace = &(bucket->entries[i]);
+    }
+    
+    // OLD ENTRY FOUND?
+    if (EntryAge(toReplace) != table->age)
+        goto Replace;
+    
+    
+    // NO OLD OR MATCHING ENTRY FOUND, REPLACE LOWEST DRAFT
+    toReplace = &(bucket->entries[3]);
+    for (i = 2; i >= 0; i--){
+        if (bucket->entries[i].depth < toReplace->depth)
+            toReplace = &(bucket->entries[i]);
+    }
     
     // PERFORM THE REPLACEMENT
-    Replace:    
+    Replace:
         toReplace->depth = (uint8_t)depth;
         toReplace->info  = (uint8_t)((table->age << 3) | (type << 1) | (turn));
         toReplace->value = (int16_t)value;

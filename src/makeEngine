@@ -1,6 +1,6 @@
 CC = gcc
 
-CFLAGS = -w -m64 -march=native -DNDEBUG -O3
+CFLAGS = -Wall -Wno-unused-variable -Wno-format -m64 -march=native -O3
 
 LIBS = -lstdc++
 
