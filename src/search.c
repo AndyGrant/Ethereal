@@ -89,8 +89,6 @@ int rootSearch(Board * board, MoveList * moveList, int depth){
     int i, valid = 0, best =-2*Mate, value;
     int currentNodes;
     Undo undo[1];
-    
-    int bestIndex;
    
     for (i = 0; i < moveList->size; i++){
         
@@ -134,7 +132,6 @@ int rootSearch(Board * board, MoveList * moveList, int depth){
         // IMPROVED CURRENT VALUE
         if (value > best){
             best = value;
-            bestIndex = i;
             moveList->bestMove = moveList->moves[i];
             
             // IMPROVED CURRENT LOWER VALUE
@@ -170,6 +167,22 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     // INCREMENT TOTAL NODE COUNTER
     TotalNodes++;
     
+    // DETERMINE 3-FOLD REPITION
+    // COMPAREING HISTORY TO NULLMOVE IS A HACK
+    // TO AVOID CALLING TREES WITH 3-NULL MOVES 
+    // APPLIED 3-FOLD REPITITIONS
+    for (i = 0; i < board->numMoves; i++){
+        if (board->history[i] == board->hash
+            && board->history[i] != NullMove){
+            repeated++;
+        }
+    }
+    
+    // 3-FOLD REPITION FOUND
+    if (repeated >= 2){
+        return 0;
+    }
+    
     // LOOKUP CURRENT POSITION IN TRANSPOSITION TABLE
     entry = getTranspositionEntry(&Table, board->hash);
     
@@ -203,22 +216,6 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             usedTableEntry = 1;
             oldAlpha = alpha;
         }
-    }   
-    
-    // DETERMINE 3-FOLD REPITION
-    // COMPAREING HISTORY TO NULLMOVE IS A HACK
-    // TO AVOID CALLING TREES WITH 3-NULL MOVES 
-    // APPLIED 3-FOLD REPITITIONS
-    for (i = 0; i < board->numMoves; i++){
-        if (board->history[i] == board->hash
-            && board->history[i] != NullMove){
-            repeated++;
-        }
-    }
-        
-    // 3-FOLD REPITION FOUND
-    if (repeated >= 2){
-        return 0;
     }
     
     // RAZOR PRUNING
@@ -248,7 +245,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             
         // APPLY NULL MOVE
         board->turn = !board->turn;
-        board->history[board->numMoves++] == NullMove;
+        board->history[board->numMoves++] = NullMove;
         
         // PERFORM NULL MOVE SEARCH
         value = -alphaBetaSearch(board, -beta, -beta+1, depth-4, height+1, CUTNODE);
