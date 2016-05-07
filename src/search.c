@@ -319,14 +319,18 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         // DETERMINE IF WE CAN USE LATE MOVE REDUCTIONS
         if (USE_LATE_MOVE_REDUCTIONS
             && usedTableEntry
-            && valid >= 4
-            && depth >= 3
+            && valid >= 5
+            && depth >= 4
             && !inCheck
             && nodeType != PVNODE
-            && MoveType(currentMove) == NormalMove
-            && undo[0].capturePiece == Empty
-            && isNotInCheck(board, board->turn))
+            &&  ((MoveType(currentMove) == NormalMove && undo[0].capturePiece == Empty)
+                || (MoveType(currentMove) == CastleMove)
+                || (MoveType(currentMove) == PromotionMove && MovePromoType(currentMove) != PromoteToQueen))
+            && isNotInCheck(board, board->turn)){
+                
             newDepth = depth-2;
+        }
+        
         else
             newDepth = depth-1;
         
@@ -421,7 +425,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             storeTranspositionEntry(&Table, depth, board->turn, ALLNODE, best, bestMove, board->hash);
     }
     
-    return best;    
+    return best;
 }
 
 int quiescenceSearch(Board * board, int alpha, int beta, int height){
