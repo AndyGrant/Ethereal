@@ -199,8 +199,8 @@ int evaluate_board(Board * board){
     
     // EVALUATE WHITE ROOKS FOR FILE AND RANK BONUSES
     for (i = 0; wRooks[i] != -1; i++){
-        if (whitePawns & FILES[wRooks[i] % 8] == 0){
-            if (blackPawns & FILES[wRooks[i] % 8] == 0){
+        if ((whitePawns & FILES[wRooks[i] % 8]) == 0){
+            if ((blackPawns & FILES[wRooks[i] % 8]) == 0){
                 mid += ROOK_OPEN_FILE_MID;
                 end += ROOK_OPEN_FILE_END;
             }
@@ -226,8 +226,8 @@ int evaluate_board(Board * board){
     
     // EVALUATE BLACK ROOKS FOR FILE AND RANK BONUSES
     for (i = 0; bRooks[i] != -1; i++){
-        if (blackPawns & FILES[bRooks[i] % 8] == 0){
-            if (whitePawns & FILES[bRooks[i] % 8] == 0){
+        if ((blackPawns & FILES[bRooks[i] % 8]) == 0){
+            if ((whitePawns & FILES[bRooks[i] % 8]) == 0){
                 mid -= ROOK_OPEN_FILE_MID;
                 end -= ROOK_OPEN_FILE_END;
             }
