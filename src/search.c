@@ -323,9 +323,12 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             && depth >= 4
             && !inCheck
             && nodeType != PVNODE
-            &&  ((MoveType(currentMove) == NormalMove && undo[0].capturePiece == Empty)
+            &&    ((MoveType(currentMove) == NormalMove
+                    && board->squares[MoveTo(currentMove)] >= KnightFlag
+                    && undo[0].capturePiece == Empty)
                 || (MoveType(currentMove) == CastleMove)
-                || (MoveType(currentMove) == PromotionMove && MovePromoType(currentMove) != PromoteToQueen))
+                || (MoveType(currentMove) == PromotionMove
+                    && MovePromoType(currentMove) != PromoteToQueen))
             && isNotInCheck(board, board->turn)){
                 
             newDepth = depth-2;
@@ -546,10 +549,11 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
             value += 2*PawnValue;
         
         // WE ARE ONLY CONCERED WITH QUEEN PROMOTIONS
-        if (MoveType(moves[i]) == PromotionMove)
+        else if (MoveType(moves[i]) == PromotionMove)
             value += QueenValue * (moves[i] & PromoteToQueen);
         
-        if (MoveType(moves[i]) == CastleMove)
+        // TRY TO LOOK AT LINES WITH CASTLES IN THEM
+        else if (MoveType(moves[i]) == CastleMove)
             value += 128;
         
         values[i] = value;
