@@ -1,6 +1,8 @@
 CC = gcc
 
-CFLAGS = -m64 -march=native -DNDEBUG -O3
+CFLAGS = -m64 -march=native -O3 -DNDEBUG
+
+WFLAGS = -Wall -Wno-unused-variable -Wno-format
 
 LIBS = -lstdc++
 
@@ -20,5 +22,5 @@ SRC = bitutils.c        \
 EXE = EtherealBitBoard
 
 all:
-	$(CC) $(CFLAGS) $(SRC) -o $(EXE) $(LIBS)
+	$(CC) $(WFLAGS) $(CFLAGS) $(SRC) -o $(EXE) $(LIBS)
 	
