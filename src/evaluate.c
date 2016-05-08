@@ -288,10 +288,10 @@ int evaluate_board(Board * board){
                   - (4 * countSetBits(queens));
     curPhase = (curPhase * 256 + 12) / 24;
     
-    midEval = board->opening + mid;
-    endEval = board->endgame + end;
+    midEval = board->opening + mid + TEMPO_MID;
+    endEval = board->endgame + end + TEMPO_END;
     
     eval = ((midEval * (256 - curPhase)) + (endEval * curPhase)) / 256;
     
-    return board->turn == ColourWhite ? eval+10 : -(eval+10);
+    return board->turn == ColourWhite ? eval : -eval;
 }

@@ -59,7 +59,7 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
         
         // LOG RESULTS TO INTERFACE
         if (logging){
-            printf("info depth %d score cp %d time %d nodes %d pv ",depth,value,1000*(time(NULL)-StartTime),TotalNodes);
+            printf("info depth %d score cp %d time %d nodes %d pv ",depth,(100*value)/PawnValue,1000*(time(NULL)-StartTime),TotalNodes);
             printMove(rootMoveList.bestMove);
             printf("\n");
             fflush(stdout);
@@ -67,7 +67,7 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
         
         // LOG RESULTS TO CONSOLE
         else {
-            printf("|%9d|%9d|%11d|%9d| ",depth,value,TotalNodes,(time(NULL)-StartTime));
+            printf("|%9d|%9d|%11d|%9d| ",depth,(100*value)/PawnValue,TotalNodes,(time(NULL)-StartTime));
             printMove(rootMoveList.bestMove);
             printf(" |\n");
         }
@@ -282,8 +282,6 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     // DETERMINE CHECK STATUS FOR LATE MOVE REDUCTIONS
     inCheck = !isNotInCheck(board, board->turn);
     
-    int hasFailedHigh = 0;
-    
     for (i = 0; i < size; i++){
         
         currentMove = getNextMove(moves, values, i, size);
@@ -319,8 +317,8 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         // DETERMINE IF WE CAN USE LATE MOVE REDUCTIONS
         if (USE_LATE_MOVE_REDUCTIONS
             && usedTableEntry
-            && valid >= 5
-            && depth >= 4
+            && valid >= 4
+            && depth >= 3
             && !inCheck
             && nodeType != PVNODE
             &&    ((MoveType(currentMove) == NormalMove
@@ -527,12 +525,12 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
         value  = 16384 * ( tableMove == moves[i]);
         
         // THEN KILLERS, UNLESS OTHER GOOD CAPTURE
-        value += 128   * (   killer1 == moves[i]);
-        value += 128   * (   killer2 == moves[i]);
-        value += 128   * (   killer3 == moves[i]);
-        value += 256   * (   killer4 == moves[i]);
-        value += 256   * (   killer5 == moves[i]);
-        value += 256   * (   killer6 == moves[i]);
+        value += 256   * (   killer1 == moves[i]);
+        value += 256   * (   killer2 == moves[i]);
+        value += 256   * (   killer3 == moves[i]);
+        value += 512   * (   killer4 == moves[i]);
+        value += 512   * (   killer5 == moves[i]);
+        value += 512   * (   killer6 == moves[i]);
         
         // INFO FOR POSSIBLE CAPTURE
         from_type = PieceType(board->squares[MoveFrom(moves[i])]);
@@ -554,7 +552,7 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
         
         // TRY TO LOOK AT LINES WITH CASTLES IN THEM
         else if (MoveType(moves[i]) == CastleMove)
-            value += 128;
+            value += 256;
         
         values[i] = value;
     }
