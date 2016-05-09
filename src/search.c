@@ -162,7 +162,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     
     // SEARCH HORIZON REACHED, QSEARCH
     if (depth <= 0)
-        return quiescenceSearch(board, alpha, beta, height);    
+        return quiescenceSearch(board, alpha, beta, height);
     
     // INCREMENT TOTAL NODE COUNTER
     TotalNodes++;
@@ -199,7 +199,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             
             // EXACT VALUE STORED
             if (entry->type == PVNODE)
-                return entry->value;            
+                return entry->value;
             
             // LOWER BOUND STORED
             else if (entry->type == CUTNODE)
@@ -230,11 +230,11 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         // EVEN GAINING A QUEEN WOULD FAIL LOW
         if (value < beta)
             return value;
-    }        
+    }
     
     // USE NULL MOVE PRUNING
     if (USE_NULL_MOVE_PRUNING
-        && depth >= 3 
+        && depth >= 3
         && abs(beta) < Mate - MaxHeight
         && alpha == beta - 1
         && nodeType != PVNODE
@@ -260,7 +260,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     
     // INTERNAL ITERATIVE DEEPING
     if (USE_INTERNAL_ITERATIVE_DEEPENING
-        && depth >= 3
+        && depth >= 4
         && tableMove == NoneMove
         && nodeType == PVNODE){
         
@@ -292,7 +292,8 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             && valid >= 1
             && depth == 1
             && !inCheck
-            && MoveType(currentMove) == NormalMove
+            && (MoveType(currentMove) == NormalMove
+                || MoveType(currentMove) == CastleMove)
             && board->squares[MoveTo(currentMove)] == Empty){
          
             if (optimalValue == -Mate)
@@ -322,7 +323,6 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             && !inCheck
             && nodeType != PVNODE
             &&    ((MoveType(currentMove) == NormalMove
-                    && board->squares[MoveTo(currentMove)] >= KnightFlag
                     && undo[0].capturePiece == Empty)
                 || (MoveType(currentMove) == CastleMove)
                 || (MoveType(currentMove) == PromotionMove
