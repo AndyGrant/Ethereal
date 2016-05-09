@@ -67,7 +67,7 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
         
         // LOG RESULTS TO CONSOLE
         else {
-            printf("|%9d|%9d|%11d|%9d| ",depth,value,TotalNodes,(time(NULL)-StartTime));
+            printf("|%9d|%9d|%11d|%9d| ",depth,value/2,TotalNodes,(time(NULL)-StartTime));
             printMove(rootMoveList.bestMove);
             printf(" |\n");
         }
@@ -201,7 +201,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             
             // EXACT VALUE STORED
             if (entry->type == PVNODE)
-                return entry->value;            
+                return entry->value;
             
             // LOWER BOUND STORED
             else if (entry->type == CUTNODE)
