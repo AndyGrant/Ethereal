@@ -67,7 +67,7 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
         
         // LOG RESULTS TO CONSOLE
         else {
-            printf("|%9d|%9d|%11d|%9d| ",depth,value,TotalNodes,(time(NULL)-StartTime));
+            printf("|%9d|%9d|%11d|%9d| ",depth,value/2,TotalNodes,(time(NULL)-StartTime));
             printMove(rootMoveList.bestMove);
             printf(" |\n");
         }
@@ -85,12 +85,15 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
 
 int rootSearch(Board * board, MoveList * moveList, int depth){
     
-    int alpha = -2*Mate, beta = 2*Mate;
-    int i, valid = 0, best =-2*Mate, value;
+    int alpha = -Mate, beta = Mate;
+    int i, valid = 0, best =-Mate, value;
     int currentNodes;
     Undo undo[1];
     
-    int bestIndex;
+    assert(board != NULL);
+    assert(moveList != NULL);
+    assert(moveList->size != 0);
+    assert(depth != 0);    
    
     for (i = 0; i < moveList->size; i++){
         
@@ -134,7 +137,6 @@ int rootSearch(Board * board, MoveList * moveList, int depth){
         // IMPROVED CURRENT VALUE
         if (value > best){
             best = value;
-            bestIndex = i;
             moveList->bestMove = moveList->moves[i];
             
             // IMPROVED CURRENT LOWER VALUE
@@ -144,7 +146,7 @@ int rootSearch(Board * board, MoveList * moveList, int depth){
         
         // IMPROVED AND FAILED HIGH
         if (alpha >= beta)
-            break;        
+            break;
     }
     
     // SORT MOVELIST FOR NEXT ITERATION
@@ -153,11 +155,21 @@ int rootSearch(Board * board, MoveList * moveList, int depth){
 }
 
 int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, int nodeType){
-    int i, valid = 0, value, size = 0, best=-2*Mate, repeated = 0, newDepth;
-    int oldAlpha = alpha, usedTableEntry = 0, inCheck, values[256], optimalValue = -Mate;
-    uint16_t moves[256], bestMove, currentMove, tableMove = NoneMove;
+    
+    // INITIALIZE SEARCH VARIABLES
+    int i, value, newDepth, inCheck, values[256];
+    int valid = 0, size = 0, best = -Mate, repeated = 0, usedTableEntry = 0;
+    int oldAlpha = alpha, optimalValue = -Mate;    
+    uint16_t bestMove, currentMove, moves[256], tableMove = NoneMove;
     TranspositionEntry * entry;
     Undo undo[1];
+    
+    // VALIDATE PARAMETERS
+    assert(board != NULL);
+    assert(alpha >= -Mate);
+    assert(beta <= Mate);
+    assert(height != 0);
+    assert(nodeType <= 3 && nodeType >= 1);
     
     // SEARCH TIME HAS EXPIRED
     if (EndTime < time(NULL))
@@ -165,7 +177,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     
     // SEARCH HORIZON REACHED, QSEARCH
     if (depth <= 0)
-        return quiescenceSearch(board, alpha, beta, height);    
+        return quiescenceSearch(board, alpha, beta, height);
     
     // INCREMENT TOTAL NODE COUNTER
     TotalNodes++;
@@ -209,15 +221,13 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     // COMPAREING HISTORY TO NULLMOVE IS A HACK
     // TO AVOID CALLING TREES WITH 3-NULL MOVES 
     // APPLIED 3-FOLD REPITITIONS
-    for (i = 0; i < board->numMoves; i++){
-        if (board->history[i] == board->hash
-            && board->history[i] != NullMove){
+    for (i = board->numMoves-2; i >= 0; i-=2)
+        if (board->history[i] == board->hash)
             repeated++;
-        }
-    }
         
     // 3-FOLD REPITION FOUND
     if (repeated >= 2){
+        assert(repeated == 2);
         return 0;
     }
     
@@ -230,7 +240,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         
         value = quiescenceSearch(board, alpha, beta, height);
         
-        // EVEN GAINING A QUEEN WOULD FAIL LOW
+        // EVEN GAINING A KNIGHT WOULD FAIL LOW
         if (value < beta)
             return value;
     }        
@@ -241,14 +251,13 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         && abs(beta) < Mate - MaxHeight
         && alpha == beta - 1
         && nodeType != PVNODE
-        && board->history[board->numMoves-1] != NullMove
         && canDoNull(board)
         && isNotInCheck(board, board->turn)
         && evaluate_board(board) >= beta){
             
         // APPLY NULL MOVE
         board->turn = !board->turn;
-        board->history[board->numMoves++] == NullMove;
+        board->history[board->numMoves++] = NullMove;
         
         // PERFORM NULL MOVE SEARCH
         value = -alphaBetaSearch(board, -beta, -beta+1, depth-4, height+1, CUTNODE);
@@ -285,8 +294,6 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     // DETERMINE CHECK STATUS FOR LATE MOVE REDUCTIONS
     inCheck = !isNotInCheck(board, board->turn);
     
-    int hasFailedHigh = 0;
-    
     for (i = 0; i < size; i++){
         
         currentMove = getNextMove(moves, values, i, size);
@@ -314,7 +321,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         if (!isNotInCheck(board, !board->turn)){
             revertMove(board, currentMove, undo);
             continue;
-        }   
+        }
     
         // INCREMENT COUNTER OF VALID MOVES FOUND
         valid++;
