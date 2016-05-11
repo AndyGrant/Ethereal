@@ -30,7 +30,6 @@ uint16_t KillerCaptures[MaxHeight][3];
 
 TranspositionTable Table;
 
-
 uint16_t getBestMove(Board * board, int seconds, int logging){
     
     // INITALIZE SEARCH GLOBALS
