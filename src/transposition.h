@@ -3,16 +3,34 @@
 
 #include <stdint.h>
 
+#include "types.h"
+
 #define PVNODE  (1)
 #define CUTNODE (2)
 #define ALLNODE (3)
 
-void initalizeTranspositionTable(TranspositionTable * table, int keySize);
+#define EntrySetAge(e,a)     ((e)->data = ((a) << 3) | ((e)->data & 0b111))
 
-TranspositionEntry * getTranspositionEntry(TranspositionTable * table, uint64_t hash);
+#define EntryDepth(e)       ((e).depth)
 
-void storeTranspositionEntry(TranspositionTable * table, int8_t depth, int8_t turn, int8_t type, int value, uint16_t bestMove, uint64_t hash);
+#define EntryHash16(e)      ((e).hash16)
 
-void dumpTranspositionTable(TranspositionTable * table);
+#define EntryAge(e)         ((e).data >> 3)
+
+#define EntryType(e)        (((e).data & 0b110) >> 1)
+
+#define EntryTurn(e)        ((e).data & 0b1)
+
+#define EntryMove(e)        ((e).bestMove)
+
+#define EntryValue(e)       ((e).value)
+
+void initalizeTranspositionTable(TransTable * table, int keySize);
+
+TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash);
+
+void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t turn, uint8_t type, int16_t value, uint16_t bestMove, uint64_t hash);
+
+void dumpTranspositionTable(TransTable * table);
 
 #endif 
