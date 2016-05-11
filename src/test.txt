@@ -1,4 +1,4 @@
 position startpos moves
 go
-position startpos moves e2e4 e7e5
+position startpos moves b1c3 g8f6
 go

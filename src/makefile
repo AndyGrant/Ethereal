@@ -1,6 +1,6 @@
 CC = gcc
 
-CFLAGS = 
+CFLAGS = -Wall -Wno-unused-variable -Wno-format -O3 -march=native
 
 PFLAGS = -p -g -pg
 

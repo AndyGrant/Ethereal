@@ -1,81 +1,134 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <assert.h>
 
 #include "move.h"
 #include "types.h"
 #include "transposition.h"
 
-void initalizeTranspositionTable(TranspositionTable * table, int keySize){
-    table->entries = malloc(sizeof(TranspositionEntry) * (1 << keySize));
+void initalizeTranspositionTable(TransTable * table, int keySize){
+    
+    // TABLE HAS ALREADY BEEN INITALIZED
+    if (table->keySize == keySize){
+        table->generation = (table->generation + 1) % 32;
+        return;
+    }
+    
+    // SET TABLE'S DATA MEMEBERS
+    table->buckets = calloc(1 << keySize,sizeof(TransBucket));
     table->maxSize = 1 << keySize;
-    table->keySize = keySize;    
+    table->keySize = keySize;
+    table->generation = 0;
+    table->used = 0;
+}
+
+TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash){
     
-    int i;
-    for (i = 0; i < table->maxSize; i++){
-        table->entries[i].depth = 0;
-        table->entries[i].turn = 0;
-        table->entries[i].type = 0;
-        table->entries[i].value = 0;
-        table->entries[i].bestMove = 0;
-        table->entries[i].hash = 0;
+    TransBucket * bucket = &(table->buckets[hash % table->maxSize]);
+    int i; uint16_t hash16 = hash >> 48;
+    
+    // SEARCH FOR MATCHING ENTRY, UPDATE GENERATION IF FOUND
+    for (i = 0; i < 4; i++){
+        if (EntryHash16(bucket->entries[i]) == hash16){
+            EntrySetAge(&(bucket->entries[i]), table->generation);
+            return &(bucket->entries[i]);
+        }
     }
+    
+    // NO MATCHING ENTRY FOUND
+    return NULL;
 }
 
-TranspositionEntry * getTranspositionEntry(TranspositionTable * table, uint64_t hash){
-    TranspositionEntry * entry = &(table->entries[hash % table->maxSize]);
+void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t turn, uint8_t type, int16_t value, uint16_t bestMove, uint64_t hash){
     
-    if (entry->hash != hash)
-        return NULL;
+    TransBucket * bucket = &(table->buckets[hash % table->maxSize]);
     
-    return entry;
-}
-
-void storeTranspositionEntry(TranspositionTable * table, int8_t depth, int8_t turn, int8_t type, int value, uint16_t bestMove, uint64_t hash){
-    TranspositionEntry * entry = &(table->entries[hash % table->maxSize]);
+    TransEntry * oldCandidate = NULL;
+    TransEntry * lowDraftCandidate = NULL;
+    TransEntry * toReplace = NULL;
     
-    if (entry->type == 0){
-        entry->depth = depth;
-        entry->turn = turn;
-        entry->type = type;
-        entry->value = value;
-        entry->bestMove = bestMove;
-        entry->hash = hash;
-        return;
-    } 
+    int i; uint16_t hash16 = hash >> 48;
     
-    else if (entry->type != PVNODE){
-        if (depth >= entry->depth || type == PVNODE){
-            entry->depth = depth;
-            entry->turn = turn;
-            entry->type = type;
-            entry->value = value;
-            entry->bestMove = bestMove;
-            entry->hash = hash;
+    // VALIDATE PARAMETERS
+    assert(depth < MaxDepth);
+    assert(turn == 0 || turn == 1);
+    assert(type >= 1 && type <= 3);
+    assert(value <= 32766 && value >= -32766);
+    
+    for (i = 0; i < 4; i++){
+        
+        // FOUND AN UNUSED ENTRY
+        if (EntryType(bucket->entries[i]) == 0){
+            table->used += 1;
+            toReplace = &(bucket->entries[i]);
+            goto Replace;
+        }
+        
+        // FOUND AN ENTRY WITH THE SAME HASH
+        if (EntryHash16(bucket->entries[i]) == hash16){
+            
+            // UPDATE MATCHING ENTRY'S GENERATION
+            EntrySetAge(&(bucket->entries[i]), table->generation);
+            
+            // REPLACE ENTRY IF NEW ENTRY HAS GREATER DRAFT
+            if (EntryDepth(bucket->entries[i]) < depth){
+                toReplace = &(bucket->entries[i]);
+                goto Replace;
+            }
+            
+            // RETURN SO WE DON'T STORE TWO MATCHING HASHES
             return;
-        }   
-    } 
-    
-    else if (type == PVNODE && depth > entry->depth){
-        entry->depth = depth;
-        entry->turn = turn;
-        entry->type = type;
-        entry->value = value;
-        entry->bestMove = bestMove;
-        entry->hash = hash;
-        return;
+        }
+        
+        // SEARCH FOR THE LOWEST DRAFT OF AN OLD ENTRY
+        if (EntryAge(bucket->entries[i]) != table->generation){
+            if (oldCandidate == NULL
+                || EntryDepth(*oldCandidate) >= EntryDepth(bucket->entries[i])){
+                    
+                oldCandidate = &(bucket->entries[i]);
+            }
+        }
+        
+        // SEARCH FOR LOWEST DRAFT IF NO OLD ENTRY FOUND YET
+        if (oldCandidate == NULL){
+            if (lowDraftCandidate == NULL 
+                || EntryDepth(*lowDraftCandidate) >= EntryDepth(bucket->entries[i])){
+                    
+                lowDraftCandidate = &(bucket->entries[i]);
+            }
+        }
     }
+    
+    toReplace = oldCandidate != NULL ? oldCandidate : lowDraftCandidate;
+    
+    Replace:
+        toReplace->depth = depth;
+        toReplace->data = (table->generation << 3) | (type << 1) | (turn);
+        toReplace->value = value;
+        toReplace->bestMove = bestMove;
+        toReplace->hash16 = hash16;
 }
 
-void dumpTranspositionTable(TranspositionTable * table){
-    int i, j, data[MaxHeight][4];
+void dumpTranspositionTable(TransTable * table){
+    
+    printf("USED %d of %d\n",table->used,4*(table->maxSize));
+    
+    TransEntry entry;
+    int i, j, depth, type, data[MaxHeight][4];
     
     for (i = 0; i < MaxHeight; i++)
         for (j = 0; j < 4; j++)
             data[i][j] = 0;
         
-    for (i = 0; i < table->maxSize; i++)
-        data[table->entries[i].depth][table->entries[i].type]++;
+    for (i = 0; i < table->maxSize; i++){
+        for (j = 0; j < 4; j++){
+            entry = table->buckets[i].entries[j];
+            depth = EntryDepth(entry);
+            type = EntryType(entry);
+            data[depth][type]++;
+        }
+    }
     
     printf("\n\n");
     printf("<-----------TRANSPOSITION TABLE---------->\n");
@@ -84,6 +137,4 @@ void dumpTranspositionTable(TranspositionTable * table){
         if (data[i][1] || data[i][2] || data[i][3])
             printf("|%8d|%9d|%11d|%9d|\n",i,data[i][1],data[i][2],data[i][3]);
     printf("\n\n");
-    
-    free(table->entries);
 }

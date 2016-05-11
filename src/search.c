@@ -28,16 +28,16 @@ int EvaluatingPlayer;
 uint16_t KillerMoves[MaxHeight][3];
 uint16_t KillerCaptures[MaxHeight][3];
 
-TranspositionTable Table;
+TransTable Table;
 
 uint16_t getBestMove(Board * board, int seconds, int logging){
     
     // INITALIZE SEARCH GLOBALS
     StartTime = time(NULL);
     EndTime = StartTime + seconds;
-    TotalNodes = 0;    
+    TotalNodes = 0;
     EvaluatingPlayer = board->turn;
-    initalizeTranspositionTable(&Table, 23);
+    initalizeTranspositionTable(&Table, 22);
     
     // POPULATE ROOT'S MOVELIST
     MoveList rootMoveList;
@@ -74,10 +74,12 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
         // END THE SEARCH IF THE NEXT DEPTH IS EXPECTED
         // TO TAKE LONGER THAN THE TOTAL ALLOTED TIME
         if ((time(NULL) - StartTime) * 4 > seconds)
-            break;        
+            break;
     }
     
-    dumpTranspositionTable(&Table);
+    // PRINT TABLE DATA TO CONSOLE
+    if (!logging)
+        dumpTranspositionTable(&Table);
     
     return rootMoveList.bestMove;    
 }
@@ -156,11 +158,11 @@ int rootSearch(Board * board, MoveList * moveList, int depth){
 int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, int nodeType){
     
     // INITIALIZE SEARCH VARIABLES
-    int i, value, newDepth, inCheck, values[256];
+    int i, value, newDepth, inCheck, entryValue, entryType, values[256];
     int valid = 0, size = 0, best = -Mate, repeated = 0, usedTableEntry = 0;
-    int oldAlpha = alpha, optimalValue = -Mate;    
+    int oldAlpha = alpha, optimalValue = -Mate;
     uint16_t bestMove, currentMove, moves[256], tableMove = NoneMove;
-    TranspositionEntry * entry;
+    TransEntry * entry;
     Undo undo[1];
     
     // VALIDATE PARAMETERS
@@ -185,31 +187,34 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     entry = getTranspositionEntry(&Table, board->hash);
     
     if (entry != NULL
-        && board->turn == entry->turn){
+        && board->turn == EntryTurn(*entry)){
         
         // ENTRY MOVE MAY BE CANDIDATE
-        tableMove = entry->bestMove;
+        tableMove = EntryMove(*entry);
         
         // ENTRY MAY IMPROVE BOUNDS
         if (USE_TRANSPOSITION_TABLE
-            && entry->depth >= depth
+            && EntryDepth(*entry) >= depth
             && nodeType != PVNODE){
+                
+            entryValue = EntryValue(*entry);
+            entryType = EntryType(*entry);
             
             // EXACT VALUE STORED
-            if (entry->type == PVNODE)
-                return entry->value;            
+            if (entryType == PVNODE)
+                return entryValue;
             
             // LOWER BOUND STORED
-            else if (entry->type == CUTNODE)
-                alpha = entry->value > alpha ? entry->value : alpha;
+            else if (entryType == CUTNODE)
+                alpha = entryValue > alpha ? entryValue : alpha;
             
             // UPPER BOUND STORED
-            else if (entry->type == ALLNODE)
-                beta = entry->value < best ? entry->value : beta;
+            else if (entryType == ALLNODE)
+                beta = entryValue < best ? entryValue : beta;
             
             // BOUNDS NOW OVERLAP?
             if (alpha >= beta)
-                return entry->value;
+                return entryValue;
             
             usedTableEntry = 1;
             oldAlpha = alpha;
@@ -283,7 +288,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         // GET TABLE MOVE FROM TRANSPOSITION TABLE
         entry = getTranspositionEntry(&Table, board->hash);
         if (entry != NULL)
-            tableMove = entry->bestMove;
+            tableMove = EntryMove(*entry);
     }
     
     // GENERATE AND PREPARE MOVE ORDERING
@@ -413,24 +418,14 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     Cut:
     
     // STORE RESULTS IN TRANSPOSITION TABLE
-    
-    // EXACT NODE FOUND, REPLACE EVEN IF WE USED AN ENTRY HERE
     if (best > oldAlpha && best < beta)
-        storeTranspositionEntry(&Table, depth, board->turn, PVNODE, best, bestMove, board->hash);
+        storeTranspositionEntry(&Table, depth, board->turn,  PVNODE, best, bestMove, board->hash);
+    else if (best >= beta)
+        storeTranspositionEntry(&Table, depth, board->turn, CUTNODE, best, bestMove, board->hash);
+    else if (best <= oldAlpha)
+        storeTranspositionEntry(&Table, depth, board->turn, ALLNODE, best, bestMove, board->hash);
     
-    // CUT OR ALL NODE, REPLACE ONLY IF WE DID NOT USE AN ENTRY HERE
-    else {
-        
-        // UPPER BOUND
-        if (best >= beta)
-            storeTranspositionEntry(&Table, depth, board->turn, CUTNODE, best, bestMove, board->hash);
-        
-        // LOWER BOUND
-        else if (best <= oldAlpha)
-            storeTranspositionEntry(&Table, depth, board->turn, ALLNODE, best, bestMove, board->hash);
-    }
-    
-    return best;    
+    return best;
 }
 
 int quiescenceSearch(Board * board, int alpha, int beta, int height){

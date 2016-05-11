@@ -249,7 +249,7 @@ int evaluate_board(Board * board){
     if (i >= 2){
         if (bRooks[0] % 8 == bRooks[1] % 8
             && ((bRooks[0] >> 3) == 1
-                | (bRooks[1] >> 3) == 1)){
+                || (bRooks[1] >> 3) == 1)){
             mid -= ROOK_STACKED_MID;
             end -= ROOK_STACKED_END;
         }
