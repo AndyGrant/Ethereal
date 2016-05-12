@@ -25,6 +25,9 @@ int main(){
     
     //initalizeBoard(&board,"4k3/3ppp2/8/8/8/8/3PPP2/4K3 w - - 0 1");
     initalizeBoard(&board,"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w - - 0 1");
+    
+    //initalizeBoard(&board,"8/6p1/6P1/8/2p5/2k4B/Kp6/8 b - - 0 84");
+    
     //initalizeBoard(&board,"1k6/5Q2/1K6/8/8/8/8/8 w - - 0 1");
     
     // STALEMATE
