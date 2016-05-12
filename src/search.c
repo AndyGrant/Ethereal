@@ -73,7 +73,7 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
         
         // END THE SEARCH IF THE NEXT DEPTH IS EXPECTED
         // TO TAKE LONGER THAN THE TOTAL ALLOTED TIME
-        if ((time(NULL) - StartTime) * 4 > seconds)
+        if ((time(NULL) - StartTime) * 3 >= seconds)
             break;
     }
     
