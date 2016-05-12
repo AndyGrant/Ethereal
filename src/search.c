@@ -25,8 +25,8 @@ int TotalNodes;
 
 int EvaluatingPlayer;
 
-uint16_t KillerMoves[MaxHeight][3];
-uint16_t KillerCaptures[MaxHeight][3];
+uint16_t KillerMoves[MaxHeight][2];
+uint16_t KillerCaptures[MaxHeight][2];
 
 TransTable Table;
 
@@ -326,7 +326,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             revertMove(board, currentMove, undo);
             continue;
         }
-    
+        
         // INCREMENT COUNTER OF VALID MOVES FOUND
         valid++;
         
@@ -391,14 +391,12 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             
             // UPDATE QUIET-KILLER MOVES
             if (undo[0].capturePiece == Empty || MoveType(currentMove) != NormalMove){
-                KillerMoves[height][2] = KillerMoves[height][1];
                 KillerMoves[height][1] = KillerMoves[height][0];
                 KillerMoves[height][0] = currentMove;
             }
             
             // UPDATE NOISY-KILLER MOVES
             else {
-                KillerCaptures[height][2] = KillerCaptures[height][1];
                 KillerCaptures[height][1] = KillerCaptures[height][0];
                 KillerCaptures[height][0] = currentMove;
             }
@@ -496,7 +494,6 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
         if (alpha >= beta){
             
             // UPDATE NOISY-KILLER MOVES
-            KillerCaptures[height][2] = KillerCaptures[height][1];
             KillerCaptures[height][1] = KillerCaptures[height][0];
             KillerCaptures[height][0] = currentMove;
             
@@ -515,11 +512,8 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
     // GET KILLER MOVES
     uint16_t killer1 = KillerMoves[height][0];
     uint16_t killer2 = KillerMoves[height][1];
-    uint16_t killer3 = KillerMoves[height][2];
-    
-    uint16_t killer4 = KillerCaptures[height][0];
-    uint16_t killer5 = KillerCaptures[height][1];
-    uint16_t killer6 = KillerCaptures[height][2];
+    uint16_t killer3 = KillerCaptures[height][0];
+    uint16_t killer4 = KillerCaptures[height][1];
     
     for (i = 0; i < size; i++){
         
@@ -529,10 +523,8 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
         // THEN KILLERS, UNLESS OTHER GOOD CAPTURE
         value += 256   * (   killer1 == moves[i]);
         value += 256   * (   killer2 == moves[i]);
-        value += 256   * (   killer3 == moves[i]);
-        value += 512   * (   killer4 == moves[i]);
-        value += 512   * (   killer5 == moves[i]);
-        value += 512   * (   killer6 == moves[i]);
+        value +=  32   * (   killer3 == moves[i]);
+        value +=  32   * (   killer4 == moves[i]);
         
         // INFO FOR POSSIBLE CAPTURE
         from_type = PieceType(board->squares[MoveFrom(moves[i])]);
@@ -549,11 +541,13 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
             value += 2*PawnValue;
         
         // WE ARE ONLY CONCERED WITH QUEEN PROMOTIONS
-        if (MoveType(moves[i]) == PromotionMove)
-            value += QueenValue * (moves[i] & PromoteToQueen);
+        else if (MoveType(moves[i]) == PromotionMove){
+            if (moves[i] & PromoteToQueen && tableMove != moves[i])
+                value = 8192;
+        }
         
         // ENCOURAGE CASTLING
-        if (MoveType(moves[i]) == CastleMove)
+        else if (MoveType(moves[i]) == CastleMove)
             value += KingValue;
         
         values[i] = value;
