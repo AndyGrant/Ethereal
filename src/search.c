@@ -58,7 +58,7 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
         
         // LOG RESULTS TO INTERFACE
         if (logging){
-            printf("info depth %d score cp %d time %d nodes %d pv ",depth,value/2,1000*(time(NULL)-StartTime),TotalNodes);
+            printf("info depth %d score cp %d time %d nodes %d pv ",depth,(100*value)/PawnValue,1000*(time(NULL)-StartTime),TotalNodes);
             printMove(rootMoveList.bestMove);
             printf("\n");
             fflush(stdout);
@@ -66,7 +66,7 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
         
         // LOG RESULTS TO CONSOLE
         else {
-            printf("|%9d|%9d|%11d|%9d| ",depth,value/2,TotalNodes,(time(NULL)-StartTime));
+            printf("|%9d|%9d|%11d|%9d| ",depth,(100*value)/PawnValue,TotalNodes,(time(NULL)-StartTime));
             printMove(rootMoveList.bestMove);
             printf(" |\n");
         }
@@ -337,7 +337,12 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             && depth >= 3
             && !inCheck
             && nodeType != PVNODE
-            && MoveType(currentMove) == NormalMove
+            && (
+                   (MoveType(currentMove) == NormalMove
+                    && board->squares[MoveTo(currentMove)] >= KnightFlag)
+                || (MoveType(currentMove) == PromotionMove
+                    && (currentMove & PromoteToQueen) == 0)
+            )
             && undo[0].capturePiece == Empty
             && isNotInCheck(board, board->turn))
             newDepth = depth-2;
@@ -398,7 +403,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
                 KillerCaptures[height][0] = currentMove;
             }
             
-            goto Cut;
+            break;
         }
     }
     
@@ -414,8 +419,6 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             return -Mate+height;
         
     }
-    
-    Cut:
     
     // STORE RESULTS IN TRANSPOSITION TABLE
     if (best > oldAlpha && best < beta)
@@ -548,6 +551,10 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
         // WE ARE ONLY CONCERED WITH QUEEN PROMOTIONS
         if (MoveType(moves[i]) == PromotionMove)
             value += QueenValue * (moves[i] & PromoteToQueen);
+        
+        // ENCOURAGE CASTLING
+        if (MoveType(moves[i]) == CastleMove)
+            value += KingValue;
         
         values[i] = value;
     }
