@@ -521,8 +521,8 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
         value  = 16384 * ( tableMove == moves[i]);
         
         // THEN KILLERS, UNLESS OTHER GOOD CAPTURE
-        value += 256   * (   killer1 == moves[i]);
-        value += 256   * (   killer2 == moves[i]);
+        value += 128   * (   killer1 == moves[i]);
+        value += 128   * (   killer2 == moves[i]);
         value +=  32   * (   killer3 == moves[i]);
         value +=  32   * (   killer4 == moves[i]);
         
@@ -542,7 +542,7 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
         
         // WE ARE ONLY CONCERED WITH QUEEN PROMOTIONS
         else if (MoveType(moves[i]) == PromotionMove){
-            if (moves[i] & PromoteToQueen && tableMove != moves[i])
+            if ((moves[i] & PromoteToQueen) && tableMove != moves[i])
                 value = 8192;
         }
         
