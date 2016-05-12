@@ -34,6 +34,7 @@ typedef struct Board {
     // Move history
     uint64_t history[2048];
     int numMoves;
+    uint16_t moveHistory[2048];
     
     // Keep Track of number of pieces
     int numPieces;

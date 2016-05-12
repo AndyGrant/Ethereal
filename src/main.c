@@ -24,7 +24,9 @@ int main(){
     //initalizeBoard(&board,"6k1/pp4b1/b6p/2n2Np1/1PP3R1/8/P2rBPPP/6K1 w - - 1 31");
     
     //initalizeBoard(&board,"4k3/3ppp2/8/8/8/8/3PPP2/4K3 w - - 0 1");
-    initalizeBoard(&board,"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w - - 0 1");
+    //initalizeBoard(&board,"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w - - 0 1");
+    
+    initalizeBoard(&board,"4k3/4p3/8/8/8/8/4P3/4K3 w - - 0 1");
     
     //initalizeBoard(&board,"8/6p1/6P1/8/2p5/2k4B/Kp6/8 b - - 0 84");
     

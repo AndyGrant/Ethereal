@@ -44,6 +44,7 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
     undo->hash = board->hash;
     undo->numPieces = board->numPieces;
     
+    board->moveHistory[board->numMoves] = move;
     board->history[board->numMoves++] = board->hash;
     
     if (MoveType(move) == NormalMove){
