@@ -23,6 +23,7 @@ int evaluate_board(Board * board){
     uint64_t bishops  = board->pieceBitBoards[2];
     uint64_t rooks    = board->pieceBitBoards[3];
     uint64_t queens   = board->pieceBitBoards[4];
+    uint64_t kings    = board->pieceBitBoards[5];
     
     // CREATE BITBOARD FOR PIECES OF EACH COLOUR
     uint64_t whitePawns   = white & pawns;
@@ -103,6 +104,9 @@ int evaluate_board(Board * board){
             countSetBits(black & bishops) == 0)
             return 0;
     }    
+    
+    
+    
     
     // DETERMINE IF STACKED PAWN ON GIVEN FILE
     pawnIsStacked[0][0] = ((wa & (wa-1)) != 0);
@@ -283,6 +287,18 @@ int evaluate_board(Board * board){
            
        mid -= BISHOP_HAS_WINGS_MID;
        end -= BISHOP_HAS_WINGS_END;
+    }
+    
+    // WHITE HAS A PAWN INFRONT OF KING
+    if (((kings & white) << 8) & (white & pawns)){
+        mid += KING_HAS_FORWARD_PAWN_MID;
+        end += KING_HAS_FORWARD_PAWN_END;
+    }
+    
+    // BLACK HAS A PAWN INFRONT OF KING
+    if (((kings & black) >> 8) & (black & pawns)){
+        mid -= KING_HAS_FORWARD_PAWN_MID;
+        end -= KING_HAS_FORWARD_PAWN_END;
     }
     
     curPhase = 24 - (1 * countSetBits(knights | bishops))
