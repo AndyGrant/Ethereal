@@ -10,15 +10,20 @@
 #define QueenValue  ( 2000)
 #define KingValue   (  800)
 
-#define ROOK_OPEN_FILE_MID         (25)
-#define ROOK_OPEN_FILE_END         (15)
+#define TEMPO_MID   (14)
+#define TEMPO_END   (10)
+
+#define PSQT_MULTIPLIER (1)
+
+#define ROOK_OPEN_FILE_MID         (35)
+#define ROOK_OPEN_FILE_END         (25)
 #define ROOK_SEMI_FILE_MID         (10)
 #define ROOK_SEMI_FILE_END         (10)
 #define ROOK_ON_7TH_MID            (15)
 #define ROOK_ON_7TH_END            ( 6)
 #define ROOK_STACKED_MID           ( 8)
 #define ROOK_STACKED_END           ( 6)
-                                   
+
 #define BISHOP_PAIR_MID            (32)
 #define BISHOP_PAIR_END            (48)
 #define BISHOP_HAS_WINGS_MID       (14)

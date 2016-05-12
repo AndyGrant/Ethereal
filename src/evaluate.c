@@ -12,7 +12,7 @@
 
 int evaluate_board(Board * board){
     
-    int i, num, mid = 0, end = 0;
+    int i, num, mid = TEMPO_MID, end = TEMPO_END;
     int curPhase, midEval, endEval, eval;
     
     // EXTRACT BASIC BITBOARDS FROM BOARD
@@ -311,5 +311,5 @@ int evaluate_board(Board * board){
     
     eval = ((midEval * (256 - curPhase)) + (endEval * curPhase)) / 256;
     
-    return board->turn == ColourWhite ? eval+10 : -(eval+10);
+    return board->turn == ColourWhite ? eval : -eval;
 }
