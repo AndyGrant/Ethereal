@@ -25,8 +25,8 @@ int TotalNodes;
 
 int EvaluatingPlayer;
 
-uint16_t KillerMoves[MaxHeight][2];
-uint16_t KillerCaptures[MaxHeight][2];
+uint16_t KillerMoves[MaxHeight][3];
+uint16_t KillerCaptures[MaxHeight][3];
 
 TransTable Table;
 
@@ -326,7 +326,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             revertMove(board, currentMove, undo);
             continue;
         }
-        
+    
         // INCREMENT COUNTER OF VALID MOVES FOUND
         valid++;
         
@@ -515,14 +515,15 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
     uint16_t killer3 = KillerCaptures[height][0];
     uint16_t killer4 = KillerCaptures[height][1];
     
+    
     for (i = 0; i < size; i++){
         
         // TABLEMOVE FIRST
         value  = 16384 * ( tableMove == moves[i]);
         
         // THEN KILLERS, UNLESS OTHER GOOD CAPTURE
-        value += 128   * (   killer1 == moves[i]);
-        value += 128   * (   killer2 == moves[i]);
+        value += 256   * (   killer1 == moves[i]);
+        value += 256   * (   killer2 == moves[i]);
         value +=  32   * (   killer3 == moves[i]);
         value +=  32   * (   killer4 == moves[i]);
         
@@ -541,13 +542,11 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
             value += 2*PawnValue;
         
         // WE ARE ONLY CONCERED WITH QUEEN PROMOTIONS
-        else if (MoveType(moves[i]) == PromotionMove){
-            if ((moves[i] & PromoteToQueen) && tableMove != moves[i])
-                value = 8192;
-        }
+        if (MoveType(moves[i]) == PromotionMove)
+            value += QueenValue * (moves[i] & PromoteToQueen);
         
         // ENCOURAGE CASTLING
-        else if (MoveType(moves[i]) == CastleMove)
+        if (MoveType(moves[i]) == CastleMove)
             value += KingValue;
         
         values[i] = value;
