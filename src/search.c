@@ -21,14 +21,13 @@
 time_t StartTime;
 time_t EndTime;
 
-int CheckExtensions = 8;
 int TotalNodes;
 
 int EvaluatingPlayer;
 int MaxReached;
 
-uint16_t KillerMoves[MaxHeight][3];
-uint16_t KillerCaptures[MaxHeight][3];
+uint16_t KillerMoves[MaxHeight][2];
+uint16_t KillerCaptures[MaxHeight][2];
 
 TransTable Table;
 
@@ -91,7 +90,7 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
 int rootSearch(Board * board, MoveList * moveList, int depth){
     
     int alpha = -Mate, beta = Mate;
-    int i, valid = 0, best =-Mate, value;
+    int i, best =-Mate, value;
     int currentNodes;
     Undo undo[1];
     
@@ -104,28 +103,20 @@ int rootSearch(Board * board, MoveList * moveList, int depth){
         
         currentNodes = TotalNodes;
         
-        // APPLY AND VALIDATE MOVE BEFORE SEARCHING
+        // APPLY MOVE
         applyMove(board, moveList->moves[i], undo);
-        if (!isNotInCheck(board, !board->turn)){
-            revertMove(board, moveList->moves[i], undo);
-            moveList->values[i] = -6 * Mate;
-            continue;
-        }
-        
-        // INCREMENT COUNTER OF VALID MOVES FOUND
-        valid++;
         
         // FULL WINDOW SEARCH ON FIRST MOVE
-        if (valid == 1)
-            value = -alphaBetaSearch(board, -beta, -alpha, depth-1, 1, CheckExtensions, PVNODE);
+        if (i == 0)
+            value = -alphaBetaSearch(board, -beta, -alpha, depth-1, 1, PVNODE);
         
         // NULL WINDOW SEARCH ON NON-FIRST MOVES
         else{
-            value = -alphaBetaSearch(board, -alpha-1, -alpha, depth-1, 1, CheckExtensions, CUTNODE);
+            value = -alphaBetaSearch(board, -alpha-1, -alpha, depth-1, 1, CUTNODE);
             
             // NULL WINDOW FAILED HIGH, RESEARCH
             if (value > alpha)
-                value = -alphaBetaSearch(board, -beta, -alpha, depth-1, 1, CheckExtensions, PVNODE);
+                value = -alphaBetaSearch(board, -beta, -alpha, depth-1, 1, PVNODE);
         }
         
         // REVERT MOVE FROM BOARD
@@ -159,13 +150,13 @@ int rootSearch(Board * board, MoveList * moveList, int depth){
     return best;
 }
 
-int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, int extensions, int nodeType){
+int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, int nodeType){
     
     // INITIALIZE SEARCH VARIABLES
-    int i, value, newDepth, inCheck, entryValue, entryType, values[256];
-    int valid = 0, size = 0, best = -Mate, repeated = 0, usedTableEntry = 0;
+    int i, value, newDepth, tempDepth, inCheck, entryValue, entryType, values[256];
+    int size = 0, best = -Mate, repeated = 0, usedTableEntry = 0;
     int oldAlpha = alpha, optimalValue = -Mate;
-    uint16_t bestMove, currentMove, moves[256], tableMove = NoneMove;
+    uint16_t currentMove, moves[256], tableMove = NoneMove, bestMove = NoneMove;
     TransEntry * entry;
     Undo undo[1];
     
@@ -180,23 +171,16 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     if (EndTime < time(NULL))
         return board->turn == EvaluatingPlayer ? -Mate : Mate;
     
-    // DETERMINE CHECK STATUS
-    inCheck = !isNotInCheck(board, board->turn);
-    
-    // UPDATE DEPTH AND EXTENSIONS
-    if (inCheck && extensions > 0){
-        depth += 1;
-        extensions -= 1;
-    }
-    
-    // SEARCH HORIZON REACHED, QSEARCH
+    // SEARCH HORIZON REACHED
     if (depth <= 0)
         return quiescenceSearch(board, alpha, beta, height);
     
-    // INCREMENT TOTAL NODE COUNTER
-    TotalNodes++;
+    // SEARCH HAS REACHED MAX HEIGHT
+    if (height >= MaxHeight)
+        return evaluate_board(board);
     
-    // UPDATE MAX REACHED SEARCH DEPTH
+    // UPDATE SEARCH INFO
+    TotalNodes++;
     MaxReached = MaxReached > height ? MaxReached : height;
     
     // LOOKUP CURRENT POSITION IN TRANSPOSITION TABLE
@@ -235,21 +219,17 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             usedTableEntry = 1;
             oldAlpha = alpha;
         }
-    }   
+    }
     
     // DETERMINE 3-FOLD REPITION
-    // COMPAREING HISTORY TO NULLMOVE IS A HACK
-    // TO AVOID CALLING TREES WITH 3-NULL MOVES 
-    // APPLIED 3-FOLD REPITITIONS
     for (i = board->numMoves-2; i >= 0; i-=2)
         if (board->history[i] == board->hash)
             repeated++;
-        
-    // 3-FOLD REPITION FOUND
-    if (repeated >= 2){
-        assert(repeated == 2);
+    if (repeated >= 2)
         return 0;
-    }
+    
+    // DETERMINE CHECK STATUS
+    inCheck = !isNotInCheck(board, board->turn);
     
     // RAZOR PRUNING
     if (USE_RAZOR_PRUNING
@@ -264,7 +244,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         // EVEN GAINING A KNIGHT WOULD FAIL LOW
         if (value < beta)
             return value;
-    }        
+    }
     
     // USE NULL MOVE PRUNING
     if (USE_NULL_MOVE_PRUNING
@@ -281,7 +261,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         board->history[board->numMoves++] = NullMove;
         
         // PERFORM NULL MOVE SEARCH
-        value = -alphaBetaSearch(board, -beta, -beta+1, depth-4, height+1, extensions, CUTNODE);
+        value = -alphaBetaSearch(board, -beta, -beta+1, depth-4, height+1, CUTNODE);
         
         // REVERT NULL MOVE
         board->numMoves--;
@@ -298,9 +278,9 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         && nodeType == PVNODE){
         
         // SEARCH AT A LOWER DEPTH
-        value = alphaBetaSearch(board, alpha, beta, depth-3, height, extensions, PVNODE);
+        value = alphaBetaSearch(board, alpha, beta, depth-3, height, PVNODE);
         if (value <= alpha)
-            value = alphaBetaSearch(board, -Mate, beta, depth-3, height, extensions, PVNODE);
+            value = alphaBetaSearch(board, -Mate, beta, depth-3, height, PVNODE);
         
         // GET TABLE MOVE FROM TRANSPOSITION TABLE
         entry = getTranspositionEntry(&Table, board->hash);
@@ -312,14 +292,17 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     genAllMoves(board, moves, &size);
     evaluateMoves(board, values, moves, size, height, tableMove);
     
+    // DETERMINE IF EXTENSIONS WILL BE USED
+    tempDepth = (size == 1 || inCheck) ? depth : depth-1;
+    
     for (i = 0; i < size; i++){
         
+        // GET NEXT MOVE FROM MOVE LIST
         currentMove = getNextMove(moves, values, i, size);
         
         // USE FUTILITY PRUNING
         if (USE_FUTILITY_PRUNING
             && nodeType != PVNODE
-            && valid >= 1
             && depth <= 1
             && !inCheck
             && MoveType(currentMove) == NormalMove
@@ -334,20 +317,14 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
                 continue;
         }
         
-        // APPLY AND VALIDATE MOVE BEFORE SEARCHING
+        // APPLY MOVE
         applyMove(board, currentMove, undo);
-        if (!isNotInCheck(board, !board->turn)){
-            revertMove(board, currentMove, undo);
-            continue;
-        }
-    
-        // INCREMENT COUNTER OF VALID MOVES FOUND
-        valid++;
         
         // DETERMINE IF WE CAN USE LATE MOVE REDUCTIONS
         if (USE_LATE_MOVE_REDUCTIONS
+            && tempDepth < depth
             && usedTableEntry
-            && valid >= 4
+            && i >= 3
             && depth >= 3
             && !inCheck
             && nodeType != PVNODE
@@ -359,35 +336,33 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             )
             && undo[0].capturePiece == Empty
             && isNotInCheck(board, board->turn))
-            newDepth = depth-2;
+            newDepth = tempDepth-1;
         else
-            newDepth = depth-1;
+            newDepth = tempDepth;
         
             
         // FULL WINDOW SEARCH ON FIRST MOVE
-        if (valid == 1 || nodeType != PVNODE){
-            value = -alphaBetaSearch(board, -beta, -alpha, newDepth, height+1, extensions, nodeType);
+        if (i == 0 || nodeType != PVNODE){
+            value = -alphaBetaSearch(board, -beta, -alpha, newDepth, height+1, nodeType);
             
             // IMPROVED BOUND, BUT WAS REDUCED DEPTH?
             if (value > alpha
-                && newDepth == depth-2){
+                && newDepth != tempDepth){
                     
-                value = -alphaBetaSearch(board, -beta, -alpha, depth-1, height+1, extensions, nodeType);
+                value = -alphaBetaSearch(board, -beta, -alpha, tempDepth, height+1, nodeType);
             }
         }
         
         // NULL WINDOW SEARCH ON NON-FIRST / PV MOVES
         else{
-            value = -alphaBetaSearch(board, -alpha-1, -alpha, newDepth, height+1, extensions ,CUTNODE);
+            value = -alphaBetaSearch(board, -alpha-1, -alpha, newDepth, height+1, CUTNODE);
             
             // NULL WINDOW FAILED HIGH, RESEARCH
-            if (value > alpha){
-                value = -alphaBetaSearch(board, -beta, -alpha, depth-1, height+1, extensions, PVNODE);
-
-            }
+            if (value > alpha)
+                value = -alphaBetaSearch(board, -beta, -alpha, tempDepth, height+1, PVNODE);
         }
         
-        // REVERT MOVE FROM BOARD
+        // REVERT MOVE
         revertMove(board, currentMove, undo);
         
         // IMPROVED CURRENT VALUE
@@ -404,7 +379,10 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         if (alpha >= beta){
             
             // UPDATE QUIET-KILLER MOVES
-            if (undo[0].capturePiece == Empty || MoveType(currentMove) != NormalMove){
+            if (MoveType(currentMove) == CastleMove
+                || MoveType(currentMove) == EnpassMove
+                || (MoveType(currentMove) == NormalMove
+                    && undo[0].capturePiece == Empty)){
                 KillerMoves[height][1] = KillerMoves[height][0];
                 KillerMoves[height][0] = currentMove;
             }
@@ -420,25 +398,24 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     }
     
     // BOARD IS STALEMATE OR CHECKMATE
-    if (valid == 0){
+    if (size == 0){
         
         // BOARD IS STALEMATE
         if (isNotInCheck(board, board->turn))
             return 0;
         
         // BOARD IS CHECKMATE
-        else 
+        else
             return -Mate+height;
-        
     }
     
     // STORE RESULTS IN TRANSPOSITION TABLE
     if (best > oldAlpha && best < beta)
-        storeTranspositionEntry(&Table, depth, board->turn,  PVNODE, best, bestMove, board->hash);
+        storeTranspositionEntry(&Table, tempDepth + 1, board->turn,  PVNODE, best, bestMove, board->hash);
     else if (best >= beta)
-        storeTranspositionEntry(&Table, depth, board->turn, CUTNODE, best, bestMove, board->hash);
+        storeTranspositionEntry(&Table, tempDepth + 1, board->turn, CUTNODE, best, bestMove, board->hash);
     else if (best <= oldAlpha)
-        storeTranspositionEntry(&Table, depth, board->turn, ALLNODE, best, bestMove, board->hash);
+        storeTranspositionEntry(&Table, tempDepth + 1, board->turn, ALLNODE, best, bestMove, board->hash);
     
     return best;
 }
@@ -452,10 +429,8 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
     if (height >= MaxHeight)
         return evaluate_board(board);
     
-    // INCREMENT TOTAL NODE COUNTER
+    // UPDATE SEARCH INFO
     TotalNodes++;
-    
-    // UPDATE MAX REACHED SEARCH DEPTH
     MaxReached = MaxReached > height ? MaxReached : height;
     
     // GET A STANDING-EVAL OF THE CURRENT BOARD
@@ -483,19 +458,17 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
     best = value;
     
     for (i = 0; i < size; i++){
+        
+        // GET NEXT MOVE FROM MOVE LIST
         currentMove = getNextMove(moves, values, i, size);
         
-        // APPLY AND VALIDATE MOVE BEFORE SEARCHING
+        // APPLY MOVE
         applyMove(board, currentMove, undo);
-        if (!isNotInCheck(board, !board->turn)){
-            revertMove(board, currentMove, undo);
-            continue;
-        }
         
         // SEARCH NEXT DEPTH
         value = -quiescenceSearch(board, -beta, -alpha, height+1);
         
-        // REVERT MOVE FROM BOARD
+        // REVERT MOVE
         revertMove(board, currentMove, undo);
         
         // IMPROVED CURRENT VALUE

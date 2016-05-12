@@ -10,7 +10,7 @@
 #include "piece.h"
 #include "types.h"
 
-void genAllMoves(Board * board, uint16_t * moves, int * size){    
+void genAllMoves(Board * board, uint16_t * dest, int * size){
     uint64_t blockers;
     uint64_t attackable;
     
@@ -40,6 +40,10 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
     uint64_t myRooks   = friendly & board->pieceBitBoards[3];
     uint64_t myQueens  = friendly & board->pieceBitBoards[4];
     uint64_t myKings   = friendly & board->pieceBitBoards[5];
+    
+    uint16_t moves[256];
+    int i, trueSize = 0;
+    Undo undo[1];
     
     // Generate queen moves as if they were rooks and bishops
     myBishops |= myQueens;
@@ -247,10 +251,20 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
                             moves[(*size)++] = MoveMake(60,58,CastleMove);
         }
     }
+    
+
+    for (i = 0; i < *size; i++){
+        applyMove(board, moves[i], undo);
+        if (isNotInCheck(board, !board->turn))
+            dest[trueSize++] = moves[i];
+        revertMove(board, moves[i], undo);
+    }
+    
+    *size = trueSize;
 }
 
 
-void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
+void genAllNonQuiet(Board * board, uint16_t * dest, int * size){
     uint64_t blockers;
     uint64_t attackable;
     
@@ -280,6 +294,10 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
     uint64_t myQueens  = friendly & board->pieceBitBoards[4];
     uint64_t myKings   = friendly & board->pieceBitBoards[5];
     
+    uint16_t moves[256];
+    int i, trueSize = 0;
+    Undo undo[1];
+    
     // Generate queen moves as if they were rooks and bishops
     myBishops |= myQueens;
     myRooks |= myQueens;
@@ -301,14 +319,6 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
         pawnLeft &= ~RANK_8;
         pawnRight &= ~RANK_8;
         
-        if(epSquare >= 40){
-            if (board->squares[epSquare-7] == WhitePawn && epSquare != 47)
-                moves[(*size)++] = MoveMake(epSquare-7,epSquare,EnpassMove);
-            
-            if (board->squares[epSquare-9] == WhitePawn && epSquare != 40)
-                moves[(*size)++] = MoveMake(epSquare-9,epSquare,EnpassMove);
-        }
-        
     } else {
         forwardShift = -8;
         leftShift = -7;
@@ -324,17 +334,9 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
         
         pawnLeft &= ~RANK_1;
         pawnRight &= ~RANK_1;
-        
-        if(epSquare > 0 && epSquare < 40){
-            if (board->squares[epSquare+7] == BlackPawn && epSquare != 16)
-                moves[(*size)++] = MoveMake(epSquare+7,epSquare,EnpassMove);
-            
-            if (board->squares[epSquare+9] == BlackPawn && epSquare != 23)
-                moves[(*size)++] = MoveMake(epSquare+9,epSquare,EnpassMove);
-        }
     }
     
-    // Generate Pawn Moves    
+    // Generate Pawn Moves
     while(pawnLeft != 0){
         lsb = getLSB(pawnLeft);
         moves[(*size)++] = MoveMake(lsb-leftShift,lsb,NormalMove);
@@ -433,6 +435,15 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
         
         myKings ^= 1ull << bit;
     }
+    
+    for (i = 0; i < *size; i++){
+        applyMove(board, moves[i], undo);
+        if (isNotInCheck(board, !board->turn))
+            dest[trueSize++] = moves[i];
+        revertMove(board, moves[i], undo);
+    }
+    
+    *size = trueSize;
 }
 
 int isNotInCheck(Board * board, int turn){

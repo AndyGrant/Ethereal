@@ -17,7 +17,7 @@
 uint16_t getBestMove(Board * board, int seconds, int logging);
 
 int rootSearch(Board * board, MoveList * moveList, int depth);
-int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, int extensions, int nodeType);
+int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, int nodeType);
 int quiescenceSearch(Board * board, int alpha, int beta, int height);
 
 void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int height, uint16_t tableMove);
