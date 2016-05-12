@@ -6,8 +6,8 @@
 #define PawnValue   (  200)
 #define KnightValue (  800)
 #define BishopValue (  800)
-#define RookValue   ( 1000)
-#define QueenValue  ( 2000)
+#define RookValue   ( 1200)
+#define QueenValue  ( 2400)
 #define KingValue   (  800)
 
 #define TEMPO_MID   (14)
