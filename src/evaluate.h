@@ -3,15 +3,15 @@
 
 #include "types.h"
 
-#define PawnValue   (  200)
-#define KnightValue (  800)
-#define BishopValue (  800)
-#define RookValue   ( 1200)
-#define QueenValue  ( 2400)
-#define KingValue   (  800)
+#define PawnValue   (  100)
+#define KnightValue (  325)
+#define BishopValue (  325)
+#define RookValue   (  500)
+#define QueenValue  (  975)
+#define KingValue   (   50)
 
-#define TEMPO_MID   (14)
-#define TEMPO_END   (10)
+#define TEMPO_MID   (8)
+#define TEMPO_END   (6)
 
 #define PSQT_MULTIPLIER (1)
 
@@ -24,8 +24,8 @@
 #define ROOK_STACKED_MID           ( 8)
 #define ROOK_STACKED_END           ( 6)
 
-#define BISHOP_PAIR_MID            (32)
-#define BISHOP_PAIR_END            (48)
+#define BISHOP_PAIR_MID            (36)
+#define BISHOP_PAIR_END            (66)
 #define BISHOP_HAS_WINGS_MID       (14)
 #define BISHOP_HAS_WINGS_END       (28)
 
