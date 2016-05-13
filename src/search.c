@@ -216,7 +216,6 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     if (USE_RAZOR_PRUNING
         && depth <= 3
         && nodeType != PVNODE
-        && alpha == beta - 1
         && evaluate_board(board) + KnightValue < beta){
         
         value = quiescenceSearch(board, alpha, beta, height);
@@ -224,13 +223,11 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         // EVEN GAINING A QUEEN WOULD FAIL LOW
         if (value < beta)
             return value;
-    }        
+    }
     
     // USE NULL MOVE PRUNING
     if (USE_NULL_MOVE_PRUNING
         && depth >= 3 
-        && abs(beta) < Mate - MaxHeight
-        && alpha == beta - 1
         && nodeType != PVNODE
         && canDoNull(board)
         && isNotInCheck(board, board->turn)
@@ -346,10 +343,8 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             value = -alphaBetaSearch(board, -alpha-1, -alpha, newDepth, height+1, CUTNODE);
             
             // NULL WINDOW FAILED HIGH, RESEARCH
-            if (value > alpha){
+            if (value > alpha)
                 value = -alphaBetaSearch(board, -beta, -alpha, depth-1, height+1, PVNODE);
-
-            }
         }
         
         // REVERT MOVE FROM BOARD
@@ -369,7 +364,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         if (alpha >= beta){
             
             // UPDATE QUIET-KILLER MOVES
-            if (undo[0].capturePiece == Empty || MoveType(currentMove) != NormalMove){
+            if (undo[0].capturePiece == Empty){
                 KillerMoves[height][1] = KillerMoves[height][0];
                 KillerMoves[height][0] = currentMove;
             }
@@ -400,24 +395,16 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     Cut:
     
     // STORE RESULTS IN TRANSPOSITION TABLE
-    
-    // EXACT NODE FOUND, REPLACE EVEN IF WE USED AN ENTRY HERE
-    if (best > oldAlpha && best < beta)
-        storeTranspositionEntry(&Table, depth, board->turn, PVNODE, best, bestMove, board->hash);
-    
-    // CUT OR ALL NODE, REPLACE ONLY IF WE DID NOT USE AN ENTRY HERE
-    else {
-        
-        // UPPER BOUND
-        if (best >= beta)
+    if (time(NULL) < EndTime){
+        if (best > oldAlpha && best < beta)
+            storeTranspositionEntry(&Table, depth, board->turn, PVNODE, best, bestMove, board->hash);
+        else if (best >= beta)
             storeTranspositionEntry(&Table, depth, board->turn, CUTNODE, best, bestMove, board->hash);
-        
-        // LOWER BOUND
         else if (best <= oldAlpha)
             storeTranspositionEntry(&Table, depth, board->turn, ALLNODE, best, bestMove, board->hash);
     }
     
-    return best;    
+    return best;
 }
 
 int quiescenceSearch(Board * board, int alpha, int beta, int height){

@@ -23,7 +23,7 @@ void initalizeZorbist(){
     
     int p, s;
     
-    srand(time(NULL));
+    srand(0);
     
     for(p = 0; p < 32; p++){
         for(s = 0; s < 64; s++){

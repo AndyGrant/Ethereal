@@ -334,6 +334,9 @@ int evaluate_board(Board * board){
             if ((knightPos << 8) & blackPawns)
                 val *= 4;
             
+            if ((defense & whitePawns) == whitePawns)
+                val *= 2;
+            
             if ((defense & whitePawns)
                 && !(attacks & blackPawns)){
                 mid += val; end += val;
@@ -351,6 +354,9 @@ int evaluate_board(Board * board){
             
             if ((knightPos >> 8) & whitePawns)
                 val *= 4;
+            
+            if ((defense & blackPawns) == blackPawns)
+                val *= 2;
              
             if ((defense & blackPawns)
                 && !(attacks & whitePawns)){
