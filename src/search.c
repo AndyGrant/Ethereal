@@ -154,7 +154,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     
     // INITIALIZE SEARCH VARIABLES
     int i, value, newDepth, tempDepth, inCheck, entryValue, entryType, values[256];
-    int size = 0, best = -Mate, repeated = 0, usedTableEntry = 0;
+    int size = 0, best = -Mate, repeated = 0, usedTableEntry = 0, hasFailedHigh = 0;
     int oldAlpha = alpha, optimalValue = -Mate;
     uint16_t currentMove, moves[256], tableMove = NoneMove, bestMove = NoneMove;
     TransEntry * entry;
@@ -236,7 +236,6 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         && depth <= 3
         && nodeType != PVNODE
         && alpha == beta - 1
-        && !inCheck
         && evaluate_board(board) + KnightValue < beta){
         
         value = quiescenceSearch(board, alpha, beta, height);
@@ -304,7 +303,6 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         if (USE_FUTILITY_PRUNING
             && nodeType != PVNODE
             && depth <= 1
-            && !inCheck
             && MoveType(currentMove) == NormalMove
             && board->squares[MoveTo(currentMove)] == Empty){
          
@@ -320,13 +318,14 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         // APPLY MOVE
         applyMove(board, currentMove, undo);
         
+        // SET NEW DEPTH BEFORE LMR
+        newDepth = tempDepth;
+        
         // DETERMINE IF WE CAN USE LATE MOVE REDUCTIONS
         if (USE_LATE_MOVE_REDUCTIONS
-            && tempDepth < depth
-            && usedTableEntry
+            && !inCheck
             && i >= 3
             && depth >= 3
-            && !inCheck
             && nodeType != PVNODE
             && (
                    (MoveType(currentMove) == NormalMove
@@ -335,12 +334,19 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
                     && (currentMove & PromoteToQueen) == 0)
             )
             && undo[0].capturePiece == Empty
-            && isNotInCheck(board, board->turn))
-            newDepth = tempDepth-1;
-        else
-            newDepth = tempDepth;
+            && isNotInCheck(board, board->turn)){
+                
+            if (i >= 8){
+                if (bestMove == tableMove
+                    && !hasFailedHigh)
+                    newDepth = tempDepth - 3;
+                else
+                    newDepth = tempDepth - 2;
+            }
+            else
+                newDepth = tempDepth - 1;
+        }
         
-            
         // FULL WINDOW SEARCH ON FIRST MOVE
         if (i == 0 || nodeType != PVNODE){
             value = -alphaBetaSearch(board, -beta, -alpha, newDepth, height+1, nodeType);
@@ -348,7 +354,8 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             // IMPROVED BOUND, BUT WAS REDUCED DEPTH?
             if (value > alpha
                 && newDepth != tempDepth){
-                    
+                
+                hasFailedHigh = 1;
                 value = -alphaBetaSearch(board, -beta, -alpha, tempDepth, height+1, nodeType);
             }
         }
@@ -358,8 +365,10 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             value = -alphaBetaSearch(board, -alpha-1, -alpha, newDepth, height+1, CUTNODE);
             
             // NULL WINDOW FAILED HIGH, RESEARCH
-            if (value > alpha)
+            if (value > alpha){
+                hasFailedHigh = 1;
                 value = -alphaBetaSearch(board, -beta, -alpha, tempDepth, height+1, PVNODE);
+            }
         }
         
         // REVERT MOVE

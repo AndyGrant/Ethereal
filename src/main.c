@@ -26,14 +26,14 @@ int main(){
     //initalizeBoard(&board,"4k3/3ppp2/8/8/8/8/3PPP2/4K3 w - - 0 1");
     //initalizeBoard(&board,"4k3/4p3/8/8/8/8/4P3/4K3 w - - 0 1");
     
-    initalizeBoard(&board,"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w - - 0 1");
+    //initalizeBoard(&board,"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w - - 0 1");
     //initalizeBoard(&board,"1k6/5Q2/1K6/8/8/8/8/8 w - - 0 1");
     
     // STALEMATE
     //initalizeBoard(&board,"8/1P2R3/7k/3N1K2/8/6P1/8/8 w - - 9 62");
     
     // TEST FOR FINDIND MATES EARLIER   
-    //initalizeBoard(&board,"8/7p/7P/6p1/8/4kr2/8/4K3 b - - 1 63");
+    initalizeBoard(&board,"8/7p/7P/6p1/8/4kr2/8/4K3 b - - 1 63");
     
     // TEST FOR THROWING SUFFICIENT MATERIAL
     //initalizeBoard(&board,"8/2k5/3N4/PP1K4/8/4b3/8/8 w - - 7 104");
