@@ -51,5 +51,6 @@ int getMSBSpecial(uint64_t bb){
     if (bb & RANK_3) return 16;
     if (bb & RANK_2) return  8;
     assert("Invalid uint64_t send!\n" && 0);
+    printf("err");
 }
 

@@ -24,7 +24,7 @@ void initalizePSQT(){
         PSQTopening[WhitePawn][i+3] = PawnValue + PSQT_MULTIPLIER * PawnOpeningMap32[j+3];
         PSQTopening[WhitePawn][i+4] = PawnValue + PSQT_MULTIPLIER * PawnOpeningMap32[j+3];
 
-        // Endgame Pawn                                
+        // Endgame Pawn
         PSQTendgame[WhitePawn][i+0] = PawnValue + PSQT_MULTIPLIER * PawnEndgameMap32[j+0];
         PSQTendgame[WhitePawn][i+7] = PawnValue + PSQT_MULTIPLIER * PawnEndgameMap32[j+0];
         PSQTendgame[WhitePawn][i+1] = PawnValue + PSQT_MULTIPLIER * PawnEndgameMap32[j+1];
@@ -64,7 +64,7 @@ void initalizePSQT(){
         PSQTopening[WhiteBishop][i+3] = BishopValue + PSQT_MULTIPLIER * BishopOpeningMap32[j+3];
         PSQTopening[WhiteBishop][i+4] = BishopValue + PSQT_MULTIPLIER * BishopOpeningMap32[j+3];
 
-        // Ending Bishop                
+        // Ending Bishop
         PSQTendgame[WhiteBishop][i+0] = BishopValue + PSQT_MULTIPLIER * BishopEndgameMap32[j+0];
         PSQTendgame[WhiteBishop][i+7] = BishopValue + PSQT_MULTIPLIER * BishopEndgameMap32[j+0];
         PSQTendgame[WhiteBishop][i+1] = BishopValue + PSQT_MULTIPLIER * BishopEndgameMap32[j+1];
@@ -84,7 +84,7 @@ void initalizePSQT(){
         PSQTopening[WhiteRook][i+3] = RookValue + PSQT_MULTIPLIER * RookOpeningMap32[j+3];
         PSQTopening[WhiteRook][i+4] = RookValue + PSQT_MULTIPLIER * RookOpeningMap32[j+3];
 
-        // Ending Rook                
+        // Ending Rook
         PSQTendgame[WhiteRook][i+0] = RookValue + PSQT_MULTIPLIER * RookEndgameMap32[j+0];
         PSQTendgame[WhiteRook][i+7] = RookValue + PSQT_MULTIPLIER * RookEndgameMap32[j+0];
         PSQTendgame[WhiteRook][i+1] = RookValue + PSQT_MULTIPLIER * RookEndgameMap32[j+1];
@@ -115,24 +115,24 @@ void initalizePSQT(){
         PSQTendgame[WhiteQueen][i+4] = QueenValue + PSQT_MULTIPLIER * QueenEndgameMap32[j+3];
         
         // Opening King
-        PSQTopening[WhiteKing][i+0] = KingValue + PSQT_MULTIPLIER * KingOpeningMap32[j+0];
-        PSQTopening[WhiteKing][i+7] = KingValue + PSQT_MULTIPLIER * KingOpeningMap32[j+0];
-        PSQTopening[WhiteKing][i+1] = KingValue + PSQT_MULTIPLIER * KingOpeningMap32[j+1];
-        PSQTopening[WhiteKing][i+6] = KingValue + PSQT_MULTIPLIER * KingOpeningMap32[j+1];
-        PSQTopening[WhiteKing][i+2] = KingValue + PSQT_MULTIPLIER * KingOpeningMap32[j+2];
-        PSQTopening[WhiteKing][i+5] = KingValue + PSQT_MULTIPLIER * KingOpeningMap32[j+2];
-        PSQTopening[WhiteKing][i+3] = KingValue + PSQT_MULTIPLIER * KingOpeningMap32[j+3];
-        PSQTopening[WhiteKing][i+4] = KingValue + PSQT_MULTIPLIER * KingOpeningMap32[j+3];
+        PSQTopening[WhiteKing][i+0] = KingValue + KingOpeningMap32[j+0];
+        PSQTopening[WhiteKing][i+7] = KingValue + KingOpeningMap32[j+0];
+        PSQTopening[WhiteKing][i+1] = KingValue + KingOpeningMap32[j+1];
+        PSQTopening[WhiteKing][i+6] = KingValue + KingOpeningMap32[j+1];
+        PSQTopening[WhiteKing][i+2] = KingValue + KingOpeningMap32[j+2];
+        PSQTopening[WhiteKing][i+5] = KingValue + KingOpeningMap32[j+2];
+        PSQTopening[WhiteKing][i+3] = KingValue + KingOpeningMap32[j+3];
+        PSQTopening[WhiteKing][i+4] = KingValue + KingOpeningMap32[j+3];
         
         // Ending King
-        PSQTendgame[WhiteKing][i+0] = KingValue + PSQT_MULTIPLIER * KingEndgameMap32[j+0];
-        PSQTendgame[WhiteKing][i+7] = KingValue + PSQT_MULTIPLIER * KingEndgameMap32[j+0];
-        PSQTendgame[WhiteKing][i+1] = KingValue + PSQT_MULTIPLIER * KingEndgameMap32[j+1];
-        PSQTendgame[WhiteKing][i+6] = KingValue + PSQT_MULTIPLIER * KingEndgameMap32[j+1];
-        PSQTendgame[WhiteKing][i+2] = KingValue + PSQT_MULTIPLIER * KingEndgameMap32[j+2];
-        PSQTendgame[WhiteKing][i+5] = KingValue + PSQT_MULTIPLIER * KingEndgameMap32[j+2];
-        PSQTendgame[WhiteKing][i+3] = KingValue + PSQT_MULTIPLIER * KingEndgameMap32[j+3];
-        PSQTendgame[WhiteKing][i+4] = KingValue + PSQT_MULTIPLIER * KingEndgameMap32[j+3];
+        PSQTendgame[WhiteKing][i+0] = KingValue + KingEndgameMap32[j+0];
+        PSQTendgame[WhiteKing][i+7] = KingValue + KingEndgameMap32[j+0];
+        PSQTendgame[WhiteKing][i+1] = KingValue + KingEndgameMap32[j+1];
+        PSQTendgame[WhiteKing][i+6] = KingValue + KingEndgameMap32[j+1];
+        PSQTendgame[WhiteKing][i+2] = KingValue + KingEndgameMap32[j+2];
+        PSQTendgame[WhiteKing][i+5] = KingValue + KingEndgameMap32[j+2];
+        PSQTendgame[WhiteKing][i+3] = KingValue + KingEndgameMap32[j+3];
+        PSQTendgame[WhiteKing][i+4] = KingValue + KingEndgameMap32[j+3];
     }
     
     for(i = BlackPawn; i <= BlackKing; i+= 4){
