@@ -233,7 +233,6 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     
     // RAZOR PRUNING
     if (USE_RAZOR_PRUNING
-        && !inCheck
         && depth <= 3
         && nodeType != PVNODE
         && alpha == beta - 1
@@ -303,7 +302,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         // USE FUTILITY PRUNING
         if (USE_FUTILITY_PRUNING
             && nodeType != PVNODE
-            && depth <= 1
+            && tempDepth <= 0
             && MoveType(currentMove) == NormalMove
             && board->squares[MoveTo(currentMove)] == Empty){
          
@@ -325,8 +324,8 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         // DETERMINE IF WE CAN USE LATE MOVE REDUCTIONS
         if (USE_LATE_MOVE_REDUCTIONS
             && !inCheck
-            && i >= 3
-            && depth >= 3
+            && i >= 4
+            && depth > 3
             && nodeType != PVNODE
             && (
                    (MoveType(currentMove) == NormalMove
@@ -337,13 +336,9 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             && undo[0].capturePiece == Empty
             && isNotInCheck(board, board->turn)){
                 
-            if (i >= 8){
-                if (bestMove == tableMove
-                    && !hasFailedHigh)
-                    newDepth = tempDepth - 3;
-                else
-                    newDepth = tempDepth - 2;
-            }
+            if (i >= 8
+                && bestMove == tableMove)
+                newDepth = tempDepth - 2;
             else
                 newDepth = tempDepth - 1;
         }
@@ -420,12 +415,14 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     }
     
     // STORE RESULTS IN TRANSPOSITION TABLE
-    if (best > oldAlpha && best < beta)
-        storeTranspositionEntry(&Table, tempDepth + 1, board->turn,  PVNODE, best, bestMove, board->hash);
-    else if (best >= beta)
-        storeTranspositionEntry(&Table, tempDepth + 1, board->turn, CUTNODE, best, bestMove, board->hash);
-    else if (best <= oldAlpha)
-        storeTranspositionEntry(&Table, tempDepth + 1, board->turn, ALLNODE, best, bestMove, board->hash);
+    if (time(NULL) < EndTime){
+        if (best > oldAlpha && best < beta)
+            storeTranspositionEntry(&Table, tempDepth + 1, board->turn,  PVNODE, best, bestMove, board->hash);
+        else if (best >= beta)
+            storeTranspositionEntry(&Table, tempDepth + 1, board->turn, CUTNODE, best, bestMove, board->hash);
+        else if (best <= oldAlpha)
+            storeTranspositionEntry(&Table, tempDepth + 1, board->turn, ALLNODE, best, bestMove, board->hash);
+    }
     
     return best;
 }
@@ -458,13 +455,12 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
     if (value + QueenValue < alpha
         && board->numPieces >= 5
         && !(board->colourBitBoards[0] & board->pieceBitBoards[0] & RANK_7)
-        && !(board->colourBitBoards[1] & board->pieceBitBoards[0] & RANK_2)
-        && isNotInCheck(board,board->turn))
+        && !(board->colourBitBoards[1] & board->pieceBitBoards[0] & RANK_2))
         return alpha;
     
     // GENERATE AND PREPARE QUIET MOVE ORDERING
     genAllNonQuiet(board, moves, &size);
-    evaluateMoves(board, values, moves, size, height, NoneMove);
+    evaluateMoves(board, values, moves, size, height, NullMove);
     
     best = value;
     
@@ -523,8 +519,8 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
         value  = 16384 * ( tableMove == moves[i]);
         
         // THEN KILLERS, UNLESS OTHER GOOD CAPTURE
-        value += 256   * (   killer1 == moves[i]);
-        value += 256   * (   killer2 == moves[i]);
+        value += 128   * (   killer1 == moves[i]);
+        value += 128   * (   killer2 == moves[i]);
         value +=  32   * (   killer3 == moves[i]);
         value +=  32   * (   killer4 == moves[i]);
         
