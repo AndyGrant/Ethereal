@@ -311,11 +311,18 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         if (USE_LATE_MOVE_REDUCTIONS
             && usedTableEntry
             && valid >= 5
-            && depth >= 4
+            && depth >= 3
             && !inCheck
             && nodeType != PVNODE
-            && MoveType(currentMove) == NormalMove
-            && undo[0].capturePiece == Empty
+            &&  (   (MoveType(currentMove) == NormalMove
+                    && undo[0].capturePiece == Empty
+                    && board->squares[MoveTo(currentMove)] >= KnightFlag)
+                || 
+                    (MoveType(currentMove) == PromotionMove
+                    && !(currentMove & PromoteToQueen))
+                ||
+                    (MoveType(currentMove) == CastleMove)
+            )
             && isNotInCheck(board, board->turn))
             newDepth = depth-2;
         else
