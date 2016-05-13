@@ -27,6 +27,8 @@ int evaluate_board(Board * board){
     // CREATE BITBOARD FOR PIECES OF EACH COLOUR
     uint64_t whitePawns   = white & pawns;
     uint64_t blackPawns   = black & pawns;
+    uint64_t whiteKnights = white & knights;
+    uint64_t blackKnights = black & knights;
     uint64_t whiteBishops = white & bishops;
     uint64_t blackBishops = black & bishops;
     uint64_t whiteRooks   = white & rooks;
@@ -67,6 +69,11 @@ int evaluate_board(Board * board){
     int wBishops[16], bBishops[16];
     getSetBits(whiteBishops, wBishops);
     getSetBits(blackBishops, bBishops);
+    
+    // GET INDEXES OF EACH COLOUR'S KNIGHTS
+    int wKnights[16], bKnights[16];
+    getSetBits(whiteKnights, wKnights);
+    getSetBits(blackKnights, bKnights);
     
     // CHECK FOR RECOGNIZED DRAWS
     if (pawns == 0 && rooks == 0 && queens == 0){
@@ -165,18 +172,17 @@ int evaluate_board(Board * board){
             end -= PawnStackedEnd[i];
         }
         
-        if (pawnIsIsolated[0][i]){
-            mid -= PawnIsolatedMid[i];
-            end -= PawnIsolatedEnd[i];
-        }
-        
         if (pawnIsPassed[0][i]){
             int msb = getMSBSpecial(whitePawns & FILES[i]);
             mid += PawnPassedMid[msb>>3];
             end += PawnPassedEnd[msb>>3];
         }
+        
+        else if (pawnIsIsolated[0][i]){
+            mid -= PawnIsolatedMid[i];
+            end -= PawnIsolatedEnd[i];
+        }
     }
-    
     
     // APPLY BONUSES AND PENALTIES FOR BLACK'S PAWN STRUCTURE
     for (i = 0; i < 8; i++){
@@ -185,22 +191,22 @@ int evaluate_board(Board * board){
             end += PawnStackedEnd[i];
         }
         
-        if (pawnIsIsolated[1][i]){
-            mid += PawnIsolatedMid[i];
-            end += PawnIsolatedEnd[i];
-        }
-        
         if (pawnIsPassed[1][i]){
             int lsb = getLSB(blackPawns & FILES[i]);
             mid -= PawnPassedMid[7-(lsb>>3)];
             end -= PawnPassedEnd[7-(lsb>>3)];
         }
+        
+        else if (pawnIsIsolated[1][i]){
+            mid += PawnIsolatedMid[i];
+            end += PawnIsolatedEnd[i];
+        }
     }
     
     // EVALUATE WHITE ROOKS FOR FILE AND RANK BONUSES
     for (i = 0; wRooks[i] != -1; i++){
-        if (whitePawns & FILES[wRooks[i] % 8] == 0){
-            if (blackPawns & FILES[wRooks[i] % 8] == 0){
+        if (!(whitePawns & FILES[wRooks[i] % 8])){
+            if (!(blackPawns & FILES[wRooks[i] % 8])){
                 mid += ROOK_OPEN_FILE_MID;
                 end += ROOK_OPEN_FILE_END;
             }
@@ -226,8 +232,8 @@ int evaluate_board(Board * board){
     
     // EVALUATE BLACK ROOKS FOR FILE AND RANK BONUSES
     for (i = 0; bRooks[i] != -1; i++){
-        if (blackPawns & FILES[bRooks[i] % 8] == 0){
-            if (whitePawns & FILES[bRooks[i] % 8] == 0){
+        if (!(blackPawns & FILES[bRooks[i] % 8])){
+            if (!(whitePawns & FILES[bRooks[i] % 8])){
                 mid -= ROOK_OPEN_FILE_MID;
                 end -= ROOK_OPEN_FILE_END;
             }
@@ -265,8 +271,8 @@ int evaluate_board(Board * board){
     
     // WHITE HAS A SOLE BISHOP WITH WINGED PAWNS
     if (whiteBishops != 0 && 
-       (whitePawns & (FILE_A|FILE_B)) != 0 &&
-       (whitePawns & (FILE_G|FILE_H)) != 0){
+       (whitePawns & (FILE_A|FILE_B|FILE_C)) &&
+       (whitePawns & (FILE_F|FILE_G|FILE_H))){
            
        mid += BISHOP_HAS_WINGS_MID;
        end += BISHOP_HAS_WINGS_END;
@@ -274,11 +280,83 @@ int evaluate_board(Board * board){
     
     // BLACK HAS A SOLE BISHOP WITH WINGED PAWNS
     if (blackBishops != 0 && 
-       (blackPawns & (FILE_A|FILE_B)) != 0 &&
-       (blackPawns & (FILE_G|FILE_H)) != 0){
+       (blackPawns & (FILE_A|FILE_B|FILE_C)) &&
+       (blackPawns & (FILE_F|FILE_G|FILE_H))){
            
        mid -= BISHOP_HAS_WINGS_MID;
        end -= BISHOP_HAS_WINGS_END;
+    }
+    
+    // WHITE BISHOP OUTPOSTS
+    for (i = 0; wBishops[i] != -1; i++){
+        int val = BishopOutpost[ColourWhite][wBishops[i]];
+        if (val != 0){
+            uint64_t bishopPos = 1 << wBishops[i];
+            uint64_t attacks = (bishopPos << 7) | (bishopPos << 9);
+            uint64_t defense = (bishopPos >> 7) | (bishopPos >> 9);
+            
+            if ((bishopPos << 8) & blackPawns)
+                val *= 4;
+            
+            if ((defense & whitePawns)
+                && !(attacks & blackPawns)){
+                mid += val; end += val;
+            }
+        }
+    }
+    
+    // BLACK BISHOP OUTPOSTS
+    for (i = 0; bBishops[i] != -1; i++){
+        int val = BishopOutpost[ColourBlack][bBishops[i]];
+        if (val != 0){
+            uint64_t bishopPos = 1 << bBishops[i];
+            uint64_t attacks = (bishopPos >> 7) | (bishopPos >> 9);
+            uint64_t defense = (bishopPos << 7) | (bishopPos << 9);
+            
+            if ((bishopPos >> 8) & whitePawns)
+                val *= 4;
+             
+            if ((defense & blackPawns)
+                && !(attacks & whitePawns)){
+                mid -= val; end -= val;
+            }
+        }
+    }
+    
+    // WHITE KNIGHT OUTPOSTS
+    for (i = 0; wKnights[i] != -1; i++){
+        int val = KnightOutpost[ColourWhite][wKnights[i]];
+        if (val != 0){
+            uint64_t knightPos = 1 << wKnights[i];
+            uint64_t attacks = (knightPos << 7) | (knightPos << 9);
+            uint64_t defense = (knightPos >> 7) | (knightPos >> 9);
+            
+            if ((knightPos << 8) & blackPawns)
+                val *= 4;
+            
+            if ((defense & whitePawns)
+                && !(attacks & blackPawns)){
+                mid += val; end += val;
+            }
+        }
+    }
+    
+    // BLACK KNIGHT OUTPOSTS
+    for (i = 0; bKnights[i] != -1; i++){
+        int val = KnightOutpost[ColourBlack][bKnights[i]];
+        if (val != 0){
+            uint64_t knightPos = 1 << bKnights[i];
+            uint64_t attacks = (knightPos >> 7) | (knightPos >> 9);
+            uint64_t defense = (knightPos << 7) | (knightPos << 9);
+            
+            if ((knightPos >> 8) & whitePawns)
+                val *= 4;
+             
+            if ((defense & blackPawns)
+                && !(attacks & whitePawns)){
+                mid -= val; end -= val;
+            }
+        }
     }
     
     curPhase = 24 - (1 * countSetBits(knights | bishops))

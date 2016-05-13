@@ -25,8 +25,8 @@ int TotalNodes;
 
 int EvaluatingPlayer;
 
-uint16_t KillerMoves[MaxHeight][3];
-uint16_t KillerCaptures[MaxHeight][3];
+uint16_t KillerMoves[MaxHeight][2];
+uint16_t KillerCaptures[MaxHeight][2];
 
 TranspositionTable Table;
 
@@ -59,7 +59,7 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
         
         // LOG RESULTS TO INTERFACE
         if (logging){
-            printf("info depth %d score cp %d time %d nodes %d pv ",depth,value/2,1000*(time(NULL)-StartTime),TotalNodes);
+            printf("info depth %d score cp %d time %d nodes %d pv ",depth,(100*value)/PawnValue,1000*(time(NULL)-StartTime),TotalNodes);
             printMove(rootMoveList.bestMove);
             printf("\n");
             fflush(stdout);
@@ -67,7 +67,7 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
         
         // LOG RESULTS TO CONSOLE
         else {
-            printf("|%9d|%9d|%11d|%9d| ",depth,value,TotalNodes,(time(NULL)-StartTime));
+            printf("|%9d|%9d|%11d|%9d| ",depth,(100*value)/PawnValue,TotalNodes,(time(NULL)-StartTime));
             printMove(rootMoveList.bestMove);
             printf(" |\n");
         }
@@ -163,9 +163,16 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     if (EndTime < time(NULL))
         return board->turn == EvaluatingPlayer ? -Mate : Mate;
     
+    // DETERMINE 3-FOLD REPITION
+    for (i = board->numMoves-2; i >= 0; i-=2)
+        if (board->history[i] == board->hash)
+            repeated++;
+    if (repeated >= 2)
+        return 0;
+    
     // SEARCH HORIZON REACHED, QSEARCH
     if (depth <= 0)
-        return quiescenceSearch(board, alpha, beta, height);    
+        return quiescenceSearch(board, alpha, beta, height);
     
     // INCREMENT TOTAL NODE COUNTER
     TotalNodes++;
@@ -203,22 +210,6 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             usedTableEntry = 1;
             oldAlpha = alpha;
         }
-    }   
-    
-    // DETERMINE 3-FOLD REPITION
-    // COMPAREING HISTORY TO NULLMOVE IS A HACK
-    // TO AVOID CALLING TREES WITH 3-NULL MOVES 
-    // APPLIED 3-FOLD REPITITIONS
-    for (i = 0; i < board->numMoves; i++){
-        if (board->history[i] == board->hash
-            && board->history[i] != NullMove){
-            repeated++;
-        }
-    }
-        
-    // 3-FOLD REPITION FOUND
-    if (repeated >= 2){
-        return 0;
     }
     
     // RAZOR PRUNING
@@ -241,14 +232,13 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         && abs(beta) < Mate - MaxHeight
         && alpha == beta - 1
         && nodeType != PVNODE
-        && board->history[board->numMoves-1] != NullMove
         && canDoNull(board)
         && isNotInCheck(board, board->turn)
         && evaluate_board(board) >= beta){
             
         // APPLY NULL MOVE
         board->turn = !board->turn;
-        board->history[board->numMoves++] == NullMove;
+        board->history[board->numMoves++] = NullMove;
         
         // PERFORM NULL MOVE SEARCH
         value = -alphaBetaSearch(board, -beta, -beta+1, depth-4, height+1, CUTNODE);
@@ -285,8 +275,6 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     // DETERMINE CHECK STATUS FOR LATE MOVE REDUCTIONS
     inCheck = !isNotInCheck(board, board->turn);
     
-    int hasFailedHigh = 0;
-    
     for (i = 0; i < size; i++){
         
         currentMove = getNextMove(moves, values, i, size);
@@ -322,8 +310,8 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         // DETERMINE IF WE CAN USE LATE MOVE REDUCTIONS
         if (USE_LATE_MOVE_REDUCTIONS
             && usedTableEntry
-            && valid >= 4
-            && depth >= 3
+            && valid >= 5
+            && depth >= 4
             && !inCheck
             && nodeType != PVNODE
             && MoveType(currentMove) == NormalMove
@@ -375,14 +363,12 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             
             // UPDATE QUIET-KILLER MOVES
             if (undo[0].capturePiece == Empty || MoveType(currentMove) != NormalMove){
-                KillerMoves[height][2] = KillerMoves[height][1];
                 KillerMoves[height][1] = KillerMoves[height][0];
                 KillerMoves[height][0] = currentMove;
             }
             
             // UPDATE NOISY-KILLER MOVES
             else {
-                KillerCaptures[height][2] = KillerCaptures[height][1];
                 KillerCaptures[height][1] = KillerCaptures[height][0];
                 KillerCaptures[height][0] = currentMove;
             }
@@ -492,7 +478,6 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
         if (alpha >= beta){
             
             // UPDATE NOISY-KILLER MOVES
-            KillerCaptures[height][2] = KillerCaptures[height][1];
             KillerCaptures[height][1] = KillerCaptures[height][0];
             KillerCaptures[height][0] = currentMove;
             
@@ -511,11 +496,9 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
     // GET KILLER MOVES
     uint16_t killer1 = KillerMoves[height][0];
     uint16_t killer2 = KillerMoves[height][1];
-    uint16_t killer3 = KillerMoves[height][2];
-    
-    uint16_t killer4 = KillerCaptures[height][0];
-    uint16_t killer5 = KillerCaptures[height][1];
-    uint16_t killer6 = KillerCaptures[height][2];
+    uint16_t killer3 = KillerCaptures[height][0];
+    uint16_t killer4 = KillerCaptures[height][1];
+
     
     for (i = 0; i < size; i++){
         
@@ -525,10 +508,8 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
         // THEN KILLERS, UNLESS OTHER GOOD CAPTURE
         value += 256   * (   killer1 == moves[i]);
         value += 256   * (   killer2 == moves[i]);
-        value += 256   * (   killer3 == moves[i]);
-        value += 512   * (   killer4 == moves[i]);
-        value += 512   * (   killer5 == moves[i]);
-        value += 512   * (   killer6 == moves[i]);
+        value +=  32   * (   killer3 == moves[i]);
+        value +=  32   * (   killer4 == moves[i]);
         
         // INFO FOR POSSIBLE CAPTURE
         from_type = PieceType(board->squares[MoveFrom(moves[i])]);
