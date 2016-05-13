@@ -329,11 +329,11 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             && nodeType != PVNODE
             && (
                    (MoveType(currentMove) == NormalMove
-                    && board->squares[MoveTo(currentMove)] >= KnightFlag)
+                    && board->squares[MoveTo(currentMove)] >= KnightFlag
+                    && undo[0].capturePiece == Empty)
                 || (MoveType(currentMove) == PromotionMove
                     && (currentMove & PromoteToQueen) == 0)
             )
-            && undo[0].capturePiece == Empty
             && isNotInCheck(board, board->turn)){
                 
             if (i >= 8
