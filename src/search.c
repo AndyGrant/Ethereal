@@ -183,6 +183,13 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     TotalNodes++;
     MaxReached = MaxReached > height ? MaxReached : height;
     
+    // DETERMINE 3-FOLD REPITION
+    for (i = board->numMoves-2; i >= 0; i-=2)
+        if (board->history[i] == board->hash)
+            repeated++;
+    if (repeated >= 2)
+        return 0;
+    
     // LOOKUP CURRENT POSITION IN TRANSPOSITION TABLE
     entry = getTranspositionEntry(&Table, board->hash);
     
@@ -220,13 +227,6 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             oldAlpha = alpha;
         }
     }
-    
-    // DETERMINE 3-FOLD REPITION
-    for (i = board->numMoves-2; i >= 0; i-=2)
-        if (board->history[i] == board->hash)
-            repeated++;
-    if (repeated >= 2)
-        return 0;
     
     // DETERMINE CHECK STATUS
     inCheck = !isNotInCheck(board, board->turn);
