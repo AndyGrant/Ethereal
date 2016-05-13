@@ -336,7 +336,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             )
             && isNotInCheck(board, board->turn)){
                 
-            if (i >= 8
+            if (i >= 9
                 && bestMove == tableMove)
                 newDepth = tempDepth - 2;
             else
