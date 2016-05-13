@@ -233,6 +233,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     
     // RAZOR PRUNING
     if (USE_RAZOR_PRUNING
+        && !inCheck
         && depth <= 3
         && nodeType != PVNODE
         && alpha == beta - 1
@@ -455,9 +456,10 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
     
     // DELTA PRUNING IN WHEN NO PROMOTIONS AND NOT EXTREME LATE GAME
     if (value + QueenValue < alpha
-        && board->numPieces >= 6 
+        && board->numPieces >= 5
         && !(board->colourBitBoards[0] & board->pieceBitBoards[0] & RANK_7)
-        && !(board->colourBitBoards[1] & board->pieceBitBoards[0] & RANK_2))
+        && !(board->colourBitBoards[1] & board->pieceBitBoards[0] & RANK_2)
+        && isNotInCheck(board,board->turn))
         return alpha;
     
     // GENERATE AND PREPARE QUIET MOVE ORDERING
