@@ -8,10 +8,10 @@ int evaluate_board(Board * board);
 
 // PIECE VALUES
 #define PawnValue   (  200)
-#define KnightValue (  700)
-#define BishopValue (  700)
-#define RookValue   ( 1000)
-#define QueenValue  ( 1975)
+#define KnightValue (  650)
+#define BishopValue (  650)
+#define RookValue   ( 1025)
+#define QueenValue  ( 1950)
 #define KingValue   (  100)
 
 // KING EVALUATION TERMS
