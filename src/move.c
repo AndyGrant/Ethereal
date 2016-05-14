@@ -90,6 +90,9 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
     }
     
     if (MoveType(move) == CastleMove){
+        
+        board->hasCastled[board->turn] = 1;
+        
         to = MoveTo(move);
         from = MoveFrom(move);
         
@@ -267,6 +270,9 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
     }
     
     if (MoveType(move) == CastleMove){
+        
+        board->hasCastled[undo->turn] = 0;
+        
         to = MoveTo(move);
         from = MoveFrom(move);
 

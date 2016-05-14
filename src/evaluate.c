@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include "castle.h"
 #include "movegen.h"
 #include "magics.h"
 #include "types.h"
@@ -364,6 +365,51 @@ int evaluate_board(Board * board){
             }
         }
     }
+    
+    // WHITE KING CASTLE VALUES
+    if (board->hasCastled[ColourWhite]){
+        mid += KING_HAS_CASTLED;
+        end += KING_HAS_CASTLED;
+    } else {
+        int castleOptions = 0;
+        if (board->castleRights & WhiteKingRights)
+            castleOptions++;
+        if (board->castleRights & WhiteQueenRights)
+            castleOptions++;
+        
+        if (castleOptions == 2){
+            mid += 1.5 * KING_CAN_CASTLE;
+            end += 1.5 * KING_CAN_CASTLE;
+        } 
+        
+        else if (castleOptions == 1){
+            mid += KING_CAN_CASTLE;
+            end += KING_CAN_CASTLE;
+        }
+    }
+    
+    // BLACK KING CASTLE VALUES
+    if (board->hasCastled[ColourBlack]){
+        mid -= KING_HAS_CASTLED;
+        end -= KING_HAS_CASTLED;
+    } else {
+        int castleOptions = 0;
+        if (board->castleRights & BlackKingRights)
+            castleOptions++;
+        if (board->castleRights & BlackQueenRights)
+            castleOptions++;
+        
+        if (castleOptions == 2){
+            mid -= 1.5 * KING_CAN_CASTLE;
+            end -= 1.5 * KING_CAN_CASTLE;
+        } 
+        
+        else if (castleOptions == 1){
+            mid -= KING_CAN_CASTLE;
+            end -= KING_CAN_CASTLE;
+        }
+    }
+    
     
     curPhase = 24 - (1 * countSetBits(knights | bishops))
                   - (2 * countSetBits(rooks))

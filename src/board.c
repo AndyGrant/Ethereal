@@ -152,6 +152,9 @@ void initalizeBoard(Board * board, char * fen){
     board->numMoves = 0;
     
     board->numPieces = countSetBits(board->colourBitBoards[0] | board->colourBitBoards[1]);
+    
+    board->hasCastled[0] = 0;
+    board->hasCastled[1] = 0;
 }
 
 /*
