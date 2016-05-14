@@ -1,8 +1,8 @@
 CC = gcc
 
-CFLAGS = -m64 -march=native -DNDEBUG -O3
+CFLAGS = -m64 -march=native -DNDEBUG -O3 -Wno-write-strings
 
-LIBS = -lstdc++
+LIBS = -lstdc++ -static-libgcc -static-libstdc++
 
 SRC = bitutils.c        \
       board.c           \
