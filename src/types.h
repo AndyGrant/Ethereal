@@ -38,6 +38,8 @@ typedef struct Board {
     // Keep Track of number of pieces
     int numPieces;
     
+    int hasCastled[2];
+    
 } Board;
 
 typedef struct Undo {
