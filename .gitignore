@@ -1,5 +1,5 @@
 *.exe
-!Ethereal6.89-Win64.exe
+!Ethereal*.*.exe
 !Ethereal.exe
 !Ethereal-android.exe
 *.class
