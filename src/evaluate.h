@@ -15,7 +15,7 @@ int evaluate_board(Board * board);
 #define KingValue   (  100)
 
 // KING EVALUATION TERMS
-#define KING_HAS_CASTLED    (30)
+#define KING_HAS_CASTLED    (25)
 #define KING_CAN_CASTLE     (10)
 
 // ROOK EVALUATION TERMS
@@ -86,7 +86,7 @@ static int PawnPassedMid[8]   = { 0,  0,  0, 10, 20, 40, 80,  0};
 static int PawnPassedEnd[8]   = { 0,  0,  0, 10, 20, 40, 80,  0};
 
 // OTHER TERMS
-#define PSQT_MULTIPLIER (2.5)
+#define PSQT_MULTIPLIER (2.0)
 static int PieceValues[8] = {PawnValue, KnightValue, BishopValue, RookValue, QueenValue, KingValue, 0, 0};
 
 #endif
