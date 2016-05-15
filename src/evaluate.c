@@ -297,7 +297,7 @@ int evaluate_board(Board * board){
             uint64_t defense = (bishopPos >> 7) | (bishopPos >> 9);
             
             if ((bishopPos << 8) & blackPawns)
-                val *= 4;
+                val *= 1.5;
             
             if ((defense & whitePawns)
                 && !(attacks & blackPawns)){
@@ -315,7 +315,7 @@ int evaluate_board(Board * board){
             uint64_t defense = (bishopPos << 7) | (bishopPos << 9);
             
             if ((bishopPos >> 8) & whitePawns)
-                val *= 4;
+                val *= 1.5;
              
             if ((defense & blackPawns)
                 && !(attacks & whitePawns)){
@@ -333,10 +333,9 @@ int evaluate_board(Board * board){
             uint64_t defense = (knightPos >> 7) | (knightPos >> 9);
             
             if ((knightPos << 8) & blackPawns)
-                val *= 4;
-            
-            if ((defense & whitePawns) == whitePawns)
                 val *= 2;
+            else if ((defense & whitePawns) == whitePawns)
+                val *= 1.5;
             
             if ((defense & whitePawns)
                 && !(attacks & blackPawns)){
@@ -354,10 +353,9 @@ int evaluate_board(Board * board){
             uint64_t defense = (knightPos << 7) | (knightPos << 9);
             
             if ((knightPos >> 8) & whitePawns)
-                val *= 4;
-            
-            if ((defense & blackPawns) == blackPawns)
                 val *= 2;
+            else if ((defense & blackPawns) == blackPawns)
+                val *= 1.5;
              
             if ((defense & blackPawns)
                 && !(attacks & whitePawns)){
@@ -378,8 +376,8 @@ int evaluate_board(Board * board){
             castleOptions++;
         
         if (castleOptions == 2){
-            mid += 1.5 * KING_CAN_CASTLE;
-            end += 1.5 * KING_CAN_CASTLE;
+            mid += 1.2 * KING_CAN_CASTLE;
+            end += 1.2 * KING_CAN_CASTLE;
         } 
         
         else if (castleOptions == 1){
@@ -400,8 +398,8 @@ int evaluate_board(Board * board){
             castleOptions++;
         
         if (castleOptions == 2){
-            mid -= 1.5 * KING_CAN_CASTLE;
-            end -= 1.5 * KING_CAN_CASTLE;
+            mid -= 1.2 * KING_CAN_CASTLE;
+            end -= 1.2* KING_CAN_CASTLE;
         } 
         
         else if (castleOptions == 1){
