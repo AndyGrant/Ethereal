@@ -19,6 +19,7 @@ int evaluate_board(Board * board){
     // EXTRACT BASIC BITBOARDS FROM BOARD
     uint64_t white    = board->colourBitBoards[ColourWhite];
     uint64_t black    = board->colourBitBoards[ColourBlack];
+    uint64_t empty    = ~ (white | black);
     uint64_t pawns    = board->pieceBitBoards[0];
     uint64_t knights  = board->pieceBitBoards[1];
     uint64_t bishops  = board->pieceBitBoards[2];
@@ -289,80 +290,20 @@ int evaluate_board(Board * board){
     }
     
     // WHITE BISHOP OUTPOSTS
-    for (i = 0; wBishops[i] != -1; i++){
-        int val = BishopOutpost[ColourWhite][wBishops[i]];
-        if (val != 0){
-            uint64_t bishopPos = 1 << wBishops[i];
-            uint64_t attacks = (bishopPos << 7) | (bishopPos << 9);
-            uint64_t defense = (bishopPos >> 7) | (bishopPos >> 9);
-            
-            if ((bishopPos << 8) & blackPawns)
-                val *= 1.5;
-            
-            if ((defense & whitePawns)
-                && !(attacks & blackPawns)){
-                mid += val; end += val;
-            }
-        }
-    }
+    for (i = 0; wBishops[i] != -1; i++)
+        evaluateWhiteOutpost(&mid, &end, 0, wBishops[i], empty, whitePawns, blackPawns);
     
     // BLACK BISHOP OUTPOSTS
-    for (i = 0; bBishops[i] != -1; i++){
-        int val = BishopOutpost[ColourBlack][bBishops[i]];
-        if (val != 0){
-            uint64_t bishopPos = 1 << bBishops[i];
-            uint64_t attacks = (bishopPos >> 7) | (bishopPos >> 9);
-            uint64_t defense = (bishopPos << 7) | (bishopPos << 9);
-            
-            if ((bishopPos >> 8) & whitePawns)
-                val *= 1.5;
-             
-            if ((defense & blackPawns)
-                && !(attacks & whitePawns)){
-                mid -= val; end -= val;
-            }
-        }
-    }
+    for (i = 0; bBishops[i] != -1; i++)
+        evaluateBlackOutpost(&mid, &end, 0, bBishops[i], empty, whitePawns, blackPawns);
     
     // WHITE KNIGHT OUTPOSTS
-    for (i = 0; wKnights[i] != -1; i++){
-        int val = KnightOutpost[ColourWhite][wKnights[i]];
-        if (val != 0){
-            uint64_t knightPos = 1 << wKnights[i];
-            uint64_t attacks = (knightPos << 7) | (knightPos << 9);
-            uint64_t defense = (knightPos >> 7) | (knightPos >> 9);
-            
-            if ((knightPos << 8) & blackPawns)
-                val *= 2;
-            else if ((defense & whitePawns) == whitePawns)
-                val *= 1.5;
-            
-            if ((defense & whitePawns)
-                && !(attacks & blackPawns)){
-                mid += val; end += val;
-            }
-        }
-    }
+    for (i = 0; wKnights[i] != -1; i++)
+        evaluateWhiteOutpost(&mid, &end, 1, wKnights[i], empty, whitePawns, blackPawns);
     
     // BLACK KNIGHT OUTPOSTS
-    for (i = 0; bKnights[i] != -1; i++){
-        int val = KnightOutpost[ColourBlack][bKnights[i]];
-        if (val != 0){
-            uint64_t knightPos = 1 << bKnights[i];
-            uint64_t attacks = (knightPos >> 7) | (knightPos >> 9);
-            uint64_t defense = (knightPos << 7) | (knightPos << 9);
-            
-            if ((knightPos >> 8) & whitePawns)
-                val *= 2;
-            else if ((defense & blackPawns) == blackPawns)
-                val *= 1.5;
-             
-            if ((defense & blackPawns)
-                && !(attacks & whitePawns)){
-                mid -= val; end -= val;
-            }
-        }
-    }
+    for (i = 0; bKnights[i] != -1; i++)
+        evaluateBlackOutpost(&mid, &end, 1, bKnights[i], empty, whitePawns, blackPawns);
     
     // WHITE KING CASTLE VALUES
     if (board->hasCastled[ColourWhite]){
@@ -420,4 +361,86 @@ int evaluate_board(Board * board){
     eval = ((midEval * (256 - curPhase)) + (endEval * curPhase)) / 256;
     
     return board->turn == ColourWhite ? eval+10 : -(eval+10);
+}
+
+void evaluateWhiteOutpost(int* mid, int* end, int isKnight, int sq, uint64_t empty, uint64_t wpawns, uint64_t bpawns){
+    
+    uint64_t piece, attacks, defenses, leftFile, rightFile;
+    int val, shift;
+    
+    val = (isKnight) ? KnightOutpost[ColourWhite][sq] : BishopOutpost[ColourWhite][sq];
+    
+    if (val == 0)
+        return;
+    
+    assert(sq % 8 != 0 && sq % 8 != 7);
+    
+    piece = 1ull << sq;
+    defenses = (piece >> 7) | (piece >> 9);
+    
+    if (!(defenses & wpawns))
+        return;
+    
+    leftFile = FILES[(sq % 8) - 1];
+    rightFile = FILES[(sq % 8) + 1];
+    
+    if ((piece << 8) & bpawns)
+        val = val << 1;
+    else if (isKnight && (defenses & wpawns) == defenses)
+        val = val << 1;
+    
+    shift = sq + 1;
+    bpawns = ((bpawns >> shift) << shift);
+    bpawns &= (leftFile | rightFile);
+    attacks = (piece << 7) | (piece << 9);
+    
+    while(bpawns){
+        if (attacks & bpawns)
+            return;
+        bpawns = ((bpawns >> 8) & empty);
+    }
+    
+    *mid += val;
+    *end += val;
+}
+
+void evaluateBlackOutpost(int* mid, int* end, int isKnight, int sq, uint64_t empty, uint64_t wpawns, uint64_t bpawns){
+    
+    uint64_t piece, attacks, defenses, leftFile, rightFile;
+    int val, shift;
+    
+    val = (isKnight) ? KnightOutpost[ColourBlack][sq] : BishopOutpost[ColourBlack][sq];
+    
+    if (val == 0)
+        return;
+    
+    assert(sq % 8 != 0 && sq % 8 != 7);
+    
+    piece = 1ull << sq;
+    defenses = (piece << 7) | (piece << 9);
+    
+    if (!(defenses & bpawns))
+        return;
+    
+    leftFile = FILES[(sq % 8) - 1];
+    rightFile = FILES[(sq % 8) + 1];
+    
+    if ((piece >> 8) & wpawns)
+        val = val << 1;
+    else if (isKnight && (defenses & bpawns) == defenses)
+        val = val << 1;
+    
+    shift = sq + 1;
+    wpawns = ((wpawns << shift) >> shift);
+    wpawns &= (leftFile | rightFile);
+    attacks = (piece >> 7) | (piece >> 9);
+    
+    while(wpawns){
+        if (attacks & wpawns)
+            return;
+        wpawns = ((wpawns << 8) & empty);
+    }
+    
+    *mid -= val;
+    *end -= val;
 }
