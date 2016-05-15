@@ -5,6 +5,8 @@
 
 // PROTOTYPES
 int evaluate_board(Board * board);
+void evaluateWhiteOutpost(int* mid, int* end, int isKnight, int sq, uint64_t empty, uint64_t wpawns, uint64_t bpawns);
+void evaluateBlackOutpost(int* mid, int* end, int isKnight, int sq, uint64_t empty, uint64_t wpawns, uint64_t bpawns);
 
 // PIECE VALUES
 #define PawnValue   (  200)
