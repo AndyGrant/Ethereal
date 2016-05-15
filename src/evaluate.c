@@ -385,7 +385,7 @@ void evaluateWhiteOutpost(int* mid, int* end, int isKnight, int sq, uint64_t emp
     rightFile = FILES[(sq % 8) + 1];
     
     if ((piece << 8) & bpawns)
-        val = val << 1;
+        val = val << 2;
     else if (isKnight && (defenses & wpawns) == defenses)
         val = val << 1;
     
@@ -426,7 +426,7 @@ void evaluateBlackOutpost(int* mid, int* end, int isKnight, int sq, uint64_t emp
     rightFile = FILES[(sq % 8) + 1];
     
     if ((piece >> 8) & wpawns)
-        val = val << 1;
+        val = val << 2;
     else if (isKnight && (defenses & bpawns) == defenses)
         val = val << 1;
     
