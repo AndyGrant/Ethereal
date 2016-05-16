@@ -6,6 +6,7 @@
 #include "board.h"
 #include "castle.h"
 #include "magics.h"
+#include "masks.h"
 #include "piece.h"
 #include "psqt.h"
 #include "types.h"
@@ -35,6 +36,7 @@ void initalizeBoard(Board * board, char * fen){
     initalizeMagics();
     initalizeZorbist();
     initalizePSQT();
+    initalizeMasks();
     
     // Init board->squares from fen notation;
     for(i = 0, sq = 56; fen[i] != ' '; i++){

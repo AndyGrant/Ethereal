@@ -5,8 +5,12 @@
 
 // PROTOTYPES
 int evaluate_board(Board * board);
-void evaluateWhiteOutpost(int* mid, int* end, int isKnight, int sq, uint64_t empty, uint64_t wpawns, uint64_t bpawns);
-void evaluateBlackOutpost(int* mid, int* end, int isKnight, int sq, uint64_t empty, uint64_t wpawns, uint64_t bpawns);
+
+void evaluatePawns(int* mid, int* end, Board* board);
+void evaluateKnights(int* mid, int*end, Board* board);
+void evaluateBishops(int* mid, int* end, Board* board);
+void evaluateRooks(int* mid, int* end, Board* board);
+void evaluateKings(int* mid, int* end, Board* board);
 
 // PIECE VALUES
 #define PawnValue   (  200)

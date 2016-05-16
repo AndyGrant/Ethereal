@@ -1,0 +1,17 @@
+#ifndef _MASKS_H
+#define _MASKS_H
+
+#include <stdint.h>
+
+static int INITALIZED_MASKS = 0;
+
+static uint64_t IsolatedPawnMasks[64];
+static uint64_t PassedPawnMasks[2][64];
+static uint64_t PawnAttackMasks[2][64];
+static uint64_t PawnAdvanceMasks[2][64];
+
+static uint64_t OutpostSquareMasks[2][64];
+
+void initalizeMasks();
+
+#endif

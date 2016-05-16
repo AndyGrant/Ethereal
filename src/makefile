@@ -11,6 +11,7 @@ SRC = bitutils.c		\
 	  evaluate.c		\
 	  magics.c			\
 	  main.c			\
+	  masks.c			\
 	  move.c			\
 	  movegen.c			\
 	  movegentest.c		\
