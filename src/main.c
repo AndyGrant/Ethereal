@@ -42,6 +42,6 @@ int main(){
     // FAILED ENDGAME MATE WITH KRvR
     //initalizeBoard(&board,"8/2K5/1r6/8/8/3k4/8/8 b - - 51 119");
     
-    getBestMove(&board,100,0);
+    getBestMove(&board,10,0);
     //getBestMove(&board,10,0);
 }

@@ -98,4 +98,17 @@ typedef struct MoveList {
     
 } MoveList;
 
+typedef struct SearchStats {
+    int totalNodes;
+    
+    int successNM;
+    int failedNM;
+    int wastedNM;
+    
+    int successLMR;
+    int failedLMR;
+    int wastedLMR;
+    
+} SearchStats;
+
 #endif

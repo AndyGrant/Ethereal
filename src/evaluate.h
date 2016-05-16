@@ -13,12 +13,12 @@ void evaluateRooks(int* mid, int* end, Board* board);
 void evaluateKings(int* mid, int* end, Board* board);
 
 // PIECE VALUES
-#define PawnValue   (  100)
-#define KnightValue (  310)
-#define BishopValue (  310)
-#define RookValue   (  495)
-#define QueenValue  (  995)
-#define KingValue   (   50)
+#define PawnValue   (  200)
+#define KnightValue (  620)
+#define BishopValue (  620)
+#define RookValue   (  990)
+#define QueenValue  ( 1990)
+#define KingValue   (  100)
 
 // KING EVALUATION TERMS
 #define KING_HAS_CASTLED    (10)
