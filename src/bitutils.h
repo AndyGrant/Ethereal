@@ -7,9 +7,6 @@
 int countSetBits(uint64_t bb);
 void getSetBits(uint64_t bb, int * arr);
 
-int getMSBSpecial(uint64_t bb);
-
-
 /* chessprogramming.wikispaces.com/Bitscan#DeBruijnMultiplation */
 static int LsbLookupTable[64] = {
     0, 47,  1, 56, 48, 27,  2, 60,
