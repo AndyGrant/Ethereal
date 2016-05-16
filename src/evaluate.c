@@ -164,14 +164,14 @@ void evaluateKnights(int* mid, int*end, Board* board){
                     if (defenders){
                         
                         if (PawnAdvanceMasks[colour][sq] & enemyPawns)
-                            outpostValue *= 4;
+                            outpostValue *= 1.5;
                         
                         if (defenders & (defenders-1))
                             outpostValue *= 1.5;
                     }
                     
-                    mg += outpostValue;
-                    eg += outpostValue;
+                    mg += outpostValue / 2;
+                    eg += outpostValue / 2;
                 }
             }
         }
@@ -229,14 +229,14 @@ void evaluateBishops(int* mid, int* end, Board* board){
                     if (defenders){
                         
                         if (PawnAdvanceMasks[colour][sq] & enemyPawns)
-                            outpostValue *= 4;
+                            outpostValue *= 1.5;
                         
                         if (defenders & (defenders-1))
                             outpostValue *= 0;
                     }
                     
-                    mg += outpostValue;
-                    eg += outpostValue;
+                    mg += outpostValue / 2;
+                    eg += outpostValue / 2;
                 }
             }
         }
