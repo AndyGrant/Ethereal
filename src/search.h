@@ -29,4 +29,6 @@ void sortMoveList(MoveList * moveList);
 
 int canDoNull(Board * board);
 
+void printSearchStats(SearchStats * stats);
+
 #endif

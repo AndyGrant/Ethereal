@@ -1,0 +1,2 @@
+position fen 8/8/5r2/1P1K4/6pk/7p/P7/7R w - - 2 58
+go
