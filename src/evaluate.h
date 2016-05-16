@@ -13,32 +13,30 @@ void evaluateRooks(int* mid, int* end, Board* board);
 void evaluateKings(int* mid, int* end, Board* board);
 
 // PIECE VALUES
-#define PawnValue   (  200)
-#define KnightValue (  650)
-#define BishopValue (  650)
-#define RookValue   ( 1025)
-#define QueenValue  ( 1950)
-#define KingValue   (  100)
+#define PawnValue   (  100)
+#define KnightValue (  310)
+#define BishopValue (  310)
+#define RookValue   (  495)
+#define QueenValue  (  995)
+#define KingValue   (   50)
 
 // KING EVALUATION TERMS
-#define KING_HAS_CASTLED    (25)
-#define KING_CAN_CASTLE     (10)
+#define KING_HAS_CASTLED    (10)
+#define KING_CAN_CASTLE     ( 5)
 
 // ROOK EVALUATION TERMS
-#define ROOK_OPEN_FILE_MID   (25)
-#define ROOK_OPEN_FILE_END   (30)
-#define ROOK_SEMI_FILE_MID   (10)
-#define ROOK_SEMI_FILE_END   (10)
-#define ROOK_ON_7TH_MID      (15)
-#define ROOK_ON_7TH_END      (25)
-#define ROOK_STACKED_MID     ( 7)
-#define ROOK_STACKED_END     ( 7)
+#define ROOK_OPEN_FILE_MID   (32)
+#define ROOK_OPEN_FILE_END   (18)
+#define ROOK_SEMI_FILE_MID   ( 8)
+#define ROOK_SEMI_FILE_END   ( 8)
+#define ROOK_ON_7TH_MID      (28)
+#define ROOK_ON_7TH_END      (32)
 
 // BISHOP EVALUATION TERMS
-#define BISHOP_PAIR_MID      ( 72)
-#define BISHOP_PAIR_END      (136)
-#define BISHOP_HAS_WINGS_MID ( 32)
-#define BISHOP_HAS_WINGS_END ( 64)
+#define BISHOP_PAIR_MID      ( 36)
+#define BISHOP_PAIR_END      ( 54)
+#define BISHOP_HAS_WINGS_MID ( 16)
+#define BISHOP_HAS_WINGS_END ( 32)
 
 static int BishopOutpost[2][64] = {
     { 0, 0, 0, 0, 0, 0, 0, 0, 
@@ -82,17 +80,17 @@ static int KnightOutpost[2][64] = {
 };
 
 // PAWN EVALUATION TERMS
-static int PawnStackedMid[8]  = {10, 18, 24, 26, 26, 24, 18, 10};
-static int PawnStackedEnd[8]  = {30, 38, 44, 46, 46, 46, 38, 30};
+static int PawnStackedMid[8]  = { 5,  9, 12, 13, 13, 12,  9,  5};
+static int PawnStackedEnd[8]  = {15, 19, 22, 23, 23, 22, 19, 15};
 
-static int PawnIsolatedMid[8] = {28, 40, 52, 52, 52, 52, 40, 28};
-static int PawnIsolatedEnd[8] = {20, 32, 36, 36, 36, 36, 32, 20};
+static int PawnIsolatedMid[8] = {14, 20, 26, 26, 26, 26, 20, 14};
+static int PawnIsolatedEnd[8] = {10, 16, 18, 18, 18, 18, 16, 10};
 
-static int PawnPassedMid[8]   = { 0,  0,  0, 10, 20, 40, 80,  0};
-static int PawnPassedEnd[8]   = { 0,  0,  0, 10, 20, 40, 80,  0};
+static int PawnPassedMid[8]   = { 0,  0,  0, 10, 15, 24, 33,  0};
+static int PawnPassedEnd[8]   = { 0,  0,  0, 10, 15, 24, 33,  0};
 
 // OTHER TERMS
-#define PSQT_MULTIPLIER (2.5)
+#define PSQT_MULTIPLIER (1)
 static int PieceValues[8] = {PawnValue, KnightValue, BishopValue, RookValue, QueenValue, KingValue, 0, 0};
 
 #endif

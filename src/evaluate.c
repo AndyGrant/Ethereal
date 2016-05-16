@@ -71,8 +71,8 @@ int evaluate_board(Board * board){
     evaluateRooks(&mid, &end, board);
     evaluateKings(&mid, &end, board);
     
-    midEval = board->opening + mid;
-    endEval = board->endgame + end;
+    midEval = board->opening + mid + 10;
+    endEval = board->endgame + end + 15;
     
     curPhase = 24 - (1 * countSetBits(knights | bishops))
                   - (2 * countSetBits(rooks))
@@ -81,7 +81,7 @@ int evaluate_board(Board * board){
     
     eval = ((midEval * (256 - curPhase)) + (endEval * curPhase)) / 256;
     
-    return board->turn == ColourWhite ? eval+10 : -(eval+10);
+    return board->turn == ColourWhite ? eval : -eval;
 }
 
 void evaluatePawns(int* mid, int* end, Board* board){
@@ -164,14 +164,14 @@ void evaluateKnights(int* mid, int*end, Board* board){
                     if (defenders){
                         
                         if (PawnAdvanceMasks[colour][sq] & enemyPawns)
-                            outpostValue *= 4;
+                            outpostValue *= 2;
                         
                         if (defenders & (defenders-1))
                             outpostValue *= 1.5;
                     }
                     
-                    mg += outpostValue;
-                    eg += outpostValue;
+                    mg += outpostValue / 2;
+                    eg += outpostValue / 2;
                 }
             }
         }
@@ -229,14 +229,14 @@ void evaluateBishops(int* mid, int* end, Board* board){
                     if (defenders){
                         
                         if (PawnAdvanceMasks[colour][sq] & enemyPawns)
-                            outpostValue *= 4;
+                            outpostValue *= 2;
                         
                         if (defenders & (defenders-1))
                             outpostValue *= 0;
                     }
                     
-                    mg += outpostValue;
-                    eg += outpostValue;
+                    mg += outpostValue / 2;
+                    eg += outpostValue / 2;
                 }
             }
         }
@@ -254,7 +254,7 @@ void evaluateRooks(int* mid, int* end, Board* board){
     uint64_t myPawns, enemyPawns, myRooks;
     
     int mg = 0, eg = 0;
-    int colour, i, sq, prevSq;
+    int colour, i, sq;
     
     for (colour = ColourBlack; colour >= ColourWhite; colour--){
         
@@ -267,13 +267,6 @@ void evaluateRooks(int* mid, int* end, Board* board){
             
             sq = getLSB(myRooks);
             myRooks ^= (1ull << sq);
-            
-            if (i == 1 && sq % 8 == prevSq % 8){
-                mg += ROOK_STACKED_MID;
-                eg += ROOK_STACKED_END;
-            }
-            
-            prevSq = sq;
             
             myPawns = allPawns & board->colourBitBoards[colour];
             enemyPawns = allPawns ^ myPawns;

@@ -1,2 +1,0 @@
-position fen 1nbq1rk1/6p1/p1p1r1Bp/Pp1pPP1P/1P1P4/1QN1R3/6R1/6K1 b - - 0 64
-go
