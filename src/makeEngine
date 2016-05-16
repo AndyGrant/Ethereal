@@ -1,13 +1,14 @@
 CC = gcc
 
-CFLAGS = -m64 -march=native -DNDEBUG -O3 -Wno-write-strings
+CFLAGS = -m64 -DNDEBUG -O3 -Wno-write-strings
 
-LIBS = -lstdc++ -static-libgcc -static-libstdc++
+LIBS = -lstdc++
 
 SRC = bitutils.c        \
       board.c           \
       evaluate.c        \
       magics.c          \
+      masks.c           \
       move.c            \
       movegen.c         \
       movegentest.c     \
