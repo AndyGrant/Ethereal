@@ -114,13 +114,13 @@ void evaluatePawns(int* mid, int* end, Board* board){
             }
             
             else if (!(IsolatedPawnMasks[sq] & myPawns)){
-                mg -= PawnIsolatedMid[file];
-                eg -= PawnIsolatedEnd[file];
+                mg -= PAWN_ISOLATED_MID;
+                eg -= PAWN_ISOLATED_END;
             }
             
             if (FILES[file] & myPawns){
-                mg -= PawnStackedMid[file];
-                eg -= PawnStackedEnd[file];
+                mg -= PAWN_STACKED_MID;
+                eg -= PAWN_STACKED_END;
             }
         }
     }
@@ -279,11 +279,6 @@ void evaluateRooks(int* mid, int* end, Board* board){
                     mg += ROOK_SEMI_FILE_MID;
                     eg += ROOK_SEMI_FILE_END;
                 }
-            }
-            
-            if (i / 8 == 6 - (5 * colour)){
-                mg += ROOK_ON_7TH_MID;
-                eg += ROOK_ON_7TH_END;
             }
         }
     }
