@@ -13,47 +13,47 @@ void evaluateRooks(int* mid, int* end, Board* board);
 void evaluateKings(int* mid, int* end, Board* board);
 
 // PIECE VALUES
-#define PawnValue   (  200)
-#define KnightValue (  620)
-#define BishopValue (  620)
-#define RookValue   (  990)
-#define QueenValue  ( 1990)
+#define PawnValue   (  100)
+#define KnightValue (  310)
+#define BishopValue (  310)
+#define RookValue   (  500)
+#define QueenValue  ( 1000)
 #define KingValue   (  100)
 
 // KING EVALUATION TERMS
-#define KING_HAS_CASTLED    (20)
-#define KING_CAN_CASTLE     (10)
+#define KING_HAS_CASTLED    (10)
+#define KING_CAN_CASTLE     ( 5)
 
 // ROOK EVALUATION TERMS
-#define ROOK_OPEN_FILE_MID   (64)
-#define ROOK_OPEN_FILE_END   (36)
-#define ROOK_SEMI_FILE_MID   (16)
-#define ROOK_SEMI_FILE_END   (16)
-#define ROOK_ON_7TH_MID      (56)
-#define ROOK_ON_7TH_END      (64)
+#define ROOK_OPEN_FILE_MID   (12)
+#define ROOK_OPEN_FILE_END   ( 8)
+#define ROOK_SEMI_FILE_MID   ( 6)
+#define ROOK_SEMI_FILE_END   ( 6)
+#define ROOK_ON_7TH_MID      ( 6)
+#define ROOK_ON_7TH_END      ( 2)
 
 // BISHOP EVALUATION TERMS
-#define BISHOP_PAIR_MID      ( 72)
-#define BISHOP_PAIR_END      (108)
-#define BISHOP_HAS_WINGS_MID ( 32)
-#define BISHOP_HAS_WINGS_END ( 64)
+#define BISHOP_PAIR_MID      ( 36)
+#define BISHOP_PAIR_END      ( 46)
+#define BISHOP_HAS_WINGS_MID (  9)
+#define BISHOP_HAS_WINGS_END ( 36)
 
 static int BishopOutpost[2][64] = {
     { 0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 2, 4, 4, 4, 4, 2, 0, 
-      0, 7, 9, 9, 9, 9, 7, 0, 
-      0, 6, 8, 8, 8, 8, 6, 0, 
-      0, 0, 1, 1, 1, 1, 0, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 1, 2, 4, 4, 2, 1, 0, 
+      0, 2, 4, 8, 8, 4, 2, 0, 
+      0, 1, 6, 9, 9, 6, 1, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, },
       
     { 0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 0, 1, 1, 1, 1, 0, 0, 
-      0, 6, 8, 8, 8, 8, 6, 0, 
-      0, 7, 9, 9, 9, 9, 7, 0, 
-      0, 2, 4, 4, 4, 4, 2, 0, 
+      0, 1, 6, 9, 9, 6, 1, 0, 
+      0, 2, 4, 8, 8, 4, 2, 0, 
+      0, 1, 2, 4, 4, 2, 1, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, }
 };
@@ -62,32 +62,32 @@ static int BishopOutpost[2][64] = {
 static int KnightOutpost[2][64] = {
     { 0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 2, 6, 6, 6, 6, 2, 0,
-      0, 4, 7, 9, 9, 7, 4, 0,
-      0, 2, 6, 6, 6, 6, 2, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 
+      0, 2, 4, 6, 6, 4, 2, 0, 
+      0, 3, 6, 8, 8, 6, 3, 0, 
+      0, 4, 8,10,10, 8, 4, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, },
       
     { 0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 0, 0, 0, 0, 0, 0, 0,
-      0, 2, 6, 6, 6, 6, 2, 0,
-      0, 4, 7, 9, 9, 7, 4, 0, 
-      0, 2, 6, 6, 6, 6, 2, 0,
+      0, 4, 8,10,10, 8, 4, 0, 
+      0, 3, 6, 8, 8, 6, 3, 0, 
+      0, 2, 4, 6, 6, 4, 2, 0, 
+      0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, }
 };
 
 // PAWN EVALUATION TERMS
-static int PawnStackedMid[8]  = { 5,  9, 12, 13, 13, 12,  9,  5};
-static int PawnStackedEnd[8]  = {15, 19, 22, 23, 23, 22, 19, 15};
+static int PawnStackedMid[8]  = { 3,  5,  7,  8,  8,  7,  5,  3};
+static int PawnStackedEnd[8]  = {10, 10, 14, 16, 16, 14, 10, 10};
 
-static int PawnIsolatedMid[8] = {14, 20, 26, 26, 26, 26, 20, 14};
-static int PawnIsolatedEnd[8] = {10, 16, 18, 18, 18, 18, 16, 10};
+static int PawnIsolatedMid[8] = { 7, 10, 13, 13, 13, 13, 10,  7};
+static int PawnIsolatedEnd[8] = { 5,  7,  9,  9,  9,  9,  7,  5};
 
-static int PawnPassedMid[8]   = { 0,  0,  0, 10, 15, 24, 33,  0};
-static int PawnPassedEnd[8]   = { 0,  0,  0, 10, 15, 24, 33,  0};
+static int PawnPassedMid[8]   = { 0, 10, 10, 25, 50,  85, 130, 0};
+static int PawnPassedEnd[8]   = { 0, 15, 15, 35, 70, 130, 190, 0};
 
 // OTHER TERMS
 #define PSQT_MULTIPLIER (1)
