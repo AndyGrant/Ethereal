@@ -233,11 +233,8 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         value = quiescenceSearch(board, alpha, beta, height);
         
         // EVEN GAINING A QUEEN WOULD FAIL LOW
-        if (value < beta){
-            best = value;
-            bestMove = tableMove;
-            goto Cut;
-        }
+        if (value < beta)
+            return value;
     }
     
     // USE NULL MOVE PRUNING
