@@ -25,10 +25,10 @@ void evaluateKings(int* mid, int* end, Board* board);
 #define KING_CAN_CASTLE     ( 5)
 
 // ROOK EVALUATION TERMS
-#define ROOK_OPEN_FILE_MID   (12)
-#define ROOK_OPEN_FILE_END   ( 8)
-#define ROOK_SEMI_FILE_MID   ( 6)
-#define ROOK_SEMI_FILE_END   ( 6)
+#define ROOK_OPEN_FILE_MID   (24)
+#define ROOK_OPEN_FILE_END   (16)
+#define ROOK_SEMI_FILE_MID   ( 8)
+#define ROOK_SEMI_FILE_END   ( 8)
 #define ROOK_ON_7TH_MID      ( 6)
 #define ROOK_ON_7TH_END      ( 2)
 
