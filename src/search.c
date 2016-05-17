@@ -295,6 +295,9 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     
     // DETERMINE CHECK STATUS FOR LATE MOVE REDUCTIONS
     inCheck = !isNotInCheck(board, board->turn);
+   
+    // CHECK EXTENSION
+    if (inCheck) depth++;
     
     for (i = 0; i < size; i++){
         
@@ -337,8 +340,8 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             && depth >= 4
             && !inCheck
             && nodeType != PVNODE
-            && (MoveType(currentMove) == NormalMove
-            && undo[0].capturePiece == Empty)
+            && MoveType(currentMove) == NormalMove
+            && undo[0].capturePiece == Empty
             && isNotInCheck(board, board->turn))
             newDepth = depth-2;
         else
@@ -510,6 +513,8 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
     // GET KILLER MOVES
     uint16_t killer1 = KillerMoves[height][0];
     uint16_t killer2 = KillerMoves[height][1];
+    //uint16_t killer3 = (height >= 2) ? KillerMoves[height-2][0] : NoneMove;
+    //uint16_t killer4 = (height >= 2) ? KillerMoves[height-2][1] : NoneMove;
 
     for (i = 0; i < size; i++){
         
@@ -518,7 +523,9 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
         
         // THEN KILLERS, UNLESS OTHER GOOD CAPTURE
         value += 256   * (   killer1 == moves[i]);
-        value += 256   * (   killer2 == moves[i]);
+        //value += 255   * (   killer3 == moves[i]);
+        value += 254   * (   killer2 == moves[i]);
+        //value += 253   * (   killer4 == moves[i]);
         
         // INFO FOR POSSIBLE CAPTURE
         from_type = PieceType(board->squares[MoveFrom(moves[i])]);
