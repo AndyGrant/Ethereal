@@ -448,23 +448,25 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
     // INCREMENT TOTAL NODE COUNTER
     TotalNodes++;
     
-    // GET A STANDING-EVAL OF THE CURRENT BOARD
-    value = evaluate_board(board);
-    
-    // UPDATE LOWER BOUND
-    if (value > alpha)
-        alpha = value;
-    
-    // BOUNDS NOW OVERLAP?
-    if (alpha >= beta)
-        return value;
-    
-    // DELTA PRUNING IN WHEN NO PROMOTIONS AND NOT EXTREME LATE GAME
-    if (value + QueenValue < alpha
-        && board->numPieces >= 6 
-        && !(board->colourBitBoards[0] & board->pieceBitBoards[0] & RANK_7)
-        && !(board->colourBitBoards[1] & board->pieceBitBoards[0] & RANK_2))
-        return alpha;
+    if (isNotInCheck(board, board->turn)){
+        // GET A STANDING-EVAL OF THE CURRENT BOARD
+        value = evaluate_board(board);
+        
+        // UPDATE LOWER BOUND
+        if (value > alpha)
+            alpha = value;
+        
+        // BOUNDS NOW OVERLAP?
+        if (alpha >= beta)
+            return value;
+        
+        // DELTA PRUNING IN WHEN NO PROMOTIONS AND NOT EXTREME LATE GAME
+        if (value + QueenValue < alpha
+            && board->numPieces >= 6 
+            && !(board->colourBitBoards[0] & board->pieceBitBoards[0] & RANK_7)
+            && !(board->colourBitBoards[1] & board->pieceBitBoards[0] & RANK_2))
+            return alpha;
+    }
     
     // GENERATE AND PREPARE QUIET MOVE ORDERING
     genAllNonQuiet(board, moves, &size);
@@ -502,6 +504,9 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
             break;
     }
     
+    if (best == -2 * Mate)
+        return Mate;
+    
     return best;
 }
 
@@ -513,8 +518,8 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
     // GET KILLER MOVES
     uint16_t killer1 = KillerMoves[height][0];
     uint16_t killer2 = KillerMoves[height][1];
-    //uint16_t killer3 = (height >= 2) ? KillerMoves[height-2][0] : NoneMove;
-    //uint16_t killer4 = (height >= 2) ? KillerMoves[height-2][1] : NoneMove;
+    //int16_t killer3 = (height >= 2) ? KillerMoves[height-2][0] : NoneMove;
+    //int16_t killer4 = (height >= 2) ? KillerMoves[height-2][1] : NoneMove;
 
     for (i = 0; i < size; i++){
         

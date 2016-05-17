@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define Mate        (100000)
+#define Mate        (16000)
 #define MaxDepth    (32)
 #define MaxHeight   (128)
 
