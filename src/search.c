@@ -199,7 +199,6 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         
         // ENTRY MAY IMPROVE BOUNDS
         if (USE_TRANSPOSITION_TABLE
-            && !verifyingNull
             && EntryDepth(*entry) >= depth
             && nodeType != PVNODE){
                 
