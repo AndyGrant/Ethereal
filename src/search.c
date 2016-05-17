@@ -10,6 +10,7 @@
 #include "evaluate.h"
 #include "magics.h"
 #include "piece.h"
+#include "psqt.h"
 #include "search.h"
 #include "transposition.h"
 #include "types.h"
@@ -263,18 +264,12 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             
             value = alphaBetaSearch(board, alpha, beta, depth-5, height, CUTNODE, 1);
             
-            if (value >= beta){
-                best = value;
-                bestMove = tableMove;
-                goto Cut;
-            }
+            if (value >= beta)
+                return value;
         }
         
-        else if (value >= beta){
-            best = value;
-            bestMove = tableMove;
-            goto Cut;
-        }
+        else if (value >= beta)
+            return value;
     }
     
     // INTERNAL ITERATIVE DEEPING
@@ -543,6 +538,8 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
         // WE ARE ONLY CONCERED WITH QUEEN PROMOTIONS
         if (MoveType(moves[i]) == PromotionMove)
             value += QueenValue * (moves[i] & PromoteToQueen);
+        
+        value += PSQTopening[from_type][MoveTo(moves[i])] - PSQTopening[from_type][MoveFrom(moves[i])];
         
         values[i] = value;
     }
