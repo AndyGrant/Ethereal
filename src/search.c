@@ -26,10 +26,8 @@ int TotalNodes;
 int EvaluatingPlayer;
 
 uint16_t KillerMoves[MaxHeight][2];
-uint16_t KillerCaptures[MaxHeight][2];
 
 TransTable Table;
-SearchStats Stats;
 
 int HistoryGood[0xFFFF];
 int HistoryTotal[0xFFFF];
@@ -48,14 +46,6 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
     MoveList rootMoveList;
     rootMoveList.size = 0;
     genAllMoves(board,rootMoveList.moves,&(rootMoveList.size));
-    
-    Stats.totalNodes = 0;
-    Stats.successNM = 0;
-    Stats.failedNM = 0;
-    Stats.wastedNM = 0;
-    Stats.successLMR = 0;
-    Stats.failedLMR = 0;
-    Stats.wastedLMR = 0;
     
     int i;
     for (i = 0; i < 0xFFFF; i++){
@@ -98,8 +88,6 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
     
     dumpTranspositionTable(&Table);
     
-    printSearchStats(&Stats);
-    
     return rootMoveList.bestMove;
 }
 
@@ -109,8 +97,6 @@ int rootSearch(Board * board, MoveList * moveList, int depth){
     int i, valid = 0, best =-2*Mate, value;
     int currentNodes;
     Undo undo[1];
-    
-    int bestIndex;
    
     for (i = 0; i < moveList->size; i++){
         
@@ -129,15 +115,15 @@ int rootSearch(Board * board, MoveList * moveList, int depth){
         
         // FULL WINDOW SEARCH ON FIRST MOVE
         if (valid == 1)
-            value = -alphaBetaSearch(board, -beta, -alpha, depth-1, 1, PVNODE);
+            value = -alphaBetaSearch(board, -beta, -alpha, depth-1, 1, PVNODE, 0);
         
         // NULL WINDOW SEARCH ON NON-FIRST MOVES
         else{
-            value = -alphaBetaSearch(board, -alpha-1, -alpha, depth-1, 1, CUTNODE);
+            value = -alphaBetaSearch(board, -alpha-1, -alpha, depth-1, 1, CUTNODE, 0);
             
             // NULL WINDOW FAILED HIGH, RESEARCH
             if (value > alpha)
-                value = -alphaBetaSearch(board, -beta, -alpha, depth-1, 1, PVNODE);
+                value = -alphaBetaSearch(board, -beta, -alpha, depth-1, 1, PVNODE, 0);
         }
         
         // REVERT MOVE FROM BOARD
@@ -154,7 +140,6 @@ int rootSearch(Board * board, MoveList * moveList, int depth){
         // IMPROVED CURRENT VALUE
         if (value > best){
             best = value;
-            bestIndex = i;
             moveList->bestMove = moveList->moves[i];
             
             // IMPROVED CURRENT LOWER VALUE
@@ -164,19 +149,24 @@ int rootSearch(Board * board, MoveList * moveList, int depth){
         
         // IMPROVED AND FAILED HIGH
         if (alpha >= beta)
-            break;        
+            break;
     }
+    
+    // STORE IN TRANSPOSITION TABLE
+    storeTranspositionEntry(&Table, depth, board->turn, PVNODE, best, moveList->bestMove, board->hash);
     
     // SORT MOVELIST FOR NEXT ITERATION
     sortMoveList(moveList);
     return best;
 }
 
-int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, int nodeType){
+int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, int nodeType, int verifyingNull){
     int i, valid = 0, value, size = 0, best=-2*Mate, repeated = 0, newDepth;
-    int oldAlpha = alpha, usedTableEntry = 0, inCheck, values[256], optimalValue = -Mate;
+    int oldAlpha = alpha, inCheck, values[256], optimalValue = -Mate;
     int entryValue, entryType;
     uint16_t moves[256], bestMove = NoneMove, currentMove, tableMove = NoneMove;
+    uint16_t played[256];
+    int playednb = 0;
     TransEntry * entry;
     Undo undo[1];
     
@@ -197,7 +187,6 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     
     // INCREMENT TOTAL NODE COUNTER
     TotalNodes++;
-    Stats.totalNodes++;
     
     // LOOKUP CURRENT POSITION IN TRANSPOSITION TABLE
     entry = getTranspositionEntry(&Table, board->hash, board->turn);
@@ -209,6 +198,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         
         // ENTRY MAY IMPROVE BOUNDS
         if (USE_TRANSPOSITION_TABLE
+            && !verifyingNull
             && EntryDepth(*entry) >= depth
             && nodeType != PVNODE){
                 
@@ -230,14 +220,12 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             // BOUNDS NOW OVERLAP?
             if (alpha >= beta)
                 return entryValue;
-            
-            usedTableEntry = 1;
-            oldAlpha = alpha;
         }
     }
     
     // RAZOR PRUNING
     if (USE_RAZOR_PRUNING
+        && !verifyingNull
         && depth <= 3
         && nodeType != PVNODE
         && evaluate_board(board) + KnightValue < beta){
@@ -245,13 +233,17 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         value = quiescenceSearch(board, alpha, beta, height);
         
         // EVEN GAINING A QUEEN WOULD FAIL LOW
-        if (value < beta)
-            return value;
+        if (value < beta){
+            best = value;
+            bestMove = tableMove;
+            goto Cut;
+        }
     }
     
     // USE NULL MOVE PRUNING
     if (USE_NULL_MOVE_PRUNING
-        && depth >= 3 
+        && !verifyingNull
+        && depth >= 2 
         && nodeType != PVNODE
         && canDoNull(board)
         && isNotInCheck(board, board->turn)
@@ -261,37 +253,44 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         board->turn = !board->turn;
         board->history[board->numMoves++] = NullMove;
         
-        int temp = Stats.totalNodes;
-        
         // PERFORM NULL MOVE SEARCH
-        value = -alphaBetaSearch(board, -beta, -beta+1, depth-4, height+1, CUTNODE);
+        value = -alphaBetaSearch(board, -beta, -beta+1, depth-4, height+1, CUTNODE, verifyingNull);
         
         // REVERT NULL MOVE
         board->numMoves--;
         board->turn = !board->turn;
         
-        
-        if (value >= beta){
-            Stats.successNM++;
-            return value;
+        // VERIFICATION SEARCH
+        if (depth > 5
+            && value >= beta){
+            
+            value = alphaBetaSearch(board, alpha, beta, depth-5, height, CUTNODE, 1);
+            
+            if (value >= beta){
+                best = value;
+                bestMove = tableMove;
+                goto Cut;
+            }
         }
         
-        else {
-            Stats.failedNM++;
-            Stats.wastedNM += Stats.totalNodes - temp;
+        else if (value >= beta){
+            best = value;
+            bestMove = tableMove;
+            goto Cut;
         }
     }
     
     // INTERNAL ITERATIVE DEEPING
     if (USE_INTERNAL_ITERATIVE_DEEPENING
+        && !verifyingNull
         && depth >= 3
         && tableMove == NoneMove
         && nodeType == PVNODE){
         
         // SEARCH AT A LOWER DEPTH
-        value = alphaBetaSearch(board, alpha, beta, depth-3, height, PVNODE);
+        value = alphaBetaSearch(board, alpha, beta, depth-2, height, PVNODE, verifyingNull);
         if (value <= alpha)
-            value = alphaBetaSearch(board, -Mate, beta, depth-3, height, PVNODE);
+            value = alphaBetaSearch(board, -Mate, beta, depth-2, height, PVNODE, verifyingNull);
         
         // GET TABLE MOVE FROM TRANSPOSITION TABLE
         entry = getTranspositionEntry(&Table, board->hash, board->turn);
@@ -302,10 +301,6 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     // GENERATE AND PREPARE MOVE ORDERING
     genAllMoves(board, moves, &size);
     evaluateMoves(board, values, moves, size, height, tableMove);
-    
-    
-    uint16_t played[256];
-    int playednb = 0;
     
     // DETERMINE CHECK STATUS FOR LATE MOVE REDUCTIONS
     inCheck = !isNotInCheck(board, board->turn);
@@ -346,62 +341,38 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         
         // DETERMINE IF WE CAN USE LATE MOVE REDUCTIONS
         if (USE_LATE_MOVE_REDUCTIONS
-            && ((16384 * HistoryGood[currentMove]) / HistoryTotal[currentMove]) < 9830
+            && ((16384 * HistoryGood[currentMove]) / HistoryTotal[currentMove]) < 8190
             && valid >= 5
-            && depth >= 3
+            && depth >= 4
             && !inCheck
             && nodeType != PVNODE
-            
-            &&  (   (MoveType(currentMove) == NormalMove
-                    && undo[0].capturePiece == Empty)
-                || 
-                    (MoveType(currentMove) == PromotionMove
-                    && !(currentMove & PromoteToQueen))
-            )
-            
+            && (MoveType(currentMove) == NormalMove
+            && undo[0].capturePiece == Empty)
             && isNotInCheck(board, board->turn))
             newDepth = depth-2;
         else
             newDepth = depth-1;
-        
-        int temp = Stats.totalNodes;
          
         // FULL WINDOW SEARCH ON FIRST MOVE
         if (valid == 1 || nodeType != PVNODE){
             
-            value = -alphaBetaSearch(board, -beta, -alpha, newDepth, height+1, nodeType);
+            value = -alphaBetaSearch(board, -beta, -alpha, newDepth, height+1, nodeType, verifyingNull);
             
             // IMPROVED BOUND, BUT WAS REDUCED DEPTH?
             if (value > alpha
                 && newDepth == depth-2){
                     
-                Stats.failedLMR++;
-                Stats.wastedLMR += Stats.totalNodes - temp;
-                value = -alphaBetaSearch(board, -beta, -alpha, depth-1, height+1, nodeType);
+                value = -alphaBetaSearch(board, -beta, -alpha, depth-1, height+1, nodeType, verifyingNull);
             }
-            
-            else if (newDepth == depth-2)
-                Stats.successLMR++;
-            
         }
         
         // NULL WINDOW SEARCH ON NON-FIRST / PV MOVES
         else{
-            value = -alphaBetaSearch(board, -alpha-1, -alpha, newDepth, height+1, CUTNODE);
+            value = -alphaBetaSearch(board, -alpha-1, -alpha, newDepth, height+1, CUTNODE, verifyingNull);
             
             // NULL WINDOW FAILED HIGH, RESEARCH
-            if (value > alpha){
-                
-                if (newDepth == depth - 2){
-                    Stats.failedLMR++;
-                    Stats.wastedLMR += Stats.totalNodes - temp;
-                }
-                
-                value = -alphaBetaSearch(board, -beta, -alpha, depth-1, height+1, PVNODE);
-            }
-            
-            else if (newDepth == depth - 2)
-                Stats.successLMR++;
+            if (value > alpha)
+                value = -alphaBetaSearch(board, -beta, -alpha, depth-1, height+1, PVNODE, verifyingNull);
         }
         
         // REVERT MOVE FROM BOARD
@@ -420,16 +391,11 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         // IMPROVED AND FAILED HIGH
         if (alpha >= beta){
             
-            // UPDATE QUIET-KILLER MOVES
-            if (undo[0].capturePiece == Empty){
+            // UPDATE KILLER MOVES
+            if (MoveType(currentMove) == NormalMove
+                && undo[0].capturePiece == Empty){
                 KillerMoves[height][1] = KillerMoves[height][0];
                 KillerMoves[height][0] = currentMove;
-            }
-            
-            // UPDATE NOISY-KILLER MOVES
-            else {
-                KillerCaptures[height][1] = KillerCaptures[height][0];
-                KillerCaptures[height][0] = currentMove;
             }
             
             goto Cut;
@@ -487,7 +453,6 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
     
     // INCREMENT TOTAL NODE COUNTER
     TotalNodes++;
-    Stats.totalNodes++;
     
     // GET A STANDING-EVAL OF THE CURRENT BOARD
     value = evaluate_board(board);
@@ -539,14 +504,8 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
         }
         
         // IMPROVED AND FAILED HIGH
-        if (alpha >= beta){
-            
-            // UPDATE NOISY-KILLER MOVES
-            KillerCaptures[height][1] = KillerCaptures[height][0];
-            KillerCaptures[height][0] = currentMove;
-            
+        if (alpha >= beta)
             break;
-        }
     }
     
     return best;
@@ -560,8 +519,6 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
     // GET KILLER MOVES
     uint16_t killer1 = KillerMoves[height][0];
     uint16_t killer2 = KillerMoves[height][1];
-    uint16_t killer3 = KillerCaptures[height][0];
-    uint16_t killer4 = KillerCaptures[height][1];
 
     for (i = 0; i < size; i++){
         
@@ -571,8 +528,6 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
         // THEN KILLERS, UNLESS OTHER GOOD CAPTURE
         value += 256   * (   killer1 == moves[i]);
         value += 256   * (   killer2 == moves[i]);
-        value +=  32   * (   killer3 == moves[i]);
-        value +=  32   * (   killer4 == moves[i]);
         
         // INFO FOR POSSIBLE CAPTURE
         from_type = PieceType(board->squares[MoveFrom(moves[i])]);
@@ -641,16 +596,4 @@ int canDoNull(Board * board){
     uint64_t kings = board->pieceBitBoards[5];
     
     return (friendly & kings) != friendly;
-}
-
-void printSearchStats(SearchStats * stats){
-    printf("============ OVERALL STATS ============\n");
-    printf("Total Nodes : %d\n",stats->totalNodes);
-    printf("NM Success  : %d\n",stats->successNM);
-    printf("NM Failed   : %d\n",stats->failedNM);
-    printf("NM Wasted   : %d\n",stats->wastedNM);
-    printf("LMR Success : %d\n",stats->successLMR);
-    printf("LMR Failed  : %d\n",stats->failedLMR);
-    printf("LMR Wasted  : %d\n",stats->wastedLMR);
-    printf("=======================================\n");
 }

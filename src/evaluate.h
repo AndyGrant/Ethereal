@@ -21,22 +21,22 @@ void evaluateKings(int* mid, int* end, Board* board);
 #define KingValue   (  100)
 
 // KING EVALUATION TERMS
-#define KING_HAS_CASTLED    (10)
-#define KING_CAN_CASTLE     ( 5)
+#define KING_HAS_CASTLED    (20)
+#define KING_CAN_CASTLE     (10)
 
 // ROOK EVALUATION TERMS
-#define ROOK_OPEN_FILE_MID   (32)
-#define ROOK_OPEN_FILE_END   (18)
-#define ROOK_SEMI_FILE_MID   ( 8)
-#define ROOK_SEMI_FILE_END   ( 8)
-#define ROOK_ON_7TH_MID      (28)
-#define ROOK_ON_7TH_END      (32)
+#define ROOK_OPEN_FILE_MID   (64)
+#define ROOK_OPEN_FILE_END   (36)
+#define ROOK_SEMI_FILE_MID   (16)
+#define ROOK_SEMI_FILE_END   (16)
+#define ROOK_ON_7TH_MID      (56)
+#define ROOK_ON_7TH_END      (64)
 
 // BISHOP EVALUATION TERMS
-#define BISHOP_PAIR_MID      ( 36)
-#define BISHOP_PAIR_END      ( 54)
-#define BISHOP_HAS_WINGS_MID ( 16)
-#define BISHOP_HAS_WINGS_END ( 32)
+#define BISHOP_PAIR_MID      ( 72)
+#define BISHOP_PAIR_END      (108)
+#define BISHOP_HAS_WINGS_MID ( 32)
+#define BISHOP_HAS_WINGS_END ( 64)
 
 static int BishopOutpost[2][64] = {
     { 0, 0, 0, 0, 0, 0, 0, 0, 
