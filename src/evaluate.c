@@ -106,7 +106,7 @@ void evaluatePawns(int* mid, int* end, Board* board){
             myPawns ^= (1ull << sq);
             
             file = sq % 8;
-            rank = colour == ColourBlack ? 7 - (sq / 8) : sq / 8;
+            rank = (colour == ColourBlack) ? 7 - (sq / 8) : sq / 8;
             
             if (!(PassedPawnMasks[colour][sq] & enemyPawns)){
                 mg += PawnPassedMid[rank];
@@ -165,9 +165,6 @@ void evaluateKnights(int* mid, int*end, Board* board){
                         
                         if (PawnAdvanceMasks[colour][sq] & enemyPawns)
                             outpostValue *= 2;
-                        
-                        if (defenders & (defenders-1))
-                            outpostValue *= 1.5;
                     }
                     
                     mg += outpostValue / 2;

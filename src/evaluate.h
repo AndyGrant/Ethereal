@@ -86,8 +86,8 @@ static int PawnStackedEnd[8]  = {10, 10, 14, 16, 16, 14, 10, 10};
 static int PawnIsolatedMid[8] = { 7, 10, 13, 13, 13, 13, 10,  7};
 static int PawnIsolatedEnd[8] = { 5,  7,  9,  9,  9,  9,  7,  5};
 
-static int PawnPassedMid[8]   = { 0, 10, 10, 25, 50,  85, 130, 0};
-static int PawnPassedEnd[8]   = { 0, 15, 15, 35, 70, 130, 190, 0};
+static int PawnPassedMid[8]   = { 0, 10, 10, 15, 21,  28, 40, 0};
+static int PawnPassedEnd[8]   = { 0, 10, 10, 15, 21,  28, 40, 0};
 
 // OTHER TERMS
 #define PSQT_MULTIPLIER (1)
