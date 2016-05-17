@@ -31,6 +31,9 @@ uint16_t KillerCaptures[MaxHeight][2];
 TransTable Table;
 SearchStats Stats;
 
+int HistoryGood[0xFFFF];
+int HistoryTotal[0xFFFF];
+
 
 uint16_t getBestMove(Board * board, int seconds, int logging){
     
@@ -53,6 +56,12 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
     Stats.successLMR = 0;
     Stats.failedLMR = 0;
     Stats.wastedLMR = 0;
+    
+    int i;
+    for (i = 0; i < 0xFFFF; i++){
+        HistoryGood[i] = 1;
+        HistoryTotal[i] = 1;
+    }
     
     // PRINT SEARCH DATA TABLE HEADER TO CONSOLE
     if (!logging){
@@ -167,7 +176,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     int i, valid = 0, value, size = 0, best=-2*Mate, repeated = 0, newDepth;
     int oldAlpha = alpha, usedTableEntry = 0, inCheck, values[256], optimalValue = -Mate;
     int entryValue, entryType;
-    uint16_t moves[256], bestMove, currentMove, tableMove = NoneMove;
+    uint16_t moves[256], bestMove = NoneMove, currentMove, tableMove = NoneMove;
     TransEntry * entry;
     Undo undo[1];
     
@@ -294,6 +303,10 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     genAllMoves(board, moves, &size);
     evaluateMoves(board, values, moves, size, height, tableMove);
     
+    
+    uint16_t played[256];
+    int playednb = 0;
+    
     // DETERMINE CHECK STATUS FOR LATE MOVE REDUCTIONS
     inCheck = !isNotInCheck(board, board->turn);
     
@@ -324,33 +337,33 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         if (!isNotInCheck(board, !board->turn)){
             revertMove(board, currentMove, undo);
             continue;
-        }   
+        }
+        
+        played[playednb++] = currentMove;
     
         // INCREMENT COUNTER OF VALID MOVES FOUND
         valid++;
         
         // DETERMINE IF WE CAN USE LATE MOVE REDUCTIONS
         if (USE_LATE_MOVE_REDUCTIONS
+            && ((16384 * HistoryGood[currentMove]) / HistoryTotal[currentMove]) < 9830
             && valid >= 5
             && depth >= 3
             && !inCheck
             && nodeType != PVNODE
+            
             &&  (   (MoveType(currentMove) == NormalMove
-                    && undo[0].capturePiece == Empty
-                    && board->squares[MoveTo(currentMove)] >= KnightFlag)
+                    && undo[0].capturePiece == Empty)
                 || 
                     (MoveType(currentMove) == PromotionMove
                     && !(currentMove & PromoteToQueen))
-                ||
-                    (MoveType(currentMove) == CastleMove)
             )
+            
             && isNotInCheck(board, board->turn))
             newDepth = depth-2;
         else
             newDepth = depth-1;
         
-         
-         
         int temp = Stats.totalNodes;
          
         // FULL WINDOW SEARCH ON FIRST MOVE
@@ -437,6 +450,18 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     }
     
     Cut:
+    
+    if (best >= beta && bestMove != NoneMove){
+        HistoryGood[bestMove]++;
+    
+        for (i = playednb - 1; i >= 0; i--){
+            HistoryTotal[played[i]]++;
+            if (HistoryTotal[played[i]] >= 16384){
+                HistoryTotal[played[i]] = (HistoryTotal[played[i]] + 1) / 2;
+                HistoryGood[played[i]] = (HistoryGood[played[i]] + 1) / 2;
+            }
+        }
+    }
     
     // STORE RESULTS IN TRANSPOSITION TABLE
     if (time(NULL) < EndTime){
@@ -538,7 +563,6 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
     uint16_t killer3 = KillerCaptures[height][0];
     uint16_t killer4 = KillerCaptures[height][1];
 
-    
     for (i = 0; i < size; i++){
         
         // TABLEMOVE FIRST
