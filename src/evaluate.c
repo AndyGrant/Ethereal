@@ -98,6 +98,7 @@ void evaluatePawns(int* mid, int* end, Board* board){
         eg = -eg;
         
         myPawns = allPawns & board->colourBitBoards[colour];
+        uint64_t allMyPawns = myPawns;
         enemyPawns = allPawns ^ myPawns;
         
         for (i = 0; myPawns != 0; i++){
@@ -113,14 +114,19 @@ void evaluatePawns(int* mid, int* end, Board* board){
                 eg += PawnPassedEnd[rank];
             }
             
-            else if (!(IsolatedPawnMasks[sq] & myPawns)){
+            if (!(IsolatedPawnMasks[sq] & myPawns)){
                 mg -= PAWN_ISOLATED_MID;
                 eg -= PAWN_ISOLATED_END;
             }
             
-            if (FILES[file] & myPawns){
+            else if (FILES[file] & myPawns){
                 mg -= PAWN_STACKED_MID;
                 eg -= PAWN_STACKED_END;
+            }
+            
+            if (PawnConnectedMasks[colour][sq] & allMyPawns){
+                mg += PawnConnected[colour][sq];
+                eg += PawnConnected[colour][sq];
             }
         }
     }
