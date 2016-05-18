@@ -1,0 +1,9 @@
+Mate Threat Extensions
+50-Move Rule
+KBN v K Mate Table
+create boardIsDraw()
+check for draw in alpha beta search and exit
+check for draw in quiescence search and exit
+add eval table
+add pawn hash -> pawn hash table
+add genCheckEvasions()
