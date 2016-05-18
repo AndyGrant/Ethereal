@@ -53,8 +53,8 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
         
         pawnForwardOne = (myPawns << 8) & empty;
         pawnForwardTwo = ((pawnForwardOne & RANK_3) << 8) & empty;
-        pawnLeft = ((myPawns << 7) & ~FILE_A) & enemy;
-        pawnRight = ((myPawns << 9) & ~FILE_H) & enemy;
+        pawnLeft = ((myPawns << 7) & (~FILE_H)) & enemy;
+        pawnRight = ((myPawns << 9) & (~FILE_A)) & enemy;
         
         pawnPromoForward = pawnForwardOne & RANK_8;
         pawnPromoLeft = pawnLeft & RANK_8;
@@ -79,8 +79,8 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
         
         pawnForwardOne = (myPawns >> 8) & empty;
         pawnForwardTwo = ((pawnForwardOne & RANK_6) >> 8) & empty;
-        pawnLeft = ((myPawns >> 7) & ~FILE_H) & enemy;
-        pawnRight = ((myPawns >> 9) & ~FILE_A) & enemy;
+        pawnLeft = ((myPawns >> 7) & (~FILE_A)) & enemy;
+        pawnRight = ((myPawns >> 9) & (~FILE_H)) & enemy;
         
         pawnPromoForward = pawnForwardOne & RANK_1;
         pawnPromoLeft = pawnLeft & RANK_1;
@@ -291,8 +291,8 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
         rightShift = 9;
         
         pawnForwardOne = (myPawns << 8) & empty;
-        pawnLeft = ((myPawns << 7) & ~FILE_A) & enemy;
-        pawnRight = ((myPawns << 9) & ~FILE_H) & enemy;
+        pawnLeft = ((myPawns << 7) & ~FILE_H) & enemy;
+        pawnRight = ((myPawns << 9) & ~FILE_A) & enemy;
         
         pawnPromoForward = pawnForwardOne & RANK_8;
         pawnPromoLeft = pawnLeft & RANK_8;
@@ -315,8 +315,8 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
         rightShift = -9;
         
         pawnForwardOne = (myPawns >> 8) & empty;
-        pawnLeft = ((myPawns >> 7) & ~FILE_H) & enemy;
-        pawnRight = ((myPawns >> 9) & ~FILE_A) & enemy;
+        pawnLeft = ((myPawns >> 7) & ~FILE_A) & enemy;
+        pawnRight = ((myPawns >> 9) & ~FILE_H) & enemy;
         
         pawnPromoForward = pawnForwardOne & RANK_1;
         pawnPromoLeft = pawnLeft & RANK_1;
@@ -462,11 +462,11 @@ int squareIsAttacked(Board * board, int turn, int sq){
     
     // Pawns
     if (turn == ColourWhite){
-        if ((((square << 7) & ~FILE_A) & enemyPawns) != 0) return 1;
-        if ((((square << 9) & ~FILE_H) & enemyPawns) != 0) return 1;
+        if ((((square << 7) & ~FILE_H) & enemyPawns) != 0) return 1;
+        if ((((square << 9) & ~FILE_A) & enemyPawns) != 0) return 1;
     } else {
-        if ((((square >> 7) & ~FILE_H) & enemyPawns) != 0) return 1;
-        if ((((square >> 9) & ~FILE_A) & enemyPawns) != 0) return 1;
+        if ((((square >> 7) & ~FILE_A) & enemyPawns) != 0) return 1;
+        if ((((square >> 9) & ~FILE_H) & enemyPawns) != 0) return 1;
     }
     
     // Knights
