@@ -25,15 +25,17 @@ void evaluateKings(int* mid, int* end, Board* board);
 #define KING_CAN_CASTLE     ( 5)
 
 // ROOK EVALUATION TERMS
-#define ROOK_OPEN_FILE_MID   (25)
-#define ROOK_OPEN_FILE_END   (30)
-#define ROOK_SEMI_FILE_MID   (12)
-#define ROOK_SEMI_FILE_END   (12)
+#define ROOK_OPEN_FILE_MID  (25)
+#define ROOK_OPEN_FILE_END  (30)
+#define ROOK_SEMI_FILE_MID  (12)
+#define ROOK_SEMI_FILE_END  (12)
+#define ROOK_STACKED_MID    ( 8)
+#define ROOK_STACKED_END    ( 8)
 
 // BISHOP EVALUATION TERMS
-#define BISHOP_PAIR_MID      ( 36)
-#define BISHOP_PAIR_END      ( 46)
-#define BISHOP_HAS_WINGS_MID (  9)
+#define BISHOP_PAIR_MID      ( 46)
+#define BISHOP_PAIR_END      ( 64)
+#define BISHOP_HAS_WINGS_MID ( 13)
 #define BISHOP_HAS_WINGS_END ( 36)
 
 static int BishopOutpost[2][64] = {
@@ -83,8 +85,8 @@ static int KnightOutpost[2][64] = {
 #define PAWN_ISOLATED_MID   (10)
 #define PAWN_ISOLATED_END   (20)
 
-static int PawnPassedMid[8]   = { 0, 10, 10, 15, 21, 28, 40, 0};
-static int PawnPassedEnd[8]   = { 0, 10, 10, 15, 21, 28, 40, 0};
+static int PawnPassedMid[8]   = { 0,  0, 10, 18, 28, 40, 54, 0};
+static int PawnPassedEnd[8]   = { 0,  0, 10, 18, 28, 40, 54, 0};
 
 static int PawnConnected[2][64] = {
     { 0, 0, 0, 0, 0, 0, 0, 0,

@@ -286,6 +286,11 @@ void evaluateRooks(int* mid, int* end, Board* board){
                     eg += ROOK_SEMI_FILE_END;
                 }
             }
+            
+            if (FILES[sq % 8] & myRooks){
+                mg += ROOK_STACKED_MID;
+                eg += ROOK_STACKED_END;
+            }
         }
     }
     
