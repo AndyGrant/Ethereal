@@ -2,7 +2,7 @@ CC = gcc
 
 CFLAGS = -m64 -DNDEBUG -O3 -Wno-write-strings
 
-LIBS = -lstdc++
+LIBS = -lstdc++ -static
 
 SRC = bitutils.c        \
       board.c           \
