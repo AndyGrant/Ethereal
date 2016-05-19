@@ -198,6 +198,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         
         // ENTRY MAY IMPROVE BOUNDS
         if (USE_TRANSPOSITION_TABLE
+            && !verifyingNull
             && EntryDepth(*entry) >= depth
             && nodeType != PVNODE){
                 
@@ -252,7 +253,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         board->history[board->numMoves++] = NullMove;
         
         // PERFORM NULL MOVE SEARCH
-        value = -alphaBetaSearch(board, -beta, -beta+1, depth-4, height+1, PVNODE, verifyingNull);
+        value = -alphaBetaSearch(board, -beta, -beta+1, depth-4, height+1, CUTNODE, verifyingNull);
         
         // REVERT NULL MOVE
         board->numMoves--;
@@ -298,7 +299,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     inCheck = !isNotInCheck(board, board->turn);
    
     // CHECK EXTENSION
-    if (inCheck) depth++;
+    if (inCheck && !verifyingNull) depth++;
     
     for (i = 0; i < size; i++){
         
@@ -306,6 +307,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         
         // USE FUTILITY PRUNING
         if (USE_FUTILITY_PRUNING
+            && !verifyingNull
             && nodeType != PVNODE
             && valid >= 1
             && depth == 1
@@ -336,14 +338,14 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         
         // DETERMINE IF WE CAN USE LATE MOVE REDUCTIONS
         if (USE_LATE_MOVE_REDUCTIONS
-            && ((16384 * HistoryGood[currentMove]) / HistoryTotal[currentMove]) < (.6 * 16384)
-            && valid >= 4
-            && depth >= 3
+            && !verifyingNull
+            && usedTableEntry
+            && valid >= 5
+            && depth >= 4
             && !inCheck
             && nodeType != PVNODE
             && MoveType(currentMove) == NormalMove
             && undo[0].capturePiece == Empty
-            && board->squares[MoveTo(currentMove)] >= KnightFlag
             && isNotInCheck(board, board->turn))
             newDepth = depth-2;
         else
