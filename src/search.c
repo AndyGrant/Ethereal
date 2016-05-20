@@ -198,7 +198,6 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         
         // ENTRY MAY IMPROVE BOUNDS
         if (USE_TRANSPOSITION_TABLE
-            && !verifyingNull
             && EntryDepth(*entry) >= depth
             && nodeType != PVNODE){
                 
@@ -227,7 +226,6 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     
     // RAZOR PRUNING
     if (USE_RAZOR_PRUNING
-        && !verifyingNull
         && depth <= 3
         && nodeType != PVNODE
         && evaluate_board(board) + KnightValue < beta){
@@ -241,7 +239,6 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     
     // USE NULL MOVE PRUNING
     if (USE_NULL_MOVE_PRUNING
-        && !verifyingNull
         && depth >= 3
         && nodeType != PVNODE
         && canDoNull(board)
@@ -259,17 +256,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         board->numMoves--;
         board->turn = !board->turn;
         
-        // VERIFICATION SEARCH
-        if (depth > 5
-            && value >= beta){
-            
-            value = alphaBetaSearch(board, alpha, beta, depth-5, height, CUTNODE, 1);
-            
-            if (value >= beta)
-                return value;
-        }
-        
-        else if (value >= beta)
+        if (value >= beta)
             return value;
     }
     
@@ -299,7 +286,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     inCheck = !isNotInCheck(board, board->turn);
    
     // CHECK EXTENSION
-    if (inCheck && !verifyingNull) depth++;
+    if (inCheck) depth++;
     
     for (i = 0; i < size; i++){
         
@@ -339,7 +326,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         // DETERMINE IF WE CAN USE LATE MOVE REDUCTIONS
         if (USE_LATE_MOVE_REDUCTIONS
             && !verifyingNull
-            && usedTableEntry
+            && tableMove != NoneMove
             && valid >= 5
             && depth >= 4
             && !inCheck
@@ -451,25 +438,24 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
     // INCREMENT TOTAL NODE COUNTER
     TotalNodes++;
     
-    if (isNotInCheck(board, board->turn)){
-        // GET A STANDING-EVAL OF THE CURRENT BOARD
-        value = evaluate_board(board);
-        
-        // UPDATE LOWER BOUND
-        if (value > alpha)
-            alpha = value;
-        
-        // BOUNDS NOW OVERLAP?
-        if (alpha >= beta)
-            return value;
-        
-        // DELTA PRUNING IN WHEN NO PROMOTIONS AND NOT EXTREME LATE GAME
-        if (value + QueenValue < alpha
-            && board->numPieces >= 6 
-            && !(board->colourBitBoards[0] & board->pieceBitBoards[0] & RANK_7)
-            && !(board->colourBitBoards[1] & board->pieceBitBoards[0] & RANK_2))
-            return alpha;
-    }
+    // GET A STANDING-EVAL OF THE CURRENT BOARD
+    value = evaluate_board(board);
+    
+    // UPDATE LOWER BOUND
+    if (value > alpha)
+        alpha = value;
+    
+    // BOUNDS NOW OVERLAP?
+    if (alpha >= beta)
+        return value;
+    
+    // DELTA PRUNING IN WHEN NO PROMOTIONS AND NOT EXTREME LATE GAME
+    if (value + QueenValue < alpha
+        && board->numPieces >= 6 
+        && !(board->colourBitBoards[0] & board->pieceBitBoards[0] & RANK_7)
+        && !(board->colourBitBoards[1] & board->pieceBitBoards[0] & RANK_2))
+        return alpha;
+    
     
     // GENERATE AND PREPARE QUIET MOVE ORDERING
     genAllNonQuiet(board, moves, &size);
@@ -506,9 +492,6 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
         if (alpha >= beta)
             break;
     }
-    
-    if (best == -2 * Mate)
-        return Mate;
     
     return best;
 }
@@ -554,7 +537,7 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
         
         value += PSQTopening[from_type][MoveTo(moves[i])] - PSQTopening[from_type][MoveFrom(moves[i])];
         
-        value += ((128 * HistoryGood[moves[i]]) / HistoryTotal[moves[i]]);
+        value += ((512 * HistoryGood[moves[i]]) / HistoryTotal[moves[i]]);
         
         values[i] = value;
     }
