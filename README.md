@@ -42,6 +42,8 @@ In the beginnings of my computer science education I attempted to create a graph
     
     Ethereal (Commit #716) vs MicroMax4.8 |   50   23   27
     
+    Ethereal (Commit #723) vs MicroMax4.8 |   65   16   19
+    
     
 # Special Thanks
 
