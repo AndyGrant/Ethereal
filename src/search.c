@@ -380,7 +380,8 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             
             // UPDATE KILLER MOVES
             if (MoveType(currentMove) == NormalMove
-                && undo[0].capturePiece == Empty){
+                && undo[0].capturePiece == Empty
+                && KillerMoves[height][0] != currentMove){
                 KillerMoves[height][1] = KillerMoves[height][0];
                 KillerMoves[height][0] = currentMove;
             }
