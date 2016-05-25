@@ -15,8 +15,6 @@ void initalizeTranspositionTable(TransTable * table, int keySize){
         return;
     }
     
-    printf("bucket sizw = %d\n",sizeof(TransBucket));
-    
     // SET TABLE'S DATA MEMEBERS
     table->buckets = calloc(1 << keySize,sizeof(TransBucket));
     table->maxSize = 1 << keySize;
