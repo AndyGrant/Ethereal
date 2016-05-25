@@ -12,8 +12,6 @@
 #define USE_INTERNAL_ITERATIVE_DEEPENING    (1)
 #define USE_TRANSPOSITION_TABLE             (1)
 
-#define MaxKillers  (3)
-
 uint16_t getBestMove(Board * board, int seconds, int logging);
 
 int rootSearch(Board * board, MoveList * moveList, int depth);

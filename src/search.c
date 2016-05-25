@@ -236,7 +236,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     if (USE_RAZOR_PRUNING
         && depth <= 3
         && nodeType != PVNODE
-        && evaluate_board(board) + KnightValue < beta){
+        && evaluateBoard(board) + KnightValue < beta){
         
         value = quiescenceSearch(board, alpha, beta, height);
         
@@ -251,7 +251,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         && nodeType != PVNODE
         && canDoNull(board)
         && isNotInCheck(board, board->turn)
-        && evaluate_board(board) >= beta){
+        && evaluateBoard(board) >= beta){
             
         // APPLY NULL MOVE
         board->turn = !board->turn;
@@ -309,7 +309,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             && board->squares[MoveTo(currentMove)] == Empty){
                 
             if (optimalValue == -Mate)
-                optimalValue = evaluate_board(board) + PawnValue;
+                optimalValue = evaluateBoard(board) + PawnValue;
             
             value = optimalValue;
             
@@ -440,13 +440,13 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
     
     // MAX HEIGHT REACHED, STOP HERE
     if (height >= MaxHeight)
-        return evaluate_board(board);
+        return evaluateBoard(board);
     
     // INCREMENT TOTAL NODE COUNTER
     TotalNodes++;
     
     // GET A STANDING-EVAL OF THE CURRENT BOARD
-    value = evaluate_board(board);
+    value = evaluateBoard(board);
     
     // UPDATE LOWER BOUND
     if (value > alpha)
@@ -558,7 +558,7 @@ uint16_t getNextMove(uint16_t * moves, int * values, int index, int size){
     uint16_t bestMove;
     
     // FIND GREATEST VALUE
-    for (i = 1; i < size-index; i++)
+    for (i = 1; i < size - index; i++)
         if (values[i] > values[best])
             best = i;
         

@@ -4,7 +4,7 @@
 #include "types.h"
 
 // PROTOTYPES
-int evaluate_board(Board * board);
+int evaluateBoard(Board * board);
 
 void evaluatePawns(int* mid, int* end, Board* board);
 void evaluateKnights(int* mid, int*end, Board* board);

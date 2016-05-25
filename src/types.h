@@ -8,61 +8,32 @@
 #define MaxHeight   (128)
 
 typedef struct Board {
-    
-    // Easy Lookups for piece types
     int squares[64];
-    
-    // White + Black + Empty
     uint64_t colourBitBoards[3];
-    
-    // Each Piece + Empty
     uint64_t pieceBitBoards[7]; 
-    
-    // Necessary data members
     int turn;
     int castleRights;
     int fiftyMoveRule;
     int epSquare;
-    
-    // Zorbist Key
     uint64_t hash;
-    
-    // Material + PST values
     int opening;
     int endgame;
-    
-    // Move history
     uint64_t history[2048];
     int numMoves;
-    
-    // Keep Track of number of pieces
     int numPieces;
-    
     int hasCastled[2];
     
 } Board;
 
 typedef struct Undo {
-    
-    // Fast undo of captures
     int captureSquare;
     int capturePiece;
-    
-    // Previous turn and Castle Rights
     int turn;
     int castleRights;
-    
-    // Previous Material + PST values
     int opening;
     int endgame;
-    
-    // Previous EP Square
     int epSquare;
-    
-    // Previous Zorbist key
     uint64_t hash;
-    
-    // Keep Track of number of pieces
     int numPieces;
     
 } Undo;

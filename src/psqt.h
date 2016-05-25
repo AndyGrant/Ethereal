@@ -17,7 +17,6 @@ static int InversionTable[64] = {
      0,   1,   2,   3,   4,   5,   6,   7
 };
 
-
 // PSQT Tables are derived from Toga's Tables
 
 static int PawnOpeningMap32[32] = {
