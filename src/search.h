@@ -14,8 +14,6 @@
 
 #define MaxKillers  (3)
 
-/* Prototypes */
-
 uint16_t getBestMove(Board * board, int seconds, int logging);
 
 int rootSearch(Board * board, MoveList * moveList, int depth);

@@ -33,10 +33,10 @@ void evaluateKings(int* mid, int* end, Board* board);
 #define ROOK_STACKED_END    ( 8)
 
 // BISHOP EVALUATION TERMS
-#define BISHOP_PAIR_MID      ( 46)
-#define BISHOP_PAIR_END      ( 64)
-#define BISHOP_HAS_WINGS_MID ( 13)
-#define BISHOP_HAS_WINGS_END ( 36)
+#define BISHOP_PAIR_MID      (46)
+#define BISHOP_PAIR_END      (64)
+#define BISHOP_HAS_WINGS_MID (13)
+#define BISHOP_HAS_WINGS_END (36)
 
 static int BishopOutpost[2][64] = {
     { 0, 0, 0, 0, 0, 0, 0, 0, 

@@ -4,11 +4,9 @@
 #include <time.h>
 
 #include "bitboards.h"
-#include "bitutils.h"
 #include "board.h"
 #include "castle.h"
 #include "evaluate.h"
-#include "magics.h"
 #include "piece.h"
 #include "psqt.h"
 #include "search.h"
@@ -16,8 +14,6 @@
 #include "types.h"
 #include "move.h"
 #include "movegen.h"
-#include "movegentest.h"
-#include "zorbist.h"
 
 time_t StartTime;
 time_t EndTime;
@@ -35,10 +31,13 @@ int HistoryTotal[0xFFFF];
 
 uint16_t getBestMove(Board * board, int seconds, int logging){
     
+    int i, depth, value;
+    int centiValue, deltaTime, hashPercent;
+    
     // INITALIZE SEARCH GLOBALS
     StartTime = time(NULL);
     EndTime = StartTime + seconds;
-    TotalNodes = 0;    
+    TotalNodes = 0;
     EvaluatingPlayer = board->turn;
     initalizeTranspositionTable(&Table, 22);
     
@@ -47,7 +46,7 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
     rootMoveList.size = 0;
     genAllMoves(board,rootMoveList.moves,&(rootMoveList.size));
     
-    int i;
+    // CLEAR HISTORY COUNTERS
     for (i = 0; i < 0xFFFF; i++){
         HistoryGood[i] = 1;
         HistoryTotal[i] = 1;
@@ -59,7 +58,7 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
         printf("|  Depth  |  Score  |   Nodes   | Elapsed | Best |\n");
     }
     
-    int depth, value;
+    // PERFORM ITERATIVE DEEPENING
     for (depth = 1; depth < MaxDepth; depth++){
         
         // PERFORM FULL SEARCH ON ROOT
@@ -67,7 +66,12 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
         
         // LOG RESULTS TO INTERFACE
         if (logging){
-            printf("info depth %d score cp %d time %d nodes %d pv ",depth,(100*value)/PawnValue,1000*(time(NULL)-StartTime),TotalNodes);
+            
+            centiValue = (100*value)/PawnValue;
+            deltaTime = 1000*(time(NULL)-StartTime);
+            hashPercent = (1000*Table.used)/(4*Table.maxSize);
+            
+            printf("info depth %d score cp %d time %d nodes %d hashfull %d pv ",depth,centiValue,deltaTime,TotalNodes,hashPercent);
             printMove(rootMoveList.bestMove);
             printf("\n");
             fflush(stdout);
@@ -86,8 +90,7 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
             break;        
     }
     
-    dumpTranspositionTable(&Table);
-    
+    // RETURN BEST MOVE
     return rootMoveList.bestMove;
 }
 
@@ -304,10 +307,10 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             && !inCheck
             && MoveType(currentMove) == NormalMove
             && board->squares[MoveTo(currentMove)] == Empty){
-         
+                
             if (optimalValue == -Mate)
                 optimalValue = evaluate_board(board) + PawnValue;
-                
+            
             value = optimalValue;
             
             if (value <= alpha)
@@ -321,6 +324,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             continue;
         }
         
+        // STORE MOVE IN PLAYED
         played[valid] = currentMove;
     
         // INCREMENT COUNTER OF VALID MOVES FOUND
@@ -500,6 +504,7 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
 }
 
 void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int height, uint16_t tableMove){
+    
     int i, value;
     int from_type, to_type;
     int from_val, to_val;
@@ -538,8 +543,10 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
         else if (MoveType(moves[i]) == CastleMove)
             value += 256;
         
+        // PIECE SQUARE TABLE ORDERING
         value += PSQTopening[from_type][MoveTo(moves[i])] - PSQTopening[from_type][MoveFrom(moves[i])];
         
+        // HISTORY ORDERING
         value += ((512 * HistoryGood[moves[i]]) / HistoryTotal[moves[i]]);
         
         values[i] = value;
