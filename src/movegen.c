@@ -10,7 +10,7 @@
 #include "piece.h"
 #include "types.h"
 
-void genAllMoves(Board * board, uint16_t * moves, int * size){    
+void genAllMoves(Board * board, uint16_t * moves, int * size){
     uint64_t blockers;
     uint64_t attackable;
     
@@ -41,11 +41,11 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
     uint64_t myQueens  = friendly & board->pieceBitBoards[4];
     uint64_t myKings   = friendly & board->pieceBitBoards[5];
     
-    // Generate queen moves as if they were rooks and bishops
+    // GENERATE QUEEN MOVES AS IF THEY WERE ROOKS AND BISHOPS
     myBishops |= myQueens;
     myRooks |= myQueens;
     
-    // Generate Pawn BitBoards and Generate Enpass Moves
+    // DEFINE PAWN BITBOARDS AND FIND ENPASS MOVES
     if (board->turn == ColourWhite){
         forwardShift = 8;
         leftShift = 7;
@@ -99,7 +99,7 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
         }
     }
     
-    // Generate Pawn Moves
+    // GENERATE PAWN MOVES
     while(pawnForwardOne != 0){
         lsb = getLSB(pawnForwardOne);
         moves[(*size)++] = MoveMake(lsb-forwardShift,lsb,NormalMove);
@@ -151,7 +151,7 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
         pawnPromoRight ^= 1ull << lsb;
     }
     
-    // Generate Knight Moves
+    // GENERATE KNIGHT MOVES
     while(myKnights != 0){
         bit = getLSB(myKnights);
         attackable = KnightMap[bit] & notFriendly;
@@ -165,7 +165,7 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
         myKnights ^= 1ull << bit;
     }
     
-    // Generate Bishop & Queen Moves
+    // GENERATE BISHOP MOVES
     while(myBishops != 0){
         bit = getLSB(myBishops);
         blockers = notEmpty & OccupancyMaskBishop[bit];
@@ -181,7 +181,7 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
         myBishops ^= 1ull << bit;
     }
     
-    // Generate Rook & Queen Moves
+    // GENERATE ROOK MOVES
     while(myRooks != 0){
         bit = getLSB(myRooks);
         blockers = notEmpty & OccupancyMaskRook[bit];
@@ -197,7 +197,7 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
         myRooks ^= 1ull << bit;
     }
     
-    // Generate King Moves
+    // GENERATE KING MOVES
     while(myKings != 0){
         bit = getLSB(myKings);
         attackable = KingMap[bit] & notFriendly;
@@ -211,18 +211,18 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
         myKings ^= 1ull << bit;
     }
     
-    // Generate Castles
+    // GENERATE CASTLES
     if (isNotInCheck(board,board->turn)){
         if (board->turn == ColourWhite){
             
-            // King Side Castle
+            // KING SIDE
             if ((notEmpty & WhiteCastleKingSideMap) == 0)
                 if (board->castleRights & WhiteKingRights)
                     if (board->squares[7] == WhiteRook)
                         if (!squareIsAttacked(board,ColourWhite,5))
                             moves[(*size)++] = MoveMake(4,6,CastleMove);
                         
-            // Queen Side Castle
+            // QUEEN SIDE
             if ((notEmpty & WhiteCastleQueenSideMap) == 0)
                 if (board->castleRights & WhiteQueenRights)
                     if (board->squares[0] == WhiteRook)
@@ -232,14 +232,14 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
         
         else {
             
-            // King Side Castle
+            // KING SIDE
             if ((notEmpty & BlackCastleKingSideMap) == 0)
                 if (board->castleRights & BlackKingRights)
                     if (board->squares[63] == BlackRook)
                         if (!squareIsAttacked(board,ColourBlack,61))
                             moves[(*size)++] = MoveMake(60,62,CastleMove);
                         
-            // Queen Side Castle
+            // QUEEN SIDE
             if ((notEmpty & BlackCastleQueenSideMap) == 0)
                 if (board->castleRights & BlackQueenRights)
                     if (board->squares[56] == BlackRook)
@@ -248,7 +248,6 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
         }
     }
 }
-
 
 void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
     uint64_t blockers;

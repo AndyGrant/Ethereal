@@ -12,7 +12,7 @@
 #include "evaluate.h"
 #include "piece.h"
 
-int evaluate_board(Board * board){
+int evaluateBoard(Board * board){
     
     int mid = 0, end = 0;
     int curPhase, midEval, endEval, eval;

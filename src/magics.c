@@ -4,14 +4,6 @@
 #include "magics.h"
 #include "bitutils.h"
 
-/*
- *  Begings the process of initializing all magic bitboard
- *  components needed to create the end result move database
- *  lookup tables for move generation
- *
- *  Sets flag INITIALIZED_MAGICS (magics.h) to indicate
- *  that the lookup-tables have been initalized.
- */
 void initalizeMagics(){
     if (INITIALIZED_MAGICS)
         return;

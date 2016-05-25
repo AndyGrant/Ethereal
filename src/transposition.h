@@ -9,28 +9,18 @@
 #define CUTNODE (2)
 #define ALLNODE (3)
 
-#define EntrySetAge(e,a)     ((e)->data = ((a) << 3) | ((e)->data & 0b111))
-
+#define EntrySetAge(e,a)    ((e)->data = ((a) << 3) | ((e)->data & 0b111))
 #define EntryDepth(e)       ((e).depth)
-
 #define EntryHash16(e)      ((e).hash16)
-
 #define EntryAge(e)         ((e).data >> 3)
-
 #define EntryType(e)        (((e).data & 0b110) >> 1)
-
 #define EntryTurn(e)        ((e).data & 0b1)
-
 #define EntryMove(e)        ((e).bestMove)
-
 #define EntryValue(e)       ((e).value)
 
 void initalizeTranspositionTable(TransTable * table, int keySize);
-
 TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash, int turn);
-
 void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t turn, uint8_t type, int16_t value, uint16_t bestMove, uint64_t hash);
-
 void dumpTranspositionTable(TransTable * table);
 
 #endif 
