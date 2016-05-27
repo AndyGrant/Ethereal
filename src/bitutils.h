@@ -1,13 +1,11 @@
 #ifndef _BITUTILS_H
 #define _BITUTILS_H
 
-#include <stdint.h> // For uint64_t
+#include <stdint.h>
 
-/* Prototypes */
 int countSetBits(uint64_t bb);
 void getSetBits(uint64_t bb, int * arr);
 
-/* chessprogramming.wikispaces.com/Bitscan#DeBruijnMultiplation */
 static int LsbLookupTable[64] = {
     0, 47,  1, 56, 48, 27,  2, 60,
    57, 49, 41, 37, 28, 16,  3, 61,

@@ -5,6 +5,14 @@
 #include "masks.h"
 #include "psqt.h"
 
+/**
+ * Fill the various masks used to aid in the evaluation
+ * function. These masks provide an easy way to determine
+ * if a pawn is passed or isolated; if a pawn can attack
+ * a given square; if a knight or bishop is on an outpost
+ * square; as well as a quick way to determine if a pawn
+ * may advance to a given square.
+ */
 void initalizeMasks(){
     
     if (INITALIZED_MASKS)
@@ -97,6 +105,7 @@ void initalizeMasks(){
         }
     }
     
+    // INITALIZE PAWN-CONNECTED MASKS
     for (i = 8 ; i < 54; i++){
         file = i % 8;
         

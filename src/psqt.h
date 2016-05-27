@@ -3,6 +3,8 @@
 
 void initalizePSQT();
 
+static int INITALIZED_PSQT = 0;
+
 int PSQTopening[32][64];
 int PSQTendgame[32][64];
 
@@ -16,8 +18,6 @@ static int InversionTable[64] = {
      8,   9,  10,  11,  12,  13,  14,  15,
      0,   1,   2,   3,   4,   5,   6,   7
 };
-
-// PSQT Tables are derived from Toga's Tables
 
 static int PawnOpeningMap32[32] = {
      -15, -10,   0,   5,

@@ -14,6 +14,20 @@
 #include "movegen.h"
 #include "zorbist.h"
 
+/**
+ * Initalize a given board object based on the passed
+ * FEN position. Also initalize the Magics, Zorbist-Keys,
+ * PSQT tables, and evaluation Masks. Once the position
+ * has been setup in the BitBoards, determine the hash-signature
+ * of the current board as well as the opening and endgame values.
+ * Set hasCastled to false for both colours, even if one has 
+ * castled. This is only used for evaluation, and will make it
+ * so the evaluation only cares if a player has castled after
+ * the root of the search, an idea I got from Robert Hyatt.
+ *
+ * @param   board   Board pointer to store information
+ * @param   fen     FEN string to create position from
+ */
 void initalizeBoard(Board * board, char * fen){
     int i, j, sq;
     char r, f;
@@ -144,6 +158,11 @@ void initalizeBoard(Board * board, char * fen){
     board->hasCastled[1] = 0;
 }
 
+/**
+ * Print a given board in a user-friendly manner.
+ *
+ * @param   board   Board pointer to board to printf
+ */
 void printBoard(Board * board){
     int i, j, f, c, t;
     
@@ -174,6 +193,16 @@ void printBoard(Board * board){
     printf("\n        A    B    C    D    E    F    G    H\n");
 }
 
+/**
+ * Perform the Performance test move path enumeration
+ * recursivly. This is only used for testing the algorithm
+ * in movegen.c.
+ *
+ * @param   board   Board pointer to current position
+ * @param   depth   Counter for recursive cut-off
+ *
+ * @return          Number of positions found
+ */
 int perft(Board * board, int depth){
     if (depth == 0)
         return 1;

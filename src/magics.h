@@ -3,9 +3,6 @@
 
 #include <stdio.h>
 
-static int INITIALIZED_MAGICS = 0;
-
-/* Prototypes */
 void initalizeMagics();
 void generateKnightMap();
 void generateKingMap();
@@ -16,7 +13,20 @@ void generateOccupancyVariationsBishop();
 void generateMoveDatabaseRook();
 void generateMoveDatabaseBishop();
 
-/* Courtesy of Rival Chess */
+static int INITIALIZED_MAGICS = 0;
+
+uint64_t KnightMap[64];
+uint64_t KingMap[64];
+
+uint64_t OccupancyMaskRook[64];
+uint64_t OccupancyMaskBishop[64];
+
+uint64_t OccupancyVariationsRook[64][4096];
+uint64_t OccupancyVariationsBishop[64][512];
+
+uint64_t ** MoveDatabaseRook;
+uint64_t ** MoveDatabaseBishop;
+
 static int MagicShiftsRook[64] = {
     52,53,53,53,53,53,53,52,53,54,54,54,54,54,54,53,
     53,54,54,54,54,54,54,53,53,54,54,54,54,54,54,53,
@@ -24,7 +34,6 @@ static int MagicShiftsRook[64] = {
     53,54,54,54,54,54,54,53,52,53,53,53,53,53,53,52
 };
 
-/* Courtesy of Rival Chess */
 static int MagicShiftsBishop[64] = {
     58,59,59,59,59,59,59,58,59,59,59,59,59,59,59,59,
     59,59,57,57,57,57,59,59,59,59,57,55,55,57,59,59,
@@ -32,7 +41,6 @@ static int MagicShiftsBishop[64] = {
     59,59,59,59,59,59,59,59,58,59,59,59,59,59,59,58
 };
 
-/* Courtesy of Rival Chess */
 static uint64_t MagicNumberRook[64] = {
     0xa180022080400230, 0x40100040022000, 0x80088020001002, 0x80080280841000,
     0x4200042010460008, 0x4800a0003040080, 0x400110082041008, 0x8000a041000880,
@@ -52,7 +60,6 @@ static uint64_t MagicNumberRook[64] = {
     0x8015001002441801, 0x801000804000603, 0xc0900220024a401, 0x1000200608243
 };
 
-/* Courtesy of Rival Chess */
 static uint64_t MagicNumberBishop[64] = {
     0x2910054208004104, 0x2100630a7020180, 0x5822022042000000, 0x2ca804a100200020, 
     0x204042200000900, 0x2002121024000002, 0x80404104202000e8, 0x812a020205010840,
@@ -71,17 +78,5 @@ static uint64_t MagicNumberBishop[64] = {
     0x2400202602104000, 0x208520209440204, 0x40c000022013020, 0x2000104000420600,
     0x400000260142410, 0x800633408100500, 0x2404080a1410, 0x138200122002900    
 };
-
-uint64_t KnightMap[64];
-uint64_t KingMap[64];
-
-uint64_t OccupancyMaskRook[64];
-uint64_t OccupancyMaskBishop[64];
-
-uint64_t OccupancyVariationsRook[64][4096];
-uint64_t OccupancyVariationsBishop[64][512];
-
-uint64_t ** MoveDatabaseRook;
-uint64_t ** MoveDatabaseBishop;
 
 #endif

@@ -6,7 +6,18 @@
 #include "board.h"
 #include "types.h"
 
+/**
+ * Read all of the test cases found in perfttests.txt. Each
+ * test case contains a FEN string for the board setup, as 
+ * well as perft counts for various depths. Complete all of
+ * these tests and print out some information about how many
+ * tests were passed, failed, how many nodes were found, the 
+ * frequency of nodes, as well as the total time taken. If
+ * any cases fail these tests there are serious problems with
+ * the movegen algorithms.
+ */
 void moveGenTest(){
+    
     int i, depth;
     int passed = 0, failed = 0;
     uint64_t total = 0, found, nodes[128];
@@ -23,7 +34,6 @@ void moveGenTest(){
             if (c == EOF) goto EndOfMainLoop;
             if (c == ';') break;
             str[i] = c;
-            
         }
         
         str[i++] = '\0';

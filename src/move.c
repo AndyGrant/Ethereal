@@ -11,6 +11,18 @@
 #include "psqt.h"
 #include "zorbist.h"
 
+/**
+ * Apply a given move to a given board and update all of the
+ * necessary information including, opening and endgame values
+ * hash signature, piece counts, castling rights, enpassant
+ * potentials, and the history of moves made.
+ *
+ * @param   board   Board pointer to current position
+ * @param   move    Move to be applied to the board
+ * @param   undo    Undo object to be filled with information
+                    which is either hard or impossible to reverse
+                    with only the board and the move
+ */
 void applyMove(Board * board, uint16_t move, Undo * undo){
     int to, from;
     int rTo, rFrom;
@@ -218,6 +230,16 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
     }
 }
 
+/**
+ * Revert a given move to a given board and update all of the
+ * necessary information including, opening and endgame values
+ * hash signature, piece counts, castling rights, enpassant
+ * potentials, and the history of moves made.
+ *
+ * @param   board   Board pointer to current position
+ * @param   move    Move to be applied to the board
+ * @param   undo    Undo object with the missing information needed
+ */
 void revertMove(Board * board, uint16_t move, Undo * undo){
     int to, from;
     int rTo, rFrom;
@@ -353,6 +375,11 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
     }
 }
 
+/**
+ * Print a move in long algebraic form.
+ *
+ * @param   move    Move to be printed
+ */
 void printMove(uint16_t move){
     int from = MoveFrom(move);
     int to = MoveTo(move);

@@ -2,6 +2,13 @@
 #include "piece.h"
 #include "psqt.h"
 
+/**
+ * Fill the opening and endgame piece-square tables using
+ * the arrays located in psqt.h. Mirror these values for
+ * and negate them for black. The tables are always scoring
+ * assuming that white is positive and black is negative. Set
+ * INITALIZED_PSQT so that this is only done once.
+ */
 void initalizePSQT(){
     int i, j;
     
@@ -141,4 +148,6 @@ void initalizePSQT(){
             PSQTendgame[i][j] = -PSQTendgame[i-1][InversionTable[j]];
         }
     }
+    
+    INITALIZED_PSQT = 1;
 }

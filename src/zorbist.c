@@ -6,11 +6,18 @@
 
 #include "zorbist.h"
 
+/**
+ * Fill the ZorbistKeys[type][square] arrays with randomly
+ * generated 64-bit Integers. Set flag INITALIZED_ZORBIST
+ * so this process is not repeated. Seed rand with 0 sopen
+ * when testing results are the same each time.
+ */
 void initalizeZorbist(){
-    if (INITALIZED_ZORBIST)
-        return;
     
     int p, s;
+    
+    if (INITALIZED_ZORBIST)
+        return;
     
     srand(0);
     
@@ -30,7 +37,13 @@ void initalizeZorbist(){
     INITALIZED_ZORBIST = 1;
 }
 
+/**
+ * Generate a random 64-bit Integer.
+ *
+ * @return  Random 64-bit Integer.
+ */
 uint64_t genRandomBitstring(){
+    
     uint64_t str = 0;
     int i;
     
