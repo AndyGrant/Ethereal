@@ -17,6 +17,11 @@ int evaluateBoard(Board * board){
     int mid = 0, end = 0;
     int curPhase, midEval, endEval, eval;
     
+    int pawnCount   = 0;
+    int knightCount = 0;
+    int bishopCount = 0;
+    int rookCount   = 0;
+    
     // EXTRACT BASIC BITBOARDS FROM BOARD
     uint64_t white    = board->colourBitBoards[ColourWhite];
     uint64_t black    = board->colourBitBoards[ColourBlack];
@@ -65,18 +70,18 @@ int evaluateBoard(Board * board){
             return 0;
     }
     
-    evaluatePawns(&mid, &end, board);
-    evaluateKnights(&mid, &end, board);
-    evaluateBishops(&mid, &end, board);
-    evaluateRooks(&mid, &end, board);
+    evaluatePawns(&mid, &end, board, &pawnCount);
+    evaluateKnights(&mid, &end, board, &knightCount);
+    evaluateBishops(&mid, &end, board, &bishopCount);
+    evaluateRooks(&mid, &end, board, &rookCount);
     evaluateKings(&mid, &end, board);
     
     midEval = board->opening + mid + 10;
     endEval = board->endgame + end + 15;
     
-    curPhase = 24 - (1 * countSetBits(knights | bishops))
-                  - (2 * countSetBits(rooks))
-                  - (4 * countSetBits(queens));
+    curPhase = 24 - (1 * (knightCount + bishopCount))
+                  - (2 * rookCount)
+                  - (4 * (board->numPieces - 2 - pawnCount - knightCount - bishopCount - rookCount));
     curPhase = (curPhase * 256 + 12) / 24;
     
     eval = ((midEval * (256 - curPhase)) + (endEval * curPhase)) / 256;
@@ -84,7 +89,7 @@ int evaluateBoard(Board * board){
     return board->turn == ColourWhite ? eval : -eval;
 }
 
-void evaluatePawns(int* mid, int* end, Board* board){
+void evaluatePawns(int* mid, int* end, Board* board, int * pawnCount){
     
     uint64_t allPawns = board->pieceBitBoards[0];
     uint64_t myPawns, enemyPawns;
@@ -102,6 +107,8 @@ void evaluatePawns(int* mid, int* end, Board* board){
         enemyPawns = allPawns ^ myPawns;
         
         for (i = 0; myPawns != 0; i++){
+            
+            (*pawnCount)++;
             
             sq = getLSB(myPawns);
             myPawns ^= (1ull << sq);
@@ -135,7 +142,7 @@ void evaluatePawns(int* mid, int* end, Board* board){
     *mid += eg;
 }
 
-void evaluateKnights(int* mid, int*end, Board* board){
+void evaluateKnights(int* mid, int*end, Board* board, int * knightCount){
     
     uint64_t allPawns = board->pieceBitBoards[0];
     uint64_t allKnights = board->pieceBitBoards[1];
@@ -155,6 +162,8 @@ void evaluateKnights(int* mid, int*end, Board* board){
         enemyPawns = allPawns ^ myPawns;
         
         for (i = 0; myKnights != 0; i++){
+            
+            (*knightCount)++;
             
             sq = getLSB(myKnights);
             myKnights ^= (1ull << sq);
@@ -184,7 +193,7 @@ void evaluateKnights(int* mid, int*end, Board* board){
     *end += eg;
 }
 
-void evaluateBishops(int* mid, int* end, Board* board){
+void evaluateBishops(int* mid, int* end, Board* board, int * bishopCount){
     
     uint64_t allPawns = board->pieceBitBoards[0];
     uint64_t allBishops = board->pieceBitBoards[2];
@@ -212,6 +221,8 @@ void evaluateBishops(int* mid, int* end, Board* board){
         }
         
         for (i = 0; myBishops != 0; i++){
+            
+            (*bishopCount)++;
             
             sq = getLSB(myBishops);
             myBishops ^= (1ull << sq);
@@ -249,7 +260,7 @@ void evaluateBishops(int* mid, int* end, Board* board){
     *end += eg;
 }
 
-void evaluateRooks(int* mid, int* end, Board* board){
+void evaluateRooks(int* mid, int* end, Board* board, int * rookCount){
     
     uint64_t allPawns = board->pieceBitBoards[0];
     uint64_t allRooks = board->pieceBitBoards[3];
@@ -267,6 +278,8 @@ void evaluateRooks(int* mid, int* end, Board* board){
         myRooks = allRooks & board->colourBitBoards[colour];
         
         for (i = 0; myRooks != 0; i++){
+            
+            (*rookCount)++;
             
             sq = getLSB(myRooks);
             myRooks ^= (1ull << sq);

@@ -4,11 +4,11 @@
 #include "types.h"
 
 int evaluateBoard(Board * board);
-void evaluatePawns(int* mid, int* end, Board* board);
-void evaluateKnights(int* mid, int*end, Board* board);
-void evaluateBishops(int* mid, int* end, Board* board);
-void evaluateRooks(int* mid, int* end, Board* board);
-void evaluateKings(int* mid, int* end, Board* board);
+void evaluatePawns(int * mid, int * end, Board* board, int * pawnCount);
+void evaluateKnights(int * mid, int *end, Board* board, int * knightCount);
+void evaluateBishops(int * mid, int * end, Board* board, int * bishopCount);
+void evaluateRooks(int * mid, int * end, Board* board, int * rookCount);
+void evaluateKings(int * mid, int * end, Board* board);
 
 #define PawnValue   ( 100)
 #define KnightValue ( 325)
