@@ -4,7 +4,15 @@
 #include "magics.h"
 #include "bitutils.h"
 
+/**
+ * Initalize the Knight and King attack lookup tables.
+ * Initalize the needed data members for the Rook and
+ * Bishop attack lookup tables. Initalize the Rook and
+ * Bishop attack lookup tables. Set a flag so the process
+ * Is not repeated more than once.
+ */
 void initalizeMagics(){
+    
     if (INITIALIZED_MAGICS)
         return;
     
@@ -20,7 +28,13 @@ void initalizeMagics(){
     INITIALIZED_MAGICS = 1;
 }
 
+
+/**
+ * Fill the KnightMap[64] array with the correct 
+ * BitBoards for generating knight moves
+ */
 void generateKnightMap(){
+    
     int i;
     uint64_t z = 1;
     
@@ -29,17 +43,14 @@ void generateKnightMap(){
             KnightMap[i] |= z << ( i + 17);
         if (i - 17 >= 0 && i % 8 != 0)
             KnightMap[i] |= z << ( i - 17);
-            
         if (i + 15 < 64 && i % 8 != 0)
             KnightMap[i] |= z << ( i + 15);
         if (i - 15 >= 0 && i % 8 != 7)
             KnightMap[i] |= z << ( i - 15);
-            
         if (i + 10 < 64 && i % 8 <= 5)
             KnightMap[i] |= z << ( i + 10);
         if (i - 10 >= 0 && i % 8 >= 2)
             KnightMap[i] |= z << ( i - 10);
-            
         if (i + 6  < 64 && i % 8 >= 2)
             KnightMap[i] |= z << ( i + 6);
         if (i - 6  >= 0 && i % 8 <= 5)
@@ -47,11 +58,16 @@ void generateKnightMap(){
     }
 }
 
+/**
+ * Fill the KingMap[64] array with the correct 
+ * BitBoards for generating king moves
+ */
 void generateKingMap(){
+    
     int i;
     uint64_t z = 1;
     
-    for(i = 0; i < 64; i++){        
+    for(i = 0; i < 64; i++){
         if (i + 9 < 64 && i % 8 != 7)
             KingMap[i] |= z << (i + 9);
         if (i - 9 >= 0 && i % 8 != 0)
@@ -71,7 +87,14 @@ void generateKingMap(){
     }
 }
 
+/**
+ * Fill the OccupancyMaskRook[64] array with the correct
+ * BitBoards for what what be the proper moves if the only
+ * piece on the board was the rook in question. This is needed
+ * to create the occupancy variations for rooks.
+ */
 void generateOccupancyMaskRook(){
+    
     int i, bit;
     uint64_t mask;
     
@@ -88,7 +111,14 @@ void generateOccupancyMaskRook(){
     }
 }
 
-void generateOccupancyMaskBishop(){  
+/**
+ * Fill the OccupancyMaskBishop[64] array with the correct
+ * BitBoards for what what be the proper moves if the only
+ * piece on the board was the bishop in question. This is needed
+ * to create the occupancy variations for bishops.
+ */
+void generateOccupancyMaskBishop(){
+    
     int i, bit; 
     uint64_t mask;
     
@@ -105,7 +135,13 @@ void generateOccupancyMaskBishop(){
     }
 }
 
+/**
+ * Fill the OccupancyVariationsRook array with each possible
+ * Set of attacks based on potential blockers along the rook's
+ * sliding path.
+ */
 void generateOccupancyVariationsRook(){
+    
     int j, bitRef, variationCount;
     uint64_t mask, i;
     int setBitsInMask[20], setBitsInIndex[20];
@@ -125,7 +161,13 @@ void generateOccupancyVariationsRook(){
     }
 }
 
+/**
+ * Fill the OccupancyVariationsBishop array with each possible
+ * Set of attacks based on potential blockers along the bishop's
+ * sliding path.
+ */
 void generateOccupancyVariationsBishop(){
+    
     int j, bitRef, variationCount;
     uint64_t mask, i;
     int setBitsInMask[20], setBitsInIndex[20];
@@ -144,7 +186,15 @@ void generateOccupancyVariationsBishop(){
     }
 }
 
+/**
+ * Fill the MoveDatabaseRook tables so that the moves
+ * for a given rook can be found by calculating the 
+ * database index and current location, then accessing
+ * the table at MoveDatabaseRook[location][index], and 
+ * then finally bit-wise anding it with empty | enemy
+ */
 void generateMoveDatabaseRook(){
+    
     uint64_t validMoves;
     int variations, bitCount;
     int bitRef, i, j, magicIndex;
@@ -190,7 +240,15 @@ void generateMoveDatabaseRook(){
     }
 }
 
+/**
+ * Fill the MoveDatabaseBishop tables so that the moves
+ * for a given bishop can be found by calculating the 
+ * database index and current location, then accessing
+ * the table at MoveDatabaseBishop[location][index], and 
+ * then finally bit-wise anding it with empty | enemy
+ */
 void generateMoveDatabaseBishop(){
+    
     uint64_t validMoves;
     int variations, bitCount;
     int bitRef, i, j, magicIndex;

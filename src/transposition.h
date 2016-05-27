@@ -5,6 +5,11 @@
 
 #include "types.h"
 
+void initalizeTranspositionTable(TransTable * table, int keySize);
+TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash, int turn);
+void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t turn, uint8_t type, int16_t value, uint16_t bestMove, uint64_t hash);
+void dumpTranspositionTable(TransTable * table);
+
 #define PVNODE  (1)
 #define CUTNODE (2)
 #define ALLNODE (3)
@@ -17,10 +22,5 @@
 #define EntryTurn(e)        ((e).data & 0b1)
 #define EntryMove(e)        ((e).bestMove)
 #define EntryValue(e)       ((e).value)
-
-void initalizeTranspositionTable(TransTable * table, int keySize);
-TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash, int turn);
-void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t turn, uint8_t type, int16_t value, uint16_t bestMove, uint64_t hash);
-void dumpTranspositionTable(TransTable * table);
 
 #endif 

@@ -7,6 +7,16 @@
 #include "types.h"
 #include "transposition.h"
 
+/**
+ * Perform one of two operations:
+ *  1)  Allocate memory for the transposition table and
+ *      set the data members to their inital states
+ *  2)  Update the generation of the table because it has
+ *      already been created and can be used between searches
+ *
+ * @param   table   TransTable pointer to allocation destination
+ * @param   keySize Number of bits per key, also the size of the table
+ */
 void initalizeTranspositionTable(TransTable * table, int keySize){
     
     // TABLE HAS ALREADY BEEN INITALIZED
@@ -23,6 +33,16 @@ void initalizeTranspositionTable(TransTable * table, int keySize){
     table->used = 0;
 }
 
+/**
+ * Fetch a matching entry from the table. A matching entry has
+ * the same hash signature and the same turn.
+ *
+ * @param   table   TransTable pointer to table location
+ * @param   hash    64-bit hash-key to be matched
+ * @param   turn    Game turn to be matched
+ *
+ * @return          Found entry or NULL
+ */
 TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash, int turn){
     
     TransBucket * bucket = &(table->buckets[hash % table->maxSize]);
@@ -41,6 +61,22 @@ TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash, int turn){
     return NULL;
 }
 
+/**
+ * Create and store a new entry in the Transposition Table. If
+ * the bucket found with the lower N(keySize) bits of the hash
+ * has an empty location, store it there. Otherwise replace the 
+ * lowest depth entry that came from a previous search (has a 
+ * different age/generation). Finally, if there are no old entries,
+ * replace the lowest depth entry found in the bucket.
+ *
+ * @param   table       TransTable pointer to table location
+ * @param   depth       Depth from the current search
+ * @param   turn        Turn from current search
+ * @param   type        Entry type based on alpha-beta window
+ * @param   value       Value to be returned by the search
+ * @param   bestMove    Best move found during the search
+ * @param   hash        64-bit hash-key corresponding to the board
+*/
 void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t turn, uint8_t type, int16_t value, uint16_t bestMove, uint64_t hash){
     
     TransBucket * bucket = &(table->buckets[hash % table->maxSize]);
@@ -112,6 +148,14 @@ void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t turn, ui
         toReplace->hash16 = hash16;
 }
 
+/**
+ * Print out information about the Transposition Table. Print
+ * the percentage of the table that has been used, as well as
+ * the number of each type of entry {ALLNODE, CUTNODE, PVNODE}
+ * at each depth that can be found in the table
+ *
+ * @param   table   TransTable pointer to table location
+ */
 void dumpTranspositionTable(TransTable * table){
     
     printf("USED %d of %d\n",table->used,4*(table->maxSize));

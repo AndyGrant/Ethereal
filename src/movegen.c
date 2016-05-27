@@ -10,6 +10,16 @@
 #include "piece.h"
 #include "types.h"
 
+/**
+ * Generate all of the psudeo legal moves for a given board.
+ * The moves will be stored in a pointer passed to the function,
+ * and an integer pointer passed to the function will be updated
+ * to reflect the total number of psuedo legal moves found.
+ *
+ * @param   board   Board pointer with the current position
+ * @param   moves   Destination for the found psuedo legal moves
+ * @param   size    Pointer to keep track of the number of moves
+ */
 void genAllMoves(Board * board, uint16_t * moves, int * size){
     uint64_t blockers;
     uint64_t attackable;
@@ -249,6 +259,18 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
     }
 }
 
+
+/**
+ * Generate all of the psudeo legal moves which are considered
+ * non quiet, IE captures, promotions, enpassant, for a given board
+ * The moves will be stored in a pointer passed to the function,
+ * and an integer pointer passed to the function will be updated
+ * to reflect the total number of psuedo legal moves found.
+ *
+ * @param   board   Board pointer with the current position
+ * @param   moves   Destination for the found psuedo legal moves
+ * @param   size    Pointer to keep track of the number of moves
+ */
 void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
     uint64_t blockers;
     uint64_t attackable;
@@ -434,12 +456,31 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
     }
 }
 
+/**
+ * Determine if the king of a certain colour is in check
+ * on the board passed to the function
+ *
+ * @param   board   Board pointer to current position
+ * @param   turn    Colour of the king to determine check status for
+ *
+ * @return          1 for not in check, 0 for in check
+ */
 int isNotInCheck(Board * board, int turn){
     int kingsq = getLSB(board->colourBitBoards[turn] & board->pieceBitBoards[5]);
     assert(board->squares[kingsq] == WhiteKing + turn);
     return !squareIsAttacked(board,turn,kingsq);
 }
 
+/**
+ * Determine if the enemy pieces are able to attacked
+ * a given square. This is used by isNotInCheck.
+ *
+ * @param   board   Board pointer for current position
+ * @param   turn    Colour of friendly side
+ * @param   sq      Square to be attacked
+ *
+ * @return          1 if can be attacked, 0 if cannot
+ */
 int squareIsAttacked(Board * board, int turn, int sq){
     int kingbit, dbIndex;
     uint64_t square, blockers;
