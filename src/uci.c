@@ -35,6 +35,8 @@ int main(){
         if (stringEquals(str, "uci")){
             printf("id name Ethereal\n");
             printf("id author Andrew Grant\n");
+            printf("uciok\n");
+            fflush(stdout);
         }
         
         else if (stringStartsWith(str, "debug")){
@@ -43,6 +45,7 @@ int main(){
         
         else if (stringEquals(str, "isready")){
             printf("readyok\n");
+            fflush(stdout);
         } 
         
         else if (stringStartsWith(str, "setoption")){
@@ -229,6 +232,8 @@ int main(){
             }
             
             printMove(getBestMove(&info));
+            printf("\n");
+            fflush(stdout);
         }
         
         else if (stringEquals(str, "stop")){
@@ -265,7 +270,10 @@ int getInput(char * str){
     if (fgets(str,2048,stdin) == NULL)
         exit(EXIT_FAILURE);
     
-    // TERMINATE THE INPUT STRING
+    
     char * ptr = strchr(str, '\n');
+    if (ptr != NULL) *ptr = '\0';
+    
+    ptr = strchr(str, '\r');
     if (ptr != NULL) *ptr = '\0';
 }
