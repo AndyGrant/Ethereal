@@ -89,17 +89,7 @@ int main(){
                 genAllMoves(&(info.board), moves, &size);
                 
                 for (size -= 1; size >= 0; size--){
-                    testStr[0] = 'a' + MoveFrom(moves[size]) % 8;
-                    testStr[1] = '1' + MoveFrom(moves[size]) / 8;
-                    testStr[2] = 'a' +   MoveTo(moves[size]) % 8;
-                    testStr[3] = '1' +   MoveTo(moves[size]) / 8;
-                    
-                    if (MoveType(moves[size]) != PromotionMove)
-                        testStr[4] = '\0';
-                    else{
-                        testStr[4] = promoteDict[moves[size] >> 14];
-                        testStr[5] = '\0';
-                    }
+                    moveToString(testStr, moves[size]);
                     
                     if (stringEquals(moveStr, testStr)){
                         applyMove(&(info.board), moves[size], &undo);
@@ -231,8 +221,8 @@ int main(){
                 info.endTime2 = info.startTime + (time / (double)(mtg + 1));
             }
             
-            printMove(getBestMove(&info));
-            printf("\n");
+            moveToString(moveStr, getBestMove(&info));
+            printf("bestmove %s\n",moveStr);
             fflush(stdout);
         }
         
@@ -276,4 +266,28 @@ int getInput(char * str){
     
     ptr = strchr(str, '\r');
     if (ptr != NULL) *ptr = '\0';
+}
+
+void moveToString(char * str, uint16_t move){
+    
+    static  char promoteDict[4] = {'n', 'b', 'r', 'q'};
+    
+    int from = MoveFrom(move);
+    int to = MoveTo(move);
+    
+    char fromFile = '1' + (from/8);
+    char toFile = '1' + (to/8);
+    char fromRank = 'a' + (from%8);
+    char toRank = 'a' + (to%8);
+    
+    str[0] = fromRank;
+    str[1] = fromFile;
+    str[2] = toRank;
+    str[3] = toFile;
+    
+    if (MoveType(move) == PromotionMove){
+        str[4] = promoteDict[move>>14];
+        str[5] = '\0';
+    } else
+        str[4] = '\0';
 }
