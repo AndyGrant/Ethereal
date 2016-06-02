@@ -107,9 +107,12 @@ void initalizeBoard(Board * board, char * fen){
     // Determine Number of half moves into fiftymoverule
     board->fiftyMoveRule = 0;
     if (fen[++i] != '-'){
+        
         // Two Digit Number
-        if (fen[i+1] != ' ') 
-            board->fiftyMoveRule = (10 * (fen[i] - '0')) + fen[1+i++] - '0';
+        if (fen[i+1] != ' '){ 
+            board->fiftyMoveRule = (10 * (fen[i] - '0')) + fen[1+i] - '0';
+            i++;
+        }
         
         // One Digit Number
         else

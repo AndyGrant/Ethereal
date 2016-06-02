@@ -2,7 +2,7 @@ CC = gcc
 
 CFLAGS = -m64 -DNDEBUG -O3 -Wno-write-strings
 
-LIBS = -lstdc++ -static
+LIBS = -static
 
 SRC = bitutils.c        \
       board.c           \
@@ -14,8 +14,9 @@ SRC = bitutils.c        \
       movegentest.c     \
       psqt.c            \
       search.c          \
+      time.c            \
       transposition.c   \
-      uci.cpp           \
+      uci.c             \
       zorbist.c         \
 
 EXE = EtherealBitBoard
