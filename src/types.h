@@ -69,4 +69,17 @@ typedef struct MoveList {
     
 } MoveList;
 
+typedef struct SearchInfo {
+    Board board;
+    int searchIsInfinite;
+    int searchIsDepthLimited;
+    int searchIsTimeLimited;
+    int depthLimit;
+    int terminateSearch;
+    double startTime;
+    double endTime1;
+    double endTime2;
+    
+} SearchInfo;
+
 #endif

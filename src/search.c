@@ -12,11 +12,9 @@
 #include "search.h"
 #include "transposition.h"
 #include "types.h"
+#include "time.h"
 #include "move.h"
 #include "movegen.h"
-
-time_t StartTime;
-time_t EndTime;
 
 int TotalNodes;
 
@@ -29,22 +27,23 @@ TransTable Table;
 int HistoryGood[0xFFFF];
 int HistoryTotal[0xFFFF];
 
-uint16_t getBestMove(Board * board, int seconds, int logging){
+SearchInfo * Info;
+
+uint16_t getBestMove(SearchInfo * info){
     
     int i, depth, value;
     int centiValue, deltaTime, hashPercent;
     
     // INITALIZE SEARCH GLOBALS
-    StartTime = time(NULL);
-    EndTime = StartTime + seconds;
     TotalNodes = 0;
-    EvaluatingPlayer = board->turn;
+    EvaluatingPlayer = info->board.turn;
     initalizeTranspositionTable(&Table, 22);
+    Info = info;
     
     // POPULATE ROOT'S MOVELIST
     MoveList rootMoveList;
     rootMoveList.size = 0;
-    genAllMoves(board,rootMoveList.moves,&(rootMoveList.size));
+    genAllMoves(&(info->board),rootMoveList.moves,&(rootMoveList.size));
     
     // CLEAR HISTORY COUNTERS
     for (i = 0; i < 0xFFFF; i++){
@@ -52,42 +51,34 @@ uint16_t getBestMove(Board * board, int seconds, int logging){
         HistoryTotal[i] = 1;
     }
     
-    // PRINT SEARCH DATA TABLE HEADER TO CONSOLE
-    if (!logging){
-        printBoard(board);
-        printf("|  Depth  |  Score  |   Nodes   | Elapsed | Best |\n");
-    }
+    printBoard(&(info->board));
     
     // PERFORM ITERATIVE DEEPENING
     for (depth = 1; depth < MaxDepth; depth++){
         
         // PERFORM FULL SEARCH ON ROOT
-        value = rootSearch(board,&rootMoveList,depth);
+        value = rootSearch(&(info->board),&rootMoveList,depth);
         
         // LOG RESULTS TO INTERFACE
-        if (logging){
-            
-            centiValue = (100*value)/PawnValue;
-            deltaTime = 1000*(time(NULL)-StartTime);
-            hashPercent = (1000*Table.used)/(4*Table.maxSize);
-            
-            printf("info depth %d score cp %d time %d nodes %d hashfull %d pv ",depth,centiValue,deltaTime,TotalNodes,hashPercent);
-            printMove(rootMoveList.bestMove);
-            printf("\n");
-            fflush(stdout);
-        }
+        centiValue = (100*value)/PawnValue;
+        deltaTime = getRealTime() - info->startTime;
+        hashPercent = (1000*Table.used)/(4*Table.maxSize);
+        printf("info depth %d score cp %d time %d nodes %d hashfull %d pv ",depth,centiValue,deltaTime,TotalNodes,hashPercent);
+        printMove(rootMoveList.bestMove);
+        printf("\n");
+        fflush(stdout);
         
-        // LOG RESULTS TO CONSOLE
-        else {
-            printf("|%9d|%9d|%11d|%9d| ",depth,(100*value)/PawnValue,TotalNodes,(time(NULL)-StartTime));
-            printMove(rootMoveList.bestMove);
-            printf(" |\n");
+        if (info->searchIsDepthLimited && info->depthLimit == depth)
+            break;
+            
+        if (info->searchIsTimeLimited){
+            
+            if (getRealTime() > info->endTime2)
+                break;
+            
+            if ((2 * (getRealTime() - info->startTime)) > (info->endTime1 - info->startTime))
+                break;
         }
-        
-        // END THE SEARCH IF THE NEXT DEPTH IS EXPECTED
-        // TO TAKE LONGER THAN THE TOTAL ALLOTED TIME
-        if ((time(NULL) - StartTime) * 4 > seconds)
-            break;        
     }
     
     // RETURN BEST MOVE
@@ -156,7 +147,7 @@ int rootSearch(Board * board, MoveList * moveList, int depth){
     }
     
     // STORE IN TRANSPOSITION TABLE
-    if (time(NULL) > EndTime)
+    if (!Info->searchIsTimeLimited || getRealTime() < Info->endTime2)
         storeTranspositionEntry(&Table, depth, board->turn, PVNODE, best, moveList->bestMove, board->hash);
     
     // SORT MOVELIST FOR NEXT ITERATION
@@ -178,7 +169,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     Undo undo[1];
     
     // SEARCH TIME HAS EXPIRED
-    if (EndTime < time(NULL))
+    if (Info->searchIsTimeLimited && getRealTime() >= Info->endTime2)
         return board->turn == EvaluatingPlayer ? -Mate : Mate;
     
     // DETERMINE 3-FOLD REPITION
@@ -421,7 +412,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     }
     
     // STORE RESULTS IN TRANSPOSITION TABLE
-    if (time(NULL) < EndTime){
+    if (!Info->searchIsTimeLimited || getRealTime() < Info->endTime2){
         if (best > oldAlpha && best < beta)
             storeTranspositionEntry(&Table, depth, board->turn,  PVNODE, best, bestMove, board->hash);
         else if (best >= beta)

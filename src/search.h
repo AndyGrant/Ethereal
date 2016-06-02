@@ -5,7 +5,7 @@
 
 #include "types.h"
 
-uint16_t getBestMove(Board * board, int seconds, int logging);
+uint16_t getBestMove(SearchInfo * info);
 int rootSearch(Board * board, MoveList * moveList, int depth);
 int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, int nodeType);
 int quiescenceSearch(Board * board, int alpha, int beta, int height);
