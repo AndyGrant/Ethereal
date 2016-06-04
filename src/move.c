@@ -42,6 +42,7 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
     undo->castleRights = board->castleRights;
     undo->opening = board->opening;
     undo->endgame = board->endgame;
+    undo->phash = board->phash;
     undo->hash = board->hash;
     undo->numPieces = board->numPieces;
     
@@ -84,7 +85,11 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
         board->hash ^= ZorbistKeys[fromPiece][from]
                     ^  ZorbistKeys[fromPiece][to]
                     ^  ZorbistKeys[toPiece][to];
-        
+                    
+        board->phash^= PawnKeys[fromPiece][from]
+                    ^  PawnKeys[fromPiece][to]
+                    ^  PawnKeys[toPiece][to];
+                    
         board->epSquare = ((!fromType) & (abs(to-from) == 16)) * (from + ((to-from)>>1));
         board->numPieces -= (toPiece != Empty);
         return;
@@ -136,6 +141,11 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
                     ^  ZorbistKeys[fromPiece][to]
                     ^  ZorbistKeys[rFromPiece][rFrom]
                     ^  ZorbistKeys[rFromPiece][rTo];
+                    
+        board->phash^= PawnKeys[fromPiece][from]
+                    ^  PawnKeys[fromPiece][to]
+                    ^  PawnKeys[rFromPiece][rFrom]
+                    ^  PawnKeys[rFromPiece][rTo];
         
         board->epSquare = -1;
         return;
@@ -180,6 +190,10 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
         board->hash ^= ZorbistKeys[fromPiece][from]
                     ^  ZorbistKeys[promoPiece][to]
                     ^  ZorbistKeys[toPiece][to];
+                    
+        board->phash^= PawnKeys[fromPiece][from]
+                    ^  PawnKeys[promoPiece][to]
+                    ^  PawnKeys[toPiece][to];
         
         board->epSquare = -1;
         board->numPieces -= (toPiece != Empty);
@@ -223,6 +237,10 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
         board->hash ^= ZorbistKeys[fromPiece][from]
                     ^  ZorbistKeys[fromPiece][to]
                     ^  ZorbistKeys[enpassPiece][ep];
+                    
+        board->phash^= PawnKeys[fromPiece][from]
+                    ^  PawnKeys[fromPiece][to]
+                    ^  PawnKeys[enpassPiece][ep];
         
         board->epSquare = -1;
         board->numPieces -= 1;
@@ -275,6 +293,7 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
         board->epSquare = undo->epSquare;
         board->opening = undo->opening;
         board->endgame = undo->endgame;
+        board->phash = undo->phash;
         board->hash = undo->hash;
         board->numPieces = undo->numPieces;
         return;
@@ -311,6 +330,7 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
         board->epSquare = undo->epSquare;
         board->opening = undo->opening;
         board->endgame = undo->endgame;
+        board->phash = undo->phash;
         board->hash = undo->hash;
         board->numPieces = undo->numPieces;
         return;
@@ -341,6 +361,7 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
         board->epSquare = undo->epSquare;
         board->opening = undo->opening;
         board->endgame = undo->endgame;
+        board->phash = undo->phash;
         board->hash = undo->hash;
         board->numPieces = undo->numPieces;
         return;
@@ -369,6 +390,7 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
         board->epSquare = undo->epSquare;
         board->opening = undo->opening;
         board->endgame = undo->endgame;
+        board->phash = undo->phash;
         board->hash = undo->hash;
         board->numPieces = undo->numPieces;
         return;

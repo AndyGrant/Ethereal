@@ -148,6 +148,40 @@ void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t turn, ui
         toReplace->hash16 = hash16;
 }
 
+void initalizePawnTable(PawnTable * ptable){
+    int i;
+    
+    for (i = 0; i < (1 << 15); i++){
+        (&(ptable->entries[i]))->hash = 0;
+        (&(ptable->entries[i]))->mg = Mate;
+        (&(ptable->entries[i]))->eg = Mate;
+    }
+}
+
+PawnEntry * getPawnEntry(PawnTable * ptable, uint64_t hash){
+    PawnEntry * pentry = &(ptable->entries[hash >> 48]);
+    
+    if (pentry->mg != Mate
+        && pentry->eg != Mate
+        && pentry->hash == hash)
+        return pentry;
+        
+    return NULL;
+}
+
+void storePawnEntry(PawnTable * ptable, uint64_t hash, int mg, int eg){
+    
+    PawnEntry * pentry = &(ptable->entries[hash >> 48]);
+    
+    //if (pentry->mg != Mate
+    //    && pentry->eg != Mate)
+    //    return;
+        
+    pentry->hash = hash;
+    pentry->mg = mg;
+    pentry->eg = eg;
+}
+
 /**
  * Print out information about the Transposition Table. Print
  * the percentage of the table that has been used, as well as

@@ -145,6 +145,10 @@ void initalizeBoard(Board * board, char * fen){
     for(i = 0, board->hash = 0; i < 64; i++)
         board->hash ^= ZorbistKeys[board->squares[i]][i];
     
+    // Init Pawn Hash
+    for (i = 0, board->phash = 0; i < 64; i++)
+        board->phash ^= PawnKeys[board->squares[i]][i];
+    
     board->opening = 0;
     board->endgame = 0;
     

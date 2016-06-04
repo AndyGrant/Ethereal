@@ -10,6 +10,10 @@ TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash, int turn);
 void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t turn, uint8_t type, int16_t value, uint16_t bestMove, uint64_t hash);
 void dumpTranspositionTable(TransTable * table);
 
+void initalizePawnTable(PawnTable * ptable);
+PawnEntry * getPawnEntry(PawnTable * ptable, uint64_t hash);
+void storePawnEntry(PawnTable * ptable, uint64_t hash, int mg, int eg);
+
 #define PVNODE  (1)
 #define CUTNODE (2)
 #define ALLNODE (3)

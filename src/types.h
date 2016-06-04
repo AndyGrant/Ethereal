@@ -15,6 +15,7 @@ typedef struct Board {
     int castleRights;
     int fiftyMoveRule;
     int epSquare;
+    uint64_t phash;
     uint64_t hash;
     int opening;
     int endgame;
@@ -33,6 +34,7 @@ typedef struct Undo {
     int opening;
     int endgame;
     int epSquare;
+    uint64_t phash;
     uint64_t hash;
     int numPieces;
     
@@ -81,5 +83,17 @@ typedef struct SearchInfo {
     double endTime2;
     
 } SearchInfo;
+
+typedef struct PawnEntry {
+    uint64_t hash;
+    int mg;
+    int eg;
+    
+} PawnEntry;
+
+typedef struct PawnTable {
+    PawnEntry entries[0xFFFF];
+    
+} PawnTable;
 
 #endif

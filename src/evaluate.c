@@ -9,10 +9,11 @@
 #include "types.h"
 #include "bitboards.h"
 #include "bitutils.h"
+#include "transposition.h"
 #include "evaluate.h"
 #include "piece.h"
 
-int evaluateBoard(Board * board){
+int evaluateBoard(Board * board, PawnTable * ptable){
     
     int mid = 0, end = 0;
     int curPhase, midEval, endEval, eval;
@@ -70,7 +71,15 @@ int evaluateBoard(Board * board){
             return 0;
     }
     
-    evaluatePawns(&mid, &end, board, &pawnCount);
+    PawnEntry * pentry = getPawnEntry(ptable, board->phash);
+    if (pentry != NULL){
+        mid = pentry->mg;
+        end = pentry->eg;
+    } else if (pentry == NULL){
+        evaluatePawns(&mid, &end, board, &pawnCount);
+        storePawnEntry(ptable, board->phash, mid, end);
+    }
+    
     evaluateKnights(&mid, &end, board, &knightCount);
     evaluateBishops(&mid, &end, board, &bishopCount);
     evaluateRooks(&mid, &end, board, &rookCount);
@@ -81,7 +90,7 @@ int evaluateBoard(Board * board){
     
     curPhase = 24 - (1 * (knightCount + bishopCount))
                   - (2 * rookCount)
-                  - (4 * (board->numPieces - 2 - pawnCount - knightCount - bishopCount - rookCount));
+                  - (4 * countSetBits(queens));
     curPhase = (curPhase * 256 + 12) / 24;
     
     eval = ((midEval * (256 - curPhase)) + (endEval * curPhase)) / 256;
