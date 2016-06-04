@@ -23,6 +23,7 @@ int EvaluatingPlayer;
 uint16_t KillerMoves[MaxHeight][2];
 
 TransTable Table;
+PawnTable PTable;
 
 int HistoryGood[0xFFFF];
 int HistoryTotal[0xFFFF];
@@ -38,6 +39,7 @@ uint16_t getBestMove(SearchInfo * info){
     TotalNodes = 0;
     EvaluatingPlayer = info->board.turn;
     initalizeTranspositionTable(&Table, 22);
+    initalizePawnTable(&PTable);
     Info = info;
     
     // POPULATE ROOT'S MOVELIST
@@ -227,7 +229,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     if (USE_RAZOR_PRUNING
         && depth <= 3
         && nodeType != PVNODE
-        && evaluateBoard(board) + KnightValue < beta){
+        && evaluateBoard(board, &PTable) + KnightValue < beta){
         
         value = quiescenceSearch(board, alpha, beta, height);
         
@@ -242,7 +244,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         && nodeType != PVNODE
         && canDoNull(board)
         && isNotInCheck(board, board->turn)
-        && evaluateBoard(board) >= beta){
+        && evaluateBoard(board, &PTable) >= beta){
             
         // APPLY NULL MOVE
         board->turn = !board->turn;
@@ -300,7 +302,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             && board->squares[MoveTo(currentMove)] == Empty){
                 
             if (optimalValue == -Mate)
-                optimalValue = evaluateBoard(board) + PawnValue;
+                optimalValue = evaluateBoard(board, &PTable) + PawnValue;
             
             value = optimalValue;
             
@@ -431,13 +433,13 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
     
     // MAX HEIGHT REACHED, STOP HERE
     if (height >= MaxHeight)
-        return evaluateBoard(board);
+        return evaluateBoard(board, &PTable);
     
     // INCREMENT TOTAL NODE COUNTER
     TotalNodes++;
     
     // GET A STANDING-EVAL OF THE CURRENT BOARD
-    value = evaluateBoard(board);
+    value = evaluateBoard(board, &PTable);
     
     // UPDATE LOWER BOUND
     if (value > alpha)

@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <time.h>
 
+#include "piece.h"
 #include "zorbist.h"
 
 /**
@@ -24,6 +25,7 @@ void initalizeZorbist(){
     for(p = 0; p < 32; p++){
         for(s = 0; s < 64; s++){
             ZorbistKeys[p][s] = 0ull;
+            PawnKeys[p][s] = 0ull;
         }
     }
         
@@ -32,6 +34,11 @@ void initalizeZorbist(){
             ZorbistKeys[(p*4) + 0][s] = genRandomBitstring();
             ZorbistKeys[(p*4) + 1][s] = genRandomBitstring();
         }
+    }
+    
+    for (s = 0; s < 64; s++){
+        PawnKeys[WhitePawn][s] = ZorbistKeys[WhitePawn][s];
+        PawnKeys[BlackPawn][s] = ZorbistKeys[BlackPawn][s];
     }
     
     INITALIZED_ZORBIST = 1;

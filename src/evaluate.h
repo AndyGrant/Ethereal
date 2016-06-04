@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-int evaluateBoard(Board * board);
+int evaluateBoard(Board * board, PawnTable * ptable);
 void evaluatePawns(int * mid, int * end, Board* board, int * pawnCount);
 void evaluateKnights(int * mid, int *end, Board* board, int * knightCount);
 void evaluateBishops(int * mid, int * end, Board* board, int * bishopCount);
