@@ -71,11 +71,18 @@ int evaluateBoard(Board * board, PawnTable * ptable){
             return 0;
     }
     
+    
+    // ATTEMPT TO USE PREVIOUS PAWN EVALUATION
     PawnEntry * pentry = getPawnEntry(ptable, board->phash);
+    
+    // PAWN ENTRY FOUND
     if (pentry != NULL){
         mid = pentry->mg;
         end = pentry->eg;
-    } else if (pentry == NULL){
+    } 
+    
+    // NO ENTRY FOUND, EVALUATE AND STORE
+    else {
         evaluatePawns(&mid, &end, board, &pawnCount);
         storePawnEntry(ptable, board->phash, mid, end);
     }
