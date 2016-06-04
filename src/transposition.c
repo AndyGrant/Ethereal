@@ -153,6 +153,11 @@ void initalizePawnTable(PawnTable * ptable){
     ptable->entries = calloc(0xFFFF, sizeof(PawnEntry));
 }
 
+void destoryPawnTable(PawnTable * ptable){
+    
+    free(ptable->entries);
+}
+
 PawnEntry * getPawnEntry(PawnTable * ptable, uint64_t phash){
     
     PawnEntry * pentry = &(ptable->entries[phash >> 48]);

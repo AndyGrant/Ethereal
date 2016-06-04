@@ -9,7 +9,8 @@
 #include "types.h"
 #include "search.h"
 #include "movegen.h"
-#include "time.h"   
+#include "time.h"
+#include "transposition.h"
 #include "uci.h"
 
 int main(){
@@ -27,6 +28,8 @@ int main(){
     
     SearchInfo info;
     initalizeBoard(&(info.board), startPos);
+    
+    initalizeTranspositionTable(&Table, 22);
     
     while (1){
         
@@ -218,7 +221,7 @@ int main(){
             else {
                 info.searchIsTimeLimited = 1;
                 info.endTime1 = info.startTime + .5 * (time / (double)(mtg+1));
-                info.endTime2 = info.startTime + (time / (double)(mtg + 1));
+                info.endTime2 = info.startTime + (time / (double)(mtg+1));
             }
             
             moveToString(moveStr, getBestMove(&info));
