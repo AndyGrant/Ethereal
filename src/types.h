@@ -85,14 +85,13 @@ typedef struct SearchInfo {
 } SearchInfo;
 
 typedef struct PawnEntry {
-    uint64_t hash;
-    int mg;
-    int eg;
+    uint64_t phash;
+    int mg, eg;
     
 } PawnEntry;
 
 typedef struct PawnTable {
-    PawnEntry entries[0xFFFF];
+    PawnEntry * entries;
     
 } PawnTable;
 

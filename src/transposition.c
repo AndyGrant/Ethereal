@@ -149,35 +149,25 @@ void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t turn, ui
 }
 
 void initalizePawnTable(PawnTable * ptable){
-    int i;
     
-    for (i = 0; i < (1 << 15); i++){
-        (&(ptable->entries[i]))->hash = 0;
-        (&(ptable->entries[i]))->mg = Mate;
-        (&(ptable->entries[i]))->eg = Mate;
-    }
+    ptable->entries = calloc(0xFFFF, sizeof(PawnEntry));
 }
 
-PawnEntry * getPawnEntry(PawnTable * ptable, uint64_t hash){
-    PawnEntry * pentry = &(ptable->entries[hash >> 48]);
+PawnEntry * getPawnEntry(PawnTable * ptable, uint64_t phash){
     
-    if (pentry->mg != Mate
-        && pentry->eg != Mate
-        && pentry->hash == hash)
+    PawnEntry * pentry = &(ptable->entries[phash >> 48]);
+    
+    if (pentry->phash == phash)
         return pentry;
         
     return NULL;
 }
 
-void storePawnEntry(PawnTable * ptable, uint64_t hash, int mg, int eg){
+void storePawnEntry(PawnTable * ptable, uint64_t phash, int mg, int eg){
     
-    PawnEntry * pentry = &(ptable->entries[hash >> 48]);
+    PawnEntry * pentry = &(ptable->entries[phash >> 48]);
     
-    //if (pentry->mg != Mate
-    //    && pentry->eg != Mate)
-    //    return;
-        
-    pentry->hash = hash;
+    pentry->phash = phash;
     pentry->mg = mg;
     pentry->eg = eg;
 }
