@@ -78,10 +78,13 @@ uint16_t getBestMove(SearchInfo * info){
             if (getRealTime() > info->endTime2)
                 break;
             
-            if ((2 * (getRealTime() - info->startTime)) > (info->endTime1 - info->startTime))
+            if (getRealTime() > info->endTime1)
                 break;
         }
     }
+    
+    // FREE PAWN TABLE
+    destoryPawnTable(&PTable);
     
     // RETURN BEST MOVE
     return rootMoveList.bestMove;

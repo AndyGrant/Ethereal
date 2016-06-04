@@ -11,8 +11,12 @@ void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t turn, ui
 void dumpTranspositionTable(TransTable * table);
 
 void initalizePawnTable(PawnTable * ptable);
+void destoryPawnTable(PawnTable * ptable);
 PawnEntry * getPawnEntry(PawnTable * ptable, uint64_t phash);
 void storePawnEntry(PawnTable * ptable, uint64_t phash, int mg, int eg);
+
+extern TransTable Table;
+extern PawnTable PTable;
 
 #define PVNODE  (1)
 #define CUTNODE (2)
