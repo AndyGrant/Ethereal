@@ -6,7 +6,8 @@
 #include "types.h"
 
 uint16_t getBestMove(SearchInfo * info);
-int rootSearch(Board * board, MoveList * moveList, int depth);
+int aspirationWindow(Board * board, MoveList * moveList, int depth, int previousScore);
+int rootSearch(Board * board, MoveList * moveList, int alpha, int beta, int depth);
 int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, int nodeType);
 int quiescenceSearch(Board * board, int alpha, int beta, int height);
 void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int height, uint16_t tableMove);
