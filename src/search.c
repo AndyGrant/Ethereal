@@ -32,7 +32,7 @@ SearchInfo * Info;
 
 uint16_t getBestMove(SearchInfo * info){
     
-    int i, depth, value;
+    int i, depth, value = 0;
     int centiValue, deltaTime, hashPercent;
     
     // INITALIZE SEARCH GLOBALS
@@ -59,7 +59,8 @@ uint16_t getBestMove(SearchInfo * info){
     for (depth = 1; depth < MaxDepth; depth++){
         
         // PERFORM FULL SEARCH ON ROOT
-        value = rootSearch(&(info->board),&rootMoveList,depth);
+        //value = rootSearch(&(info->board),&rootMoveList,-Mate*2,Mate*2,depth);
+        value = aspirationWindow(&(info->board), &rootMoveList, depth, value);
         
         // LOG RESULTS TO INTERFACE
         centiValue = (100*value)/PawnValue;
@@ -90,9 +91,30 @@ uint16_t getBestMove(SearchInfo * info){
     return rootMoveList.bestMove;
 }
 
-int rootSearch(Board * board, MoveList * moveList, int depth){
+int aspirationWindow(Board * board, MoveList * moveList, int depth, int previousScore){
     
-    int alpha = -2*Mate, beta = 2*Mate;
+    int alpha, beta, value, margin;
+    
+    if (depth > 4 && previousScore < Mate/2){
+        for (margin = 30; margin < 250; margin *= 2){
+            alpha = previousScore - margin;
+            beta  = previousScore + margin;
+            
+            value = rootSearch(board, moveList, alpha, beta, depth);
+            
+            if (value > alpha && value < beta)
+                return value;
+            
+            if (value > Mate/2)
+                break;
+        }
+    }
+    
+    return rootSearch(board, moveList, -Mate*2, Mate*2, depth);
+}
+
+int rootSearch(Board * board, MoveList * moveList, int alpha, int beta, int depth){
+    
     int i, valid = 0, best =-2*Mate, value;
     int currentNodes;
     Undo undo[1];
