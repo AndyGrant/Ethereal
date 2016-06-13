@@ -1,8 +1,0 @@
-Ethereal7.40-Win64.exe        ;   W;   L;   D;   ELO;  DIFF;   FINAL;
-BikJump2.01.exe               ; 146; 105;  49;  2100;    48;    2148;
-MadChess2.0.exe               ;  57;  85;   8;  2288;   -66;    2222;
-Monarch1.7.exe                ;  75;  47;  28;  2056;    66;    2122;
-Clarabit1.0.exe               ; 179;  82;  39;  2100;   117;    2217;
-Glass1.3.exe                  ;  63; 209;  28;  2358;  -185;    2173;
-Sungorus1.4.exe               ;  26; 105;  19;  2308;  -203;    2105;
-
