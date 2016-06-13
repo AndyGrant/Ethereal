@@ -1,0 +1,78 @@
+Indexing opening suite...
+Started game 1 of 25 (Ethereal vs Sungorus 1.4)
+Started game 2 of 25 (Sungorus 1.4 vs Ethereal)
+Started game 3 of 25 (Ethereal vs Sungorus 1.4)
+Finished game 1 (Ethereal vs Sungorus 1.4): 1-0 {White mates}
+Score of Ethereal vs Sungorus 1.4: 1 - 0 - 0  [1.000] 1
+Started game 4 of 25 (Sungorus 1.4 vs Ethereal)
+Finished game 2 (Sungorus 1.4 vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs Sungorus 1.4: 2 - 0 - 0  [1.000] 2
+Started game 5 of 25 (Ethereal vs Sungorus 1.4)
+Finished game 3 (Ethereal vs Sungorus 1.4): 1-0 {White mates}
+Score of Ethereal vs Sungorus 1.4: 3 - 0 - 0  [1.000] 3
+Started game 6 of 25 (Sungorus 1.4 vs Ethereal)
+Finished game 5 (Ethereal vs Sungorus 1.4): 1-0 {White mates}
+Score of Ethereal vs Sungorus 1.4: 4 - 0 - 0  [1.000] 4
+Started game 7 of 25 (Ethereal vs Sungorus 1.4)
+Finished game 4 (Sungorus 1.4 vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs Sungorus 1.4: 4 - 1 - 0  [0.800] 5
+Started game 8 of 25 (Sungorus 1.4 vs Ethereal)
+Finished game 6 (Sungorus 1.4 vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs Sungorus 1.4: 5 - 1 - 0  [0.833] 6
+Started game 9 of 25 (Ethereal vs Sungorus 1.4)
+Finished game 8 (Sungorus 1.4 vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs Sungorus 1.4: 6 - 1 - 0  [0.857] 7
+Started game 10 of 25 (Sungorus 1.4 vs Ethereal)
+Finished game 7 (Ethereal vs Sungorus 1.4): 0-1 {Black mates}
+Score of Ethereal vs Sungorus 1.4: 6 - 2 - 0  [0.750] 8
+Started game 11 of 25 (Ethereal vs Sungorus 1.4)
+Finished game 11 (Ethereal vs Sungorus 1.4): 0-1 {Black mates}
+Score of Ethereal vs Sungorus 1.4: 6 - 3 - 0  [0.667] 9
+Started game 12 of 25 (Sungorus 1.4 vs Ethereal)
+Finished game 9 (Ethereal vs Sungorus 1.4): 0-1 {Black mates}
+Score of Ethereal vs Sungorus 1.4: 6 - 4 - 0  [0.600] 10
+Started game 13 of 25 (Ethereal vs Sungorus 1.4)
+Finished game 10 (Sungorus 1.4 vs Ethereal): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Ethereal vs Sungorus 1.4: 6 - 4 - 1  [0.591] 11
+Started game 14 of 25 (Sungorus 1.4 vs Ethereal)
+Finished game 14 (Sungorus 1.4 vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs Sungorus 1.4: 6 - 5 - 1  [0.542] 12
+Started game 15 of 25 (Ethereal vs Sungorus 1.4)
+Finished game 13 (Ethereal vs Sungorus 1.4): 0-1 {Black mates}
+Score of Ethereal vs Sungorus 1.4: 6 - 6 - 1  [0.500] 13
+Started game 16 of 25 (Sungorus 1.4 vs Ethereal)
+Finished game 12 (Sungorus 1.4 vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs Sungorus 1.4: 6 - 7 - 1  [0.464] 14
+Started game 17 of 25 (Ethereal vs Sungorus 1.4)
+Finished game 15 (Ethereal vs Sungorus 1.4): 1-0 {White mates}
+Score of Ethereal vs Sungorus 1.4: 7 - 7 - 1  [0.500] 15
+Started game 18 of 25 (Sungorus 1.4 vs Ethereal)
+Finished game 17 (Ethereal vs Sungorus 1.4): 0-1 {Black mates}
+Score of Ethereal vs Sungorus 1.4: 7 - 8 - 1  [0.469] 16
+Started game 19 of 25 (Ethereal vs Sungorus 1.4)
+Finished game 16 (Sungorus 1.4 vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs Sungorus 1.4: 7 - 9 - 1  [0.441] 17
+Started game 20 of 25 (Sungorus 1.4 vs Ethereal)
+Finished game 18 (Sungorus 1.4 vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs Sungorus 1.4: 7 - 10 - 1  [0.417] 18
+Started game 21 of 25 (Ethereal vs Sungorus 1.4)
+Finished game 19 (Ethereal vs Sungorus 1.4): 0-1 {Black mates}
+Score of Ethereal vs Sungorus 1.4: 7 - 11 - 1  [0.395] 19
+Started game 22 of 25 (Sungorus 1.4 vs Ethereal)
+Finished game 20 (Sungorus 1.4 vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs Sungorus 1.4: 7 - 12 - 1  [0.375] 20
+Started game 23 of 25 (Ethereal vs Sungorus 1.4)
+Finished game 21 (Ethereal vs Sungorus 1.4): 0-1 {Black mates}
+Score of Ethereal vs Sungorus 1.4: 7 - 13 - 1  [0.357] 21
+Started game 24 of 25 (Sungorus 1.4 vs Ethereal)
+Finished game 22 (Sungorus 1.4 vs Ethereal): 1/2-1/2 {Draw by insufficient mating material}
+Score of Ethereal vs Sungorus 1.4: 7 - 13 - 2  [0.364] 22
+Started game 25 of 25 (Ethereal vs Sungorus 1.4)
+Finished game 24 (Sungorus 1.4 vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs Sungorus 1.4: 8 - 13 - 2  [0.391] 23
+Finished game 23 (Ethereal vs Sungorus 1.4): 0-1 {Black mates}
+Score of Ethereal vs Sungorus 1.4: 8 - 14 - 2  [0.375] 24
+Finished game 25 (Ethereal vs Sungorus 1.4): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Ethereal vs Sungorus 1.4: 8 - 14 - 3  [0.380] 25
+ELO difference: -85.04 +/- 139.12
+Finished match

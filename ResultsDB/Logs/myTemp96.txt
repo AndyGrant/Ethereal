@@ -1,0 +1,78 @@
+Indexing opening suite...
+Started game 1 of 25 (Ethereal vs BikJump v2.01 (64-bit))
+Started game 3 of 25 (Ethereal vs BikJump v2.01 (64-bit))
+Started game 2 of 25 (BikJump v2.01 (64-bit) vs Ethereal)
+Finished game 2 (BikJump v2.01 (64-bit) vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 1 - 0 - 0  [1.000] 1
+Started game 4 of 25 (BikJump v2.01 (64-bit) vs Ethereal)
+Finished game 1 (Ethereal vs BikJump v2.01 (64-bit)): 1-0 {White mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 2 - 0 - 0  [1.000] 2
+Started game 5 of 25 (Ethereal vs BikJump v2.01 (64-bit))
+Finished game 3 (Ethereal vs BikJump v2.01 (64-bit)): 1-0 {White mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 3 - 0 - 0  [1.000] 3
+Started game 6 of 25 (BikJump v2.01 (64-bit) vs Ethereal)
+Finished game 4 (BikJump v2.01 (64-bit) vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 3 - 1 - 0  [0.750] 4
+Started game 7 of 25 (Ethereal vs BikJump v2.01 (64-bit))
+Finished game 6 (BikJump v2.01 (64-bit) vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 4 - 1 - 0  [0.800] 5
+Started game 8 of 25 (BikJump v2.01 (64-bit) vs Ethereal)
+Finished game 5 (Ethereal vs BikJump v2.01 (64-bit)): 0-1 {Black mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 4 - 2 - 0  [0.667] 6
+Started game 9 of 25 (Ethereal vs BikJump v2.01 (64-bit))
+Finished game 7 (Ethereal vs BikJump v2.01 (64-bit)): 0-1 {Black mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 4 - 3 - 0  [0.571] 7
+Started game 10 of 25 (BikJump v2.01 (64-bit) vs Ethereal)
+Finished game 10 (BikJump v2.01 (64-bit) vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 5 - 3 - 0  [0.625] 8
+Started game 11 of 25 (Ethereal vs BikJump v2.01 (64-bit))
+Finished game 8 (BikJump v2.01 (64-bit) vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 5 - 4 - 0  [0.556] 9
+Started game 12 of 25 (BikJump v2.01 (64-bit) vs Ethereal)
+Finished game 9 (Ethereal vs BikJump v2.01 (64-bit)): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Ethereal vs BikJump v2.01 (64-bit): 5 - 4 - 1  [0.550] 10
+Started game 13 of 25 (Ethereal vs BikJump v2.01 (64-bit))
+Finished game 12 (BikJump v2.01 (64-bit) vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 6 - 4 - 1  [0.591] 11
+Started game 14 of 25 (BikJump v2.01 (64-bit) vs Ethereal)
+Finished game 11 (Ethereal vs BikJump v2.01 (64-bit)): 1-0 {White mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 7 - 4 - 1  [0.625] 12
+Started game 15 of 25 (Ethereal vs BikJump v2.01 (64-bit))
+Finished game 13 (Ethereal vs BikJump v2.01 (64-bit)): 1-0 {White mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 8 - 4 - 1  [0.654] 13
+Started game 16 of 25 (BikJump v2.01 (64-bit) vs Ethereal)
+Finished game 15 (Ethereal vs BikJump v2.01 (64-bit)): 1-0 {White mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 9 - 4 - 1  [0.679] 14
+Finished game 14 (BikJump v2.01 (64-bit) vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 10 - 4 - 1  [0.700] 15
+Started game 17 of 25 (Ethereal vs BikJump v2.01 (64-bit))
+Started game 18 of 25 (BikJump v2.01 (64-bit) vs Ethereal)
+Finished game 16 (BikJump v2.01 (64-bit) vs Ethereal): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Ethereal vs BikJump v2.01 (64-bit): 10 - 4 - 2  [0.688] 16
+Started game 19 of 25 (Ethereal vs BikJump v2.01 (64-bit))
+Finished game 17 (Ethereal vs BikJump v2.01 (64-bit)): 1-0 {White mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 11 - 4 - 2  [0.706] 17
+Started game 20 of 25 (BikJump v2.01 (64-bit) vs Ethereal)
+Finished game 18 (BikJump v2.01 (64-bit) vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 12 - 4 - 2  [0.722] 18
+Started game 21 of 25 (Ethereal vs BikJump v2.01 (64-bit))
+Finished game 21 (Ethereal vs BikJump v2.01 (64-bit)): 1-0 {White mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 13 - 4 - 2  [0.737] 19
+Started game 22 of 25 (BikJump v2.01 (64-bit) vs Ethereal)
+Finished game 20 (BikJump v2.01 (64-bit) vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 14 - 4 - 2  [0.750] 20
+Started game 23 of 25 (Ethereal vs BikJump v2.01 (64-bit))
+Finished game 22 (BikJump v2.01 (64-bit) vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 14 - 5 - 2  [0.714] 21
+Started game 24 of 25 (BikJump v2.01 (64-bit) vs Ethereal)
+Finished game 19 (Ethereal vs BikJump v2.01 (64-bit)): 0-1 {Black mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 14 - 6 - 2  [0.682] 22
+Started game 25 of 25 (Ethereal vs BikJump v2.01 (64-bit))
+Finished game 25 (Ethereal vs BikJump v2.01 (64-bit)): 0-1 {Black mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 14 - 7 - 2  [0.652] 23
+Finished game 23 (Ethereal vs BikJump v2.01 (64-bit)): 1-0 {White mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 15 - 7 - 2  [0.667] 24
+Finished game 24 (BikJump v2.01 (64-bit) vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs BikJump v2.01 (64-bit): 15 - 8 - 2  [0.640] 25
+ELO difference: 99.95 +/- 145.21
+Finished match

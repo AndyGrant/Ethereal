@@ -1,0 +1,16 @@
+Ethereal7.40-Win64.exe        ;   W;   L;   D;   ELO;  DIFF;   FINAL;
+BikJump2.01.exe               ; 541; 346; 138;  2100;    67;    2167;
+MadChess2.0.exe               ; 313; 469;  93;  2288;   -63;    2225;
+Glass1.3.exe                  ; 232; 701;  92;  2358;  -172;    2186;
+Clarabit1.0.exe               ; 607; 275; 143;  2100;   117;    2217;
+Monarch1.7.exe                ; 430; 285; 135;  2056;    60;    2116;
+Sungorus1.4.exe               ; 168; 577; 105;  2308;  -182;    2126;
+
+EtherealStatic2.exe           ;   W;   L;   D;   ELO;  DIFF;   FINAL;
+BikJump2.01.exe               ; 264; 173;  78;  2100;    62;    2162;
+MadChess2.0.exe               ; 194; 269;  52;  2288;   -51;    2237;
+Glass1.3.exe                  ; 121; 345;  49;  2358;  -162;    2196;
+Clarabit1.0.exe               ; 321; 133;  61;  2100;   133;    2233;
+Monarch1.7.exe                ; 271; 150;  69;  2056;    88;    2144;
+Sungorus1.4.exe               ; 135; 302;  53;  2308;  -123;    2185;
+

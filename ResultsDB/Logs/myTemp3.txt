@@ -1,0 +1,78 @@
+Indexing opening suite...
+Started game 2 of 25 (MadChess 2.0 vs Ethereal)
+Started game 1 of 25 (Ethereal vs MadChess 2.0)
+Started game 3 of 25 (Ethereal vs MadChess 2.0)
+Finished game 1 (Ethereal vs MadChess 2.0): 0-1 {Black mates}
+Score of Ethereal vs MadChess 2.0: 0 - 1 - 0  [0.000] 1
+Started game 4 of 25 (MadChess 2.0 vs Ethereal)
+Finished game 2 (MadChess 2.0 vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs MadChess 2.0: 0 - 2 - 0  [0.000] 2
+Started game 5 of 25 (Ethereal vs MadChess 2.0)
+Finished game 3 (Ethereal vs MadChess 2.0): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Ethereal vs MadChess 2.0: 0 - 2 - 1  [0.167] 3
+Started game 6 of 25 (MadChess 2.0 vs Ethereal)
+Finished game 4 (MadChess 2.0 vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs MadChess 2.0: 1 - 2 - 1  [0.375] 4
+Started game 7 of 25 (Ethereal vs MadChess 2.0)
+Finished game 5 (Ethereal vs MadChess 2.0): 1-0 {White mates}
+Score of Ethereal vs MadChess 2.0: 2 - 2 - 1  [0.500] 5
+Started game 8 of 25 (MadChess 2.0 vs Ethereal)
+Finished game 6 (MadChess 2.0 vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs MadChess 2.0: 3 - 2 - 1  [0.583] 6
+Started game 9 of 25 (Ethereal vs MadChess 2.0)
+Finished game 7 (Ethereal vs MadChess 2.0): 1-0 {White mates}
+Score of Ethereal vs MadChess 2.0: 4 - 2 - 1  [0.643] 7
+Started game 10 of 25 (MadChess 2.0 vs Ethereal)
+Finished game 8 (MadChess 2.0 vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs MadChess 2.0: 5 - 2 - 1  [0.688] 8
+Started game 11 of 25 (Ethereal vs MadChess 2.0)
+Finished game 9 (Ethereal vs MadChess 2.0): 0-1 {Black mates}
+Score of Ethereal vs MadChess 2.0: 5 - 3 - 1  [0.611] 9
+Started game 12 of 25 (MadChess 2.0 vs Ethereal)
+Finished game 10 (MadChess 2.0 vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs MadChess 2.0: 5 - 4 - 1  [0.550] 10
+Started game 13 of 25 (Ethereal vs MadChess 2.0)
+Finished game 11 (Ethereal vs MadChess 2.0): 0-1 {Black mates}
+Score of Ethereal vs MadChess 2.0: 5 - 5 - 1  [0.500] 11
+Started game 14 of 25 (MadChess 2.0 vs Ethereal)
+Finished game 14 (MadChess 2.0 vs Ethereal): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Ethereal vs MadChess 2.0: 5 - 5 - 2  [0.500] 12
+Started game 15 of 25 (Ethereal vs MadChess 2.0)
+Finished game 12 (MadChess 2.0 vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs MadChess 2.0: 6 - 5 - 2  [0.538] 13
+Started game 16 of 25 (MadChess 2.0 vs Ethereal)
+Finished game 15 (Ethereal vs MadChess 2.0): 0-1 {Black mates}
+Score of Ethereal vs MadChess 2.0: 6 - 6 - 2  [0.500] 14
+Started game 17 of 25 (Ethereal vs MadChess 2.0)
+Finished game 13 (Ethereal vs MadChess 2.0): 1/2-1/2 {Draw by fifty moves rule}
+Score of Ethereal vs MadChess 2.0: 6 - 6 - 3  [0.500] 15
+Started game 18 of 25 (MadChess 2.0 vs Ethereal)
+Finished game 16 (MadChess 2.0 vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs MadChess 2.0: 6 - 7 - 3  [0.469] 16
+Started game 19 of 25 (Ethereal vs MadChess 2.0)
+Finished game 17 (Ethereal vs MadChess 2.0): 0-1 {Black mates}
+Score of Ethereal vs MadChess 2.0: 6 - 8 - 3  [0.441] 17
+Started game 20 of 25 (MadChess 2.0 vs Ethereal)
+Finished game 19 (Ethereal vs MadChess 2.0): 0-1 {Black mates}
+Score of Ethereal vs MadChess 2.0: 6 - 9 - 3  [0.417] 18
+Started game 21 of 25 (Ethereal vs MadChess 2.0)
+Finished game 21 (Ethereal vs MadChess 2.0): 0-1 {Black mates}
+Score of Ethereal vs MadChess 2.0: 6 - 10 - 3  [0.395] 19
+Started game 22 of 25 (MadChess 2.0 vs Ethereal)
+Finished game 18 (MadChess 2.0 vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs MadChess 2.0: 6 - 11 - 3  [0.375] 20
+Finished game 20 (MadChess 2.0 vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs MadChess 2.0: 7 - 11 - 3  [0.405] 21
+Started game 23 of 25 (Ethereal vs MadChess 2.0)
+Started game 24 of 25 (MadChess 2.0 vs Ethereal)
+Finished game 23 (Ethereal vs MadChess 2.0): 0-1 {Black mates}
+Score of Ethereal vs MadChess 2.0: 7 - 12 - 3  [0.386] 22
+Started game 25 of 25 (Ethereal vs MadChess 2.0)
+Finished game 22 (MadChess 2.0 vs Ethereal): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Ethereal vs MadChess 2.0: 7 - 12 - 4  [0.391] 23
+Finished game 25 (Ethereal vs MadChess 2.0): 0-1 {Black mates}
+Score of Ethereal vs MadChess 2.0: 7 - 13 - 4  [0.375] 24
+Finished game 24 (MadChess 2.0 vs Ethereal): 1/2-1/2 {Draw by fifty moves rule}
+Score of Ethereal vs MadChess 2.0: 7 - 13 - 5  [0.380] 25
+ELO difference: -85.04 +/- 131.32
+Finished match

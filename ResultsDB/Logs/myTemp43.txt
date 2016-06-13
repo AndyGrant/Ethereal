@@ -1,0 +1,78 @@
+Indexing opening suite...
+Started game 2 of 25 (Clarabit 1.00 vs Ethereal)
+Started game 1 of 25 (Ethereal vs Clarabit 1.00)
+Started game 3 of 25 (Ethereal vs Clarabit 1.00)
+Finished game 1 (Ethereal vs Clarabit 1.00): 1-0 {White mates}
+Score of Ethereal vs Clarabit 1.00: 1 - 0 - 0  [1.000] 1
+Started game 4 of 25 (Clarabit 1.00 vs Ethereal)
+Finished game 2 (Clarabit 1.00 vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs Clarabit 1.00: 2 - 0 - 0  [1.000] 2
+Started game 5 of 25 (Ethereal vs Clarabit 1.00)
+Finished game 3 (Ethereal vs Clarabit 1.00): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Ethereal vs Clarabit 1.00: 2 - 0 - 1  [0.833] 3
+Started game 6 of 25 (Clarabit 1.00 vs Ethereal)
+Finished game 5 (Ethereal vs Clarabit 1.00): 1-0 {White mates}
+Score of Ethereal vs Clarabit 1.00: 3 - 0 - 1  [0.875] 4
+Started game 7 of 25 (Ethereal vs Clarabit 1.00)
+Finished game 4 (Clarabit 1.00 vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs Clarabit 1.00: 4 - 0 - 1  [0.900] 5
+Started game 8 of 25 (Clarabit 1.00 vs Ethereal)
+Finished game 7 (Ethereal vs Clarabit 1.00): 1-0 {White mates}
+Score of Ethereal vs Clarabit 1.00: 5 - 0 - 1  [0.917] 6
+Started game 9 of 25 (Ethereal vs Clarabit 1.00)
+Finished game 6 (Clarabit 1.00 vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs Clarabit 1.00: 6 - 0 - 1  [0.929] 7
+Started game 10 of 25 (Clarabit 1.00 vs Ethereal)
+Finished game 8 (Clarabit 1.00 vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs Clarabit 1.00: 7 - 0 - 1  [0.938] 8
+Started game 11 of 25 (Ethereal vs Clarabit 1.00)
+Finished game 10 (Clarabit 1.00 vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs Clarabit 1.00: 8 - 0 - 1  [0.944] 9
+Started game 12 of 25 (Clarabit 1.00 vs Ethereal)
+Finished game 9 (Ethereal vs Clarabit 1.00): 1-0 {White mates}
+Score of Ethereal vs Clarabit 1.00: 9 - 0 - 1  [0.950] 10
+Started game 13 of 25 (Ethereal vs Clarabit 1.00)
+Finished game 12 (Clarabit 1.00 vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs Clarabit 1.00: 9 - 1 - 1  [0.864] 11
+Started game 14 of 25 (Clarabit 1.00 vs Ethereal)
+Finished game 11 (Ethereal vs Clarabit 1.00): 1-0 {White mates}
+Score of Ethereal vs Clarabit 1.00: 10 - 1 - 1  [0.875] 12
+Started game 15 of 25 (Ethereal vs Clarabit 1.00)
+Finished game 14 (Clarabit 1.00 vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs Clarabit 1.00: 11 - 1 - 1  [0.885] 13
+Started game 16 of 25 (Clarabit 1.00 vs Ethereal)
+Finished game 15 (Ethereal vs Clarabit 1.00): 1-0 {White mates}
+Score of Ethereal vs Clarabit 1.00: 12 - 1 - 1  [0.893] 14
+Started game 17 of 25 (Ethereal vs Clarabit 1.00)
+Finished game 13 (Ethereal vs Clarabit 1.00): 1-0 {White mates}
+Score of Ethereal vs Clarabit 1.00: 13 - 1 - 1  [0.900] 15
+Started game 18 of 25 (Clarabit 1.00 vs Ethereal)
+Finished game 17 (Ethereal vs Clarabit 1.00): 0-1 {Black mates}
+Score of Ethereal vs Clarabit 1.00: 13 - 2 - 1  [0.844] 16
+Started game 19 of 25 (Ethereal vs Clarabit 1.00)
+Finished game 18 (Clarabit 1.00 vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs Clarabit 1.00: 14 - 2 - 1  [0.853] 17
+Started game 20 of 25 (Clarabit 1.00 vs Ethereal)
+Finished game 19 (Ethereal vs Clarabit 1.00): 0-1 {Black mates}
+Score of Ethereal vs Clarabit 1.00: 14 - 3 - 1  [0.806] 18
+Started game 21 of 25 (Ethereal vs Clarabit 1.00)
+Finished game 20 (Clarabit 1.00 vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs Clarabit 1.00: 15 - 3 - 1  [0.816] 19
+Started game 22 of 25 (Clarabit 1.00 vs Ethereal)
+Finished game 16 (Clarabit 1.00 vs Ethereal): 1/2-1/2 {Draw by fifty moves rule}
+Score of Ethereal vs Clarabit 1.00: 15 - 3 - 2  [0.800] 20
+Started game 23 of 25 (Ethereal vs Clarabit 1.00)
+Finished game 21 (Ethereal vs Clarabit 1.00): 1-0 {White mates}
+Score of Ethereal vs Clarabit 1.00: 16 - 3 - 2  [0.810] 21
+Started game 24 of 25 (Clarabit 1.00 vs Ethereal)
+Finished game 22 (Clarabit 1.00 vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs Clarabit 1.00: 16 - 4 - 2  [0.773] 22
+Started game 25 of 25 (Ethereal vs Clarabit 1.00)
+Finished game 24 (Clarabit 1.00 vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs Clarabit 1.00: 16 - 5 - 2  [0.739] 23
+Finished game 23 (Ethereal vs Clarabit 1.00): 0-1 {Black mates}
+Score of Ethereal vs Clarabit 1.00: 16 - 6 - 2  [0.708] 24
+Finished game 25 (Ethereal vs Clarabit 1.00): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Ethereal vs Clarabit 1.00: 16 - 6 - 3  [0.700] 25
+ELO difference: 147.19 +/- 150.33
+Finished match

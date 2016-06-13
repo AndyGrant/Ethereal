@@ -1,0 +1,78 @@
+Indexing opening suite...
+Started game 1 of 25 (Ethereal vs Monarch 1.7)
+Started game 2 of 25 (Monarch 1.7 vs Ethereal)
+Started game 3 of 25 (Ethereal vs Monarch 1.7)
+Finished game 2 (Monarch 1.7 vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs Monarch 1.7: 0 - 1 - 0  [0.000] 1
+Started game 4 of 25 (Monarch 1.7 vs Ethereal)
+Finished game 1 (Ethereal vs Monarch 1.7): 1-0 {White mates}
+Score of Ethereal vs Monarch 1.7: 1 - 1 - 0  [0.500] 2
+Started game 5 of 25 (Ethereal vs Monarch 1.7)
+Finished game 3 (Ethereal vs Monarch 1.7): 1-0 {White mates}
+Score of Ethereal vs Monarch 1.7: 2 - 1 - 0  [0.667] 3
+Started game 6 of 25 (Monarch 1.7 vs Ethereal)
+Finished game 4 (Monarch 1.7 vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs Monarch 1.7: 2 - 2 - 0  [0.500] 4
+Started game 7 of 25 (Ethereal vs Monarch 1.7)
+Finished game 6 (Monarch 1.7 vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs Monarch 1.7: 3 - 2 - 0  [0.600] 5
+Started game 8 of 25 (Monarch 1.7 vs Ethereal)
+Finished game 5 (Ethereal vs Monarch 1.7): 0-1 {Black mates}
+Score of Ethereal vs Monarch 1.7: 3 - 3 - 0  [0.500] 6
+Started game 9 of 25 (Ethereal vs Monarch 1.7)
+Finished game 7 (Ethereal vs Monarch 1.7): 1/2-1/2 {Draw by insufficient mating material}
+Score of Ethereal vs Monarch 1.7: 3 - 3 - 1  [0.500] 7
+Started game 10 of 25 (Monarch 1.7 vs Ethereal)
+Finished game 9 (Ethereal vs Monarch 1.7): 0-1 {Black mates}
+Score of Ethereal vs Monarch 1.7: 3 - 4 - 1  [0.438] 8
+Started game 11 of 25 (Ethereal vs Monarch 1.7)
+Finished game 10 (Monarch 1.7 vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs Monarch 1.7: 3 - 5 - 1  [0.389] 9
+Started game 12 of 25 (Monarch 1.7 vs Ethereal)
+Finished game 8 (Monarch 1.7 vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs Monarch 1.7: 3 - 6 - 1  [0.350] 10
+Started game 13 of 25 (Ethereal vs Monarch 1.7)
+Finished game 11 (Ethereal vs Monarch 1.7): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Ethereal vs Monarch 1.7: 3 - 6 - 2  [0.364] 11
+Started game 14 of 25 (Monarch 1.7 vs Ethereal)
+Finished game 14 (Monarch 1.7 vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs Monarch 1.7: 3 - 7 - 2  [0.333] 12
+Started game 15 of 25 (Ethereal vs Monarch 1.7)
+Finished game 13 (Ethereal vs Monarch 1.7): 1-0 {White mates}
+Score of Ethereal vs Monarch 1.7: 4 - 7 - 2  [0.385] 13
+Started game 16 of 25 (Monarch 1.7 vs Ethereal)
+Finished game 12 (Monarch 1.7 vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs Monarch 1.7: 4 - 8 - 2  [0.357] 14
+Started game 17 of 25 (Ethereal vs Monarch 1.7)
+Finished game 17 (Ethereal vs Monarch 1.7): 0-1 {Black mates}
+Score of Ethereal vs Monarch 1.7: 4 - 9 - 2  [0.333] 15
+Started game 18 of 25 (Monarch 1.7 vs Ethereal)
+Finished game 16 (Monarch 1.7 vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs Monarch 1.7: 5 - 9 - 2  [0.375] 16
+Started game 19 of 25 (Ethereal vs Monarch 1.7)
+Finished game 15 (Ethereal vs Monarch 1.7): 1-0 {White mates}
+Score of Ethereal vs Monarch 1.7: 6 - 9 - 2  [0.412] 17
+Started game 20 of 25 (Monarch 1.7 vs Ethereal)
+Finished game 20 (Monarch 1.7 vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs Monarch 1.7: 6 - 10 - 2  [0.389] 18
+Started game 21 of 25 (Ethereal vs Monarch 1.7)
+Finished game 18 (Monarch 1.7 vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs Monarch 1.7: 7 - 10 - 2  [0.421] 19
+Started game 22 of 25 (Monarch 1.7 vs Ethereal)
+Finished game 19 (Ethereal vs Monarch 1.7): 0-1 {Black mates}
+Score of Ethereal vs Monarch 1.7: 7 - 11 - 2  [0.400] 20
+Started game 23 of 25 (Ethereal vs Monarch 1.7)
+Finished game 22 (Monarch 1.7 vs Ethereal): 1-0 {White mates}
+Score of Ethereal vs Monarch 1.7: 7 - 12 - 2  [0.381] 21
+Started game 24 of 25 (Monarch 1.7 vs Ethereal)
+Finished game 21 (Ethereal vs Monarch 1.7): 1-0 {White mates}
+Score of Ethereal vs Monarch 1.7: 8 - 12 - 2  [0.409] 22
+Started game 25 of 25 (Ethereal vs Monarch 1.7)
+Finished game 23 (Ethereal vs Monarch 1.7): 0-1 {Black mates}
+Score of Ethereal vs Monarch 1.7: 8 - 13 - 2  [0.391] 23
+Finished game 24 (Monarch 1.7 vs Ethereal): 0-1 {Black mates}
+Score of Ethereal vs Monarch 1.7: 9 - 13 - 2  [0.417] 24
+Finished game 25 (Ethereal vs Monarch 1.7): 1/2-1/2 {Draw by 3-fold repetition}
+Score of Ethereal vs Monarch 1.7: 9 - 13 - 3  [0.420] 25
+ELO difference: -56.07 +/- 136.10
+Finished match
