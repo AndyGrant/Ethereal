@@ -250,15 +250,32 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         }
     }
     
+    // DETERMINE CHECK STATUS
+    inCheck = !isNotInCheck(board, board->turn);
+    
+    // STATIC NULL MOVE PRUNING
+    if (USE_STATIC_NULL_PRUNING
+        && depth <= 3
+        && nodeType != PVNODE
+        && alpha == beta - 1
+        && !inCheck){
+            
+        value = evaluateBoard(board, &PTable) - (depth * (PawnValue + 45));
+        
+        if (value > beta)
+            return value;
+    }
+    
     // RAZOR PRUNING
     if (USE_RAZOR_PRUNING
         && depth <= 3
         && nodeType != PVNODE
-        && evaluateBoard(board, &PTable) + KnightValue < beta){
+        && alpha == beta - 1
+        && evaluateBoard(board, &PTable) + RazorMargins[depth] < beta){
         
         value = quiescenceSearch(board, alpha, beta, height);
         
-        // EVEN GAINING A QUEEN WOULD FAIL LOW
+        // EVEN GAINING A LARGE MARGIN WOULD FAIL LOW
         if (value < beta)
             return value;
     }
@@ -268,7 +285,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         && depth >= 3
         && nodeType != PVNODE
         && canDoNull(board)
-        && isNotInCheck(board, board->turn)
+        && !inCheck
         && evaluateBoard(board, &PTable) >= beta){
             
         // APPLY NULL MOVE
@@ -306,12 +323,9 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     // GENERATE AND PREPARE MOVE ORDERING
     genAllMoves(board, moves, &size);
     evaluateMoves(board, values, moves, size, height, tableMove);
-    
-    // DETERMINE CHECK STATUS FOR LATE MOVE REDUCTIONS
-    inCheck = !isNotInCheck(board, board->turn);
    
     // CHECK EXTENSION
-    if (inCheck) depth++;
+    depth += inCheck;
     
     for (i = 0; i < size; i++){
         

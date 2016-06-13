@@ -92,8 +92,11 @@ int evaluateBoard(Board * board, PawnTable * ptable){
     evaluateRooks(&mid, &end, board, &rookCount);
     evaluateKings(&mid, &end, board);
     
-    midEval = board->opening + mid + 10;
-    endEval = board->endgame + end + 15;
+    midEval = board->opening + mid;
+    endEval = board->endgame + end;
+    
+    midEval += (board->turn == ColourWhite) ? 5 : -5;
+    endEval += (board->turn == ColourWhite) ? 7 : -7;
     
     curPhase = 24 - (1 * (knightCount + bishopCount))
                   - (2 * rookCount)
