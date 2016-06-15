@@ -75,29 +75,39 @@ class ChessDataBase():
             json.dump(self.data, fout)
             
     def outputDataBase(self, filename):
-    
-        FORMAT_STR = "{:30}; {:>3}; {:>3}; {:>3}; {:>5}; {:>5}; {:>7};"
         
         outputStr = ""
+        OPP_FORMAT_STR = "{:>25} {:>5}; {:>5}; {:>5}; {:>5}; {:>5}; {:>7};\n"
         
         for engine in self.data:
-            opponents = self.data[engine]
             
-            matchups = []
+            opponents = self.data[engine]
+            tempStr = ""
+            
+            names  = []; wins  = []
+            losses = []; draws = []
+            elos   = []; diffs = []
+            finals = []
             
             for opponent in opponents:
-                name = opponent
-                wins = opponents[opponent]["Wins"]
-                losses = opponents[opponent]["Losses"]
-                draws = opponents[opponent]["Draws"]
-                elo = int(opponents[opponent]["ELO"])
-                diff = self.calculateELODifference(wins, losses, draws)
-                final = elo + diff
-                matchups += [FORMAT_STR.format(name,wins,losses,draws,elo,diff,final)]
+                names  += [opponent]
+                wins   += [int(opponents[opponent]["Wins"])]
+                losses += [int(opponents[opponent]["Losses"])]
+                draws  += [int(opponents[opponent]["Draws"])]
+                elos   += [int(opponents[opponent]["ELO"])]
+                diffs  += [self.calculateELODifference(wins[-1], losses[-1], draws[-1])]
+                finals += [elos[-1] + diffs[-1]]
                 
-            outputStr += FORMAT_STR.format(engine,"W","L","D","ELO","DIFF","FINAL") + "\n"
-            outputStr += "\n".join(matchups)
-            outputStr += "\n\n"
+            
+            tempStr += OPP_FORMAT_STR.format("","Win","Loss","Draw","Elo","Diff","Final")
+                
+            tempStr += OPP_FORMAT_STR.format(engine,"","","","","",sum(finals)/len(finals))
+                
+            for f in range(len(names)):
+                n, w, l, d, e, di, f = zip(names,wins,losses,draws,elos,diffs,finals)[f]
+                tempStr += OPP_FORMAT_STR.format(n, w, l, d, e, di, f)
+                
+            outputStr += tempStr + "\n\n"
             
         with open(filename, "w") as fout:
             fout.write(outputStr)
@@ -108,4 +118,4 @@ class ChessDataBase():
         return int(round((-400 * math.log10((1/score) - 1))))
         
 if __name__ == "__main__":
-    ChessDataBase("DataBase.json").outputDataBase("Foo.txt")
+    ChessDataBase("DataBase.json").outputDataBase("EloTables.txt")
