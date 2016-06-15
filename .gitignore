@@ -7,3 +7,10 @@
 _Scripts/gmon.out
 profiler_data.txt
 output.txt
+
+tempDataBase.json
+EloTables.txt
+*.pyc
+ResultsDB/Logs/*
+Qt5Core.dll
+
