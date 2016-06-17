@@ -260,7 +260,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         && alpha == beta - 1
         && !inCheck){
             
-        value = evaluateBoard(board, &PTable) - (depth * (PawnValue + 45));
+        value = evaluateBoard(board, &PTable) - (depth * (PawnValue + 15));
         
         if (value > beta)
             return value;

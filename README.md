@@ -1,6 +1,6 @@
 # Ethereal
 
-Ethereal is a UCI compliant chess engine which uses a BitBoard board representation and an alpha beta pruning framework. Additionally, the engine uses the follow improvements to pruning, move ordering, and other time saving methods; Null move pruning, Razoring at pre-frontier and frontier nodes, Delta pruning in the quiescence search, Late move reductions in the main alpha beta algorithm, Null windows for principle variation searches, a transposition table, and finally, a killer move heuristic. This engine was originally developed to give myself a worthy opponent, but has since become a worthy opponent for other chess engines. This engine can compete with various engines in the lower rankings of the CCLR tier lists. Some of those results are noted at the bottom of this readme.
+Ethereal is a UCI compliant chess engine which uses a BitBoard board representation and an alpha beta pruning framework. Additionally, the engine uses the follow improvements to pruning, move ordering, and other time saving methods; Null move pruning, Razoring at pre-frontier and frontier nodes, Delta pruning in the quiescence search, Late move reductions in the main alpha beta algorithm, Null windows for principle variation searches, a transposition table, and finally, a killer move heuristic. This engine was originally developed to give myself a worthy opponent, but has since become a worthy opponent for other chess engines. This engine can compete with various engines in the lower rankings of the CCLR tier lists. Estimations of elo can be found at the bottom
 
 # History
 
@@ -21,28 +21,9 @@ In the beginnings of my computer science education I attempted to create a graph
   Select "File" and "New Game" to Play
   
   
-# Things To Add To Ethereal:
-  
-  Add Opening Book
-  
-  Add full UCI supports
-  
-  
-# Noteable Results:
+# ELO Estimation
 
-                                             WIN LOSS DRAW
-                                               
-  40 Moves in 4 Minutes
-  
-    Ethereal (Commit #621) vs MicroMax4.8 |   48   29   23
-    
-    Ethereal (Commit #624) vs TSCP1.81    |   13    3    4
-    
-    Ethereal (Commit #635) vs MicroMax4.8 |   55   27   18
-    
-    Ethereal (Commit #716) vs MicroMax4.8 |   50   23   27
-    
-    Ethereal (Commit #723) vs MicroMax4.8 |   65   16   19
+Please refer to EloTables.txt
     
     
 # Special Thanks
