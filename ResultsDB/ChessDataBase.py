@@ -82,6 +82,10 @@ class ChessDataBase():
         for engine in self.data:
             
             opponents = self.data[engine]
+            
+            ordered = [f for f in opponents]
+            ordered.sort()
+            
             tempStr = ""
             
             names  = []; wins  = []
@@ -89,7 +93,7 @@ class ChessDataBase():
             elos   = []; diffs = []
             finals = []
             
-            for opponent in opponents:
+            for opponent in ordered:
                 names  += [opponent]
                 wins   += [int(opponents[opponent]["Wins"])]
                 losses += [int(opponents[opponent]["Losses"])]
