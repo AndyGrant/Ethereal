@@ -79,7 +79,10 @@ class ChessDataBase():
         outputStr = ""
         OPP_FORMAT_STR = "{:>25} {:>5}; {:>5}; {:>5}; {:>5}; {:>5}; {:>7};\n"
         
-        for engine in self.data:
+        engines = [f for f in self.data]
+        engines.sort()
+        
+        for engine in engines:
             
             opponents = self.data[engine]
             
