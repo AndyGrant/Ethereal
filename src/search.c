@@ -280,9 +280,9 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             return value;
     }
     
-    // USE NULL MOVE PRUNING
+    // NULL MOVE PRUNING
     if (USE_NULL_MOVE_PRUNING
-        && depth >= 3
+        && depth >= 2
         && nodeType != PVNODE
         && canDoNull(board)
         && !inCheck
@@ -292,8 +292,10 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         board->turn = !board->turn;
         board->history[board->numMoves++] = NullMove;
         
+        int R = (40 + (depth << 2)) >> 4;
+        
         // PERFORM NULL MOVE SEARCH
-        value = -alphaBetaSearch(board, -beta, -beta+1, depth-4, height+1, CUTNODE);
+        value = -alphaBetaSearch(board, -beta, -beta+1, depth-R, height+1, CUTNODE);
         
         // REVERT NULL MOVE
         board->numMoves--;
@@ -622,7 +624,7 @@ void sortMoveList(MoveList * moveList){
                 moveList->moves[i] = tempMove;
             }
         }
-    }    
+    }
 }
 
 int canDoNull(Board * board){
