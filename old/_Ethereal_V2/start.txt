@@ -1,3 +1,0 @@
-position startpos moves
-go
-quit
