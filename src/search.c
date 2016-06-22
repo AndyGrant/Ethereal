@@ -173,10 +173,6 @@ int rootSearch(Board * board, MoveList * moveList, int alpha, int beta, int dept
             break;
     }
     
-    // STORE IN TRANSPOSITION TABLE
-    if (!Info->searchIsTimeLimited || getRealTime() < Info->endTime2)
-        storeTranspositionEntry(&Table, depth, board->turn, PVNODE, best, moveList->bestMove, board->hash);
-    
     // SORT MOVELIST FOR NEXT ITERATION
     sortMoveList(moveList);
     return best;
@@ -186,7 +182,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     
     int i, value, newDepth, entryValue, entryType;
     int min, max, inCheck, values[256];
-    int valid = 0, size = 0, repeated = 0;
+    int valid = 0, size = 0;
     int oldAlpha = alpha, best = -2*Mate, optimalValue = -Mate;
     
     uint16_t currentMove, tableMove = NoneMove, bestMove = NoneMove;
@@ -202,9 +198,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     // DETERMINE 3-FOLD REPITION
     for (i = board->numMoves-2; i >= 0; i-=2)
         if (board->history[i] == board->hash)
-            repeated++;
-    if (repeated >= 2)
-        return 0;
+            return 0;
     
     // SEARCH HORIZON REACHED, QSEARCH
     if (depth <= 0)
@@ -268,6 +262,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     
     // RAZOR PRUNING
     if (USE_RAZOR_PRUNING
+        && tableMove == NoneMove
         && depth <= 3
         && nodeType != PVNODE
         && alpha == beta - 1
@@ -276,7 +271,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         value = quiescenceSearch(board, alpha, beta, height);
         
         // EVEN GAINING A LARGE MARGIN WOULD FAIL LOW
-        if (value < beta)
+        if (value + RazorMargins[depth] < beta)
             return value;
     }
     
@@ -286,16 +281,15 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         && nodeType != PVNODE
         && canDoNull(board)
         && !inCheck
+        && board->history[board->numMoves-1] != NullMove
         && evaluateBoard(board, &PTable) >= beta){
             
         // APPLY NULL MOVE
         board->turn = !board->turn;
         board->history[board->numMoves++] = NullMove;
         
-        int R = (40 + (depth << 2)) >> 4;
-        
         // PERFORM NULL MOVE SEARCH
-        value = -alphaBetaSearch(board, -beta, -beta+1, depth-R, height+1, CUTNODE);
+        value = -alphaBetaSearch(board, -beta, -beta+1, depth-4, height+1, CUTNODE);
         
         // REVERT NULL MOVE
         board->numMoves--;
@@ -337,13 +331,13 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         if (USE_FUTILITY_PRUNING
             && nodeType != PVNODE
             && valid >= 1
-            && depth == 1
+            && depth <= 4
             && !inCheck
             && MoveType(currentMove) == NormalMove
             && board->squares[MoveTo(currentMove)] == Empty){
                 
             if (optimalValue == -Mate)
-                optimalValue = evaluateBoard(board, &PTable) + PawnValue;
+                optimalValue = evaluateBoard(board, &PTable) + (depth * 1.5 * PawnValue);
             
             value = optimalValue;
             
@@ -374,7 +368,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             && MoveType(currentMove) == NormalMove
             && undo[0].capturePiece == Empty
             && isNotInCheck(board, board->turn))
-            newDepth = depth-2;
+            newDepth = depth - ((valid >= 12) ? 3 : 2);
         else
             newDepth = depth-1;
          
@@ -385,7 +379,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             
             // IMPROVED BOUND, BUT WAS REDUCED DEPTH?
             if (value > alpha
-                && newDepth == depth-2){
+                && newDepth != depth-1){
                     
                 value = -alphaBetaSearch(board, -beta, -alpha, depth-1, height+1, nodeType);
             }
@@ -442,15 +436,14 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     
     Cut:
     
-    if (best >= beta && bestMove != NoneMove){
+    if (best >= beta && bestMove != NoneMove)
         HistoryGood[bestMove]++;
     
-        for (i = valid - 1; i >= 0; i--){
-            HistoryTotal[played[i]]++;
-            if (HistoryTotal[played[i]] >= 16384){
-                HistoryTotal[played[i]] = (HistoryTotal[played[i]] + 1) / 2;
-                HistoryGood[played[i]] = (HistoryGood[played[i]] + 1) / 2;
-            }
+    for (i = valid - 1; i >= 0; i--){
+        HistoryTotal[played[i]]++;
+        if (HistoryTotal[played[i]] >= 16384){
+            HistoryTotal[played[i]] = (HistoryTotal[played[i]] + 1) / 2;
+            HistoryGood[played[i]] = (HistoryGood[played[i]] + 1) / 2;
         }
     }
     
@@ -469,7 +462,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
 
 int quiescenceSearch(Board * board, int alpha, int beta, int height){
     int i, size = 0, value = -2*Mate, best = -2*Mate, values[256];
-    uint16_t moves[256], bestMove, currentMove;
+    uint16_t moves[256], bestMove, currentMove, maxValueGain;
     Undo undo[1];
     
     // MAX HEIGHT REACHED, STOP HERE
@@ -490,8 +483,14 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
     if (alpha >= beta)
         return value;
     
+    
+    if (board->colourBitBoards[!board->turn] & board->pieceBitBoards[4])
+        maxValueGain = QueenValue;
+    else
+        maxValueGain = RookValue;
+    
     // DELTA PRUNING IN WHEN NO PROMOTIONS AND NOT EXTREME LATE GAME
-    if (value + QueenValue < alpha
+    if (value + maxValueGain < alpha
         && board->numPieces >= 6 
         && !(board->colourBitBoards[0] & board->pieceBitBoards[0] & RANK_7)
         && !(board->colourBitBoards[1] & board->pieceBitBoards[0] & RANK_2))
@@ -630,6 +629,7 @@ void sortMoveList(MoveList * moveList){
 int canDoNull(Board * board){
     uint64_t friendly = board->colourBitBoards[board->turn];
     uint64_t kings = board->pieceBitBoards[5];
+    uint64_t pawns = board->pieceBitBoards[0];
     
-    return (friendly & kings) != friendly;
+    return (friendly & (kings | pawns)) != friendly;
 }
