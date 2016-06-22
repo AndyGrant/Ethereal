@@ -31,6 +31,11 @@ class ChessDataBase():
         assert self.hasEngine(engineName)
         return opponentName in self.data[engineName]
         
+    def removeEngine(self, engineName):
+        if self.hasEngine(engineName):
+            del self.data[engineName]
+        print "-->Removed Engine :", engineName
+        
     def addEngine(self, engineName):
         assert not self.hasEngine(engineName)
         self.data[engineName] = {}
@@ -125,4 +130,8 @@ class ChessDataBase():
         return int(round((-400 * math.log10((1/score) - 1))))
         
 if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        c = ChessDataBase("DataBase.json")
+        c.removeEngine(sys.argv[1])
+        c.saveDataBase()
     ChessDataBase("DataBase.json").outputDataBase("EloTables.txt")
