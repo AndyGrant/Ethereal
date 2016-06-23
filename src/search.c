@@ -53,19 +53,16 @@ uint16_t getBestMove(SearchInfo * info){
         HistoryTotal[i] = 1;
     }
     
-    printBoard(&(info->board));
-    
     // PERFORM ITERATIVE DEEPENING
     for (depth = 1; depth < MaxDepth; depth++){
         
         // PERFORM FULL SEARCH ON ROOT
-        //value = rootSearch(&(info->board),&rootMoveList,-Mate*2,Mate*2,depth);
         value = aspirationWindow(&(info->board), &rootMoveList, depth, value);
         
         // LOG RESULTS TO INTERFACE
         centiValue = (100*value)/PawnValue;
         deltaTime = getRealTime() - info->startTime;
-        hashPercent = (1000*Table.used)/(4*Table.maxSize);
+        hashPercent = (1000*(uint64_t)(Table.used)) / (4*(uint64_t)(Table.maxSize));
         printf("info depth %d score cp %d time %d nodes %d hashfull %d pv ",depth,centiValue,deltaTime,TotalNodes,hashPercent);
         printMove(rootMoveList.bestMove);
         printf("\n");
@@ -180,7 +177,7 @@ int rootSearch(Board * board, MoveList * moveList, int alpha, int beta, int dept
 
 int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, int nodeType){
     
-    int i, value, newDepth, entryValue, entryType;
+    int i, value, newDepth, entryValue, entryType, eval;
     int min, max, inCheck, values[256];
     int valid = 0, size = 0;
     int oldAlpha = alpha, best = -2*Mate, optimalValue = -Mate;
@@ -247,14 +244,16 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     // DETERMINE CHECK STATUS
     inCheck = !isNotInCheck(board, board->turn);
     
+    if (nodeType != PVNODE)
+        eval = evaluateBoard(board, &PTable);
+    
     // STATIC NULL MOVE PRUNING
     if (USE_STATIC_NULL_PRUNING
         && depth <= 3
         && nodeType != PVNODE
-        && alpha == beta - 1
         && !inCheck){
             
-        value = evaluateBoard(board, &PTable) - (depth * (PawnValue + 15));
+        value = eval - (depth * (PawnValue + 15));
         
         if (value > beta)
             return value;
@@ -265,8 +264,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         && tableMove == NoneMove
         && depth <= 3
         && nodeType != PVNODE
-        && alpha == beta - 1
-        && evaluateBoard(board, &PTable) + RazorMargins[depth] < beta){
+        && eval + RazorMargins[depth] < beta){
         
         value = quiescenceSearch(board, alpha, beta, height);
         
@@ -282,7 +280,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         && canDoNull(board)
         && !inCheck
         && board->history[board->numMoves-1] != NullMove
-        && evaluateBoard(board, &PTable) >= beta){
+        && eval >= beta){
             
         // APPLY NULL MOVE
         board->turn = !board->turn;
@@ -321,7 +319,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     evaluateMoves(board, values, moves, size, height, tableMove);
    
     // CHECK EXTENSION
-    depth += inCheck;
+    depth += (inCheck && (nodeType == PVNODE || depth <= 6));
     
     for (i = 0; i < size; i++){
         
@@ -331,13 +329,13 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         if (USE_FUTILITY_PRUNING
             && nodeType != PVNODE
             && valid >= 1
-            && depth <= 4
+            && depth <= 8
             && !inCheck
             && MoveType(currentMove) == NormalMove
             && board->squares[MoveTo(currentMove)] == Empty){
                 
             if (optimalValue == -Mate)
-                optimalValue = evaluateBoard(board, &PTable) + (depth * 1.5 * PawnValue);
+                optimalValue = eval + (depth * 1.25 * PawnValue);
             
             value = optimalValue;
             
@@ -361,8 +359,8 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         // DETERMINE IF WE CAN USE LATE MOVE REDUCTIONS
         if (USE_LATE_MOVE_REDUCTIONS
             && valid >= 5
-            && depth >= 4
-            && played[0] == tableMove
+            && depth >= 3
+            && ((100 * HistoryGood[currentMove]) / HistoryTotal[currentMove]) < 80
             && !inCheck
             && nodeType != PVNODE
             && MoveType(currentMove) == NormalMove
@@ -461,7 +459,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
 }
 
 int quiescenceSearch(Board * board, int alpha, int beta, int height){
-    int i, size = 0, value = -2*Mate, best = -2*Mate, values[256];
+    int i, size = 0, eval, value = -2*Mate, best = -2*Mate, values[256];
     uint16_t moves[256], bestMove, currentMove, maxValueGain;
     Undo undo[1];
     
@@ -473,7 +471,8 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
     TotalNodes++;
     
     // GET A STANDING-EVAL OF THE CURRENT BOARD
-    value = evaluateBoard(board, &PTable);
+    eval = evaluateBoard(board, &PTable);
+    value = eval;
     
     // UPDATE LOWER BOUND
     if (value > alpha)
@@ -485,9 +484,9 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
     
     
     if (board->colourBitBoards[!board->turn] & board->pieceBitBoards[4])
-        maxValueGain = QueenValue;
+        maxValueGain = QueenValue + 55;
     else
-        maxValueGain = RookValue;
+        maxValueGain = RookValue + 35;
     
     // DELTA PRUNING IN WHEN NO PROMOTIONS AND NOT EXTREME LATE GAME
     if (value + maxValueGain < alpha
@@ -505,6 +504,9 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
     
     for (i = 0; i < size; i++){
         currentMove = getNextMove(moves, values, i, size);
+        
+        if (eval + 55 + PieceValues[PieceType(board->squares[MoveTo(currentMove)])] < alpha)
+            continue;
         
         // APPLY AND VALIDATE MOVE BEFORE SEARCHING
         applyMove(board, currentMove, undo);
