@@ -233,7 +233,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             
             // UPPER BOUND STORED
             else if (entryType == ALLNODE)
-                max = entryValue < best ? entryValue : beta;
+                max = entryValue < beta ? entryValue : beta;
             
             // BOUNDS NOW OVERLAP?
             if (min >= max)
