@@ -106,17 +106,8 @@ void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t turn, ui
         if (EntryHash16(bucket->entries[i]) == hash16
             && EntryTurn(bucket->entries[i]) == turn){
             
-            // UPDATE MATCHING ENTRY'S GENERATION
-            EntrySetAge(&(bucket->entries[i]), table->generation);
-            
-            // REPLACE ENTRY IF NEW ENTRY HAS GREATER DRAFT
-            if (EntryDepth(bucket->entries[i]) < depth){
-                toReplace = &(bucket->entries[i]);
-                goto Replace;
-            }
-            
-            // RETURN SO WE DON'T STORE TWO MATCHING HASHES
-            return;
+            toReplace = &(bucket->entries[i]);
+            goto Replace;
         }
         
         // SEARCH FOR THE LOWEST DRAFT OF AN OLD ENTRY
