@@ -1,0 +1,2 @@
+position fen KR6/3k1P2/1p6/p4r2/P7/2P5/8/8 b 0 0
+go infinite

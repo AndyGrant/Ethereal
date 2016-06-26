@@ -1,5 +1,0 @@
-position fen 8/8/8/4NK2/8/7k/8/6R1 b - - 44 105
-go
-
-position fen 8/8/8/4NK2/8/7k/8/6R1 b - - 44 105
-go

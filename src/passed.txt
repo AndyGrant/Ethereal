@@ -1,0 +1,2 @@
+position fen 8/r7/3P1pPk/p3P3/1pN3Qp/1P5P/P4qPK/8 b - - 0 0
+go infinite

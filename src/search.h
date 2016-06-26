@@ -23,6 +23,6 @@ int canDoNull(Board * board);
 #define USE_INTERNAL_ITERATIVE_DEEPENING    (1)
 #define USE_TRANSPOSITION_TABLE             (1)
 
-static int RazorMargins[4] = {0, 325, 345, 395};
+extern int RazorMargins[4];
 
 #endif

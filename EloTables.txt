@@ -49,12 +49,22 @@
 
 
                             Win;  Loss;  Draw;   Elo;  Diff;   Final;
-    Ethreal7.58-Win64.exe      ;      ;      ;      ;      ;    2275;
+   Ethereal7.58-Win64.exe      ;      ;      ;      ;      ;    2275;
           BikJump2.01.exe   589;   226;   105;  2100;   145;    2245;
           Clarabit1.0.exe   651;   173;    96;  2100;   200;    2300;
              Glass1.3.exe   317;   498;    80;  2358;   -71;    2287;
           MadChess2.0.exe   450;   342;    68;  2288;    44;    2332;
            Monarch1.7.exe   564;   155;   116;  2056;   186;    2242;
           Sungorus1.4.exe   296;   437;   102;  2308;   -59;    2249;
+
+
+                            Win;  Loss;  Draw;   Elo;  Diff;   Final;
+   Ethereal7.60-Win64.exe      ;      ;      ;      ;      ;    2453;
+          BikJump2.01.exe   465;    32;    54;  2100;   368;    2468;
+          Clarabit1.0.exe   447;    29;    49;  2100;   378;    2478;
+             Glass1.3.exe   297;   151;    77;  2358;    99;    2457;
+          MadChess2.0.exe   359;   108;    58;  2288;   181;    2469;
+           Monarch1.7.exe   443;    39;    43;  2056;   354;    2410;
+          Sungorus1.4.exe   292;   115;    93;  2308;   129;    2437;
 
 
