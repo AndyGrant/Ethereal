@@ -7,6 +7,11 @@
 #include "piece.h"
 #include "zorbist.h"
 
+int INITALIZED_ZORBIST = 0;
+
+uint64_t ZorbistKeys[32][64];
+uint64_t PawnKeys[32][64];
+
 /**
  * Fill the ZorbistKeys[type][square] arrays with randomly
  * generated 64-bit Integers. Set flag INITALIZED_ZORBIST

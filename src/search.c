@@ -16,6 +16,8 @@
 #include "move.h"
 #include "movegen.h"
 
+int RazorMargins[4] = {0, 325, 345, 395};
+
 int TotalNodes;
 
 int EvaluatingPlayer;
@@ -177,10 +179,11 @@ int rootSearch(Board * board, MoveList * moveList, int alpha, int beta, int dept
 
 int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, int nodeType){
     
-    int i, value, newDepth, entryValue, entryType, eval;
+    int i, value, newDepth, entryValue, entryType;
     int min, max, inCheck, values[256];
     int valid = 0, size = 0;
     int oldAlpha = alpha, best = -2*Mate, optimalValue = -Mate;
+    int eval = 0; // NO NEED TO SET THIS, BUT A BUG IN GCC THROWS A WARNING
     
     uint16_t currentMove, tableMove = NoneMove, bestMove = NoneMove;
     uint16_t moves[256], played[256];
@@ -261,11 +264,12 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     
     // RAZOR PRUNING
     if (USE_RAZOR_PRUNING
+        && nodeType != PVNODE
         && tableMove == NoneMove
         && depth <= 3
         && nodeType != PVNODE
         && eval + RazorMargins[depth] < beta){
-        
+            
         value = quiescenceSearch(board, alpha, beta, height);
         
         // EVEN GAINING A LARGE MARGIN WOULD FAIL LOW
@@ -460,7 +464,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
 
 int quiescenceSearch(Board * board, int alpha, int beta, int height){
     int i, size = 0, eval, value = -2*Mate, best = -2*Mate, values[256];
-    uint16_t moves[256], bestMove, currentMove, maxValueGain;
+    uint16_t moves[256], currentMove, maxValueGain;
     Undo undo[1];
     
     // MAX HEIGHT REACHED, STOP HERE
@@ -505,7 +509,12 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
     for (i = 0; i < size; i++){
         currentMove = getNextMove(moves, values, i, size);
         
-        if (eval + 55 + PieceValues[PieceType(board->squares[MoveTo(currentMove)])] < alpha)
+        value = eval + 55 + PieceValues[PieceType(board->squares[MoveTo(currentMove)])];
+        
+        if (MoveType(currentMove) == PromotionMove)
+            value += PieceValues[PieceType(1 + (MovePromoType(currentMove) >> 14))];
+        
+        if (value < alpha)
             continue;
         
         // APPLY AND VALIDATE MOVE BEFORE SEARCHING
@@ -542,7 +551,7 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
     
     int i, value;
     int from_type, to_type;
-    int from_val, to_val;
+    int to_val;
     
     // GET KILLER MOVES
     uint16_t killer1 = KillerMoves[height][0];
@@ -560,7 +569,6 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
         // INFO FOR POSSIBLE CAPTURE
         from_type = PieceType(board->squares[MoveFrom(moves[i])]);
         to_type = PieceType(board->squares[MoveTo(moves[i])]);
-        from_val = PieceValues[from_type];
         to_val = PieceValues[to_type];
         
         // ENCOURAGE CAPTURING HIGH VALUE

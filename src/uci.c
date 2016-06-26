@@ -9,6 +9,7 @@
 #include "types.h"
 #include "search.h"
 #include "movegen.h"
+#include "movegentest.h"
 #include "time.h"
 #include "transposition.h"
 #include "uci.h"
@@ -16,7 +17,6 @@
 int main(){
     
     char * startPos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    char promoteDict[4] = {'n', 'b', 'r', 'q'};
     
     char str[2048];
     char * ptr;
@@ -60,7 +60,7 @@ int main(){
         } 
         
         else if (stringEquals(str, "ucinewgame")){
-            // WIPE TRANS
+            clearTranspositionTable(&Table);
         } 
         
         else if (stringStartsWith(str, "position")){
@@ -88,7 +88,7 @@ int main(){
                     moveStr[5] = '\0';
                 }
                 
-                int size = 0;
+                size = 0;
                 genAllMoves(&(info.board), moves, &size);
                 
                 for (size -= 1; size >= 0; size--){
@@ -116,8 +116,8 @@ int main(){
             double inc = 0;
             double wtime = -1;
             double btime = -1;
-            double winc = -1;
-            double binc = -1;
+            double winc = 0;
+            double binc = 0;
             int mtg = -1;
             int depth = -1;
             double movetime = -1;
@@ -219,9 +219,20 @@ int main(){
             }
             
             else {
+                
                 info.searchIsTimeLimited = 1;
-                info.endTime1 = info.startTime + .5 * (time / (double)(mtg+1));
-                info.endTime2 = info.startTime + (time / (double)(mtg+1));
+                
+                // NOT USING REPEATING TIME CONTROL
+                if (mtg == -1){
+                    info.endTime1 = info.startTime + .5 * (time / (double)(30));
+                    info.endTime2 = info.startTime + (time / (double)(30)) + inc;
+                }
+                
+                // USING REPEATING TIME CONTROL
+                else {
+                    info.endTime1 = info.startTime + .5 * (time / (double)(mtg+1));
+                    info.endTime2 = info.startTime + (time / (double)(mtg+1));
+                }
             }
             
             moveToString(moveStr, getBestMove(&info));
@@ -238,9 +249,12 @@ int main(){
         } 
         
         else if (stringEquals(str, "quit")){
+            destroyTranspositionTable(&Table);
             break;
         }
     }
+    
+    return 1;
 }
 
 int stringEquals(char * s1, char * s2){
@@ -258,11 +272,10 @@ int stringContains(char * str, char * key){
     return strstr(str, key) != NULL;
 }
 
-int getInput(char * str){
+void getInput(char * str){
     
     if (fgets(str,2048,stdin) == NULL)
         exit(EXIT_FAILURE);
-    
     
     char * ptr = strchr(str, '\n');
     if (ptr != NULL) *ptr = '\0';
@@ -273,7 +286,7 @@ int getInput(char * str){
 
 void moveToString(char * str, uint16_t move){
     
-    static  char promoteDict[4] = {'n', 'b', 'r', 'q'};
+    static char promoteDict[4] = {'n', 'b', 'r', 'q'};
     
     int from = MoveFrom(move);
     int to = MoveTo(move);

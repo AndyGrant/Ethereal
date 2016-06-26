@@ -292,7 +292,6 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
     
     uint64_t empty = ~(friendly | enemy);
     uint64_t notEmpty = ~empty;
-    uint64_t notFriendly = ~friendly;
     
     uint64_t myPawns   = friendly & board->pieceBitBoards[0];
     uint64_t myKnights = friendly & board->pieceBitBoards[1];
@@ -482,7 +481,8 @@ int isNotInCheck(Board * board, int turn){
  * @return          1 if can be attacked, 0 if cannot
  */
 int squareIsAttacked(Board * board, int turn, int sq){
-    int kingbit, dbIndex;
+    
+    int dbIndex;
     uint64_t square, blockers;
     
     uint64_t friendly = board->colourBitBoards[turn];

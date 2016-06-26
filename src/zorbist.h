@@ -6,9 +6,9 @@
 void initalizeZorbist();
 uint64_t genRandomBitstring();
 
-static int INITALIZED_ZORBIST = 0;
+extern int INITALIZED_ZORBIST;
 
-uint64_t ZorbistKeys[32][64];
-uint64_t PawnKeys[32][64];
+extern uint64_t ZorbistKeys[32][64];
+extern uint64_t PawnKeys[32][64];
 
 #endif

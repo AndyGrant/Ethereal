@@ -17,7 +17,7 @@
  * @param   table   TransTable pointer to allocation destination
  * @param   keySize Number of bits per key, also the size of the table
  */
-void initalizeTranspositionTable(TransTable * table, int keySize){
+void initalizeTranspositionTable(TransTable * table, unsigned int keySize){
     
     // TABLE HAS ALREADY BEEN INITALIZED
     if (table->keySize == keySize){
@@ -31,6 +31,33 @@ void initalizeTranspositionTable(TransTable * table, int keySize){
     table->keySize = keySize;
     table->generation = 0;
     table->used = 0;
+}
+
+void destroyTranspositionTable(TransTable * table){
+    
+    free(table->buckets);
+}
+
+void clearTranspositionTable(TransTable * table){
+    
+    unsigned int i;
+    int j;
+    TransEntry * entry;
+    
+    table->generation = 0;
+    table->used = 0;
+    
+    for (i = 0; i < table->maxSize; i++){
+        for (j = 0; j < 4; j++){
+            entry = &(table->buckets[i].entries[j]);
+            
+            entry->depth = 0;
+            entry->data = 0;
+            entry->value = 0;
+            entry->bestMove = 0;
+            entry->hash16 = 0;
+        }
+    }
 }
 
 /**
@@ -181,7 +208,8 @@ void dumpTranspositionTable(TransTable * table){
     printf("USED %d of %d\n",table->used,4*(table->maxSize));
     
     TransEntry entry;
-    int i, j, depth, type, data[MaxHeight][4];
+    int j, depth, type, data[MaxHeight][4];
+    unsigned int i;
     
     for (i = 0; i < MaxHeight; i++)
         for (j = 0; j < 4; j++)

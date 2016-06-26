@@ -5,6 +5,15 @@
 #include "masks.h"
 #include "psqt.h"
 
+int INITALIZED_MASKS = 0;
+
+uint64_t IsolatedPawnMasks[64];
+uint64_t PassedPawnMasks[2][64];
+uint64_t PawnAttackMasks[2][64];
+uint64_t PawnAdvanceMasks[2][64];
+uint64_t PawnConnectedMasks[2][64];
+uint64_t OutpostSquareMasks[2][64];
+
 /**
  * Fill the various masks used to aid in the evaluation
  * function. These masks provide an easy way to determine
@@ -19,7 +28,7 @@ void initalizeMasks(){
         return;
     
     int i, j, file, rank;
-    uint64_t files, temp;
+    uint64_t files;
     
     // INITALIZE ISOLATED PAWN MASKS
     for (i = 0; i < 64; i++){
