@@ -20,12 +20,14 @@ void evaluateKings(int * mid, int * end, Board* board);
 #define KING_HAS_CASTLED     (10)
 #define KING_CAN_CASTLE      ( 5)
 
-#define ROOK_OPEN_FILE_MID   (25)
-#define ROOK_OPEN_FILE_END   (30)
+#define ROOK_OPEN_FILE_MID   (35)
+#define ROOK_OPEN_FILE_END   (20)
 #define ROOK_SEMI_FILE_MID   (12)
 #define ROOK_SEMI_FILE_END   (12)
 #define ROOK_STACKED_MID     ( 8)
 #define ROOK_STACKED_END     ( 8)
+#define ROOK_ON_7TH_MID      (10)
+#define ROOK_ON_7TH_END      (15)
 
 #define BISHOP_PAIR_MID      (46)
 #define BISHOP_PAIR_END      (64)

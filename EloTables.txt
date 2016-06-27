@@ -68,3 +68,13 @@
           Sungorus1.4.exe   292;   115;    93;  2308;   129;    2437;
 
 
+                            Win;  Loss;  Draw;   Elo;  Diff;   Final;
+   Ethereal7.61-Win64.exe      ;      ;      ;      ;      ;    2512;
+          BikJump2.01.exe   211;     8;    16;  2100;   455;    2555;
+          Clarabit1.0.exe   186;     2;    22;  2100;   472;    2572;
+             Glass1.3.exe   128;    49;    23;  2358;   145;    2503;
+          MadChess2.0.exe   137;    36;    17;  2288;   206;    2494;
+           Monarch1.7.exe   168;    10;    12;  2056;   415;    2471;
+          Sungorus1.4.exe   126;    39;    25;  2308;   172;    2480;
+
+

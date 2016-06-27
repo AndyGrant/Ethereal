@@ -73,8 +73,8 @@ int PawnConnected[2][64] = {
       0, 0, 0, 0, 0, 0, 0, 0, }
 };
 
-int PawnPassedMid[8] = { 0,  0, 10, 18, 28, 40, 54, 0};
-int PawnPassedEnd[8] = { 0,  0, 10, 18, 28, 40, 54, 0};
+int PawnPassedMid[8] = { 0,  10, 10, 23, 39, 58, 70, 0};
+int PawnPassedEnd[8] = { 0,  12, 12, 26, 44, 66, 90, 0};
 
 int PieceValues[8] = {PawnValue, KnightValue, BishopValue, RookValue, QueenValue, KingValue, 0, 0};
 
@@ -361,15 +361,15 @@ void evaluateRooks(int* mid, int* end, Board* board, int * rookCount){
         
         myRooks = allRooks & board->colourBitBoards[colour];
         
+        myPawns = allPawns & board->colourBitBoards[colour];
+        enemyPawns = allPawns ^ myPawns;
+        
         for (i = 0; myRooks != 0; i++){
             
             (*rookCount)++;
             
             sq = getLSB(myRooks);
             myRooks ^= (1ull << sq);
-            
-            myPawns = allPawns & board->colourBitBoards[colour];
-            enemyPawns = allPawns ^ myPawns;
             
             if (!(myPawns & FILES[sq % 8])){
                 
@@ -387,6 +387,12 @@ void evaluateRooks(int* mid, int* end, Board* board, int * rookCount){
             if (FILES[sq % 8] & myRooks){
                 mg += ROOK_STACKED_MID;
                 eg += ROOK_STACKED_END;
+            }
+            
+            
+            if (sq / 8 == (colour == ColourBlack ? 1 : 6)){
+                mg += ROOK_ON_7TH_MID;
+                eg += ROOK_ON_7TH_END;
             }
         }
     }
