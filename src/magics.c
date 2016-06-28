@@ -12,11 +12,33 @@ uint64_t KingMap[64];
 uint64_t OccupancyMaskRook[64];
 uint64_t OccupancyMaskBishop[64];
 
-uint64_t OccupancyVariationsRook[64][4096];
-uint64_t OccupancyVariationsBishop[64][512];
+uint64_t ** OccupancyVariationsRook;
+uint64_t ** OccupancyVariationsBishop;
 
-uint64_t ** MoveDatabaseRook;
-uint64_t ** MoveDatabaseBishop;
+uint64_t * MoveDatabaseRook;
+uint64_t * MoveDatabaseBishop;
+
+int MagicRookIndexes[64] = {
+        0,  4096,  6144,  8192, 10240, 12288, 14336, 16384,
+    20480, 22528, 23552, 24576, 25600, 26624, 27648, 28672,
+    30720, 32768, 33792, 34816, 35840, 36864, 37888, 38912,
+    40960, 43008, 44032, 45056, 46080, 47104, 48128, 49152,
+    51200, 53248, 54272, 55296, 56320, 57344, 58368, 59392,
+    61440, 63488, 64512, 65536, 66560, 67584, 68608, 69632,
+    71680, 73728, 74752, 75776, 76800, 77824, 78848, 79872,
+    81920, 86016, 88064, 90112, 92160, 94208, 96256, 98304
+};
+
+int MagicBishopIndexes[64] = {
+       0,   64,   96,  128,  160,  192,  224,  256,
+     320,  352,  384,  416,  448,  480,  512,  544,
+     576,  608,  640,  768,  896, 1024, 1152, 1184,
+    1216, 1248, 1280, 1408, 1920, 2432, 2560, 2592,
+    2624, 2656, 2688, 2816, 3328, 3840, 3968, 4000,
+    4032, 4064, 4096, 4224, 4352, 4480, 4608, 4640,
+    4672, 4704, 4736, 4768, 4800, 4832, 4864, 4896,
+    4928, 4992, 5024, 5056, 5088, 5120, 5152, 5184
+};
 
 int MagicShiftsRook[64] = {
     52,53,53,53,53,53,53,52,53,54,54,54,54,54,54,53,
@@ -79,6 +101,8 @@ uint64_t MagicNumberBishop[64] = {
  */
 void initalizeMagics(){
     
+    int i;
+    
     if (INITIALIZED_MAGICS)
         return;
     
@@ -91,9 +115,18 @@ void initalizeMagics(){
     generateMoveDatabaseRook();
     generateMoveDatabaseBishop();
     
+    // CLEAN UP OCCUPANCY VARIATIONS FOR BISHOPS
+    for (i = 0; i < 64; i++)
+        free(OccupancyVariationsBishop[i]);
+    free(OccupancyVariationsBishop);
+    
+    // CLEAN UP OCCUPANCY VARIATIONS FOR ROOKS
+    for (i = 0; i < 64; i++)
+        free(OccupancyVariationsRook[i]);
+    free(OccupancyVariationsRook);
+    
     INITIALIZED_MAGICS = 1;
 }
-
 
 /**
  * Fill the KnightMap[64] array with the correct 
@@ -212,6 +245,11 @@ void generateOccupancyVariationsRook(){
     uint64_t mask;
     int setBitsInMask[20], setBitsInIndex[20];
     
+    OccupancyVariationsRook = malloc(sizeof(uint64_t) * 64);
+    
+    for (i = 0; i < 64; i++)
+        OccupancyVariationsRook[i] = malloc(sizeof(uint64_t) * 4096);
+    
     for (bitRef = 0; bitRef < 64; bitRef++){
         mask = OccupancyMaskRook[bitRef];
         getSetBits(mask,setBitsInMask);
@@ -237,6 +275,11 @@ void generateOccupancyVariationsBishop(){
     int i, j, bitRef, variationCount;
     uint64_t mask;
     int setBitsInMask[20], setBitsInIndex[20];
+    
+    OccupancyVariationsBishop = malloc(sizeof(uint64_t) * 64);
+    
+    for (i = 0; i < 64; i++)
+        OccupancyVariationsBishop[i] = malloc(sizeof(uint64_t) * 512);
     
     for (bitRef = 0; bitRef < 64; bitRef++){
         mask = OccupancyMaskBishop[bitRef];
@@ -265,18 +308,16 @@ void generateMoveDatabaseRook(){
     int variations, bitCount;
     int bitRef, i, j, magicIndex;
     
-    MoveDatabaseRook = malloc(sizeof(uint64_t) * 64);
+    MoveDatabaseRook = malloc(sizeof(uint64_t) * (98304 + 4096));
     
     for (bitRef=0; bitRef<=63; bitRef++){
         bitCount = countSetBits(OccupancyMaskRook[bitRef]);
         variations = (int)(1ull << bitCount);
         
-        MoveDatabaseRook[bitRef] = malloc(sizeof(uint64_t) * variations);
-
         for (i = 0; i < variations; i++){
             validMoves = 0;
             magicIndex = (int)((OccupancyVariationsRook[bitRef][i] * MagicNumberRook[bitRef]) >> MagicShiftsRook[bitRef]);
-
+            
             for (j=bitRef+8; j<=63; j+=8) { 
                 validMoves |= (1ull << j); 
                 if ((OccupancyVariationsRook[bitRef][i] & (1ull << j)) != 0) 
@@ -300,8 +341,8 @@ void generateMoveDatabaseRook(){
                 if ((OccupancyVariationsRook[bitRef][i] & (1ull << j)) != 0)
                     break;
             }
-
-            MoveDatabaseRook[bitRef][magicIndex] = validMoves;
+            
+            MoveDatabaseRook[MagicRookIndexes[bitRef] + magicIndex] = validMoves;
         }
     }
 }
@@ -319,13 +360,11 @@ void generateMoveDatabaseBishop(){
     int variations, bitCount;
     int bitRef, i, j, magicIndex;
     
-    MoveDatabaseBishop = malloc(sizeof(uint64_t) * 64);
+    MoveDatabaseBishop = malloc(sizeof(uint64_t) * (5184 + 64));
     
     for (bitRef=0; bitRef<=63; bitRef++){
         bitCount = countSetBits(OccupancyMaskBishop[bitRef]);
         variations = (int)(1ull << bitCount);
-        
-        MoveDatabaseBishop[bitRef] = malloc(sizeof(uint64_t) * variations);
         
         for (i = 0; i < variations; i++){
             validMoves = 0;
@@ -355,7 +394,7 @@ void generateMoveDatabaseBishop(){
                     break; 
             }
 
-            MoveDatabaseBishop[bitRef][magicIndex] = validMoves;
+            MoveDatabaseBishop[MagicBishopIndexes[bitRef] + magicIndex] = validMoves;
         }
     }
 }
