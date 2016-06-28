@@ -23,6 +23,6 @@ int squareIsAttacked(Board * board, int turn, int sq);
 #define KnightAttacks(sq, tg)       (KnightMap[(sq)] & (tg))
 #define BishopAttacks(sq, ne, tg)   (__MDB[(sq)][(((ne) & __OMB[(sq)]) * __MNB[(sq)]) >> __MSB[(sq)]] & (tg))
 #define RookAttacks(sq, ne, tg)     (__MDR[(sq)][(((ne) & __OMR[(sq)]) * __MNR[(sq)]) >> __MSR[(sq)]] & (tg))
-#define KingAttacks(sq, tg)         (KingMap[(sq)] & tg)
+#define KingAttacks(sq, tg)         (KingMap[(sq)] & (tg))
 
 #endif
