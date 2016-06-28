@@ -21,7 +21,6 @@
  * @param   size    Pointer to keep track of the number of moves
  */
 void genAllMoves(Board * board, uint16_t * moves, int * size){
-    uint64_t blockers;
     uint64_t attackable;
     
     uint64_t pawnForwardOne;
@@ -33,7 +32,7 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
     uint64_t pawnPromoLeft;
     uint64_t pawnPromoRight;
     
-    int bit, lsb, dbIndex;
+    int bit, lsb;
     int forwardShift, leftShift, rightShift;
     int epSquare = board->epSquare;
     
@@ -164,7 +163,7 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
     // GENERATE KNIGHT MOVES
     while(myKnights != 0){
         bit = getLSB(myKnights);
-        attackable = KnightMap[bit] & notFriendly;
+        attackable = KnightAttacks(bit, notFriendly);
         
         while(attackable != 0){
             lsb = getLSB(attackable);
@@ -178,9 +177,7 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
     // GENERATE BISHOP MOVES
     while(myBishops != 0){
         bit = getLSB(myBishops);
-        blockers = notEmpty & OccupancyMaskBishop[bit];
-        dbIndex = (blockers * MagicNumberBishop[bit]) >> MagicShiftsBishop[bit];
-        attackable = MoveDatabaseBishop[bit][dbIndex] & notFriendly;
+        attackable = BishopAttacks(bit, notEmpty, notFriendly);
         
         while(attackable != 0){
             lsb = getLSB(attackable);
@@ -194,9 +191,7 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
     // GENERATE ROOK MOVES
     while(myRooks != 0){
         bit = getLSB(myRooks);
-        blockers = notEmpty & OccupancyMaskRook[bit];
-        dbIndex = (blockers * MagicNumberRook[bit]) >> MagicShiftsRook[bit];
-        attackable = MoveDatabaseRook[bit][dbIndex] & notFriendly;
+        attackable = RookAttacks(bit, notEmpty, notFriendly);
         
         while(attackable != 0){
             lsb = getLSB(attackable);
@@ -210,7 +205,7 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
     // GENERATE KING MOVES
     while(myKings != 0){
         bit = getLSB(myKings);
-        attackable = KingMap[bit] & notFriendly;
+        attackable = KingAttacks(bit, notFriendly);
         
         while(attackable != 0){
             lsb = getLSB(attackable);
@@ -272,7 +267,6 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
  * @param   size    Pointer to keep track of the number of moves
  */
 void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
-    uint64_t blockers;
     uint64_t attackable;
     
     uint64_t pawnForwardOne;
@@ -283,7 +277,7 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
     uint64_t pawnPromoLeft;
     uint64_t pawnPromoRight;
     
-    int bit, lsb, dbIndex;
+    int bit, lsb;
     int forwardShift, leftShift, rightShift;
     int epSquare = board->epSquare;
     
@@ -354,7 +348,7 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
         }
     }
     
-    // Generate Pawn Moves    
+    // Generate Pawn Moves
     while(pawnLeft != 0){
         lsb = getLSB(pawnLeft);
         moves[(*size)++] = MoveMake(lsb-leftShift,lsb,NormalMove);
@@ -397,7 +391,7 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
     // Generate Knight Moves
     while(myKnights != 0){
         bit = getLSB(myKnights);
-        attackable = KnightMap[bit] & enemy;
+        attackable = KnightAttacks(bit, enemy);
         
         while(attackable != 0){
             lsb = getLSB(attackable);
@@ -411,9 +405,7 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
     // Generate Bishop & Queen Moves
     while(myBishops != 0){
         bit = getLSB(myBishops);
-        blockers = notEmpty & OccupancyMaskBishop[bit];
-        dbIndex = (blockers * MagicNumberBishop[bit]) >> MagicShiftsBishop[bit];
-        attackable = MoveDatabaseBishop[bit][dbIndex] & enemy;
+        attackable = BishopAttacks(bit, notEmpty, enemy);
         
         while(attackable != 0){
             lsb = getLSB(attackable);
@@ -427,9 +419,7 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
     // Generate Rook & Queen Moves
     while(myRooks != 0){
         bit = getLSB(myRooks);
-        blockers = notEmpty & OccupancyMaskRook[bit];
-        dbIndex = (blockers * MagicNumberRook[bit]) >> MagicShiftsRook[bit];
-        attackable = MoveDatabaseRook[bit][dbIndex] & enemy;
+        attackable = RookAttacks(bit, notEmpty, enemy);
         
         while(attackable != 0){
             lsb = getLSB(attackable);
@@ -443,7 +433,7 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
     // Generate King Moves
     while(myKings != 0){
         bit = getLSB(myKings);
-        attackable = KingMap[bit] & enemy;
+        attackable = KingAttacks(bit, enemy);
         
         while(attackable != 0){
             lsb = getLSB(attackable);
@@ -467,7 +457,7 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
 int isNotInCheck(Board * board, int turn){
     int kingsq = getLSB(board->colourBitBoards[turn] & board->pieceBitBoards[5]);
     assert(board->squares[kingsq] == WhiteKing + turn);
-    return !squareIsAttacked(board,turn,kingsq);
+    return !squareIsAttacked(board, turn, kingsq);
 }
 
 /**
@@ -482,8 +472,7 @@ int isNotInCheck(Board * board, int turn){
  */
 int squareIsAttacked(Board * board, int turn, int sq){
     
-    int dbIndex;
-    uint64_t square, blockers;
+    uint64_t square;
     
     uint64_t friendly = board->colourBitBoards[turn];
     uint64_t enemy = board->colourBitBoards[!turn];
@@ -502,28 +491,24 @@ int squareIsAttacked(Board * board, int turn, int sq){
     
     // Pawns
     if (turn == ColourWhite){
-        if ((((square << 7) & ~FILE_H) & enemyPawns) != 0) return 1;
-        if ((((square << 9) & ~FILE_A) & enemyPawns) != 0) return 1;
+        if (((square << 7) & ~FILE_H) & enemyPawns) return 1;
+        if (((square << 9) & ~FILE_A) & enemyPawns) return 1;
     } else {
-        if ((((square >> 7) & ~FILE_A) & enemyPawns) != 0) return 1;
-        if ((((square >> 9) & ~FILE_H) & enemyPawns) != 0) return 1;
+        if (((square >> 7) & ~FILE_A) & enemyPawns) return 1;
+        if (((square >> 9) & ~FILE_H) & enemyPawns) return 1;
     }
     
     // Knights
-    if ((KnightMap[sq] & enemyKnights) != 0) return 1;
+    if (enemyKnights && KnightAttacks(sq, enemyKnights)) return 1;
     
     // Bishops and Queens
-    blockers = notEmpty & OccupancyMaskBishop[sq];
-    dbIndex = (blockers * MagicNumberBishop[sq]) >> MagicShiftsBishop[sq];
-    if ((MoveDatabaseBishop[sq][dbIndex] & enemyBishops) != 0) return 1;
+    if (enemyBishops && BishopAttacks(sq, notEmpty, enemyBishops)) return 1;
     
     // Rooks and Queens
-    blockers = notEmpty & OccupancyMaskRook[sq];
-    dbIndex = (blockers * MagicNumberRook[sq]) >> MagicShiftsRook[sq];
-    if ((MoveDatabaseRook[sq][dbIndex] & enemyRooks) != 0) return 1;
+    if (enemyRooks && RookAttacks(sq, notEmpty, enemyRooks)) return 1;
     
     // King
-    if ((KingMap[sq] & enemyKings) != 0) return 1;
+    if (KingAttacks(sq, enemyKings)) return 1;
     
     return 0;
 }

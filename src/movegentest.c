@@ -20,7 +20,7 @@ void moveGenTest(){
     
     int i, depth;
     int passed = 0, failed = 0;
-    unsigned int total = 0, found, nodes[128];
+    uint64_t total = 0, found, nodes[128];
     
     char c, str[128];
     clock_t start = clock(), end;
@@ -70,10 +70,10 @@ void moveGenTest(){
             total += found;
             
             if (found == nodes[i-1]){
-                printf("PASSED %s %u of %u\n",str,found,nodes[i-1]);
+                printf("PASSED %s %d of %d\n",str,(int)(found),(int)(nodes[i-1]));
                 passed++;
             } else {
-                printf("FAILED %s %u of %u\n",str,found,nodes[i-1]);
+                printf("FAILED %s %d of %d\n",str,(int)(found),(int)(nodes[i-1]));
                 failed++;
             }
         }
@@ -86,7 +86,7 @@ void moveGenTest(){
     printf("\n\n");
     printf("Passed : %d\n",passed);
     printf("Failed : %d\n",failed);
-    printf("Nodes  : %u\n",total);
+    printf("Nodes  : %d\n",(int)(total));
     printf("Seconds: %f\n",(double)(end - start) / CLOCKS_PER_SEC);
     printf("MNPS   : %.3f",(total/(float)(1000000 * ((end-start)/CLOCKS_PER_SEC))));
 }
