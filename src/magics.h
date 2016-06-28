@@ -21,11 +21,14 @@ extern uint64_t KingMap[64];
 extern uint64_t OccupancyMaskRook[64];
 extern uint64_t OccupancyMaskBishop[64];
 
-extern uint64_t OccupancyVariationsRook[64][4096];
-extern uint64_t OccupancyVariationsBishop[64][512];
+extern uint64_t ** OccupancyVariationsRook;
+extern uint64_t ** OccupancyVariationsBishop;
 
-extern uint64_t ** MoveDatabaseRook;
-extern uint64_t ** MoveDatabaseBishop;
+extern uint64_t * MoveDatabaseRook;
+extern uint64_t * MoveDatabaseBishop;
+
+extern int MagicRookIndexes[64];
+extern int MagicBishopIndexes[64];
 
 extern int MagicShiftsRook[64];
 extern int MagicShiftsBishop[64];
