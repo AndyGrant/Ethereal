@@ -1,5 +1,5 @@
-#ifndef _TIME_H
-#define _TIME_H
+#ifndef _MY_TIME_H
+#define _MY_TIME_H
 
 double getRealTime();
 

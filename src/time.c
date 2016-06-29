@@ -4,6 +4,8 @@
     #include <sys/time.h>
 #endif
 
+#include <stdlib.h>
+
 /**
  * Return the number of millseconds elapsed since
  * any arbitrary point in time. This method should
@@ -17,9 +19,8 @@ double getRealTime(){
     return (double)(GetTickCount());
 #else
     struct timeval tv;
-    struct timezone tz;
 
-    gettimeofday(&tv,&tz);
+    gettimeofday(&tv, NULL);
     
     double secsInMilli = ((double)tv.tv_sec) * 1000;
     double usecsInMilli = tv.tv_usec / 1000;
