@@ -12,12 +12,19 @@ BOOK = "-openings file=book.pgn order=random plies=16"
 ENGINE_DIR = "../Engines"
 
 ENGINES = [
-    ["BikJump2.01.exe", "uci", 2100],
-    ["Clarabit1.0.exe", "uci", 2100],
-    [   "Glass1.3.exe", "uci", 2358],
-    ["MadChess2.0.exe", "uci", 2288],
-    [ "Monarch1.7.exe", "uci", 2056],
-    ["Sungorus1.4.exe", "uci", 2308],
+    #["BikJump2.01.exe", "uci", 2100],
+    #["Clarabit1.0.exe", "uci", 2100],
+    #[   "Glass1.3.exe", "uci", 2358],
+    #["MadChess2.0.exe", "uci", 2288],
+    #[ "Monarch1.7.exe", "uci", 2056],
+    #["Sungorus1.4.exe", "uci", 2308],
+    
+    [ "CyberPagno3.exe", "xboard", 2499],
+    [   "Fridolin2.exe", "uci",    2527],
+    [    "Glass1.6.exe", "uci",    2459],
+    [    "Glass1.9.exe", "uci",    2603],
+    [ "Maverick1.5.exe", "uci",    2574],
+    [   "Shield1.2.exe", "uci",    2456]
 ]
 
 TEST_ENGINE = [sys.argv[1], "uci"]
