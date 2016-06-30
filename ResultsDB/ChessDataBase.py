@@ -92,7 +92,7 @@ class ChessDataBase():
             opponents = self.data[engine]
             
             ordered = [f for f in opponents]
-            ordered.sort()
+            ordered.sort(key = lambda x: opponents[x]['ELO'])
             
             tempStr = ""
             
