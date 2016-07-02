@@ -47,5 +47,7 @@ extern int PawnConnected[2][64];
 extern int PawnPassedMid[8];
 extern int PawnPassedEnd[8];
 extern int PieceValues[8];
+extern int BishopMobility[13];
+extern int RookMobility[14];
 
 #endif

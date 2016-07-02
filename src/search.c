@@ -27,8 +27,8 @@ uint16_t KillerMoves[MaxHeight][2];
 TransTable Table;
 PawnTable PTable;
 
-int HistoryGood[0xFFFF];
-int HistoryTotal[0xFFFF];
+int HistoryGood[0x10000];
+int HistoryTotal[0x10000];
 
 SearchInfo * Info;
 
@@ -50,7 +50,7 @@ uint16_t getBestMove(SearchInfo * info){
     genAllMoves(&(info->board),rootMoveList.moves,&(rootMoveList.size));
     
     // CLEAR HISTORY COUNTERS
-    for (i = 0; i < 0xFFFF; i++){
+    for (i = 0; i < 0x10000; i++){
         HistoryGood[i] = 1;
         HistoryTotal[i] = 1;
     }

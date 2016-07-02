@@ -14,11 +14,10 @@ ENGINE_DIR = "../Engines"
 ENGINES = [
     #["BikJump2.01.exe", "uci", 2100],
     #["Clarabit1.0.exe", "uci", 2100],
-    #[   "Glass1.3.exe", "uci", 2358],
-    #["MadChess2.0.exe", "uci", 2288],
+    [   "Glass1.3.exe", "uci", 2358],
+    ["MadChess2.0.exe", "uci", 2288],
     #[ "Monarch1.7.exe", "uci", 2056],
-    #["Sungorus1.4.exe", "uci", 2308],
-    
+    ["Sungorus1.4.exe", "uci", 2308],
     [ "CyberPagno3.exe", "xboard", 2499],
     [   "Fridolin2.exe", "uci",    2527],
     [    "Glass1.6.exe", "uci",    2459],
@@ -40,6 +39,10 @@ index = -1
 testNum = -1;
 while (True):
     index = (index + 1) % len(ENGINES)
+    
+    if index == 0:
+        print "======================"
+    
     testNum += 1
     engine = ENGINES[index]
     their_cmd = "-engine cmd={0} proto={1} ".format(*(engine[0:2]))

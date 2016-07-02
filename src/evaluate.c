@@ -78,6 +78,9 @@ int PawnPassedEnd[8] = { 0,  12, 12, 26, 44, 66, 90, 0};
 
 int PieceValues[8] = {PawnValue, KnightValue, BishopValue, RookValue, QueenValue, KingValue, 0, 0};
 
+int BishopMobility[13] = {-15, -12, -9, -6, -3, 0, 3, 6, 9, 12, 15, 18, 21};
+int RookMobility[14] = {-7, -6, -5, -4, -3, -3, -2, 0, 2, 3, 4, 5, 6, 7};
+
 int evaluateBoard(Board * board, PawnTable * ptable){
     
     int mid = 0, end = 0;
@@ -282,10 +285,15 @@ void evaluateBishops(int* mid, int* end, Board* board, int * bishopCount){
     uint64_t allPawns = board->pieceBitBoards[0];
     uint64_t allBishops = board->pieceBitBoards[2];
     
+    uint64_t white = board->colourBitBoards[0];
+    uint64_t black = board->colourBitBoards[1];
+    uint64_t notEmpty = white | black;
+    
     uint64_t myPawns, enemyPawns, myBishops, defenders;
     
+    
     int mg = 0, eg = 0;
-    int colour, i, sq, outpostValue;
+    int colour, i, sq, outpostValue, mobility;
     
     for (colour = ColourBlack; colour >= ColourWhite; colour--){
         
@@ -310,6 +318,10 @@ void evaluateBishops(int* mid, int* end, Board* board, int * bishopCount){
             
             sq = getLSB(myBishops);
             myBishops ^= (1ull << sq);
+            
+            mobility = BishopMobility[BishopMoveCount(sq, notEmpty)];
+            mg += mobility;
+            eg += mobility;
             
             if (i == 1){
                 mg += BISHOP_PAIR_MID;
@@ -349,10 +361,14 @@ void evaluateRooks(int* mid, int* end, Board* board, int * rookCount){
     uint64_t allPawns = board->pieceBitBoards[0];
     uint64_t allRooks = board->pieceBitBoards[3];
     
+    uint64_t white = board->colourBitBoards[0];
+    uint64_t black = board->colourBitBoards[1];
+    uint64_t notEmpty = white | black;
+    
     uint64_t myPawns, enemyPawns, myRooks;
     
     int mg = 0, eg = 0;
-    int colour, i, sq;
+    int colour, i, sq, mobility;
     
     for (colour = ColourBlack; colour >= ColourWhite; colour--){
         
@@ -370,6 +386,10 @@ void evaluateRooks(int* mid, int* end, Board* board, int * rookCount){
             
             sq = getLSB(myRooks);
             myRooks ^= (1ull << sq);
+            
+            mobility = RookMobility[RookMoveCount(sq, notEmpty)];
+            mg += mobility;
+            eg += mobility;
             
             if (!(myPawns & FILES[sq % 8])){
                 
