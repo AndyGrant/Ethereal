@@ -92,6 +92,9 @@ uint64_t MagicNumberBishop[64] = {
     0x400000260142410, 0x800633408100500, 0x2404080a1410, 0x138200122002900    
 };
 
+uint8_t * MobilityTableRook;
+uint8_t * MobilityTableBishop;
+
 /**
  * Initalize the Knight and King attack lookup tables.
  * Initalize the needed data members for the Rook and
@@ -309,6 +312,7 @@ void generateMoveDatabaseRook(){
     int bitRef, i, j, magicIndex;
     
     MoveDatabaseRook = malloc(sizeof(uint64_t) * (98304 + 4096));
+    MobilityTableRook = malloc(sizeof(uint8_t) * (98304 + 4096));
     
     for (bitRef=0; bitRef<=63; bitRef++){
         bitCount = countSetBits(OccupancyMaskRook[bitRef]);
@@ -343,6 +347,7 @@ void generateMoveDatabaseRook(){
             }
             
             MoveDatabaseRook[MagicRookIndexes[bitRef] + magicIndex] = validMoves;
+            MobilityTableRook[MagicRookIndexes[bitRef] + magicIndex] = countSetBits(validMoves);
         }
     }
 }
@@ -361,6 +366,7 @@ void generateMoveDatabaseBishop(){
     int bitRef, i, j, magicIndex;
     
     MoveDatabaseBishop = malloc(sizeof(uint64_t) * (5184 + 64));
+    MobilityTableBishop = malloc(sizeof(uint8_t) * (5184 + 64));
     
     for (bitRef=0; bitRef<=63; bitRef++){
         bitCount = countSetBits(OccupancyMaskBishop[bitRef]);
@@ -395,6 +401,7 @@ void generateMoveDatabaseBishop(){
             }
 
             MoveDatabaseBishop[MagicBishopIndexes[bitRef] + magicIndex] = validMoves;
+            MobilityTableBishop[MagicBishopIndexes[bitRef] + magicIndex] = countSetBits(validMoves);
         }
     }
 }

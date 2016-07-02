@@ -168,7 +168,7 @@ void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t turn, ui
 
 void initalizePawnTable(PawnTable * ptable){
     
-    ptable->entries = calloc(0xFFFF, sizeof(PawnEntry));
+    ptable->entries = calloc(0x10000, sizeof(PawnEntry));
 }
 
 void destoryPawnTable(PawnTable * ptable){
