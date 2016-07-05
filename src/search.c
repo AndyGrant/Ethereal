@@ -181,7 +181,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     
     int i, value, newDepth, entryValue, entryType;
     int min, max, inCheck, values[256];
-    int valid = 0, size = 0;
+    int valid = 0, size = 0, avoidedQS = 0;
     int oldAlpha = alpha, best = -2*Mate, optimalValue = -Mate;
     int eval = 0; // NO NEED TO SET THIS, BUT A BUG IN GCC THROWS A WARNING
     
@@ -201,8 +201,21 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             return 0;
     
     // SEARCH HORIZON REACHED, QSEARCH
-    if (depth <= 0)
-        return quiescenceSearch(board, alpha, beta, height);
+    if (depth <= 0){
+        
+        // DETERMINE CHECK STATUS
+        inCheck = !isNotInCheck(board, board->turn);
+        
+        // DON'T JUMP INTO THE QSEARCH IF WE ARE IN CHECK
+        if (inCheck){
+            avoidedQS = 1;
+            depth += 1;
+        }
+
+        else{
+            return quiescenceSearch(board, alpha, beta, height);
+        }
+    }
     
     // INCREMENT TOTAL NODE COUNTER
     TotalNodes++;
@@ -245,7 +258,8 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     }
     
     // DETERMINE CHECK STATUS
-    inCheck = !isNotInCheck(board, board->turn);
+    if (!avoidedQS)
+        inCheck = !isNotInCheck(board, board->turn);
     
     if (nodeType != PVNODE)
         eval = evaluateBoard(board, &PTable);
@@ -323,7 +337,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     evaluateMoves(board, values, moves, size, height, tableMove);
    
     // CHECK EXTENSION
-    depth += (inCheck && (nodeType == PVNODE || depth <= 6));
+    depth += (!avoidedQS && inCheck && (nodeType == PVNODE || depth <= 6));
     
     for (i = 0; i < size; i++){
         
