@@ -15,6 +15,9 @@ Ethereal is a UCI-compliant chess engine. It uses the traditional alpha-beta fra
 | v7.58   |  2275|
 | v7.60   |  2453|
 | v7.61   |  2482|
+| v7.65*  |  2503|
+| v7.69   |  2532|
+| v7.70   |  2549|
 
 # Development
 

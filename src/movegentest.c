@@ -18,7 +18,7 @@
  */
 void moveGenTest(){
     
-    int i, depth;
+    int i, j, depth;
     int passed = 0, failed = 0;
     uint64_t total = 0, found, nodes[128];
     
@@ -30,8 +30,9 @@ void moveGenTest(){
         
         Board board;
         for(i = 0;; i++){
-            c = fgetc(input);
-            if (c == EOF) goto EndOfMainLoop;
+            j = fgetc(input);
+            c = (char)(j);
+            if (j == EOF) goto EndOfMainLoop;
             if (c == ';') break;
             str[i] = c;
         }
