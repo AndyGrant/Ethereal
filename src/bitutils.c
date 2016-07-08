@@ -21,7 +21,7 @@ int LsbLookupTable[64] = {
  * @param   bb  BitBoard to count set bits in
  * @return      Count of all set bits in bb
  */
-int countSetBits(uint64_t bb){
+unsigned int countSetBits(uint64_t bb){
     int count = 0;
     
     while(bb){

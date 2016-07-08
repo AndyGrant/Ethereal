@@ -72,7 +72,7 @@ void clearTranspositionTable(TransTable * table){
  */
 TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash, int turn){
     
-    TransBucket * bucket = &(table->buckets[hash % table->maxSize]);
+    TransBucket * bucket = &(table->buckets[hash & (table->maxSize - 1)]);
     int i; uint16_t hash16 = hash >> 48;
     
     // SEARCH FOR MATCHING ENTRY, UPDATE GENERATION IF FOUND
@@ -106,7 +106,7 @@ TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash, int turn){
 */
 void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t turn, uint8_t type, int16_t value, uint16_t bestMove, uint64_t hash){
     
-    TransBucket * bucket = &(table->buckets[hash % table->maxSize]);
+    TransBucket * bucket = &(table->buckets[hash & (table->maxSize - 1)]);
     
     TransEntry * oldCandidate = NULL;
     TransEntry * lowDraftCandidate = NULL;

@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-int countSetBits(uint64_t bb);
+unsigned int countSetBits(uint64_t bb);
 void getSetBits(uint64_t bb, int * arr);
 
 extern int LsbLookupTable[64];
