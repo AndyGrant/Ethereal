@@ -41,8 +41,8 @@ void evaluateKings(int * mid, int * end, Board* board);
 
 #define PSQT_MULTIPLIER      (1)
 
-extern int BishopOutpost[2][64];
-extern int KnightOutpost[2][64];
+extern unsigned int BishopOutpost[2][64];
+extern unsigned int KnightOutpost[2][64];
 extern int PawnConnected[2][64];
 extern int PawnPassedMid[8];
 extern int PawnPassedEnd[8];

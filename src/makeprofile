@@ -1,23 +1,28 @@
 CC = gcc
 
-CFLAGS = -Wall -Wno-unused-variable -Wno-format -m64 -DNDEBUG -p -g -pg
+CFLAGS = -m64 -DNDEBUG -O0 -Wall -Wextra -pedantic -std=c99 -p -g -pg
 
-SRC = bitutils.c		\
-	  board.c			\
-	  evaluate.c		\
-	  magics.c			\
-	  main.c			\
-	  masks.c			\
-	  move.c			\
-	  movegen.c			\
-	  movegentest.c		\
-	  psqt.c			\
-	  search.c			\
-	  time.c			\
-	  transposition.c	\
-	  zorbist.c			\
-	  
-EXE = foo
+LIBS = -static
+
+SRC = bitboards.c       \
+      bitutils.c        \
+      board.c           \
+      castle.c          \
+      evaluate.c        \
+      magics.c          \
+      masks.c           \
+      move.c            \
+      movegen.c         \
+      movegentest.c     \
+      psqt.c            \
+      search.c          \
+      time.c            \
+      transposition.c   \
+      uci.c             \
+      zorbist.c         \
+
+EXE = EtherealBitBoard
 
 all:
-	$(CC) $(CFLAGS) $(SRC) -o $(EXE)
+	$(CC) $(CFLAGS) $(SRC) -o $(EXE) $(LIBS)
+	

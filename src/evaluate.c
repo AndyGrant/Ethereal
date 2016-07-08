@@ -13,7 +13,7 @@
 #include "evaluate.h"
 #include "piece.h"
 
-int BishopOutpost[2][64] = {
+unsigned int BishopOutpost[2][64] = {
     { 0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 
@@ -33,7 +33,7 @@ int BishopOutpost[2][64] = {
       0, 0, 0, 0, 0, 0, 0, 0, }
 };
 
-int KnightOutpost[2][64] = {
+unsigned int KnightOutpost[2][64] = {
     { 0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 
       0, 0, 0, 0, 0, 0, 0, 0, 
@@ -179,7 +179,7 @@ int evaluateBoard(Board * board, PawnTable * ptable){
 void evaluatePawns(int* mid, int* end, Board* board, int * pawnCount){
     
     uint64_t allPawns = board->pieceBitBoards[0];
-    uint64_t myPawns, enemyPawns;
+    uint64_t myPawns, enemyPawns, allMyPawns;
     
     int mg = 0, eg = 0;
     int colour, i, sq, file, rank;
@@ -190,7 +190,7 @@ void evaluatePawns(int* mid, int* end, Board* board, int * pawnCount){
         eg = -eg;
         
         myPawns = allPawns & board->colourBitBoards[colour];
-        uint64_t allMyPawns = myPawns;
+        allMyPawns = myPawns;
         enemyPawns = allPawns ^ myPawns;
         
         for (i = 0; myPawns != 0; i++){
@@ -200,8 +200,8 @@ void evaluatePawns(int* mid, int* end, Board* board, int * pawnCount){
             sq = getLSB(myPawns);
             myPawns ^= (1ull << sq);
             
-            file = sq % 8;
-            rank = (colour == ColourBlack) ? 7 - (sq / 8) : sq / 8;
+            file = sq & 7;
+            rank = (colour == ColourBlack) ? (7 - (sq >> 3)) : (sq >> 3);
             
             if (!(PassedPawnMasks[colour][sq] & enemyPawns)){
                 mg += PawnPassedMid[rank];
@@ -266,11 +266,11 @@ void evaluateKnights(int* mid, int*end, Board* board, int * knightCount){
                     if (defenders){
                         
                         if (PawnAdvanceMasks[colour][sq] & enemyPawns)
-                            outpostValue *= 2;
+                            outpostValue <<= 1;
                     }
                     
-                    mg += outpostValue / 2;
-                    eg += outpostValue / 2;
+                    mg += outpostValue >> 1;
+                    eg += outpostValue >> 1;
                 }
             }
         }
@@ -368,7 +368,7 @@ void evaluateRooks(int* mid, int* end, Board* board, int * rookCount){
     uint64_t myPawns, enemyPawns, myRooks;
     
     int mg = 0, eg = 0;
-    int colour, i, sq, mobility;
+    int colour, i, sq, file, mobility;
     
     for (colour = ColourBlack; colour >= ColourWhite; colour--){
         
@@ -387,13 +387,15 @@ void evaluateRooks(int* mid, int* end, Board* board, int * rookCount){
             sq = getLSB(myRooks);
             myRooks ^= (1ull << sq);
             
+            file = sq & 7;
+            
             mobility = RookMobility[RookMoveCount(sq, notEmpty)];
             mg += mobility;
             eg += mobility;
             
-            if (!(myPawns & FILES[sq % 8])){
+            if (!(myPawns & FILES[file])){
                 
-                if (!(enemyPawns & FILES[sq % 8])){
+                if (!(enemyPawns & FILES[file])){
                     mg += ROOK_OPEN_FILE_MID;
                     eg += ROOK_OPEN_FILE_END;
                 }
@@ -404,13 +406,13 @@ void evaluateRooks(int* mid, int* end, Board* board, int * rookCount){
                 }
             }
             
-            if (FILES[sq % 8] & myRooks){
+            if (FILES[file] & myRooks){
                 mg += ROOK_STACKED_MID;
                 eg += ROOK_STACKED_END;
             }
             
             
-            if (sq / 8 == (colour == ColourBlack ? 1 : 6)){
+            if ((sq >> 3)  == (colour == ColourBlack ? 1 : 6)){
                 mg += ROOK_ON_7TH_MID;
                 eg += ROOK_ON_7TH_END;
             }

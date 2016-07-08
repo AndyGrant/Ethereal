@@ -1,0 +1,462 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+ 13.44      1.87     1.87 10191767     0.00     0.00  evaluateMoves
+ 12.08      3.55     1.68 38850962     0.00     0.00  getNextMove
+  9.99      4.94     1.39                             _mcount_private
+  8.59      6.13     1.20 16723307     0.00     0.00  evaluateRooks
+  7.33      7.16     1.02  8797310     0.00     0.00  genAllNonQuiet
+  5.72      7.95     0.80 16723307     0.00     0.00  evaluateBishops
+  5.39      8.70     0.75 21295430     0.00     0.00  applyMove
+  4.82      9.37     0.67                             __fentry__
+  4.60     10.01     0.64  1394458     0.00     0.00  genAllMoves
+  4.46     10.63     0.62 32073521     0.00     0.00  squareIsAttacked
+  3.45     11.11     0.48 16723307     0.00     0.00  evaluateKnights
+  3.09     11.54     0.43  4357264     0.00     0.00  getTranspositionEntry
+  3.09     11.97     0.43  3685186     0.00     0.00  quiescenceSearch
+  3.09     12.40     0.43      787     0.00     0.02  alphaBetaSearch
+  2.88     12.80     0.40 16723307     0.00     0.00  evaluateBoard
+  2.37     13.13     0.33 21295430     0.00     0.00  revertMove
+  1.58     13.35     0.22 32073521     0.00     0.00  isNotInCheck
+  1.19     13.52     0.17 16831213     0.00     0.00  countSetBits
+  1.08     13.66     0.15 16723307     0.00     0.00  getPawnEntry
+  0.79     13.78     0.11 16723307     0.00     0.00  evaluateKings
+  0.58     13.86     0.08   435809     0.00     0.00  evaluatePawns
+  0.14     13.88     0.02  1178143     0.00     0.00  canDoNull
+  0.07     13.89     0.01  1393654     0.00     0.00  storeTranspositionEntry
+  0.07     13.90     0.01        1     0.01     0.01  generateMoveDatabaseRook
+  0.07     13.90     0.01        1     0.01     0.01  generateOccupancyVariationsRook
+  0.04     13.91     0.01   107776     0.00     0.00  getSetBits
+  0.00     13.91     0.00   435809     0.00     0.00  storePawnEntry
+  0.00     13.91     0.00      768     0.00     0.00  genRandomBitstring
+  0.00     13.91     0.00       17     0.00     0.70  rootSearch
+  0.00     13.91     0.00       17     0.00     0.00  sortMoveList
+  0.00     13.91     0.00       16     0.00     0.00  getRealTime
+  0.00     13.91     0.00       16     0.00     0.00  stringEquals
+  0.00     13.91     0.00       15     0.00     0.79  aspirationWindow
+  0.00     13.91     0.00       15     0.00     0.00  printMove
+  0.00     13.91     0.00        7     0.00     0.00  stringStartsWith
+  0.00     13.91     0.00        3     0.00     0.00  getInput
+  0.00     13.91     0.00        2     0.00     0.01  initalizeBoard
+  0.00     13.91     0.00        2     0.00     0.01  initalizeMagics
+  0.00     13.91     0.00        2     0.00     0.00  initalizeMasks
+  0.00     13.91     0.00        2     0.00     0.00  initalizePSQT
+  0.00     13.91     0.00        2     0.00     0.00  initalizeTranspositionTable
+  0.00     13.91     0.00        2     0.00     0.00  initalizeZorbist
+  0.00     13.91     0.00        1     0.00     0.00  destoryPawnTable
+  0.00     13.91     0.00        1     0.00     0.00  generateKingMap
+  0.00     13.91     0.00        1     0.00     0.00  generateKnightMap
+  0.00     13.91     0.00        1     0.00     0.00  generateMoveDatabaseBishop
+  0.00     13.91     0.00        1     0.00     0.00  generateOccupancyMaskBishop
+  0.00     13.91     0.00        1     0.00     0.00  generateOccupancyMaskRook
+  0.00     13.91     0.00        1     0.00     0.00  generateOccupancyVariationsBishop
+  0.00     13.91     0.00        1     0.00    11.82  getBestMove
+  0.00     13.91     0.00        1     0.00     0.00  initalizePawnTable
+  0.00     13.91     0.00        1     0.00     0.00  moveToString
+  0.00     13.91     0.00        1     0.00     0.00  stringContains
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+ 
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this 
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012-2014 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 4 byte(s) for 0.07% of 13.91 seconds
+
+index % time    self  children    called     name
+                                                 <spontaneous>
+[1]     85.2    0.00   11.85                 main [1]
+                0.00   11.82       1/1           getBestMove [2]
+                0.00    0.03       2/2           initalizeBoard [26]
+                0.00    0.00      16/16          stringEquals [39]
+                0.00    0.00       7/7           stringStartsWith [41]
+                0.00    0.00       3/3           getInput [42]
+                0.00    0.00       1/2           initalizeTranspositionTable [45]
+                0.00    0.00       1/1           stringContains [54]
+                0.00    0.00       1/16          getRealTime [38]
+                0.00    0.00       1/1           moveToString [53]
+-----------------------------------------------
+                0.00   11.82       1/1           main [1]
+[2]     85.0    0.00   11.82       1         getBestMove [2]
+                0.00   11.82      15/15          aspirationWindow [4]
+                0.00    0.00       1/1394458     genAllMoves [16]
+                0.00    0.00      15/16          getRealTime [38]
+                0.00    0.00      15/15          printMove [40]
+                0.00    0.00       1/2           initalizeTranspositionTable [45]
+                0.00    0.00       1/1           initalizePawnTable [52]
+                0.00    0.00       1/1           destoryPawnTable [47]
+-----------------------------------------------
+                0.00   11.82      17/17          aspirationWindow [4]
+[3]     85.0    0.00   11.82      17         rootSearch [3]
+                0.43   11.39     787/787         alphaBetaSearch [5]
+                0.00    0.00     782/21295430     applyMove [15]
+                0.00    0.00     782/32073521     isNotInCheck [13]
+                0.00    0.00     782/21295430     revertMove [21]
+                0.00    0.00      17/17          sortMoveList [37]
+-----------------------------------------------
+                0.00   11.82      15/15          getBestMove [2]
+[4]     85.0    0.00   11.82      15         aspirationWindow [4]
+                0.00   11.82      17/17          rootSearch [3]
+-----------------------------------------------
+                             7633799             alphaBetaSearch [5]
+                0.43   11.39     787/787         rootSearch [3]
+[5]     85.0    0.43   11.39     787+7633799 alphaBetaSearch [5]
+                0.43    6.89 3685186/3685186     quiescenceSearch [6]
+                0.10    0.72 4023994/16723307     evaluateBoard [7]
+                0.73    0.00 16950690/38850962     getNextMove [9]
+                0.64    0.04 1394457/1394458     genAllMoves [16]
+                0.14    0.40 20947670/32073521     isNotInCheck [13]
+                0.43    0.00 4357264/4357264     getTranspositionEntry [20]
+                0.41    0.00 11564037/21295430     applyMove [15]
+                0.26    0.00 1394457/10191767     evaluateMoves [8]
+                0.18    0.00 11564037/21295430     revertMove [21]
+                0.02    0.00 1178143/1178143     canDoNull [28]
+                0.01    0.00 1393654/1393654     storeTranspositionEntry [31]
+                             7633799             alphaBetaSearch [5]
+-----------------------------------------------
+                             9014127             quiescenceSearch [6]
+                0.43    6.89 3685186/3685186     alphaBetaSearch [5]
+[6]     52.6    0.43    6.89 3685186+9014127 quiescenceSearch [6]
+                0.30    2.26 12699313/16723307     evaluateBoard [7]
+                1.61    0.00 8797310/10191767     evaluateMoves [8]
+                1.02    0.00 8797310/8797310     genAllNonQuiet [12]
+                0.95    0.00 21900272/38850962     getNextMove [9]
+                0.34    0.00 9730611/21295430     applyMove [15]
+                0.07    0.19 9730611/32073521     isNotInCheck [13]
+                0.15    0.00 9730611/21295430     revertMove [21]
+                             9014127             quiescenceSearch [6]
+-----------------------------------------------
+                0.10    0.72 4023994/16723307     alphaBetaSearch [5]
+                0.30    2.26 12699313/16723307     quiescenceSearch [6]
+[7]     24.3    0.40    2.97 16723307         evaluateBoard [7]
+                1.20    0.00 16723307/16723307     evaluateRooks [11]
+                0.80    0.00 16723307/16723307     evaluateBishops [14]
+                0.48    0.00 16723307/16723307     evaluateKnights [19]
+                0.16    0.00 16723307/16831213     countSetBits [22]
+                0.15    0.00 16723307/16723307     getPawnEntry [23]
+                0.11    0.00 16723307/16723307     evaluateKings [24]
+                0.08    0.00  435809/435809      evaluatePawns [25]
+                0.00    0.00  435809/435809      storePawnEntry [35]
+-----------------------------------------------
+                0.26    0.00 1394457/10191767     alphaBetaSearch [5]
+                1.61    0.00 8797310/10191767     quiescenceSearch [6]
+[8]     13.4    1.87    0.00 10191767         evaluateMoves [8]
+-----------------------------------------------
+                0.73    0.00 16950690/38850962     alphaBetaSearch [5]
+                0.95    0.00 21900272/38850962     quiescenceSearch [6]
+[9]     12.1    1.68    0.00 38850962         getNextMove [9]
+-----------------------------------------------
+                                                 <spontaneous>
+[10]    10.0    1.39    0.00                 _mcount_private [10]
+-----------------------------------------------
+                1.20    0.00 16723307/16723307     evaluateBoard [7]
+[11]     8.6    1.20    0.00 16723307         evaluateRooks [11]
+-----------------------------------------------
+                1.02    0.00 8797310/8797310     quiescenceSearch [6]
+[12]     7.3    1.02    0.00 8797310         genAllNonQuiet [12]
+-----------------------------------------------
+                0.00    0.00     782/32073521     rootSearch [3]
+                0.01    0.03 1394458/32073521     genAllMoves [16]
+                0.07    0.19 9730611/32073521     quiescenceSearch [6]
+                0.14    0.40 20947670/32073521     alphaBetaSearch [5]
+[13]     6.0    0.22    0.62 32073521         isNotInCheck [13]
+                0.62    0.00 32073521/32073521     squareIsAttacked [18]
+-----------------------------------------------
+                0.80    0.00 16723307/16723307     evaluateBoard [7]
+[14]     5.7    0.80    0.00 16723307         evaluateBishops [14]
+-----------------------------------------------
+                0.00    0.00     782/21295430     rootSearch [3]
+                0.34    0.00 9730611/21295430     quiescenceSearch [6]
+                0.41    0.00 11564037/21295430     alphaBetaSearch [5]
+[15]     5.4    0.75    0.00 21295430         applyMove [15]
+-----------------------------------------------
+                0.00    0.00       1/1394458     getBestMove [2]
+                0.64    0.04 1394457/1394458     alphaBetaSearch [5]
+[16]     4.9    0.64    0.04 1394458         genAllMoves [16]
+                0.01    0.03 1394458/32073521     isNotInCheck [13]
+-----------------------------------------------
+                                                 <spontaneous>
+[17]     4.8    0.67    0.00                 __fentry__ [17]
+-----------------------------------------------
+                0.62    0.00 32073521/32073521     isNotInCheck [13]
+[18]     4.5    0.62    0.00 32073521         squareIsAttacked [18]
+-----------------------------------------------
+                0.48    0.00 16723307/16723307     evaluateBoard [7]
+[19]     3.5    0.48    0.00 16723307         evaluateKnights [19]
+-----------------------------------------------
+                0.43    0.00 4357264/4357264     alphaBetaSearch [5]
+[20]     3.1    0.43    0.00 4357264         getTranspositionEntry [20]
+-----------------------------------------------
+                0.00    0.00     782/21295430     rootSearch [3]
+                0.15    0.00 9730611/21295430     quiescenceSearch [6]
+                0.18    0.00 11564037/21295430     alphaBetaSearch [5]
+[21]     2.4    0.33    0.00 21295430         revertMove [21]
+-----------------------------------------------
+                0.00    0.00       2/16831213     initalizeBoard [26]
+                0.00    0.00      64/16831213     generateOccupancyVariationsRook [29]
+                0.00    0.00      64/16831213     generateOccupancyVariationsBishop [33]
+                0.00    0.00    5312/16831213     generateMoveDatabaseBishop [34]
+                0.00    0.00  102464/16831213     generateMoveDatabaseRook [30]
+                0.16    0.00 16723307/16831213     evaluateBoard [7]
+[22]     1.2    0.17    0.00 16831213         countSetBits [22]
+-----------------------------------------------
+                0.15    0.00 16723307/16723307     evaluateBoard [7]
+[23]     1.1    0.15    0.00 16723307         getPawnEntry [23]
+-----------------------------------------------
+                0.11    0.00 16723307/16723307     evaluateBoard [7]
+[24]     0.8    0.11    0.00 16723307         evaluateKings [24]
+-----------------------------------------------
+                0.08    0.00  435809/435809      evaluateBoard [7]
+[25]     0.6    0.08    0.00  435809         evaluatePawns [25]
+-----------------------------------------------
+                0.00    0.03       2/2           main [1]
+[26]     0.2    0.00    0.03       2         initalizeBoard [26]
+                0.00    0.03       2/2           initalizeMagics [27]
+                0.00    0.00       2/16831213     countSetBits [22]
+                0.00    0.00       2/2           initalizeZorbist [46]
+                0.00    0.00       2/2           initalizePSQT [44]
+                0.00    0.00       2/2           initalizeMasks [43]
+-----------------------------------------------
+                0.00    0.03       2/2           initalizeBoard [26]
+[27]     0.2    0.00    0.03       2         initalizeMagics [27]
+                0.01    0.00       1/1           generateOccupancyVariationsRook [29]
+                0.01    0.00       1/1           generateMoveDatabaseRook [30]
+                0.00    0.00       1/1           generateOccupancyVariationsBishop [33]
+                0.00    0.00       1/1           generateMoveDatabaseBishop [34]
+                0.00    0.00       1/1           generateKnightMap [49]
+                0.00    0.00       1/1           generateKingMap [48]
+                0.00    0.00       1/1           generateOccupancyMaskRook [51]
+                0.00    0.00       1/1           generateOccupancyMaskBishop [50]
+-----------------------------------------------
+                0.02    0.00 1178143/1178143     alphaBetaSearch [5]
+[28]     0.1    0.02    0.00 1178143         canDoNull [28]
+-----------------------------------------------
+                0.01    0.00       1/1           initalizeMagics [27]
+[29]     0.1    0.01    0.00       1         generateOccupancyVariationsRook [29]
+                0.00    0.00  102464/107776      getSetBits [32]
+                0.00    0.00      64/16831213     countSetBits [22]
+-----------------------------------------------
+                0.01    0.00       1/1           initalizeMagics [27]
+[30]     0.1    0.01    0.00       1         generateMoveDatabaseRook [30]
+                0.00    0.00  102464/16831213     countSetBits [22]
+-----------------------------------------------
+                0.01    0.00 1393654/1393654     alphaBetaSearch [5]
+[31]     0.1    0.01    0.00 1393654         storeTranspositionEntry [31]
+-----------------------------------------------
+                0.00    0.00    5312/107776      generateOccupancyVariationsBishop [33]
+                0.00    0.00  102464/107776      generateOccupancyVariationsRook [29]
+[32]     0.0    0.01    0.00  107776         getSetBits [32]
+-----------------------------------------------
+                0.00    0.00       1/1           initalizeMagics [27]
+[33]     0.0    0.00    0.00       1         generateOccupancyVariationsBishop [33]
+                0.00    0.00    5312/107776      getSetBits [32]
+                0.00    0.00      64/16831213     countSetBits [22]
+-----------------------------------------------
+                0.00    0.00       1/1           initalizeMagics [27]
+[34]     0.0    0.00    0.00       1         generateMoveDatabaseBishop [34]
+                0.00    0.00    5312/16831213     countSetBits [22]
+-----------------------------------------------
+                0.00    0.00  435809/435809      evaluateBoard [7]
+[35]     0.0    0.00    0.00  435809         storePawnEntry [35]
+-----------------------------------------------
+                0.00    0.00     768/768         initalizeZorbist [46]
+[36]     0.0    0.00    0.00     768         genRandomBitstring [36]
+-----------------------------------------------
+                0.00    0.00      17/17          rootSearch [3]
+[37]     0.0    0.00    0.00      17         sortMoveList [37]
+-----------------------------------------------
+                0.00    0.00       1/16          main [1]
+                0.00    0.00      15/16          getBestMove [2]
+[38]     0.0    0.00    0.00      16         getRealTime [38]
+-----------------------------------------------
+                0.00    0.00      16/16          main [1]
+[39]     0.0    0.00    0.00      16         stringEquals [39]
+-----------------------------------------------
+                0.00    0.00      15/15          getBestMove [2]
+[40]     0.0    0.00    0.00      15         printMove [40]
+-----------------------------------------------
+                0.00    0.00       7/7           main [1]
+[41]     0.0    0.00    0.00       7         stringStartsWith [41]
+-----------------------------------------------
+                0.00    0.00       3/3           main [1]
+[42]     0.0    0.00    0.00       3         getInput [42]
+-----------------------------------------------
+                0.00    0.00       2/2           initalizeBoard [26]
+[43]     0.0    0.00    0.00       2         initalizeMasks [43]
+-----------------------------------------------
+                0.00    0.00       2/2           initalizeBoard [26]
+[44]     0.0    0.00    0.00       2         initalizePSQT [44]
+-----------------------------------------------
+                0.00    0.00       1/2           getBestMove [2]
+                0.00    0.00       1/2           main [1]
+[45]     0.0    0.00    0.00       2         initalizeTranspositionTable [45]
+-----------------------------------------------
+                0.00    0.00       2/2           initalizeBoard [26]
+[46]     0.0    0.00    0.00       2         initalizeZorbist [46]
+                0.00    0.00     768/768         genRandomBitstring [36]
+-----------------------------------------------
+                0.00    0.00       1/1           getBestMove [2]
+[47]     0.0    0.00    0.00       1         destoryPawnTable [47]
+-----------------------------------------------
+                0.00    0.00       1/1           initalizeMagics [27]
+[48]     0.0    0.00    0.00       1         generateKingMap [48]
+-----------------------------------------------
+                0.00    0.00       1/1           initalizeMagics [27]
+[49]     0.0    0.00    0.00       1         generateKnightMap [49]
+-----------------------------------------------
+                0.00    0.00       1/1           initalizeMagics [27]
+[50]     0.0    0.00    0.00       1         generateOccupancyMaskBishop [50]
+-----------------------------------------------
+                0.00    0.00       1/1           initalizeMagics [27]
+[51]     0.0    0.00    0.00       1         generateOccupancyMaskRook [51]
+-----------------------------------------------
+                0.00    0.00       1/1           getBestMove [2]
+[52]     0.0    0.00    0.00       1         initalizePawnTable [52]
+-----------------------------------------------
+                0.00    0.00       1/1           main [1]
+[53]     0.0    0.00    0.00       1         moveToString [53]
+-----------------------------------------------
+                0.00    0.00       1/1           main [1]
+[54]     0.0    0.00    0.00       1         stringContains [54]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function is in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+Copyright (C) 2012-2014 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Index by function name
+
+  [17] __fentry__             [48] generateKingMap        [44] initalizePSQT
+  [10] _mcount_private        [49] generateKnightMap      [52] initalizePawnTable
+   [5] alphaBetaSearch        [34] generateMoveDatabaseBishop [45] initalizeTranspositionTable
+  [15] applyMove              [30] generateMoveDatabaseRook [46] initalizeZorbist
+   [4] aspirationWindow       [50] generateOccupancyMaskBishop [13] isNotInCheck
+  [28] canDoNull              [51] generateOccupancyMaskRook [53] moveToString
+  [22] countSetBits           [33] generateOccupancyVariationsBishop [40] printMove
+  [47] destoryPawnTable       [29] generateOccupancyVariationsRook [6] quiescenceSearch
+  [14] evaluateBishops         [2] getBestMove            [21] revertMove
+   [7] evaluateBoard          [42] getInput                [3] rootSearch
+  [24] evaluateKings           [9] getNextMove            [37] sortMoveList
+  [19] evaluateKnights        [23] getPawnEntry           [18] squareIsAttacked
+   [8] evaluateMoves          [38] getRealTime            [35] storePawnEntry
+  [25] evaluatePawns          [32] getSetBits             [31] storeTranspositionEntry
+  [11] evaluateRooks          [20] getTranspositionEntry  [54] stringContains
+  [16] genAllMoves            [26] initalizeBoard         [39] stringEquals
+  [12] genAllNonQuiet         [27] initalizeMagics        [41] stringStartsWith
+  [36] genRandomBitstring     [43] initalizeMasks
