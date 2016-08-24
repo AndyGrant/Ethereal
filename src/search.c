@@ -529,7 +529,7 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
         && board->numPieces >= 6 
         && !(board->colourBitBoards[0] & board->pieceBitBoards[0] & RANK_7)
         && !(board->colourBitBoards[1] & board->pieceBitBoards[0] & RANK_2))
-        return alpha;
+        return value;
     
     
     // GENERATE AND PREPARE QUIET MOVE ORDERING
