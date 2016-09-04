@@ -31,6 +31,7 @@ uint64_t PawnAttackMasks[2][64];
 uint64_t PawnAdvanceMasks[2][64];
 uint64_t PawnConnectedMasks[2][64];
 uint64_t OutpostSquareMasks[2][64];
+uint64_t OutpostRanks[2];
 
 /**
  * Fill the various masks used to aid in the evaluation
@@ -78,6 +79,9 @@ void initalizeMasks(){
         OutpostSquareMasks[0][i] = PassedPawnMasks[0][i] & ~FILES[file];
         OutpostSquareMasks[1][i] = PassedPawnMasks[1][i] & ~FILES[file];
     }
+    
+    OutpostRanks[0] = RANK_4 | RANK_5 | RANK_6;
+    OutpostRanks[1] = RANK_3 | RANK_4 | RANK_5;
     
     // INITALIZE ATTACK-SQ PAWN MASKS
     for (i = 0; i < 64; i++){

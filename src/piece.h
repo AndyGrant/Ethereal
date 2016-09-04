@@ -22,6 +22,14 @@
 #define ColourWhite (0)
 #define ColourBlack (1)
 #define ColourNone  (2)
+#define ColourNb    (2)
+
+#define PAWN    (0)
+#define KNIGHT  (1)
+#define BISHOP  (2)
+#define ROOK    (3)
+#define QUEEN   (4)
+#define KING    (5)
 
 #define WhitePawn   (0)
 #define BlackPawn   (1)

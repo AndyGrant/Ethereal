@@ -33,6 +33,8 @@ int LsbLookupTable[64] = {
    13, 18,  8, 12,  7,  6,  5, 63
 };
 
+int BitCounts[0x10000];
+
 /**
  * Count the number of set bits in a given 64-bit Integer
  *
@@ -70,4 +72,11 @@ void getSetBits(uint64_t bb, int * arr){
     }
     
     arr[count] = -1;
+}
+
+unsigned int popcount(uint64_t bb){
+    return  BitCounts[(bb >>  0) & 0xFFFF] + 
+            BitCounts[(bb >> 16) & 0xFFFF] + 
+            BitCounts[(bb >> 32) & 0xFFFF] + 
+            BitCounts[(bb >> 48) & 0xFFFF];
 }

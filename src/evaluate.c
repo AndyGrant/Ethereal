@@ -18,6 +18,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <assert.h>
 
 #include "castle.h"
@@ -31,47 +32,20 @@
 #include "evaluate.h"
 #include "piece.h"
 
-unsigned int BishopOutpost[2][64] = {
-    { 0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 1, 2, 4, 4, 2, 1, 0, 
-      0, 2, 4, 8, 8, 4, 2, 0, 
-      0, 1, 6, 9, 9, 6, 1, 0, 
-      0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 0, 0, 0, 0, 0, 0, 0, },
-      
-    { 0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 1, 6, 9, 9, 6, 1, 0, 
-      0, 2, 4, 8, 8, 4, 2, 0, 
-      0, 1, 2, 4, 4, 2, 1, 0, 
-      0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 0, 0, 0, 0, 0, 0, 0, }
+int SafetyTable[100] = { // Taken from CPW / Stockfish
+    0,  0,   1,   2,   3,   5,   7,   9,  12,  15,
+  18,  22,  26,  30,  35,  39,  44,  50,  56,  62,
+  68,  75,  82,  85,  89,  97, 105, 113, 122, 131,
+ 140, 150, 169, 180, 191, 202, 213, 225, 237, 248,
+ 260, 272, 283, 295, 307, 319, 330, 342, 354, 366,
+ 377, 389, 401, 412, 424, 436, 448, 459, 471, 483,
+ 494, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+ 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+ 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+ 500, 500, 500, 500, 500, 500, 500, 500, 500, 500
 };
 
-unsigned int KnightOutpost[2][64] = {
-    { 0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 2, 4, 6, 6, 4, 2, 0, 
-      0, 3, 6, 8, 8, 6, 3, 0, 
-      0, 4, 8,10,10, 8, 4, 0, 
-      0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 0, 0, 0, 0, 0, 0, 0, },
-      
-    { 0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 4, 8,10,10, 8, 4, 0, 
-      0, 3, 6, 8, 8, 6, 3, 0, 
-      0, 2, 4, 6, 6, 4, 2, 0, 
-      0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 0, 0, 0, 0, 0, 0, 0, 
-      0, 0, 0, 0, 0, 0, 0, 0, }
-};
-
-int PawnConnected[2][64] = {
+int PawnConnected[ColourNb][64] = {
     { 0, 0, 0, 0, 0, 0, 0, 0,
       2, 2, 2, 3, 3, 2, 2, 2,
       4, 4, 5, 6, 6, 5, 4, 4,
@@ -90,14 +64,38 @@ int PawnConnected[2][64] = {
       2, 2, 2, 3, 3, 2, 2, 2,
       0, 0, 0, 0, 0, 0, 0, 0, }
 };
+
+int KnightOutpostValues[PhaseNb][2] = {{20, 40}, {10, 20}};
+int BishopOutpostValues[PhaseNb][2] = {{15, 30}, { 3,  5}};
 
 int PawnPassedMid[8] = { 0,  10, 10, 23, 39, 58, 70, 0};
 int PawnPassedEnd[8] = { 0,  12, 12, 26, 44, 66, 90, 0};
 
 int PieceValues[8] = {PawnValue, KnightValue, BishopValue, RookValue, QueenValue, KingValue, 0, 0};
 
-int BishopMobility[13] = {-15, -12, -9, -6, -3, 0, 3, 6, 9, 12, 15, 18, 21};
-int RookMobility[14] = {-7, -6, -5, -4, -3, -3, -2, 0, 2, 3, 4, 5, 6, 7};
+int KnightMobility[PhaseNb][9] = {
+    {-30, -25, -10,   0,  10,  18,  26,  34,  42},
+    {-30, -25,   0,   9,  15,  21,  28,  35,  36}
+};
+
+int BishopMobility[PhaseNb][14] = {
+    {-30, -20, -15,   0, 15,  21,  26,  31,  34,  36,  37,  38,  38,  38},
+    {-30, -20, -15,   0, 15,  21,  26,  31,  34,  36,  37,  38,  38,  38},
+};
+
+int RookMobility[PhaseNb][15] = {
+    {-30, -25, -10,  -5,  -3,  -1,   6,  11,  15,  19,  23,  25,  26,  27, 27},
+    {-35, -20, -10,   0,  10,  19,  27,  33,  39,  41,  43,  45,  47,  48, 48}
+};
+
+int QueenMobility[PhaseNb][28] = {
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+};
+
+int BishopHasWings[PhaseNb] = {13, 36};
+
+int BishopPair[PhaseNb] = {46, 64};
 
 int evaluateBoard(Board * board, PawnTable * ptable){
     
@@ -108,6 +106,7 @@ int evaluateBoard(Board * board, PawnTable * ptable){
     int knightCount = 0;
     int bishopCount = 0;
     int rookCount   = 0;
+    int queenCount  = 0;
     
     // EXTRACT BASIC BITBOARDS FROM BOARD
     uint64_t white    = board->colourBitBoards[ColourWhite];
@@ -173,10 +172,7 @@ int evaluateBoard(Board * board, PawnTable * ptable){
         storePawnEntry(ptable, board->phash, mid, end);
     }
     
-    evaluateKnights(&mid, &end, board, &knightCount);
-    evaluateBishops(&mid, &end, board, &bishopCount);
-    evaluateRooks(&mid, &end, board, &rookCount);
-    evaluateKings(&mid, &end, board);
+    evaluatePieces(&mid, &end, board, &knightCount, &bishopCount, &rookCount, &queenCount);
     
     midEval = board->opening + mid;
     endEval = board->endgame + end;
@@ -186,7 +182,7 @@ int evaluateBoard(Board * board, PawnTable * ptable){
     
     curPhase = 24 - (1 * (knightCount + bishopCount))
                   - (2 * rookCount)
-                  - (4 * countSetBits(queens));
+                  - (4 * queenCount);
     curPhase = (curPhase * 256 + 12) / 24;
     
     eval = ((midEval * (256 - curPhase)) + (endEval * curPhase)) / 256;
@@ -247,231 +243,274 @@ void evaluatePawns(int* mid, int* end, Board* board, int * pawnCount){
     *end += eg;
 }
 
-void evaluateKnights(int* mid, int*end, Board* board, int * knightCount){
+void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int * bishopCount, int * rookCount, int * queenCount){
+    uint64_t white = board->colourBitBoards[ColourWhite];
+    uint64_t black = board->colourBitBoards[ColourBlack];
     
-    uint64_t allPawns = board->pieceBitBoards[0];
-    uint64_t allKnights = board->pieceBitBoards[1];
+    uint64_t pawns   = board->pieceBitBoards[PAWN];
+    uint64_t knights = board->pieceBitBoards[KNIGHT];
+    uint64_t bishops = board->pieceBitBoards[BISHOP];
+    uint64_t rooks   = board->pieceBitBoards[ROOK];
+    uint64_t queens  = board->pieceBitBoards[QUEEN];
+    uint64_t kings   = board->pieceBitBoards[KING];
     
-    uint64_t myPawns, enemyPawns, myKnights, defenders;
-    
-    int mg = 0, eg = 0;
-    int colour, i, sq, outpostValue;
-    
-    for (colour = ColourBlack; colour >= ColourWhite; colour--){
-        
-        mg = -mg;
-        eg = -eg;
-        
-        myKnights = allKnights & board->colourBitBoards[colour];
-        myPawns = allPawns & board->colourBitBoards[colour];
-        enemyPawns = allPawns ^ myPawns;
-        
-        for (i = 0; myKnights != 0; i++){
-            
-            (*knightCount)++;
-            
-            sq = getLSB(myKnights);
-            myKnights ^= (1ull << sq);
-            
-            outpostValue = KnightOutpost[colour][sq];
-            
-            if (outpostValue != 0){
-            
-                if (!(OutpostSquareMasks[colour][sq] & enemyPawns)){
-                    
-                    defenders = PawnAttackMasks[colour][sq] & myPawns;
-                    
-                    if (defenders){
-                        
-                        if (PawnAdvanceMasks[colour][sq] & enemyPawns)
-                            outpostValue <<= 1;
-                    }
-                    
-                    mg += outpostValue >> 1;
-                    eg += outpostValue >> 1;
-                }
-            }
-        }
-    }
-    
-    *mid += mg;
-    *end += eg;
-}
-
-void evaluateBishops(int* mid, int* end, Board* board, int * bishopCount){
-    
-    uint64_t allPawns = board->pieceBitBoards[0];
-    uint64_t allBishops = board->pieceBitBoards[2];
-    
-    uint64_t white = board->colourBitBoards[0];
-    uint64_t black = board->colourBitBoards[1];
+    uint64_t whitePawns = white & pawns;
+    uint64_t blackPawns = black & pawns;
     uint64_t notEmpty = white | black;
     
-    uint64_t myPawns, enemyPawns, myBishops, defenders;
+    uint64_t myPieces, myPawns, enemyPawns;
+    uint64_t tempKnights, tempBishops, tempRooks, tempQueens;
+    uint64_t occupiedMinusMyBishops, occupiedMinusMyRooks;
+    uint64_t attacks, mobilityArea;
     
+    int mobiltyCount, defended;
+    
+    int whiteKingSq = getLSB(white & kings);
+    int blackKingSq = getLSB(black & kings);
+    
+    uint64_t pawnAttacks[ColourNb] = {
+        (((whitePawns << 9) & ~FILE_A) | ((whitePawns << 7) & ~FILE_H)),
+        (((blackPawns >> 9) & ~FILE_H) | ((blackPawns >> 7) & ~FILE_A))
+    };
+    
+    uint64_t blockedPawns[ColourNb] = {
+        (((whitePawns << 8 ) & black) >> 8),
+        (((blackPawns >> 8 ) & white) << 8),
+    };
+    
+    uint64_t kingAreas[ColourNb] = {
+        ((KingMap[whiteKingSq] | (1ull << whiteKingSq)) | (KingMap[whiteKingSq] << 8)),
+        ((KingMap[blackKingSq] | (1ull << blackKingSq)) | (KingMap[blackKingSq] >> 8))
+    };
     
     int mg = 0, eg = 0;
-    int colour, i, sq, outpostValue, mobility;
+    int colour, bit, rank, file;
+    
+    int attackCounts[ColourNb] = {0, 0};
+    int attackerCounts[ColourNb] = {0, 0};
     
     for (colour = ColourBlack; colour >= ColourWhite; colour--){
         
-        mg = -mg;
-        eg = -eg;
+        // Negate the scores so that the scores are from
+        // White's perspective after the loop completes
+        mg = -mg; eg = -eg;
         
-        myBishops = allBishops & board->colourBitBoards[colour];
-        myPawns = allPawns & board->colourBitBoards[colour];
-        enemyPawns = allPawns ^ myPawns;
+        myPieces = board->colourBitBoards[colour];
+        myPawns = myPieces & pawns;
+        enemyPawns = pawns ^ myPawns;
         
-        if (myBishops != 0
+        occupiedMinusMyBishops = notEmpty ^ (myPieces & (bishops | queens));
+        occupiedMinusMyRooks = notEmpty ^ (myPieces & (rooks | queens));
+        
+        // Don't include squares that are attacked by enemy pawns, 
+        // occupied by our king, or occupied with our blocked pawns
+        // in our mobilityArea. This definition of mobilityArea is
+        // derived directly from Stockfish's evaluation features. 
+        mobilityArea = ~(pawnAttacks[!colour] | (myPieces & kings) | blockedPawns[colour]);
+        
+        tempKnights = myPieces & knights;
+        tempBishops = myPieces & bishops;
+        tempRooks = myPieces & rooks;
+        tempQueens = myPieces & queens;
+        
+        // Generate the attack boards for each Knight,
+        // and evaluate any other bonuses / penalties
+        while (tempKnights != 0){
+            
+            // Pop the next Knight off
+            bit = getLSB(tempKnights);
+            tempKnights ^= (1ull << bit);
+            (*knightCount)++;
+            
+            // Generate the attack board
+            attacks = KnightAttacks(bit, ~0ull);
+            
+            // Knight is in an outpost square, unable to be
+            // attacked by enemy pawns, on or between ranks
+            // four through seven, relative to it's colour
+            if (OutpostRanks[colour] & (1ull << bit)
+                && !(OutpostSquareMasks[colour][bit] & enemyPawns)){
+                    
+                defended = (pawnAttacks[colour] & (1ull << bit)) != 0;
+                
+                mg += KnightOutpostValues[MG][defended];
+                eg += KnightOutpostValues[EG][defended];
+            }
+            
+            // Knight gains a mobility bonus based off of the number
+            // of attacked or defended squares within the mobility area
+            mobiltyCount = popcount((mobilityArea & attacks));
+            mg += KnightMobility[MG][mobiltyCount];
+            eg += KnightMobility[EG][mobiltyCount];
+            
+            // Get the attack counts for this piece
+            attacks = attacks & kingAreas[!colour];
+            if (attacks != 0ull){
+                attackCounts[colour] += 2 * popcount(attacks);
+                attackerCounts[colour]++;
+            }
+        }
+        
+        
+        // Bishop gains a bonus for pawn wings
+        if (tempBishops != 0
             && (myPawns & (FILE_A|FILE_B|FILE_C))
             && (myPawns & (FILE_F|FILE_G|FILE_H))){
                 
-            mg += BISHOP_HAS_WINGS_MID;
-            eg += BISHOP_HAS_WINGS_END;
+            mg += BishopHasWings[MG];
+            eg += BishopHasWings[EG];
         }
         
-        for (i = 0; myBishops != 0; i++){
+        // Bishop gains a bonus for being in a pair
+        if ((tempBishops & WHITE_SQUARES)
+            && (tempBishops & BLACK_SQUARES)){
+                
+            mg += BishopPair[MG];
+            eg += BishopPair[EG];
+        }
+        
+        // Generate the attack boards for each Bishop,
+        // and evaluate any other bonuses / penalties
+        while (tempBishops != 0){
             
+            // Pop the next Bishop off
+            bit = getLSB(tempBishops);
+            tempBishops ^= (1ull << bit);
             (*bishopCount)++;
             
-            sq = getLSB(myBishops);
-            myBishops ^= (1ull << sq);
+            // Generate the attack board
+            attacks = BishopAttacks(bit, occupiedMinusMyBishops, ~0ull);
             
-            mobility = BishopMobility[BishopMoveCount(sq, notEmpty)];
-            mg += mobility;
-            eg += mobility;
-            
-            if (i == 1){
-                mg += BISHOP_PAIR_MID;
-                eg += BISHOP_PAIR_END;
+            // Bishop is in an outpost square, unable to be
+            // attacked by enemy pawns, on or between ranks
+            // four through seven, relative to it's colour
+            if (OutpostRanks[colour] & (1ull << bit)
+                && !(OutpostSquareMasks[colour][bit] & enemyPawns)){
+                    
+                defended = (pawnAttacks[colour] & (1ull << bit)) != 0;
+                
+                mg += BishopOutpostValues[MG][defended];
+                eg += BishopOutpostValues[EG][defended];
             }
             
-            outpostValue = BishopOutpost[colour][sq];
+            // Bishop gains a mobility bonus based off of the number
+            // of attacked or defended squares within the mobility area
+            mobiltyCount = popcount((mobilityArea & attacks));
+            mg += BishopMobility[MG][mobiltyCount];
+            eg += BishopMobility[EG][mobiltyCount];
             
-            if (outpostValue != 0){
-            
-                if (!(OutpostSquareMasks[colour][sq] & enemyPawns)){
-                    
-                    defenders = PawnAttackMasks[colour][sq] & myPawns;
-                    
-                    if (defenders){
-                        
-                        if (PawnAdvanceMasks[colour][sq] & enemyPawns)
-                            outpostValue *= 2;
-                        
-                        if (defenders & (defenders-1))
-                            outpostValue *= 0;
-                    }
-                    
-                    mg += outpostValue / 2;
-                    eg += outpostValue / 2;
-                }
+            // Get the attack counts for this piece
+            attacks = attacks & kingAreas[!colour];
+            if (attacks != 0ull){
+                attackCounts[colour] += 2 * popcount(attacks);
+                attackerCounts[colour]++;
             }
         }
-    }
-    
-    *mid += mg;
-    *end += eg;
-}
-
-void evaluateRooks(int* mid, int* end, Board* board, int * rookCount){
-    
-    uint64_t allPawns = board->pieceBitBoards[0];
-    uint64_t allRooks = board->pieceBitBoards[3];
-    
-    uint64_t white = board->colourBitBoards[0];
-    uint64_t black = board->colourBitBoards[1];
-    uint64_t notEmpty = white | black;
-    
-    uint64_t myPawns, enemyPawns, myRooks;
-    
-    int mg = 0, eg = 0;
-    int colour, i, sq, file, mobility;
-    
-    for (colour = ColourBlack; colour >= ColourWhite; colour--){
         
-        mg = -mg;
-        eg = -eg;
-        
-        myRooks = allRooks & board->colourBitBoards[colour];
-        
-        myPawns = allPawns & board->colourBitBoards[colour];
-        enemyPawns = allPawns ^ myPawns;
-        
-        for (i = 0; myRooks != 0; i++){
+        // Generate the attack boards for each Rook,
+        // and evaluate any other bonuses / penalties
+        while (tempRooks != 0){
             
+            // Pop the next Rook off
+            bit = getLSB(tempRooks);
+            tempRooks ^= (1ull << bit);
             (*rookCount)++;
             
-            sq = getLSB(myRooks);
-            myRooks ^= (1ull << sq);
+            // Generate the attack board
+            attacks = RookAttacks(bit, occupiedMinusMyRooks, ~0ull);
             
-            file = sq & 7;
+            rank = bit >> 3;
+            file = bit & 7;
             
-            mobility = RookMobility[RookMoveCount(sq, notEmpty)];
-            mg += mobility;
-            eg += mobility;
-            
+            // Rook is on a semi-open file if there are no
+            // pawns of the rook's colour on the file. If
+            // there are no pawns at all, it is an open file
             if (!(myPawns & FILES[file])){
-                
                 if (!(enemyPawns & FILES[file])){
                     mg += ROOK_OPEN_FILE_MID;
                     eg += ROOK_OPEN_FILE_END;
                 }
-                
-                else {
+                else{
                     mg += ROOK_SEMI_FILE_MID;
                     eg += ROOK_SEMI_FILE_END;
                 }
             }
             
-            if (FILES[file] & myRooks){
-                mg += ROOK_STACKED_MID;
-                eg += ROOK_STACKED_END;
-            }
-            
-            
-            if ((sq >> 3)  == (colour == ColourBlack ? 1 : 6)){
+            // Rook gains a bonus for being located
+            // on seventh rank relative to its colour
+            if (rank == (colour == ColourBlack ? 1 : 6)){
                 mg += ROOK_ON_7TH_MID;
                 eg += ROOK_ON_7TH_END;
+            }
+            
+            // Rook gains a mobility bonus based off of the number
+            // of attacked or defended squares within the mobility area
+            mobiltyCount = popcount((mobilityArea & attacks));
+            mg += RookMobility[MG][mobiltyCount];
+            eg += RookMobility[EG][mobiltyCount];
+            
+            // Get the attack counts for this piece
+            attacks = attacks & kingAreas[!colour];
+            if (attacks != 0ull){
+                attackCounts[colour] += 3 * popcount(attacks);
+                attackerCounts[colour]++;
+            }
+        }
+        
+        while (tempQueens != 0){
+            bit = getLSB(tempQueens);
+            tempQueens ^= (1ull << bit);
+            (*queenCount)++;
+            
+            attacks = RookAttacks(bit, occupiedMinusMyRooks, ~0ull)
+                | BishopAttacks(bit, occupiedMinusMyBishops, ~0ull);
+                
+            //// Queen gains a mobility bonus based off of the number
+            //// of attacked or defended squares within the mobility area
+            //mobiltyCount = countSetBits((mobilityArea & attacks));
+            //mg += QueenMobility[MG][mobiltyCount];
+            //eg += QueenMobility[EG][mobiltyCount];
+            //
+            
+            // Get the attack counts for this piece
+            attacks = attacks & kingAreas[!colour];
+            if (attacks != 0ull){
+                attackCounts[colour] += 5 * popcount(attacks);
+                attackerCounts[colour]++;
             }
         }
     }
     
-    *mid += mg;
-    *end += eg;
-}
-
-void evaluateKings(int* mid, int* end, Board* board){
-    
-    int mg = 0, eg = 0;
-    int colour, options;
-    
     for (colour = ColourBlack; colour >= ColourWhite; colour--){
-        mg = -mg;
-        eg = -eg;
         
+        // Negate the scores so that the scores are from
+        // White's perspective after the loop completes
+        mg = -mg; eg = -eg;
+        
+        // King gains a bonus if it has already castled
         if (board->hasCastled[colour]){
             mg += KING_HAS_CASTLED;
             eg += KING_HAS_CASTLED;
+        } 
+        
+        // King gains a bonus if it still may castle
+        else if (board->castleRights & (3 << (2*colour))){
+            mg += KING_CAN_CASTLE;
+            eg += KING_CAN_CASTLE;
         }
         
-        else {
+        if (attackerCounts[!colour] > 2){
+            int n = attackCounts[!colour];
+            if (n >= 100) n = 99;
             
-            options = 0;
-            if (board->castleRights & (1 << (2*colour)))
-                options++;
-            if (board->castleRights & (2 << (2*colour)))
-                options++;
+            if (!(board->colourBitBoards[!colour] & queens))
+                n *= .5;
             
-            if (options == 2){
-                mg += 1.2 * KING_CAN_CASTLE;
-                eg += 1.2 * KING_CAN_CASTLE;
-            }
-            
-            else if (options == 1){
-                mg += KING_CAN_CASTLE;
-                eg += KING_CAN_CASTLE;
-            }
+            if (!(board->colourBitBoards[!colour] & rooks))
+                n *= .8;
+        
+            mg -= SafetyTable[n];
+            eg -= SafetyTable[n];
         }
     }
     

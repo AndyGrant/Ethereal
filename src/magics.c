@@ -123,6 +123,7 @@ uint8_t * MobilityTableBishop;
 void initalizeMagics(){
     
     int i;
+    uint64_t j;
     
     if (INITIALIZED_MAGICS)
         return;
@@ -145,6 +146,10 @@ void initalizeMagics(){
     for (i = 0; i < 64; i++)
         free(OccupancyVariationsRook[i]);
     free(OccupancyVariationsRook);
+    
+    
+    for (j = 0ull; j < 0x10000ull; j++)
+        BitCounts[j] = countSetBits(j);
     
     INITIALIZED_MAGICS = 1;
 }
