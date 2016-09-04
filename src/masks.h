@@ -31,5 +31,6 @@ extern uint64_t PawnAttackMasks[2][64];
 extern uint64_t PawnAdvanceMasks[2][64];
 extern uint64_t PawnConnectedMasks[2][64];
 extern uint64_t OutpostSquareMasks[2][64];
+extern uint64_t OutpostRanks[2];
 
 #endif
