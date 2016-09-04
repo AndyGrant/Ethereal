@@ -1,0 +1,7 @@
+                  Engine     Elo   Score   Total WinRate    Diff
+            RedQueen1.11    2610   403.5  1000.0   40.4%   -68.0
+               Rodent1.1    2639   496.5  1000.0   49.6%    -2.0
+            Fridolin2.00    2526   625.0  1000.0   62.5%   +89.0
+          DiscoCheck4.03    2712   162.5  1000.0   16.3%  -285.0
+                                                                
+            Ethereal7.76  2555.3  1687.5  4000.0   42.2%        
