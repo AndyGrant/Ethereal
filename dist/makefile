@@ -1,12 +1,11 @@
 CCWIN32 = gcc32
 CCWIN64 = gcc
-CCDROID = arm-linux-gnueabihf-gcc
+CCDROID = arm-linux-gnueabi-gcc
 
 
 CWIN32FLAGS = -DNDEBUG -O3 -Wall -Wextra -pedantic -std=c99 -m32
 CWIN64FLAGS = -DNDEBUG -O3 -Wall -Wextra -pedantic -std=c99 -m64
-CDROIDFLAGS = -DNDEBUG -O3 -Wall -Wextra -pedantic -std=c99
-
+CDROIDFLAGS = -DNDEBUG -O3 -Wall -Wextra -pedantic -std=c99 -march=armv5t
 LIBS = -static
 
 SRC = ../src/bitboards.c       \
