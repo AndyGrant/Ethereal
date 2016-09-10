@@ -16,11 +16,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdio.h>
 #include <assert.h>
+#include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <time.h>
 
+#include "bitutils.h"
 #include "bitboards.h"
 #include "board.h"
 #include "castle.h"
@@ -53,7 +55,6 @@ SearchInfo * Info;
 uint16_t getBestMove(SearchInfo * info){
     
     int i, depth, value = 0;
-    int centiValue, deltaTime, hashPercent;
     
     // INITALIZE SEARCH GLOBALS
     TotalNodes = 0;
@@ -76,16 +77,20 @@ uint16_t getBestMove(SearchInfo * info){
     // PERFORM ITERATIVE DEEPENING
     for (depth = 1; depth < MaxDepth; depth++){
         
-        // PERFORM FULL SEARCH ON ROOT
+        // Perform full search on Root
         value = aspirationWindow(&(info->board), &rootMoveList, depth, value);
         
-        // LOG RESULTS TO INTERFACE
-        centiValue = (100*value)/PawnValue;
-        deltaTime = getRealTime() - info->startTime;
-        hashPercent = (1000*(uint64_t)(Table.used)) / (4*(uint64_t)(Table.maxSize));
-        printf("info depth %d score cp %d time %d nodes %d hashfull %d pv ",depth,centiValue,deltaTime,TotalNodes,hashPercent);
+        printf("info depth %d ", depth);
+        printf("score cp %d ", value);
+        printf("time %d ", (int)(getRealTime() - info->startTime));
+        printf("nodes %d ", (int)(TotalNodes));
+        printf("nps %d ", (int)(1000 * (TotalNodes / (1 + getRealTime() - info->startTime))));
+        printf("hashfull %d ", (250 * Table.used) / Table.maxSize);
+        
+        printf("pv ");
         printMove(rootMoveList.bestMove);
         printf("\n");
+        
         fflush(stdout);
         
         if (info->searchIsDepthLimited && info->depthLimit == depth)
@@ -101,10 +106,9 @@ uint16_t getBestMove(SearchInfo * info){
         }
     }
     
-    // FREE PAWN TABLE
+    // Free the Pawn Table
     destoryPawnTable(&PTable);
     
-    // RETURN BEST MOVE
     return rootMoveList.bestMove;
 }
 
@@ -112,7 +116,7 @@ int aspirationWindow(Board * board, MoveList * moveList, int depth, int previous
     
     int alpha, beta, value, margin;
     
-    if (depth > 4 && previousScore < Mate/2){
+    if (depth > 4 && abs(previousScore) < Mate / 2){
         for (margin = 30; margin < 250; margin *= 2){
             alpha = previousScore - margin;
             beta  = previousScore + margin;
@@ -122,7 +126,7 @@ int aspirationWindow(Board * board, MoveList * moveList, int depth, int previous
             if (value > alpha && value < beta)
                 return value;
             
-            if (value > Mate/2)
+            if (abs(value) > Mate/2)
                 break;
         }
     }
@@ -199,9 +203,8 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     
     int i, value, newDepth, entryValue, entryType;
     int min, max, inCheck, values[256];
-    int valid = 0, size = 0, avoidedQS = 0;
-    int oldAlpha = alpha, best = -2*Mate, optimalValue = -Mate;
-    int eval = 0; // NO NEED TO SET THIS, BUT A BUG IN GCC THROWS A WARNING
+    int valid = 0, size = 0, avoidedQS = 0, eval = 0;
+    int oldAlpha = alpha, best = -2 * Mate, optimalValue = -Mate;
     
     uint16_t currentMove, tableMove = NoneMove, bestMove = NoneMove;
     uint16_t moves[256], played[256];
@@ -495,6 +498,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
 }
 
 int quiescenceSearch(Board * board, int alpha, int beta, int height){
+    
     int i, size = 0, eval, value = -2*Mate, best = -2*Mate, values[256];
     uint16_t moves[256], currentMove, maxValueGain;
     Undo undo[1];
@@ -526,7 +530,7 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
     
     // DELTA PRUNING IN WHEN NO PROMOTIONS AND NOT EXTREME LATE GAME
     if (value + maxValueGain < alpha
-        && board->numPieces >= 6 
+        && popcount(board->colourBitBoards[0] | board->colourBitBoards[1]) >= 6
         && !(board->colourBitBoards[0] & board->pieceBitBoards[0] & RANK_7)
         && !(board->colourBitBoards[1] & board->pieceBitBoards[0] & RANK_2))
         return value;

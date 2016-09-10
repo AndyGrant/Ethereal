@@ -21,8 +21,6 @@
 
 void initalizePSQT();
 
-extern int INITALIZED_PSQT;
-
 extern int PSQTopening[32][64];
 extern int PSQTendgame[32][64];
 

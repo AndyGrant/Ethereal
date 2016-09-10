@@ -21,18 +21,27 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "piece.h"
-#include "move.h"
 #include "board.h"
-#include "types.h"
-#include "search.h"
+#include "magics.h"
+#include "masks.h"
+#include "move.h"
 #include "movegen.h"
 #include "movegentest.h"
+#include "piece.h"
+#include "psqt.h"
+#include "search.h"
 #include "time.h"
 #include "transposition.h"
+#include "types.h"
 #include "uci.h"
+#include "zorbist.h"
 
 int main(){
+    
+    initalizeMagics();
+    initalizeZorbist();
+    initalizePSQT();
+    initalizeMasks();
     
     char * startPos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     
@@ -54,10 +63,14 @@ int main(){
         getInput(str);
         
         if (stringEquals(str, "uci")){
-            printf("id name Ethereal\n");
+            printf("id name Ethereal7.81\n");
             printf("id author Andrew Grant\n");
             printf("uciok\n");
             fflush(stdout);
+        }
+        
+        else if (stringEquals(str, "movegentest")){
+            moveGenTest();
         }
         
         else if (stringStartsWith(str, "debug")){
@@ -292,7 +305,7 @@ int stringContains(char * str, char * key){
 
 void getInput(char * str){
     
-    if (fgets(str,2048,stdin) == NULL)
+    if (fgets(str, 2048, stdin) == NULL)
         exit(EXIT_FAILURE);
     
     char * ptr = strchr(str, '\n');
@@ -309,10 +322,10 @@ void moveToString(char * str, uint16_t move){
     int from = MoveFrom(move);
     int to = MoveTo(move);
     
-    char fromFile = '1' + (from/8);
-    char toFile = '1' + (to/8);
-    char fromRank = 'a' + (from%8);
-    char toRank = 'a' + (to%8);
+    char fromFile = '1' + (from / 8);
+    char toFile = '1' + (to / 8);
+    char fromRank = 'a' + (from % 8);
+    char toRank = 'a' + (to % 8);
     
     str[0] = fromRank;
     str[1] = fromFile;
@@ -320,7 +333,7 @@ void moveToString(char * str, uint16_t move){
     str[3] = toFile;
     
     if (MoveType(move) == PromotionMove){
-        str[4] = promoteDict[move>>14];
+        str[4] = promoteDict[move >> 14];
         str[5] = '\0';
     } else
         str[4] = '\0';

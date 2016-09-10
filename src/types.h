@@ -39,7 +39,6 @@ typedef struct Board {
     int endgame;
     uint64_t history[2048];
     int numMoves;
-    int numPieces;
     int hasCastled[2];
     
 } Board;
@@ -54,7 +53,6 @@ typedef struct Undo {
     int epSquare;
     uint64_t phash;
     uint64_t hash;
-    int numPieces;
     
 } Undo;
 

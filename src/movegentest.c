@@ -99,6 +99,7 @@ void moveGenTest(){
     }
     
     EndOfMainLoop:
+    fclose(input);
     
     end = clock();
     
