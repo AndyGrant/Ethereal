@@ -62,7 +62,6 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
     undo->endgame = board->endgame;
     undo->phash = board->phash;
     undo->hash = board->hash;
-    undo->numPieces = board->numPieces;
     
     board->history[board->numMoves++] = board->hash;
     
@@ -109,7 +108,6 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
                     ^  PawnKeys[toPiece][to];
                     
         board->epSquare = ((!fromType) & (abs(to-from) == 16)) * (from + ((to-from)>>1));
-        board->numPieces -= (toPiece != Empty);
         return;
     }
     
@@ -214,7 +212,6 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
                     ^  PawnKeys[toPiece][to];
         
         board->epSquare = -1;
-        board->numPieces -= (toPiece != Empty);
         return;
     }
     
@@ -261,7 +258,6 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
                     ^  PawnKeys[enpassPiece][ep];
         
         board->epSquare = -1;
-        board->numPieces -= 1;
         return;
     }
 }
@@ -313,7 +309,6 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
         board->endgame = undo->endgame;
         board->phash = undo->phash;
         board->hash = undo->hash;
-        board->numPieces = undo->numPieces;
         return;
     }
     
@@ -350,7 +345,6 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
         board->endgame = undo->endgame;
         board->phash = undo->phash;
         board->hash = undo->hash;
-        board->numPieces = undo->numPieces;
         return;
     }
     
@@ -381,7 +375,6 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
         board->endgame = undo->endgame;
         board->phash = undo->phash;
         board->hash = undo->hash;
-        board->numPieces = undo->numPieces;
         return;
     }
     
@@ -410,7 +403,6 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
         board->endgame = undo->endgame;
         board->phash = undo->phash;
         board->hash = undo->hash;
-        board->numPieces = undo->numPieces;
         return;
     }
 }

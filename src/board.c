@@ -33,27 +33,18 @@
 #include "zorbist.h"
 
 /**
- * Initalize a given board object based on the passed
- * FEN position. Also initalize the Magics, Zorbist-Keys,
- * PSQT tables, and evaluation Masks. Once the position
- * has been setup in the BitBoards, determine the hash-signature
- * of the current board as well as the opening and endgame values.
- * Set hasCastled to false for both colours, even if one has 
- * castled. This is only used for evaluation, and will make it
- * so the evaluation only cares if a player has castled after
- * the root of the search, an idea I got from Robert Hyatt.
+ * Initalize a given board struct based on the passed
+ * FEN position. Once the position has been setup in 
+ * the BitBoards, determine the hash-signature of the 
+ * current board as well as the opening and endgame values.
  *
  * @param   board   Board pointer to store information
  * @param   fen     FEN string to create position from
  */
 void initalizeBoard(Board * board, char * fen){
+    
     int i, j, sq;
     char r, f;
-    
-    initalizeMagics();
-    initalizeZorbist();
-    initalizePSQT();
-    initalizeMasks();
     
     // Init board->squares from fen notation;
     for(i = 0, sq = 56; fen[i] != ' '; i++){
@@ -176,8 +167,6 @@ void initalizeBoard(Board * board, char * fen){
     }
     
     board->numMoves = 0;
-    
-    board->numPieces = countSetBits(board->colourBitBoards[0] | board->colourBitBoards[1]);
     
     board->hasCastled[0] = 0;
     board->hasCastled[1] = 0;

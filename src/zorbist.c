@@ -25,33 +25,30 @@
 #include "piece.h"
 #include "zorbist.h"
 
-int INITALIZED_ZORBIST = 0;
-
 uint64_t ZorbistKeys[32][64];
 uint64_t PawnKeys[32][64];
 
 /**
- * Fill the ZorbistKeys[type][square] arrays with randomly
- * generated 64-bit Integers. Set flag INITALIZED_ZORBIST
- * so this process is not repeated. Seed rand with 0 sopen
- * when testing results are the same each time.
+ * Fill the ZorbistKeys[type][square] and the
+ * PawnKeys[type][square] arrays with randomly
+ * generated 64-bit Integers. Seed with zero
+ * to generate consistent values for testing.
  */
 void initalizeZorbist(){
     
     int p, s;
     
-    if (INITALIZED_ZORBIST)
-        return;
-    
     srand(0);
     
+    // Zero out both arrays
     for(p = 0; p < 32; p++){
         for(s = 0; s < 64; s++){
             ZorbistKeys[p][s] = 0ull;
             PawnKeys[p][s] = 0ull;
         }
     }
-        
+    
+    // Fill ZorbistKeys for each piece type and square
     for(p = 0; p <= 5; p++){
         for(s = 0; s < 64; s++){
             ZorbistKeys[(p*4) + 0][s] = genRandomBitstring();
@@ -59,12 +56,11 @@ void initalizeZorbist(){
         }
     }
     
+    // Fill PawnKeys for each pawn colour and square
     for (s = 0; s < 64; s++){
         PawnKeys[WhitePawn][s] = ZorbistKeys[WhitePawn][s];
         PawnKeys[BlackPawn][s] = ZorbistKeys[BlackPawn][s];
     }
-    
-    INITALIZED_ZORBIST = 1;
 }
 
 /**

@@ -23,8 +23,6 @@
 
 void initalizeMasks();
 
-extern int INITALIZED_MASKS;
-
 extern uint64_t IsolatedPawnMasks[64];
 extern uint64_t PassedPawnMasks[2][64];
 extern uint64_t PawnAttackMasks[2][64];

@@ -109,19 +109,20 @@ int evaluateBoard(Board * board, PawnTable * ptable){
     int queenCount  = 0;
     
     // EXTRACT BASIC BITBOARDS FROM BOARD
-    uint64_t white    = board->colourBitBoards[ColourWhite];
-    uint64_t black    = board->colourBitBoards[ColourBlack];
-    uint64_t pawns    = board->pieceBitBoards[0];
-    uint64_t knights  = board->pieceBitBoards[1];
-    uint64_t bishops  = board->pieceBitBoards[2];
-    uint64_t rooks    = board->pieceBitBoards[3];
-    uint64_t queens   = board->pieceBitBoards[4];
+    uint64_t white   = board->colourBitBoards[ColourWhite];
+    uint64_t black   = board->colourBitBoards[ColourBlack];
+    uint64_t pawns   = board->pieceBitBoards[PAWN];
+    uint64_t knights = board->pieceBitBoards[KNIGHT];
+    uint64_t bishops = board->pieceBitBoards[BISHOP];
+    uint64_t rooks   = board->pieceBitBoards[ROOK];
+    uint64_t queens  = board->pieceBitBoards[QUEEN];
+    uint64_t kings   = board->pieceBitBoards[KING];
     
     // CHECK FOR RECOGNIZED DRAWS
     if (pawns == 0 && rooks == 0 && queens == 0){
         
         // K v K
-        if (board->numPieces == 2)
+        if (kings == (white | black))
             return 0;
         
         // K+B v K and K+N v K

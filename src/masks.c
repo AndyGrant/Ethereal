@@ -21,9 +21,6 @@
 
 #include "bitboards.h"
 #include "masks.h"
-#include "psqt.h"
-
-int INITALIZED_MASKS = 0;
 
 uint64_t IsolatedPawnMasks[64];
 uint64_t PassedPawnMasks[2][64];
@@ -35,16 +32,10 @@ uint64_t OutpostRanks[2];
 
 /**
  * Fill the various masks used to aid in the evaluation
- * function. These masks provide an easy way to determine
- * if a pawn is passed or isolated; if a pawn can attack
- * a given square; if a knight or bishop is on an outpost
- * square; as well as a quick way to determine if a pawn
- * may advance to a given square.
+ * function. These masks provide an easy and cheap way
+ * to cheap determine various components for the evaluation.
  */
 void initalizeMasks(){
-    
-    if (INITALIZED_MASKS)
-        return;
     
     int i, j, file, rank;
     uint64_t files;
@@ -155,6 +146,4 @@ void initalizeMasks(){
             PawnConnectedMasks[1][i] = (1ull << (i-1)) | (1ull << (i+7)) | (1ull << (i+1)) | (1ull << (i+9));
         }
     }
-    
-    INITALIZED_MASKS = 1;
 }
