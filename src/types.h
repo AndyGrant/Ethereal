@@ -21,14 +21,21 @@
 
 #include <stdint.h>
 
-#define Mate        (16000)
-#define MaxDepth    (32)
-#define MaxHeight   (128)
+#define MATE        (16000)
+#define MAX_DEPTH   (32)
+#define MAX_HEIGHT  (128)
+#define MAX_MOVES   (256)
+
+#define SQUARE_NB   (64)
+#define COLOUR_NB   ( 2)
+#define RANK_NB     ( 8)
+#define FILE_NB     ( 8)
+#define PHASE_NB    ( 2)
 
 typedef struct Board {
-    int squares[64];
-    uint64_t colourBitBoards[3];
-    uint64_t pieceBitBoards[7]; 
+    int squares[SQUARE_NB];
+    uint64_t colours[3];
+    uint64_t pieces[7]; 
     int turn;
     int castleRights;
     int fiftyMoveRule;
@@ -80,8 +87,8 @@ typedef struct TransTable {
 } TransTable;
 
 typedef struct MoveList {
-    uint16_t moves[256];
-    int values[256];
+    uint16_t moves[MAX_MOVES];
+    int values[MAX_MOVES];
     uint16_t bestMove;
     int size;
     

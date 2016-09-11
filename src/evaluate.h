@@ -22,12 +22,11 @@
 #include "types.h"
 
 int evaluateBoard(Board * board, PawnTable * ptable);
-void evaluatePawns(int * mid, int * end, Board* board, int * pawnCount);
+void evaluatePawns(int * mid, int * end, Board* board);
 void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int * bishopCount, int * rookCount, int * queenCount);
 
-#define MG      (0)
-#define EG      (1)
-#define PhaseNb (2)
+#define MG          (0)
+#define EG          (1)
 
 #define PawnValue   ( 100)
 #define KnightValue ( 325)
@@ -53,18 +52,18 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
 
 #define PSQT_MULTIPLIER      (1)
 
-extern int PawnConnected[2][64];
+extern int PawnConnected[COLOUR_NB][SQUARE_NB];
 extern int PawnPassedMid[8];
 extern int PawnPassedEnd[8];
 extern int PieceValues[8];
-extern int KnightOutpost[PhaseNb][2];
-extern int BishopOutpost[PhaseNb][2];
-extern int KnightMobility[PhaseNb][9];
-extern int BishopMobility[PhaseNb][14];
-extern int RookMobility[PhaseNb][15];
-extern int QueenMobility[PhaseNb][28];
+extern int KnightOutpost[PHASE_NB][2];
+extern int BishopOutpost[PHASE_NB][2];
+extern int KnightMobility[PHASE_NB][9];
+extern int BishopMobility[PHASE_NB][14];
+extern int RookMobility[PHASE_NB][15];
+extern int QueenMobility[PHASE_NB][28];
 extern int SafetyTable[100];
-extern int BishopHasWings[PhaseNb];
-extern int BishopPair[PhaseNb];
+extern int BishopHasWings[PHASE_NB];
+extern int BishopPair[PHASE_NB];
 
 #endif

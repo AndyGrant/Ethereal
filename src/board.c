@@ -55,22 +55,22 @@ void initalizeBoard(Board * board, char * fen){
         
         else if (fen[i] <= '8' && fen[i] >= '1')
             for(j = 0; j < fen[i] - '0'; j++, sq++)
-                board->squares[sq] = Empty;
+                board->squares[sq] = EMPTY;
             
         else {
             switch(fen[i]){
-                case 'P': board->squares[sq++] = WhitePawn;   break;
-                case 'N': board->squares[sq++] = WhiteKnight; break;
-                case 'B': board->squares[sq++] = WhiteBishop; break;
-                case 'R': board->squares[sq++] = WhiteRook;   break;
-                case 'Q': board->squares[sq++] = WhiteQueen;  break;
-                case 'K': board->squares[sq++] = WhiteKing;   break;
-                case 'p': board->squares[sq++] = BlackPawn;   break;
-                case 'n': board->squares[sq++] = BlackKnight; break;
-                case 'b': board->squares[sq++] = BlackBishop; break;
-                case 'r': board->squares[sq++] = BlackRook;   break;
-                case 'q': board->squares[sq++] = BlackQueen;  break;
-                case 'k': board->squares[sq++] = BlackKing;   break;
+                case 'P': board->squares[sq++] = WHITE_PAWN;   break;
+                case 'N': board->squares[sq++] = WHITE_KNIGHT; break;
+                case 'B': board->squares[sq++] = WHITE_BISHOP; break;
+                case 'R': board->squares[sq++] = WHITE_ROOK;   break;
+                case 'Q': board->squares[sq++] = WHITE_QUEEN;  break;
+                case 'K': board->squares[sq++] = WHITE_KING;   break;
+                case 'p': board->squares[sq++] = BLACK_PAWN;   break;
+                case 'n': board->squares[sq++] = BLACK_KNIGHT; break;
+                case 'b': board->squares[sq++] = BLACK_BISHOP; break;
+                case 'r': board->squares[sq++] = BLACK_ROOK;   break;
+                case 'q': board->squares[sq++] = BLACK_QUEEN;  break;
+                case 'k': board->squares[sq++] = BLACK_KING;   break;
                 default : assert("Unable to decode piece in init_board()" && 0);
             }
         }
@@ -78,8 +78,8 @@ void initalizeBoard(Board * board, char * fen){
     
     // Determine turn
     switch(fen[++i]){
-        case 'w': board->turn = ColourWhite; break;
-        case 'b': board->turn = ColourBlack; break;
+        case 'w': board->turn = WHITE; break;
+        case 'b': board->turn = BLACK; break;
         default : assert("Unable to determine player to move in init_board()" && 0);
     }
     
@@ -89,10 +89,10 @@ void initalizeBoard(Board * board, char * fen){
     board->castleRights = 0;
     while(fen[++i] != ' '){
         switch(fen[i]){
-            case 'K' : board->castleRights |= WhiteKingRights; break;
-            case 'Q' : board->castleRights |= WhiteQueenRights; break;
-            case 'k' : board->castleRights |= BlackKingRights; break;
-            case 'q' : board->castleRights |= BlackQueenRights; break;
+            case 'K' : board->castleRights |= WHITE_KING_RIGHTS; break;
+            case 'Q' : board->castleRights |= WHITE_QUEEN_RIGHTS; break;
+            case 'k' : board->castleRights |= BLACK_KING_RIGHTS; break;
+            case 'q' : board->castleRights |= BLACK_QUEEN_RIGHTS; break;
             case '-' : break;
             default  : assert("Unable to decode castle rights in init_board()" && 0);
         }
@@ -131,30 +131,30 @@ void initalizeBoard(Board * board, char * fen){
     }
     
     // Set BitBoards to default values
-    board->colourBitBoards[0] = 0;
-    board->colourBitBoards[1] = 0;
-    board->pieceBitBoards[0] = 0;
-    board->pieceBitBoards[1] = 0;
-    board->pieceBitBoards[2] = 0;
-    board->pieceBitBoards[3] = 0;
-    board->pieceBitBoards[4] = 0;
-    board->pieceBitBoards[5] = 0;
+    board->colours[WHITE] = 0ull;
+    board->colours[BLACK] = 0ull;
+    board->pieces[PAWN]   = 0ull;
+    board->pieces[KNIGHT] = 0ull;
+    board->pieces[BISHOP] = 0ull;
+    board->pieces[ROOK]   = 0ull;
+    board->pieces[QUEEN]  = 0ull;
+    board->pieces[KING]   = 0ull;
     
     // Set Empty BitBoards to filled
-    board->colourBitBoards[2] = 0xFFFFFFFFFFFFFFFF;
-    board->pieceBitBoards[6] = 0xFFFFFFFFFFFFFFFF;
+    board->colours[2] = 0xFFFFFFFFFFFFFFFFull;
+    board->pieces[6]  = 0xFFFFFFFFFFFFFFFFull;
     
     // Fill BitBoards
     for(i = 0; i < 64; i++){
-        board->colourBitBoards[PieceColour(board->squares[i])] |= (1ull << i);
-        board->pieceBitBoards[PieceType(board->squares[i])]    |= (1ull << i);
+        board->colours[PieceColour(board->squares[i])] |= (1ull << i);
+        board->pieces[PieceType(board->squares[i])]    |= (1ull << i);
     }
     
-    // Init Zorbist Hash
+    // Inititalize Zorbist Hash
     for(i = 0, board->hash = 0; i < 64; i++)
         board->hash ^= ZorbistKeys[board->squares[i]][i];
     
-    // Init Pawn Hash
+    // Inititalize Pawn Hash
     for (i = 0, board->phash = 0; i < 64; i++)
         board->phash ^= PawnKeys[board->squares[i]][i];
     
@@ -175,27 +175,30 @@ void initalizeBoard(Board * board, char * fen){
 /**
  * Print a given board in a user-friendly manner.
  *
- * @param   board   Board pointer to board to printf
+ * @param   board   Board pointer to board to print
  */
 void printBoard(Board * board){
+    
     int i, j, f, c, t;
     
-    char table[3][7] = {
+    static const char table[3][7] = {
         {'P','N','B','R','Q','K'},
         {'p','n','b','r','q','k'},
         {' ',' ',' ',' ',' ',' '} 
     };
     
     for(i = 56, f = 8; i >= 0; i-=8, f--){
+        
         printf("\n     |----|----|----|----|----|----|----|----|\n");
         printf("    %d",f);
+        
         for(j = 0; j < 8; j++){
             c = PieceColour(board->squares[i+j]);
             t = PieceType(board->squares[i+j]);
             
             switch(c){
-                case ColourWhite: printf("| *%c ",table[c][t]); break;
-                case ColourBlack: printf("|  %c ",table[c][t]); break;
+                case WHITE: printf("| *%c ",table[c][t]); break;
+                case BLACK: printf("|  %c ",table[c][t]); break;
                 default         : printf("|    "); break;
             }
         }
@@ -218,15 +221,16 @@ void printBoard(Board * board){
  * @return          Number of positions found
  */
 int perft(Board * board, int depth){
+    
+    Undo undo;
+    int size = 0, found = 0;
+    uint16_t moves[MAX_MOVES];
+    
     if (depth == 0)
         return 1;
     
-    uint16_t moves[256];
-    int size = 0;
     genAllMoves(board,moves,&size);
-    Undo undo;
     
-    int found = 0;
     for(size -= 1; size >= 0; size--){
         applyMove(board,moves[size],&undo);
         if (isNotInCheck(board,!board->turn))

@@ -21,10 +21,10 @@
 
 void initalizePSQT();
 
-extern int PSQTopening[32][64];
-extern int PSQTendgame[32][64];
+extern int PSQTopening[32][SQUARE_NB];
+extern int PSQTendgame[32][SQUARE_NB];
 
-extern int InversionTable[64];
+extern int InversionTable[SQUARE_NB];
 extern int PawnOpeningMap32[32];
 extern int PawnEndgameMap32[32];
 extern int KnightOpeningMap32[32];

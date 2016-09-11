@@ -21,14 +21,16 @@
 
 #include <stdint.h>
 
+#include "types.h"
+
 void initalizeMasks();
 
-extern uint64_t IsolatedPawnMasks[64];
-extern uint64_t PassedPawnMasks[2][64];
-extern uint64_t PawnAttackMasks[2][64];
-extern uint64_t PawnAdvanceMasks[2][64];
-extern uint64_t PawnConnectedMasks[2][64];
-extern uint64_t OutpostSquareMasks[2][64];
-extern uint64_t OutpostRanks[2];
+extern uint64_t IsolatedPawnMasks[SQUARE_NB];
+extern uint64_t PassedPawnMasks[COLOUR_NB][SQUARE_NB];
+extern uint64_t PawnAttackMasks[COLOUR_NB][SQUARE_NB];
+extern uint64_t PawnAdvanceMasks[COLOUR_NB][SQUARE_NB];
+extern uint64_t PawnConnectedMasks[COLOUR_NB][SQUARE_NB];
+extern uint64_t OutpostSquareMasks[COLOUR_NB][SQUARE_NB];
+extern uint64_t OutpostRanks[COLOUR_NB];
 
 #endif

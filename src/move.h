@@ -27,18 +27,18 @@ void applyMove(Board * board, uint16_t move, Undo * undo);
 void revertMove(Board * board, uint16_t move, Undo * undo);
 void printMove(uint16_t move);
 
-#define NoneMove ( 0)
-#define NullMove (11)
+#define NULL_MOVE (11)
+#define NONE_MOVE ( 0)
 
-#define NormalMove      (0 << 12)
-#define CastleMove      (1 << 12)
-#define EnpassMove      (2 << 12)
-#define PromotionMove   (3 << 12)
+#define NORMAL_MOVE      (0 << 12)
+#define CASTLE_MOVE      (1 << 12)
+#define ENPASS_MOVE      (2 << 12)
+#define PROMOTION_MOVE   (3 << 12)
 
-#define PromoteToKnight (0 << 14)
-#define PromoteToBishop (1 << 14)
-#define PromoteToRook   (2 << 14)
-#define PromoteToQueen  (3 << 14)
+#define PROMOTE_TO_KNIGHT (0 << 14)
+#define PROMOTE_TO_BISHOP (1 << 14)
+#define PROMOTE_TO_ROOK   (2 << 14)
+#define PROMOTE_TO_QUEEN  (3 << 14)
 
 #define MoveFrom(move)         (((move) >> 0) & 63)
 #define MoveTo(move)           (((move) >> 6) & 63)

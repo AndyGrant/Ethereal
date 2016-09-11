@@ -21,10 +21,12 @@
 
 #include <stdint.h>
 
+#include "types.h"
+
 void initalizeZorbist();
 uint64_t genRandomBitstring();
 
-extern uint64_t ZorbistKeys[32][64];
-extern uint64_t PawnKeys[32][64];
+extern uint64_t ZorbistKeys[32][SQUARE_NB];
+extern uint64_t PawnKeys[32][SQUARE_NB];
 
 #endif

@@ -21,15 +21,15 @@
 
 #include <stdint.h>
 
-#define WhiteCastleKingSideMap  ((1ull <<  5) + (1ull <<  6))
-#define BlackCastleKingSideMap  ((1ull << 61) + (1ull << 62))
-#define WhiteCastleQueenSideMap ((1ull <<  1) + (1ull <<  2) + (1ull <<  3))
-#define BlackCastleQueenSideMap ((1ull << 57) + (1ull << 58) + (1ull << 59))
+#define WHITE_CASTLE_KING_SIDE_MAP  ((1ull <<  5) + (1ull <<  6))
+#define BLACK_CASTLE_KING_SIDE_MAP  ((1ull << 61) + (1ull << 62))
+#define WHITE_CASTLE_QUEEN_SIDE_MAP ((1ull <<  1) + (1ull <<  2) + (1ull <<  3))
+#define BLACK_CASTLE_QUEEN_SIDE_MAP ((1ull << 57) + (1ull << 58) + (1ull << 59))
 
-#define WhiteKingRights     (1)
-#define WhiteQueenRights    (2)
-#define BlackKingRights     (4)
-#define BlackQueenRights    (8)
+#define WHITE_KING_RIGHTS     (1)
+#define WHITE_QUEEN_RIGHTS    (2)
+#define BLACK_KING_RIGHTS     (4)
+#define BLACK_QUEEN_RIGHTS    (8)
 
 extern int CastleMask[64];
 

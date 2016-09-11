@@ -45,7 +45,7 @@ int SafetyTable[100] = { // Taken from CPW / Stockfish
  500, 500, 500, 500, 500, 500, 500, 500, 500, 500
 };
 
-int PawnConnected[ColourNb][64] = {
+int PawnConnected[COLOUR_NB][64] = {
     { 0, 0, 0, 0, 0, 0, 0, 0,
       2, 2, 2, 3, 3, 2, 2, 2,
       4, 4, 5, 6, 6, 5, 4, 4,
@@ -65,58 +65,56 @@ int PawnConnected[ColourNb][64] = {
       0, 0, 0, 0, 0, 0, 0, 0, }
 };
 
-int KnightOutpostValues[PhaseNb][2] = {{20, 40}, {10, 20}};
-int BishopOutpostValues[PhaseNb][2] = {{15, 30}, { 3,  5}};
+int KnightOutpostValues[PHASE_NB][2] = {{20, 40}, {10, 20}};
+int BishopOutpostValues[PHASE_NB][2] = {{15, 30}, { 3,  5}};
 
 int PawnPassedMid[8] = { 0,  10, 10, 23, 39, 58, 70, 0};
 int PawnPassedEnd[8] = { 0,  12, 12, 26, 44, 66, 90, 0};
 
 int PieceValues[8] = {PawnValue, KnightValue, BishopValue, RookValue, QueenValue, KingValue, 0, 0};
 
-int KnightMobility[PhaseNb][9] = {
+int KnightMobility[PHASE_NB][9] = {
     {-30, -25, -10,   0,  10,  18,  26,  34,  42},
     {-30, -25,   0,   9,  15,  21,  28,  35,  36}
 };
 
-int BishopMobility[PhaseNb][14] = {
+int BishopMobility[PHASE_NB][14] = {
     {-30, -20, -15,   0, 15,  21,  26,  31,  34,  36,  37,  38,  38,  38},
     {-30, -20, -15,   0, 15,  21,  26,  31,  34,  36,  37,  38,  38,  38},
 };
 
-int RookMobility[PhaseNb][15] = {
+int RookMobility[PHASE_NB][15] = {
     {-30, -25, -10,  -5,  -3,  -1,   6,  11,  15,  19,  23,  25,  26,  27, 27},
     {-35, -20, -10,   0,  10,  19,  27,  33,  39,  41,  43,  45,  47,  48, 48}
 };
 
-int QueenMobility[PhaseNb][28] = {
+int QueenMobility[PHASE_NB][28] = {
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 };
 
-int BishopHasWings[PhaseNb] = {13, 36};
+int BishopHasWings[PHASE_NB] = {13, 36};
 
-int BishopPair[PhaseNb] = {46, 64};
+int BishopPair[PHASE_NB] = {46, 64};
 
 int evaluateBoard(Board * board, PawnTable * ptable){
     
     int mid = 0, end = 0;
     int curPhase, midEval, endEval, eval;
     
-    int pawnCount   = 0;
     int knightCount = 0;
     int bishopCount = 0;
     int rookCount   = 0;
     int queenCount  = 0;
     
-    // EXTRACT BASIC BITBOARDS FROM BOARD
-    uint64_t white   = board->colourBitBoards[ColourWhite];
-    uint64_t black   = board->colourBitBoards[ColourBlack];
-    uint64_t pawns   = board->pieceBitBoards[PAWN];
-    uint64_t knights = board->pieceBitBoards[KNIGHT];
-    uint64_t bishops = board->pieceBitBoards[BISHOP];
-    uint64_t rooks   = board->pieceBitBoards[ROOK];
-    uint64_t queens  = board->pieceBitBoards[QUEEN];
-    uint64_t kings   = board->pieceBitBoards[KING];
+    uint64_t white   = board->colours[WHITE];
+    uint64_t black   = board->colours[BLACK];
+    uint64_t pawns   = board->pieces[PAWN];
+    uint64_t knights = board->pieces[KNIGHT];
+    uint64_t bishops = board->pieces[BISHOP];
+    uint64_t rooks   = board->pieces[ROOK];
+    uint64_t queens  = board->pieces[QUEEN];
+    uint64_t kings   = board->pieces[KING];
     
     // CHECK FOR RECOGNIZED DRAWS
     if (pawns == 0 && rooks == 0 && queens == 0){
@@ -169,7 +167,7 @@ int evaluateBoard(Board * board, PawnTable * ptable){
     
     // NO ENTRY FOUND, EVALUATE AND STORE
     else {
-        evaluatePawns(&mid, &end, board, &pawnCount);
+        evaluatePawns(&mid, &end, board);
         storePawnEntry(ptable, board->phash, mid, end);
     }
     
@@ -178,8 +176,8 @@ int evaluateBoard(Board * board, PawnTable * ptable){
     midEval = board->opening + mid;
     endEval = board->endgame + end;
     
-    midEval += (board->turn == ColourWhite) ? 5 : -5;
-    endEval += (board->turn == ColourWhite) ? 7 : -7;
+    midEval += (board->turn == WHITE) ? 5 : -5;
+    endEval += (board->turn == WHITE) ? 7 : -7;
     
     curPhase = 24 - (1 * (knightCount + bishopCount))
                   - (2 * rookCount)
@@ -188,35 +186,33 @@ int evaluateBoard(Board * board, PawnTable * ptable){
     
     eval = ((midEval * (256 - curPhase)) + (endEval * curPhase)) / 256;
     
-    return board->turn == ColourWhite ? eval : -eval;
+    return board->turn == WHITE ? eval : -eval;
 }
 
-void evaluatePawns(int* mid, int* end, Board* board, int * pawnCount){
+void evaluatePawns(int * mid, int * end, Board * board){
     
-    uint64_t allPawns = board->pieceBitBoards[0];
+    uint64_t allPawns = board->pieces[PAWN];
     uint64_t myPawns, enemyPawns, allMyPawns;
     
     int mg = 0, eg = 0;
     int colour, i, sq, file, rank;
     
-    for (colour = ColourBlack; colour >= ColourWhite; colour--){
+    for (colour = BLACK; colour >= WHITE; colour--){
         
         mg = -mg;
         eg = -eg;
         
-        myPawns = allPawns & board->colourBitBoards[colour];
+        myPawns = allPawns & board->colours[colour];
         allMyPawns = myPawns;
         enemyPawns = allPawns ^ myPawns;
         
         for (i = 0; myPawns != 0; i++){
             
-            (*pawnCount)++;
-            
             sq = getLSB(myPawns);
             myPawns ^= (1ull << sq);
             
             file = sq & 7;
-            rank = (colour == ColourBlack) ? (7 - (sq >> 3)) : (sq >> 3);
+            rank = (colour == BLACK) ? (7 - (sq >> 3)) : (sq >> 3);
             
             if (!(PassedPawnMasks[colour][sq] & enemyPawns)){
                 mg += PawnPassedMid[rank];
@@ -228,7 +224,7 @@ void evaluatePawns(int* mid, int* end, Board* board, int * pawnCount){
                 eg -= PAWN_ISOLATED_END;
             }
             
-            else if (FILES[file] & myPawns){
+            else if (Files[file] & myPawns){
                 mg -= PAWN_STACKED_MID;
                 eg -= PAWN_STACKED_END;
             }
@@ -245,15 +241,16 @@ void evaluatePawns(int* mid, int* end, Board* board, int * pawnCount){
 }
 
 void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int * bishopCount, int * rookCount, int * queenCount){
-    uint64_t white = board->colourBitBoards[ColourWhite];
-    uint64_t black = board->colourBitBoards[ColourBlack];
     
-    uint64_t pawns   = board->pieceBitBoards[PAWN];
-    uint64_t knights = board->pieceBitBoards[KNIGHT];
-    uint64_t bishops = board->pieceBitBoards[BISHOP];
-    uint64_t rooks   = board->pieceBitBoards[ROOK];
-    uint64_t queens  = board->pieceBitBoards[QUEEN];
-    uint64_t kings   = board->pieceBitBoards[KING];
+    uint64_t white = board->colours[WHITE];
+    uint64_t black = board->colours[BLACK];
+    
+    uint64_t pawns   = board->pieces[PAWN];
+    uint64_t knights = board->pieces[KNIGHT];
+    uint64_t bishops = board->pieces[BISHOP];
+    uint64_t rooks   = board->pieces[ROOK];
+    uint64_t queens  = board->pieces[QUEEN];
+    uint64_t kings   = board->pieces[KING];
     
     uint64_t whitePawns = white & pawns;
     uint64_t blackPawns = black & pawns;
@@ -264,39 +261,39 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
     uint64_t occupiedMinusMyBishops, occupiedMinusMyRooks;
     uint64_t attacks, mobilityArea;
     
+    int mg = 0, eg = 0;
     int mobiltyCount, defended;
+    int colour, bit, rank, file;
     
     int whiteKingSq = getLSB(white & kings);
     int blackKingSq = getLSB(black & kings);
     
-    uint64_t pawnAttacks[ColourNb] = {
+    int attackCounts[COLOUR_NB] = {0, 0};
+    int attackerCounts[COLOUR_NB] = {0, 0};
+    
+    uint64_t pawnAttacks[COLOUR_NB] = {
         (((whitePawns << 9) & ~FILE_A) | ((whitePawns << 7) & ~FILE_H)),
         (((blackPawns >> 9) & ~FILE_H) | ((blackPawns >> 7) & ~FILE_A))
     };
     
-    uint64_t blockedPawns[ColourNb] = {
+    uint64_t blockedPawns[COLOUR_NB] = {
         (((whitePawns << 8 ) & black) >> 8),
         (((blackPawns >> 8 ) & white) << 8),
     };
     
-    uint64_t kingAreas[ColourNb] = {
+    uint64_t kingAreas[COLOUR_NB] = {
         ((KingMap[whiteKingSq] | (1ull << whiteKingSq)) | (KingMap[whiteKingSq] << 8)),
         ((KingMap[blackKingSq] | (1ull << blackKingSq)) | (KingMap[blackKingSq] >> 8))
     };
     
-    int mg = 0, eg = 0;
-    int colour, bit, rank, file;
     
-    int attackCounts[ColourNb] = {0, 0};
-    int attackerCounts[ColourNb] = {0, 0};
-    
-    for (colour = ColourBlack; colour >= ColourWhite; colour--){
+    for (colour = BLACK; colour >= WHITE; colour--){
         
         // Negate the scores so that the scores are from
         // White's perspective after the loop completes
         mg = -mg; eg = -eg;
         
-        myPieces = board->colourBitBoards[colour];
+        myPieces = board->colours[colour];
         myPawns = myPieces & pawns;
         enemyPawns = pawns ^ myPawns;
         
@@ -426,8 +423,8 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
             // Rook is on a semi-open file if there are no
             // pawns of the rook's colour on the file. If
             // there are no pawns at all, it is an open file
-            if (!(myPawns & FILES[file])){
-                if (!(enemyPawns & FILES[file])){
+            if (!(myPawns & Files[file])){
+                if (!(enemyPawns & Files[file])){
                     mg += ROOK_OPEN_FILE_MID;
                     eg += ROOK_OPEN_FILE_END;
                 }
@@ -439,7 +436,7 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
             
             // Rook gains a bonus for being located
             // on seventh rank relative to its colour
-            if (rank == (colour == ColourBlack ? 1 : 6)){
+            if (rank == (colour == BLACK ? 1 : 6)){
                 mg += ROOK_ON_7TH_MID;
                 eg += ROOK_ON_7TH_END;
             }
@@ -482,7 +479,7 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
         }
     }
     
-    for (colour = ColourBlack; colour >= ColourWhite; colour--){
+    for (colour = BLACK; colour >= WHITE; colour--){
         
         // Negate the scores so that the scores are from
         // White's perspective after the loop completes
@@ -504,10 +501,10 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
             int n = attackCounts[!colour];
             if (n >= 100) n = 99;
             
-            if (!(board->colourBitBoards[!colour] & queens))
+            if (!(board->colours[!colour] & queens))
                 n *= .5;
             
-            if (!(board->colourBitBoards[!colour] & rooks))
+            if (!(board->colours[!colour] & rooks))
                 n *= .8;
         
             mg -= SafetyTable[n];

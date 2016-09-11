@@ -42,7 +42,7 @@
 #define WHITE_SQUARES (0x55AA55AA55AA55AA)
 #define BLACK_SQUARES (0xAA55AA55AA55AA55)
 
-extern uint64_t FILES[8];
-extern uint64_t RANKS[8];
+extern uint64_t Files[8];
+extern uint64_t Ranks[8];
 
 #endif

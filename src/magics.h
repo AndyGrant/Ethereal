@@ -21,6 +21,8 @@
 
 #include <stdio.h>
 
+#include "types.h"
+
 void initalizeMagics();
 void generateKnightMap();
 void generateKingMap();
@@ -31,11 +33,11 @@ void generateOccupancyVariationsBishop();
 void generateMoveDatabaseRook();
 void generateMoveDatabaseBishop();
 
-extern uint64_t KnightMap[64];
-extern uint64_t KingMap[64];
+extern uint64_t KnightMap[SQUARE_NB];
+extern uint64_t KingMap[SQUARE_NB];
 
-extern uint64_t OccupancyMaskRook[64];
-extern uint64_t OccupancyMaskBishop[64];
+extern uint64_t OccupancyMaskRook[SQUARE_NB];
+extern uint64_t OccupancyMaskBishop[SQUARE_NB];
 
 extern uint64_t ** OccupancyVariationsRook;
 extern uint64_t ** OccupancyVariationsBishop;
@@ -43,13 +45,13 @@ extern uint64_t ** OccupancyVariationsBishop;
 extern uint64_t * MoveDatabaseRook;
 extern uint64_t * MoveDatabaseBishop;
 
-extern int MagicRookIndexes[64];
-extern int MagicBishopIndexes[64];
+extern int MagicRookIndexes[SQUARE_NB];
+extern int MagicBishopIndexes[SQUARE_NB];
 
-extern int MagicShiftsRook[64];
-extern int MagicShiftsBishop[64];
+extern int MagicShiftsRook[SQUARE_NB];
+extern int MagicShiftsBishop[SQUARE_NB];
 
-extern uint64_t MagicNumberRook[64];
-extern uint64_t MagicNumberBishop[64];
+extern uint64_t MagicNumberRook[SQUARE_NB];
+extern uint64_t MagicNumberBishop[SQUARE_NB];
 
 #endif

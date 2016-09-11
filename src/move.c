@@ -42,6 +42,7 @@
                     with only the board and the move
  */
 void applyMove(Board * board, uint16_t move, Undo * undo){
+    
     int to, from;
     int rTo, rFrom;
     int fromType, toType;
@@ -65,7 +66,7 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
     
     board->history[board->numMoves++] = board->hash;
     
-    if (MoveType(move) == NormalMove){
+    if (MoveType(move) == NORMAL_MOVE){
         to = MoveTo(move);
         from = MoveFrom(move);
         
@@ -78,15 +79,15 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
         fromType = PieceType(fromPiece);
         toType = PieceType(toPiece);
         
-        board->colourBitBoards[board->turn] ^= shiftFrom | shiftTo;
-        board->colourBitBoards[PieceColour(toPiece)] ^= shiftTo;
+        board->colours[board->turn] ^= shiftFrom | shiftTo;
+        board->colours[PieceColour(toPiece)] ^= shiftTo;
         
-        board->pieceBitBoards[toType] ^= shiftTo;
-        board->pieceBitBoards[fromType] ^= shiftFrom | shiftTo;     
+        board->pieces[toType] ^= shiftTo;
+        board->pieces[fromType] ^= shiftFrom | shiftTo;
         
         undo->capturePiece = toPiece;
         board->squares[to] = fromPiece;
-        board->squares[from] = Empty;
+        board->squares[from] = EMPTY;
         
         board->castleRights &= CastleMask[from];
         board->turn = !board->turn;
@@ -111,7 +112,7 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
         return;
     }
     
-    if (MoveType(move) == CastleMove){
+    if (MoveType(move) == CASTLE_MOVE){
         
         board->hasCastled[board->turn] = 1;
         
@@ -121,7 +122,7 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
         rTo = CastleGetRookTo(from,to);
         rFrom = CastleGetRookFrom(from,to);
         
-        fromPiece = WhiteKing + board->turn;
+        fromPiece = WHITE_KING + board->turn;
         rFromPiece = fromPiece - 8;
         
         shiftFrom = 1ull << from;
@@ -129,16 +130,16 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
         rShiftFrom = 1ull << rFrom;
         rShiftTo = 1ull << rTo;
         
-        board->colourBitBoards[board->turn] ^= shiftTo | shiftFrom | rShiftTo | rShiftFrom;
+        board->colours[board->turn] ^= shiftTo | shiftFrom | rShiftTo | rShiftFrom;
         
-        board->pieceBitBoards[5] ^= shiftFrom | shiftTo;
-        board->pieceBitBoards[3] ^= rShiftFrom | rShiftTo;
+        board->pieces[KING] ^= shiftFrom | shiftTo;
+        board->pieces[ROOK] ^= rShiftFrom | rShiftTo;
         
         board->squares[to] = fromPiece;
-        board->squares[from] = Empty;
+        board->squares[from] = EMPTY;
         
         board->squares[rTo] = rFromPiece;
-        board->squares[rFrom] = Empty;
+        board->squares[rFrom] = EMPTY;
         
         board->castleRights &= CastleMask[from];
         board->turn = !board->turn;
@@ -167,7 +168,7 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
         return;
     }
     
-    if (MoveType(move) == PromotionMove){
+    if (MoveType(move) == PROMOTION_MOVE){
         to = MoveTo(move);
         from = MoveFrom(move);
         
@@ -182,16 +183,16 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
         shiftFrom = 1ull << from;
         shiftTo = 1ull << to;
     
-        board->colourBitBoards[board->turn] ^= shiftFrom | shiftTo;
-        board->colourBitBoards[PieceColour(toPiece)] ^= shiftTo;
+        board->colours[board->turn] ^= shiftFrom | shiftTo;
+        board->colours[PieceColour(toPiece)] ^= shiftTo;
         
-        board->pieceBitBoards[0] ^= shiftFrom;
-        board->pieceBitBoards[promotype] ^= shiftTo;
-        board->pieceBitBoards[toType] ^= shiftTo;
+        board->pieces[PAWN] ^= shiftFrom;
+        board->pieces[promotype] ^= shiftTo;
+        board->pieces[toType] ^= shiftTo;
         
         undo->capturePiece = toPiece;
         board->squares[to] = promoPiece;
-        board->squares[from] = Empty;
+        board->squares[from] = EMPTY;
         
         board->turn = !board->turn;
         
@@ -215,29 +216,29 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
         return;
     }
     
-    if (MoveType(move) == EnpassMove){
+    if (MoveType(move) == ENPASS_MOVE){
         to = MoveTo(move);
         from = MoveFrom(move);
         ep = board->epSquare - 8 + (board->turn << 4);
         
-        fromPiece = WhitePawn + board->turn;
-        enpassPiece = WhitePawn + !board->turn;
+        fromPiece = WHITE_PAWN + board->turn;
+        enpassPiece = WHITE_PAWN + !board->turn;
         
         shiftFrom = 1ull << from;
         shiftTo = 1ull << to;
         shiftEnpass = 1ull << ep;
         
-        board->colourBitBoards[!board->turn] ^= shiftEnpass;
-        board->pieceBitBoards[0] ^= shiftEnpass;
+        board->colours[!board->turn] ^= shiftEnpass;
+        board->pieces[PAWN] ^= shiftEnpass;
         
-        board->colourBitBoards[board->turn] ^= shiftFrom | shiftTo;
-        board->pieceBitBoards[0] ^= shiftFrom | shiftTo;
+        board->colours[board->turn] ^= shiftFrom | shiftTo;
+        board->pieces[PAWN] ^= shiftFrom | shiftTo;
         
         board->squares[to] = fromPiece;
-        board->squares[from] = Empty;
+        board->squares[from] = EMPTY;
         
         undo->capturePiece = enpassPiece;
-        board->squares[ep] = Empty;
+        board->squares[ep] = EMPTY;
         
         board->turn = !board->turn;
         
@@ -273,6 +274,7 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
  * @param   undo    Undo object with the missing information needed
  */
 void revertMove(Board * board, uint16_t move, Undo * undo){
+    
     int to, from;
     int rTo, rFrom;
     int fromType, toType;
@@ -283,7 +285,7 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
     
     board->numMoves--;
     
-    if (MoveType(move) == NormalMove){
+    if (MoveType(move) == NORMAL_MOVE){
         to = MoveTo(move);
         from = MoveFrom(move);
         
@@ -293,11 +295,11 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
         shiftFrom = 1ull << from;
         shiftTo = 1ull << to;
         
-        board->colourBitBoards[undo->turn] ^= shiftFrom | shiftTo;
-        board->colourBitBoards[PieceColour(undo->capturePiece)] |= shiftTo;
+        board->colours[undo->turn] ^= shiftFrom | shiftTo;
+        board->colours[PieceColour(undo->capturePiece)] |= shiftTo;
         
-        board->pieceBitBoards[fromType] ^= shiftTo | shiftFrom;
-        board->pieceBitBoards[toType] |= shiftTo;
+        board->pieces[fromType] ^= shiftTo | shiftFrom;
+        board->pieces[toType] |= shiftTo;
         
         board->squares[from] = board->squares[to];
         board->squares[to] = undo->capturePiece;
@@ -312,7 +314,7 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
         return;
     }
     
-    if (MoveType(move) == CastleMove){
+    if (MoveType(move) == CASTLE_MOVE){
         
         board->hasCastled[undo->turn] = 0;
         
@@ -327,16 +329,16 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
         rShiftFrom = 1ull << rFrom;
         rShiftTo = 1ull << rTo;
     
-        board->colourBitBoards[undo->turn] ^= shiftFrom | shiftTo | rShiftTo | rShiftFrom;
+        board->colours[undo->turn] ^= shiftFrom | shiftTo | rShiftTo | rShiftFrom;
         
-        board->pieceBitBoards[5] ^= shiftFrom | shiftTo;
-        board->pieceBitBoards[3] ^= rShiftFrom | rShiftTo;
+        board->pieces[KING] ^= shiftFrom | shiftTo;
+        board->pieces[ROOK] ^= rShiftFrom | rShiftTo;
         
         board->squares[from] = board->squares[to];
-        board->squares[to] = Empty;
+        board->squares[to] = EMPTY;
         
         board->squares[rFrom] = board->squares[rTo];
-        board->squares[rTo] = Empty;
+        board->squares[rTo] = EMPTY;
         
         board->castleRights = undo->castleRights;
         board->turn = undo->turn;
@@ -348,26 +350,26 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
         return;
     }
     
-    if (MoveType(move) == PromotionMove){
+    if (MoveType(move) == PROMOTION_MOVE){
         to = MoveTo(move);
         from = MoveFrom(move);
         
-        fromType = WhitePawn + undo->turn;
+        fromType = WHITE_PAWN + undo->turn;
         toType = PieceType(undo->capturePiece);
         promotype = 1 + (move >> 14);
         
         shiftFrom = 1ull << from;
         shiftTo = 1ull << to;
     
-        board->colourBitBoards[undo->turn] ^= shiftFrom | shiftTo;
-        board->colourBitBoards[PieceColour(undo->capturePiece)] ^= shiftTo;
+        board->colours[undo->turn] ^= shiftFrom | shiftTo;
+        board->colours[PieceColour(undo->capturePiece)] ^= shiftTo;
         
-        board->pieceBitBoards[0] ^= shiftFrom;
-        board->pieceBitBoards[promotype] ^= shiftTo;
-        board->pieceBitBoards[toType] ^= shiftTo;
+        board->pieces[PAWN] ^= shiftFrom;
+        board->pieces[promotype] ^= shiftTo;
+        board->pieces[toType] ^= shiftTo;
         
         board->squares[to] = undo->capturePiece;
-        board->squares[from] = WhitePawn + undo->turn;
+        board->squares[from] = WHITE_PAWN + undo->turn;
         
         board->turn = undo->turn;
         board->epSquare = undo->epSquare;
@@ -378,7 +380,7 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
         return;
     }
     
-    if (MoveType(move) == EnpassMove){
+    if (MoveType(move) == ENPASS_MOVE){
         to = MoveTo(move);
         from = MoveFrom(move);
         ep = undo->epSquare - 8 + (undo->turn << 4);
@@ -387,14 +389,14 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
         shiftTo = 1ull << to;
         shiftEnpass = 1ull << ep;
         
-        board->colourBitBoards[!undo->turn] ^= shiftEnpass;
-        board->pieceBitBoards[0] ^= shiftEnpass;
+        board->colours[!undo->turn] ^= shiftEnpass;
+        board->pieces[PAWN] ^= shiftEnpass;
         
-        board->colourBitBoards[undo->turn] ^= shiftFrom | shiftTo;
-        board->pieceBitBoards[0] ^= shiftFrom | shiftTo;
+        board->colours[undo->turn] ^= shiftFrom | shiftTo;
+        board->pieces[PAWN] ^= shiftFrom | shiftTo;
         
         board->squares[from] = board->squares[to];
-        board->squares[to] = Empty;
+        board->squares[to] = EMPTY;
         board->squares[ep] = undo->capturePiece;
         
         board->turn = undo->turn;
@@ -413,14 +415,15 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
  * @param   move    Move to be printed
  */
 void printMove(uint16_t move){
+    
     int from = MoveFrom(move);
     int to = MoveTo(move);
     
-    char fromFile = '1' + (from/8);
-    char toFile = '1' + (to/8);
+    char fromFile = '1' + (from / 8);
+    char toFile = '1' + (to / 8);
     
-    char fromRank = 'a' + (from%8);
-    char toRank = 'a' + (to%8);
+    char fromRank = 'a' + (from % 8);
+    char toRank = 'a' + (to % 8);
     
-    printf("%c%c%c%c",fromRank,fromFile,toRank,toFile);
+    printf("%c%c%c%c", fromRank, fromFile, toRank, toFile);
 }
