@@ -261,8 +261,8 @@ int main(){
                 
                 // USING REPEATING TIME CONTROL
                 else {
-                    info.endTime1 = info.startTime + .5 * (time / (double)(mtg+1));
-                    info.endTime2 = info.startTime + (time / (double)(mtg+1));
+                    info.endTime1 = info.startTime + .5 * (time / (double)(mtg+2));
+                    info.endTime2 = info.startTime + (time / (double)(mtg+2));
                 }
             }
             
