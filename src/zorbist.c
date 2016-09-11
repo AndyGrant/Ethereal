@@ -23,10 +23,11 @@
 #include <time.h>
 
 #include "piece.h"
+#include "types.h"
 #include "zorbist.h"
 
-uint64_t ZorbistKeys[32][64];
-uint64_t PawnKeys[32][64];
+uint64_t ZorbistKeys[32][SQUARE_NB];
+uint64_t PawnKeys[32][SQUARE_NB];
 
 /**
  * Fill the ZorbistKeys[type][square] and the
@@ -42,7 +43,7 @@ void initalizeZorbist(){
     
     // Zero out both arrays
     for(p = 0; p < 32; p++){
-        for(s = 0; s < 64; s++){
+        for(s = 0; s < SQUARE_NB; s++){
             ZorbistKeys[p][s] = 0ull;
             PawnKeys[p][s] = 0ull;
         }
@@ -50,16 +51,16 @@ void initalizeZorbist(){
     
     // Fill ZorbistKeys for each piece type and square
     for(p = 0; p <= 5; p++){
-        for(s = 0; s < 64; s++){
+        for(s = 0; s < SQUARE_NB; s++){
             ZorbistKeys[(p*4) + 0][s] = genRandomBitstring();
             ZorbistKeys[(p*4) + 1][s] = genRandomBitstring();
         }
     }
     
     // Fill PawnKeys for each pawn colour and square
-    for (s = 0; s < 64; s++){
-        PawnKeys[WhitePawn][s] = ZorbistKeys[WhitePawn][s];
-        PawnKeys[BlackPawn][s] = ZorbistKeys[BlackPawn][s];
+    for (s = 0; s < SQUARE_NB; s++){
+        PawnKeys[WHITE_PAWN][s] = ZorbistKeys[WHITE_PAWN][s];
+        PawnKeys[BLACK_PAWN][s] = ZorbistKeys[BLACK_PAWN][s];
     }
 }
 

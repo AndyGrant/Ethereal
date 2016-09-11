@@ -19,14 +19,15 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "magics.h"
 #include "bitutils.h"
+#include "magics.h"
+#include "types.h"
 
-uint64_t KnightMap[64];
-uint64_t KingMap[64];
+uint64_t KnightMap[SQUARE_NB];
+uint64_t KingMap[SQUARE_NB];
 
-uint64_t OccupancyMaskRook[64];
-uint64_t OccupancyMaskBishop[64];
+uint64_t OccupancyMaskRook[SQUARE_NB];
+uint64_t OccupancyMaskBishop[SQUARE_NB];
 
 uint64_t ** OccupancyVariationsRook;
 uint64_t ** OccupancyVariationsBishop;
@@ -34,7 +35,7 @@ uint64_t ** OccupancyVariationsBishop;
 uint64_t * MoveDatabaseRook;
 uint64_t * MoveDatabaseBishop;
 
-int MagicRookIndexes[64] = {
+int MagicRookIndexes[SQUARE_NB] = {
         0,  4096,  6144,  8192, 10240, 12288, 14336, 16384,
     20480, 22528, 23552, 24576, 25600, 26624, 27648, 28672,
     30720, 32768, 33792, 34816, 35840, 36864, 37888, 38912,
@@ -45,7 +46,7 @@ int MagicRookIndexes[64] = {
     81920, 86016, 88064, 90112, 92160, 94208, 96256, 98304
 };
 
-int MagicBishopIndexes[64] = {
+int MagicBishopIndexes[SQUARE_NB] = {
        0,   64,   96,  128,  160,  192,  224,  256,
      320,  352,  384,  416,  448,  480,  512,  544,
      576,  608,  640,  768,  896, 1024, 1152, 1184,
@@ -56,21 +57,21 @@ int MagicBishopIndexes[64] = {
     4928, 4992, 5024, 5056, 5088, 5120, 5152, 5184
 };
 
-int MagicShiftsRook[64] = {
+int MagicShiftsRook[SQUARE_NB] = {
     52,53,53,53,53,53,53,52,53,54,54,54,54,54,54,53,
     53,54,54,54,54,54,54,53,53,54,54,54,54,54,54,53,
     53,54,54,54,54,54,54,53,53,54,54,54,54,54,54,53,
     53,54,54,54,54,54,54,53,52,53,53,53,53,53,53,52
 };
 
-int MagicShiftsBishop[64] = {
+int MagicShiftsBishop[SQUARE_NB] = {
     58,59,59,59,59,59,59,58,59,59,59,59,59,59,59,59,
     59,59,57,57,57,57,59,59,59,59,57,55,55,57,59,59,
     59,59,57,55,55,57,59,59,59,59,57,57,57,57,59,59,
     59,59,59,59,59,59,59,59,58,59,59,59,59,59,59,58
 };
 
-uint64_t MagicNumberRook[64] = {
+uint64_t MagicNumberRook[SQUARE_NB] = {
     0xa180022080400230, 0x0040100040022000, 0x0080088020001002, 0x0080080280841000,
     0x4200042010460008, 0x04800a0003040080, 0x0400110082041008, 0x008000a041000880,
     0x10138001a080c010, 0x0000804008200480, 0x00010011012000c0, 0x0022004128102200,
@@ -89,7 +90,7 @@ uint64_t MagicNumberRook[64] = {
     0x8015001002441801, 0x0801000804000603, 0x0c0900220024a401, 0x0001000200608243
 };
 
-uint64_t MagicNumberBishop[64] = {
+uint64_t MagicNumberBishop[SQUARE_NB] = {
     0x2910054208004104, 0x02100630a7020180, 0x5822022042000000, 0x2ca804a100200020,
     0x0204042200000900, 0x2002121024000002, 0x80404104202000e8, 0x812a020205010840,
     0x8005181184080048, 0x1001c20208010101, 0x1001080204002100, 0x1810080489021800,
@@ -130,12 +131,12 @@ void initalizeMagics(){
     generateMoveDatabaseBishop();
     
     // CLEAN UP OCCUPANCY VARIATIONS FOR BISHOPS
-    for (i = 0; i < 64; i++)
+    for (i = 0; i < SQUARE_NB; i++)
         free(OccupancyVariationsBishop[i]);
     free(OccupancyVariationsBishop);
     
     // CLEAN UP OCCUPANCY VARIATIONS FOR ROOKS
-    for (i = 0; i < 64; i++)
+    for (i = 0; i < SQUARE_NB; i++)
         free(OccupancyVariationsRook[i]);
     free(OccupancyVariationsRook);
     
@@ -145,7 +146,7 @@ void initalizeMagics(){
 }
 
 /**
- * Fill the KnightMap[64] array with the correct 
+ * Fill the KnightMap[SQUARE_NB] array with the correct 
  * BitBoards for generating knight moves
  */
 void generateKnightMap(){
@@ -153,20 +154,20 @@ void generateKnightMap(){
     int i;
     uint64_t z = 1;
     
-    for(i = 0; i < 64; i++){
-        if (i + 17 < 64 && i % 8 != 7)
+    for(i = 0; i < SQUARE_NB; i++){
+        if (i + 17 < SQUARE_NB && i % 8 != 7)
             KnightMap[i] |= z << ( i + 17);
         if (i - 17 >= 0 && i % 8 != 0)
             KnightMap[i] |= z << ( i - 17);
-        if (i + 15 < 64 && i % 8 != 0)
+        if (i + 15 < SQUARE_NB && i % 8 != 0)
             KnightMap[i] |= z << ( i + 15);
         if (i - 15 >= 0 && i % 8 != 7)
             KnightMap[i] |= z << ( i - 15);
-        if (i + 10 < 64 && i % 8 <= 5)
+        if (i + 10 < SQUARE_NB && i % 8 <= 5)
             KnightMap[i] |= z << ( i + 10);
         if (i - 10 >= 0 && i % 8 >= 2)
             KnightMap[i] |= z << ( i - 10);
-        if (i + 6  < 64 && i % 8 >= 2)
+        if (i + 6  < SQUARE_NB && i % 8 >= 2)
             KnightMap[i] |= z << ( i + 6);
         if (i - 6  >= 0 && i % 8 <= 5)
             KnightMap[i] |= z << ( i - 6);
@@ -174,7 +175,7 @@ void generateKnightMap(){
 }
 
 /**
- * Fill the KingMap[64] array with the correct 
+ * Fill the KingMap[SQUARE_NB] array with the correct 
  * BitBoards for generating king moves
  */
 void generateKingMap(){
@@ -182,20 +183,20 @@ void generateKingMap(){
     int i;
     uint64_t z = 1;
     
-    for(i = 0; i < 64; i++){
-        if (i + 9 < 64 && i % 8 != 7)
+    for(i = 0; i < SQUARE_NB; i++){
+        if (i + 9 < SQUARE_NB && i % 8 != 7)
             KingMap[i] |= z << (i + 9);
         if (i - 9 >= 0 && i % 8 != 0)
             KingMap[i] |= z << (i - 9); 
-        if (i + 7 < 64 && i % 8 != 0)
+        if (i + 7 < SQUARE_NB && i % 8 != 0)
             KingMap[i] |= z << (i + 7);
         if (i - 7 >= 0 && i % 8 != 7)
             KingMap[i] |= z << (i - 7); 
-        if (i + 1 < 64 && i % 8 != 7)
+        if (i + 1 < SQUARE_NB && i % 8 != 7)
             KingMap[i] |= z << (i + 1);
         if (i - 1 >= 0 && i % 8 != 0)
             KingMap[i] |= z << (i - 1);
-        if (i + 8 < 64)
+        if (i + 8 < SQUARE_NB)
             KingMap[i] |= z << (i + 8);
         if (i - 8 >= 0)
             KingMap[i] |= z << (i - 8);
@@ -203,7 +204,7 @@ void generateKingMap(){
 }
 
 /**
- * Fill the OccupancyMaskRook[64] array with the correct
+ * Fill the OccupancyMaskRook[SQUARE_NB] array with the correct
  * BitBoards for what what be the proper moves if the only
  * piece on the board was the rook in question. This is needed
  * to create the occupancy variations for rooks.
@@ -213,7 +214,7 @@ void generateOccupancyMaskRook(){
     int i, bit;
     uint64_t mask;
     
-    for (bit = 0, mask = 0; bit <= 63; bit++, mask = 0){
+    for (bit = 0, mask = 0; bit < SQUARE_NB; bit++, mask = 0){
         for (i=bit+8; i<=55; i+=8)
             mask |= (1ull << i);
         for (i=bit-8; i>=8; i-=8)
@@ -227,7 +228,7 @@ void generateOccupancyMaskRook(){
 }
 
 /**
- * Fill the OccupancyMaskBishop[64] array with the correct
+ * Fill the OccupancyMaskBishop[SQUARE_NB] array with the correct
  * BitBoards for what what be the proper moves if the only
  * piece on the board was the bishop in question. This is needed
  * to create the occupancy variations for bishops.
@@ -237,14 +238,14 @@ void generateOccupancyMaskBishop(){
     int i, bit; 
     uint64_t mask;
     
-    for (bit = 0, mask = 0; bit <= 63; bit++, mask = 0){
-        for (i=bit+9; i%8!=7 && i%8!=0 && i<=55; i+=9)
+    for (bit = 0, mask = 0; bit < SQUARE_NB; bit++, mask = 0){
+        for (i = bit + 9; i % 8 != 7 && i % 8 != 0 && i <= 55; i += 9)
             mask |= (1ull << i);
-        for (i=bit-9; i%8!=7 && i%8!=0 && i>=8; i-=9)
+        for (i = bit - 9; i % 8 != 7 && i % 8 != 0 && i >= 8; i -= 9)
             mask |= (1ull << i);
-        for (i=bit+7; i%8!=7 && i%8!=0 && i<=55; i+=7)
+        for (i = bit + 7; i % 8 != 7 && i % 8 != 0 && i <= 55; i += 7)
             mask |= (1ull << i);
-        for (i=bit-7; i%8!=7 && i%8!=0 && i>=8; i-=7)
+        for (i = bit - 7; i % 8 != 7 && i % 8 !=0  && i >= 8; i -= 7)
             mask |= (1ull << i);
         OccupancyMaskBishop[bit] = mask;
     }
@@ -261,19 +262,19 @@ void generateOccupancyVariationsRook(){
     uint64_t mask;
     int setBitsInMask[20], setBitsInIndex[20];
     
-    OccupancyVariationsRook = malloc(sizeof(uint64_t) * 64);
+    OccupancyVariationsRook = malloc(sizeof(uint64_t) * SQUARE_NB);
     
-    for (i = 0; i < 64; i++)
+    for (i = 0; i < SQUARE_NB; i++)
         OccupancyVariationsRook[i] = malloc(sizeof(uint64_t) * 4096);
     
-    for (bitRef = 0; bitRef < 64; bitRef++){
+    for (bitRef = 0; bitRef < SQUARE_NB; bitRef++){
         mask = OccupancyMaskRook[bitRef];
-        getSetBits(mask,setBitsInMask);
+        getSetBits(mask, setBitsInMask);
         variationCount = (int)(1ull << countSetBits(mask));
         
         for (i = 0; i < variationCount; i++){
-            OccupancyVariationsRook[bitRef][i] = 0; 
-            getSetBits(i,setBitsInIndex);
+            OccupancyVariationsRook[bitRef][i] = 0ull; 
+            getSetBits(i, setBitsInIndex);
             for (j = 0; setBitsInIndex[j] != -1; j++){
                 OccupancyVariationsRook[bitRef][i] |= (1ull << setBitsInMask[setBitsInIndex[j]]);
             }
@@ -292,19 +293,19 @@ void generateOccupancyVariationsBishop(){
     uint64_t mask;
     int setBitsInMask[20], setBitsInIndex[20];
     
-    OccupancyVariationsBishop = malloc(sizeof(uint64_t) * 64);
+    OccupancyVariationsBishop = malloc(sizeof(uint64_t) * SQUARE_NB);
     
-    for (i = 0; i < 64; i++)
+    for (i = 0; i < SQUARE_NB; i++)
         OccupancyVariationsBishop[i] = malloc(sizeof(uint64_t) * 512);
     
-    for (bitRef = 0; bitRef < 64; bitRef++){
+    for (bitRef = 0; bitRef < SQUARE_NB; bitRef++){
         mask = OccupancyMaskBishop[bitRef];
-        getSetBits(mask,setBitsInMask);
+        getSetBits(mask, setBitsInMask);
         variationCount = (int)(1ull << countSetBits(mask));
         
         for (i = 0; i < variationCount; i++){
-            OccupancyVariationsBishop[bitRef][i] = 0; 
-            getSetBits(i,setBitsInIndex);
+            OccupancyVariationsBishop[bitRef][i] = 0ull; 
+            getSetBits(i, setBitsInIndex);
             for (j = 0; setBitsInIndex[j] != -1; j++)
                 OccupancyVariationsBishop[bitRef][i] |= (1ull << setBitsInMask[setBitsInIndex[j]]);
         }
@@ -326,7 +327,7 @@ void generateMoveDatabaseRook(){
     
     MoveDatabaseRook = malloc(sizeof(uint64_t) * (98304 + 4096));
     
-    for (bitRef=0; bitRef<=63; bitRef++){
+    for (bitRef = 0; bitRef < SQUARE_NB; bitRef++){
         bitCount = countSetBits(OccupancyMaskRook[bitRef]);
         variations = (int)(1ull << bitCount);
         
@@ -334,27 +335,27 @@ void generateMoveDatabaseRook(){
             validMoves = 0;
             magicIndex = (int)((OccupancyVariationsRook[bitRef][i] * MagicNumberRook[bitRef]) >> MagicShiftsRook[bitRef]);
             
-            for (j=bitRef+8; j<=63; j+=8) { 
+            for (j = bitRef + 8; j < SQUARE_NB; j += 8) { 
                 validMoves |= (1ull << j); 
-                if ((OccupancyVariationsRook[bitRef][i] & (1ull << j)) != 0) 
+                if ((OccupancyVariationsRook[bitRef][i] & (1ull << j)) != 0ull) 
                     break; 
             }
             
-            for (j=bitRef-8; j>=0; j-=8) { 
+            for (j = bitRef - 8; j >= 0; j -= 8) { 
                 validMoves |= (1ull << j); 
-                if ((OccupancyVariationsRook[bitRef][i] & (1ull << j)) != 0) 
+                if ((OccupancyVariationsRook[bitRef][i] & (1ull << j)) != 0ull) 
                     break; 
             }
             
-            for (j=bitRef+1; j%8!=0; j++) { 
+            for (j = bitRef + 1; j % 8 != 0; j++) { 
                 validMoves |= (1ull << j);
-                if ((OccupancyVariationsRook[bitRef][i] & (1ull << j)) != 0) 
+                if ((OccupancyVariationsRook[bitRef][i] & (1ull << j)) != 0ull) 
                     break;
             }
                 
-            for (j=bitRef-1; j%8!=7 && j>=0; j--) {
+            for (j = bitRef - 1; j % 8 != 7 && j >= 0; j--) {
                 validMoves |= (1ull << j);
-                if ((OccupancyVariationsRook[bitRef][i] & (1ull << j)) != 0)
+                if ((OccupancyVariationsRook[bitRef][i] & (1ull << j)) != 0ull)
                     break;
             }
             
@@ -378,7 +379,7 @@ void generateMoveDatabaseBishop(){
     
     MoveDatabaseBishop = malloc(sizeof(uint64_t) * (5184 + 64));
     
-    for (bitRef=0; bitRef<=63; bitRef++){
+    for (bitRef = 0; bitRef < SQUARE_NB; bitRef++){
         bitCount = countSetBits(OccupancyMaskBishop[bitRef]);
         variations = (int)(1ull << bitCount);
         
@@ -386,27 +387,27 @@ void generateMoveDatabaseBishop(){
             validMoves = 0;
             magicIndex = (int)((OccupancyVariationsBishop[bitRef][i] * MagicNumberBishop[bitRef]) >> MagicShiftsBishop[bitRef]);
             
-            for (j=bitRef+9; j%8!=0 && j<=63; j+=9) { 
+            for (j = bitRef + 9; j % 8 != 0 && j < SQUARE_NB; j += 9) { 
                 validMoves |= (1ull << j); 
-                if ((OccupancyVariationsBishop[bitRef][i] & (1ull << j)) != 0)
+                if ((OccupancyVariationsBishop[bitRef][i] & (1ull << j)) != 0ull)
                     break; 
             }
             
-            for (j=bitRef-9; j%8!=7 && j>=0; j-=9) { 
+            for (j = bitRef - 9; j % 8 != 7 && j >= 0; j -= 9) { 
                 validMoves |= (1ull << j); 
-                if ((OccupancyVariationsBishop[bitRef][i] & (1ull << j)) != 0) 
+                if ((OccupancyVariationsBishop[bitRef][i] & (1ull << j)) != 0ull) 
                     break; 
             }
             
-            for (j=bitRef+7; j%8!=7 && j<=63; j+=7) { 
+            for (j = bitRef + 7; j % 8 != 7 && j < SQUARE_NB; j += 7) { 
                 validMoves |= (1ull << j); 
-                if ((OccupancyVariationsBishop[bitRef][i] & (1ull << j)) != 0) 
+                if ((OccupancyVariationsBishop[bitRef][i] & (1ull << j)) != 0ull) 
                     break; 
             }
             
-            for (j=bitRef-7; j%8!=0 && j>=0; j-=7) { 
+            for (j = bitRef - 7; j % 8 !=0 && j >= 0; j -= 7) { 
                 validMoves |= (1ull << j); 
-                if ((OccupancyVariationsBishop[bitRef][i] & (1ull << j)) != 0) 
+                if ((OccupancyVariationsBishop[bitRef][i] & (1ull << j)) != 0ull) 
                     break; 
             }
             

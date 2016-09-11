@@ -21,14 +21,16 @@
 
 #include "bitboards.h"
 #include "masks.h"
+#include "piece.h"
+#include "types.h"
 
-uint64_t IsolatedPawnMasks[64];
-uint64_t PassedPawnMasks[2][64];
-uint64_t PawnAttackMasks[2][64];
-uint64_t PawnAdvanceMasks[2][64];
-uint64_t PawnConnectedMasks[2][64];
-uint64_t OutpostSquareMasks[2][64];
-uint64_t OutpostRanks[2];
+uint64_t IsolatedPawnMasks[SQUARE_NB];
+uint64_t PassedPawnMasks[COLOUR_NB][SQUARE_NB];
+uint64_t PawnAttackMasks[COLOUR_NB][SQUARE_NB];
+uint64_t PawnAdvanceMasks[COLOUR_NB][SQUARE_NB];
+uint64_t PawnConnectedMasks[COLOUR_NB][SQUARE_NB];
+uint64_t OutpostSquareMasks[COLOUR_NB][SQUARE_NB];
+uint64_t OutpostRanks[COLOUR_NB];
 
 /**
  * Fill the various masks used to aid in the evaluation
@@ -41,89 +43,89 @@ void initalizeMasks(){
     uint64_t files;
     
     // INITALIZE ISOLATED PAWN MASKS
-    for (i = 0; i < 64; i++){
+    for (i = 0; i < SQUARE_NB; i++){
         file = i % 8;
         
         if (file > 0 && file < 7)
-            IsolatedPawnMasks[i] = FILES[file+1] | FILES[file-1];
+            IsolatedPawnMasks[i] = Files[file+1] | Files[file-1];
         else if (file > 0)
-            IsolatedPawnMasks[i] = FILES[file-1];
+            IsolatedPawnMasks[i] = Files[file-1];
         else
-            IsolatedPawnMasks[i] = FILES[file+1];
+            IsolatedPawnMasks[i] = Files[file+1];
     }
     
     // INITALIZE PASSED PAWN MASKS AND OUTPOST MASKS
-    for (i = 0; i < 64; i++){
+    for (i = 0; i < SQUARE_NB; i++){
         file = i % 8;
         rank = i / 8;
         
-        files = IsolatedPawnMasks[i] | FILES[file];
+        files = IsolatedPawnMasks[i] | Files[file];
         
-        PassedPawnMasks[0][i] = files;
+        PassedPawnMasks[WHITE][i] = files;
         for (j = rank; j >= 0; j--)
-            PassedPawnMasks[0][i] &= ~(RANKS[j]);
+            PassedPawnMasks[WHITE][i] &= ~(Ranks[j]);
         
-        PassedPawnMasks[1][i] = files;
+        PassedPawnMasks[BLACK][i] = files;
         for (j = rank; j <= 7; j++)
-            PassedPawnMasks[1][i] &= ~(RANKS[j]);
+            PassedPawnMasks[BLACK][i] &= ~(Ranks[j]);
         
-        OutpostSquareMasks[0][i] = PassedPawnMasks[0][i] & ~FILES[file];
-        OutpostSquareMasks[1][i] = PassedPawnMasks[1][i] & ~FILES[file];
+        OutpostSquareMasks[WHITE][i] = PassedPawnMasks[WHITE][i] & ~Files[file];
+        OutpostSquareMasks[BLACK][i] = PassedPawnMasks[BLACK][i] & ~Files[file];
     }
     
-    OutpostRanks[0] = RANK_4 | RANK_5 | RANK_6;
-    OutpostRanks[1] = RANK_3 | RANK_4 | RANK_5;
+    OutpostRanks[WHITE] = RANK_4 | RANK_5 | RANK_6;
+    OutpostRanks[BLACK] = RANK_3 | RANK_4 | RANK_5;
     
     // INITALIZE ATTACK-SQ PAWN MASKS
-    for (i = 0; i < 64; i++){
+    for (i = 0; i < SQUARE_NB; i++){
         file = i % 8;
         rank = i / 8;
         
-        PawnAttackMasks[0][i] = 0ull;
-        PawnAttackMasks[1][i] = 0ull;
+        PawnAttackMasks[WHITE][i] = 0ull;
+        PawnAttackMasks[BLACK][i] = 0ull;
         
         if (rank == 0){
-            PawnAttackMasks[1][i] |= (1ull << i) << 7;
-            PawnAttackMasks[1][i] |= (1ull << i) << 9;
+            PawnAttackMasks[BLACK][i] |= (1ull << i) << 7;
+            PawnAttackMasks[BLACK][i] |= (1ull << i) << 9;
         }
         
         else if (rank == 7){
-            PawnAttackMasks[0][i] |= (1ull << i) >> 7;
-            PawnAttackMasks[0][i] |= (1ull << i) >> 9;
+            PawnAttackMasks[WHITE][i] |= (1ull << i) >> 7;
+            PawnAttackMasks[WHITE][i] |= (1ull << i) >> 9;
         }
         
         else {
-            PawnAttackMasks[0][i] |= (1ull << i) >> 7;
-            PawnAttackMasks[0][i] |= (1ull << i) >> 9;
-            PawnAttackMasks[1][i] |= (1ull << i) << 7;
-            PawnAttackMasks[1][i] |= (1ull << i) << 9;
+            PawnAttackMasks[WHITE][i] |= (1ull << i) >> 7;
+            PawnAttackMasks[WHITE][i] |= (1ull << i) >> 9;
+            PawnAttackMasks[BLACK][i] |= (1ull << i) << 7;
+            PawnAttackMasks[BLACK][i] |= (1ull << i) << 9;
         }
         
         if (file == 0){
-            PawnAttackMasks[0][i] &= ~FILE_H;
-            PawnAttackMasks[1][i] &= ~FILE_H;
+            PawnAttackMasks[WHITE][i] &= ~FILE_H;
+            PawnAttackMasks[BLACK][i] &= ~FILE_H;
         }
         
         else if (file == 7){
-            PawnAttackMasks[0][i] &= ~FILE_A;
-            PawnAttackMasks[1][i] &= ~FILE_A;
+            PawnAttackMasks[WHITE][i] &= ~FILE_A;
+            PawnAttackMasks[BLACK][i] &= ~FILE_A;
         }
     }
     
     // INITALIZE PAWN-MAY-ADVANCE MASKS
-    for (i = 0; i < 64; i++){
+    for (i = 0; i < SQUARE_NB; i++){
         rank = i / 8;
         
-        PawnAdvanceMasks[0][i] = 0ull;
-        PawnAdvanceMasks[1][i] = 0ull;
+        PawnAdvanceMasks[WHITE][i] = 0ull;
+        PawnAdvanceMasks[BLACK][i] = 0ull;
         
         if (rank == 0)
-            PawnAdvanceMasks[0][i] = (1ull << i) << 8;
+            PawnAdvanceMasks[WHITE][i] = (1ull << i) << 8;
         else if (rank == 7)
-            PawnAdvanceMasks[1][i] = (1ull << i) >> 8;
+            PawnAdvanceMasks[BLACK][i] = (1ull << i) >> 8;
         else {
-            PawnAdvanceMasks[0][i] = (1ull << i) << 8;
-            PawnAdvanceMasks[1][i] = (1ull << i) >> 8;
+            PawnAdvanceMasks[WHITE][i] = (1ull << i) << 8;
+            PawnAdvanceMasks[BLACK][i] = (1ull << i) >> 8;
         }
     }
     
@@ -132,18 +134,18 @@ void initalizeMasks(){
         file = i % 8;
         
         if (file == 0){
-            PawnConnectedMasks[0][i] = (1ull << (i+1)) | (1ull << (i-7));
-            PawnConnectedMasks[1][i] = (1ull << (i+1)) | (1ull << (i+9));
+            PawnConnectedMasks[WHITE][i] = (1ull << (i+1)) | (1ull << (i-7));
+            PawnConnectedMasks[BLACK][i] = (1ull << (i+1)) | (1ull << (i+9));
         }
         
         else if (file == 7){
-            PawnConnectedMasks[0][i] = (1ull << (i-1)) | (1ull << (i-9));
-            PawnConnectedMasks[1][i] = (1ull << (i-1)) | (1ull << (i+7));
+            PawnConnectedMasks[WHITE][i] = (1ull << (i-1)) | (1ull << (i-9));
+            PawnConnectedMasks[BLACK][i] = (1ull << (i-1)) | (1ull << (i+7));
         }
         
         else {
-            PawnConnectedMasks[0][i] = (1ull << (i-1)) | (1ull << (i-9)) | (1ull << (i+1)) | (1ull << (i-7));
-            PawnConnectedMasks[1][i] = (1ull << (i-1)) | (1ull << (i+7)) | (1ull << (i+1)) | (1ull << (i+9));
+            PawnConnectedMasks[WHITE][i] = (1ull << (i-1)) | (1ull << (i-9)) | (1ull << (i+1)) | (1ull << (i-7));
+            PawnConnectedMasks[BLACK][i] = (1ull << (i-1)) | (1ull << (i+7)) | (1ull << (i+1)) | (1ull << (i+9));
         }
     }
 }

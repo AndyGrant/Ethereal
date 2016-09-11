@@ -49,7 +49,7 @@ int main(){
     char * ptr;
     
     char moveStr[6], testStr[6];
-    uint16_t moves[256];
+    uint16_t moves[MAX_MOVES];
     int size;
     Undo undo;
     
@@ -219,7 +219,7 @@ int main(){
                 }
             }
             
-            if (info.board.turn == ColourWhite){
+            if (info.board.turn == WHITE){
                 time = wtime;
                 inc = winc;
             } else {
@@ -332,7 +332,7 @@ void moveToString(char * str, uint16_t move){
     str[2] = toRank;
     str[3] = toFile;
     
-    if (MoveType(move) == PromotionMove){
+    if (MoveType(move) == PROMOTION_MOVE){
         str[4] = promoteDict[move >> 14];
         str[5] = '\0';
     } else

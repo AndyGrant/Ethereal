@@ -54,26 +54,26 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
     int forwardShift, leftShift, rightShift;
     int epSquare = board->epSquare;
     
-    uint64_t friendly = board->colourBitBoards[board->turn];
-    uint64_t enemy = board->colourBitBoards[!board->turn];
+    uint64_t friendly = board->colours[board->turn];
+    uint64_t enemy = board->colours[!board->turn];
     
     uint64_t empty = ~(friendly | enemy);
     uint64_t notEmpty = ~empty;
     uint64_t notFriendly = ~friendly;
     
-    uint64_t myPawns   = friendly & board->pieceBitBoards[0];
-    uint64_t myKnights = friendly & board->pieceBitBoards[1];
-    uint64_t myBishops = friendly & board->pieceBitBoards[2];
-    uint64_t myRooks   = friendly & board->pieceBitBoards[3];
-    uint64_t myQueens  = friendly & board->pieceBitBoards[4];
-    uint64_t myKings   = friendly & board->pieceBitBoards[5];
+    uint64_t myPawns   = friendly & board->pieces[PAWN];
+    uint64_t myKnights = friendly & board->pieces[KNIGHT];
+    uint64_t myBishops = friendly & board->pieces[BISHOP];
+    uint64_t myRooks   = friendly & board->pieces[ROOK];
+    uint64_t myQueens  = friendly & board->pieces[QUEEN];
+    uint64_t myKings   = friendly & board->pieces[KING];
     
     // GENERATE QUEEN MOVES AS IF THEY WERE ROOKS AND BISHOPS
     myBishops |= myQueens;
     myRooks |= myQueens;
     
     // DEFINE PAWN BITBOARDS AND FIND ENPASS MOVES
-    if (board->turn == ColourWhite){
+    if (board->turn == WHITE){
         forwardShift = 8;
         leftShift = 7;
         rightShift = 9;
@@ -92,11 +92,11 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
         pawnRight &= ~RANK_8;
         
         if(epSquare >= 40){
-            if (board->squares[epSquare-7] == WhitePawn && epSquare != 47)
-                moves[(*size)++] = MoveMake(epSquare-7,epSquare,EnpassMove);
+            if (board->squares[epSquare - 7] == WHITE_PAWN && epSquare != 47)
+                moves[(*size)++] = MoveMake(epSquare - 7, epSquare, ENPASS_MOVE);
             
-            if (board->squares[epSquare-9] == WhitePawn && epSquare != 40)
-                moves[(*size)++] = MoveMake(epSquare-9,epSquare,EnpassMove);
+            if (board->squares[epSquare - 9] == WHITE_PAWN && epSquare != 40)
+                moves[(*size)++] = MoveMake(epSquare - 9, epSquare, ENPASS_MOVE);
         }
         
     } else {
@@ -118,63 +118,63 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
         pawnRight &= ~RANK_1;
         
         if(epSquare > 0 && epSquare < 40){
-            if (board->squares[epSquare+7] == BlackPawn && epSquare != 16)
-                moves[(*size)++] = MoveMake(epSquare+7,epSquare,EnpassMove);
+            if (board->squares[epSquare + 7] == BLACK_PAWN && epSquare != 16)
+                moves[(*size)++] = MoveMake(epSquare + 7, epSquare, ENPASS_MOVE);
             
-            if (board->squares[epSquare+9] == BlackPawn && epSquare != 23)
-                moves[(*size)++] = MoveMake(epSquare+9,epSquare,EnpassMove);
+            if (board->squares[epSquare + 9] == BLACK_PAWN && epSquare != 23)
+                moves[(*size)++] = MoveMake(epSquare + 9, epSquare, ENPASS_MOVE);
         }
     }
     
     // GENERATE PAWN MOVES
     while(pawnForwardOne != 0){
         lsb = getLSB(pawnForwardOne);
-        moves[(*size)++] = MoveMake(lsb-forwardShift,lsb,NormalMove);
+        moves[(*size)++] = MoveMake(lsb - forwardShift, lsb, NORMAL_MOVE);
         pawnForwardOne ^= 1ull << lsb;
     }
     
     while(pawnForwardTwo != 0){
         lsb = getLSB(pawnForwardTwo);
-        moves[(*size)++] = MoveMake(lsb-(2*forwardShift),lsb,NormalMove);
+        moves[(*size)++] = MoveMake(lsb - (2 * forwardShift), lsb, NORMAL_MOVE);
         pawnForwardTwo ^= 1ull << lsb;
     }
     
     while(pawnLeft != 0){
         lsb = getLSB(pawnLeft);
-        moves[(*size)++] = MoveMake(lsb-leftShift,lsb,NormalMove);
+        moves[(*size)++] = MoveMake(lsb - leftShift, lsb, NORMAL_MOVE);
         pawnLeft ^= 1ull << lsb;
     }
     
     while(pawnRight != 0){
         lsb = getLSB(pawnRight);
-        moves[(*size)++] = MoveMake(lsb-rightShift,lsb,NormalMove);
+        moves[(*size)++] = MoveMake(lsb - rightShift, lsb, NORMAL_MOVE);
         pawnRight ^= 1ull << lsb;
     }
     
     while(pawnPromoForward != 0){
         lsb = getLSB(pawnPromoForward);
-        moves[(*size)++] = MoveMake(lsb-forwardShift,lsb,PromotionMove|PromoteToQueen);
-        moves[(*size)++] = MoveMake(lsb-forwardShift,lsb,PromotionMove|PromoteToRook);
-        moves[(*size)++] = MoveMake(lsb-forwardShift,lsb,PromotionMove|PromoteToBishop);
-        moves[(*size)++] = MoveMake(lsb-forwardShift,lsb,PromotionMove|PromoteToKnight);
+        moves[(*size)++] = MoveMake(lsb - forwardShift, lsb, PROMOTION_MOVE | PROMOTE_TO_QUEEN);
+        moves[(*size)++] = MoveMake(lsb - forwardShift, lsb, PROMOTION_MOVE | PROMOTE_TO_ROOK);
+        moves[(*size)++] = MoveMake(lsb - forwardShift, lsb, PROMOTION_MOVE | PROMOTE_TO_BISHOP);
+        moves[(*size)++] = MoveMake(lsb - forwardShift, lsb, PROMOTION_MOVE | PROMOTE_TO_KNIGHT);
         pawnPromoForward ^= 1ull << lsb;
     }
     
     while(pawnPromoLeft != 0){
         lsb = getLSB(pawnPromoLeft);
-        moves[(*size)++] = MoveMake(lsb-leftShift,lsb,PromotionMove|PromoteToQueen);
-        moves[(*size)++] = MoveMake(lsb-leftShift,lsb,PromotionMove|PromoteToRook);
-        moves[(*size)++] = MoveMake(lsb-leftShift,lsb,PromotionMove|PromoteToBishop);
-        moves[(*size)++] = MoveMake(lsb-leftShift,lsb,PromotionMove|PromoteToKnight);
+        moves[(*size)++] = MoveMake(lsb - leftShift, lsb, PROMOTION_MOVE | PROMOTE_TO_QUEEN);
+        moves[(*size)++] = MoveMake(lsb - leftShift, lsb, PROMOTION_MOVE | PROMOTE_TO_ROOK);
+        moves[(*size)++] = MoveMake(lsb - leftShift, lsb, PROMOTION_MOVE | PROMOTE_TO_BISHOP);
+        moves[(*size)++] = MoveMake(lsb - leftShift, lsb, PROMOTION_MOVE | PROMOTE_TO_KNIGHT);
         pawnPromoLeft ^= 1ull << lsb;
     }
     
     while(pawnPromoRight != 0){
         lsb = getLSB(pawnPromoRight);
-        moves[(*size)++] = MoveMake(lsb-rightShift,lsb,PromotionMove|PromoteToQueen);
-        moves[(*size)++] = MoveMake(lsb-rightShift,lsb,PromotionMove|PromoteToRook);
-        moves[(*size)++] = MoveMake(lsb-rightShift,lsb,PromotionMove|PromoteToBishop);
-        moves[(*size)++] = MoveMake(lsb-rightShift,lsb,PromotionMove|PromoteToKnight);
+        moves[(*size)++] = MoveMake(lsb - rightShift, lsb, PROMOTION_MOVE | PROMOTE_TO_QUEEN);
+        moves[(*size)++] = MoveMake(lsb - rightShift, lsb, PROMOTION_MOVE | PROMOTE_TO_ROOK);
+        moves[(*size)++] = MoveMake(lsb - rightShift, lsb, PROMOTION_MOVE | PROMOTE_TO_BISHOP);
+        moves[(*size)++] = MoveMake(lsb - rightShift, lsb, PROMOTION_MOVE | PROMOTE_TO_KNIGHT);
         pawnPromoRight ^= 1ull << lsb;
     }
     
@@ -185,7 +185,7 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
         
         while(attackable != 0){
             lsb = getLSB(attackable);
-            moves[(*size)++] = MoveMake(bit,lsb,NormalMove);
+            moves[(*size)++] = MoveMake(bit, lsb, NORMAL_MOVE);
             attackable ^= 1ull << lsb;
         }
         
@@ -199,7 +199,7 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
         
         while(attackable != 0){
             lsb = getLSB(attackable);
-            moves[(*size)++] = MoveMake(bit,lsb,NormalMove);
+            moves[(*size)++] = MoveMake(bit, lsb, NORMAL_MOVE);
             attackable ^= 1ull << lsb;
         }
         
@@ -213,7 +213,7 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
         
         while(attackable != 0){
             lsb = getLSB(attackable);
-            moves[(*size)++] = MoveMake(bit,lsb,NormalMove);
+            moves[(*size)++] = MoveMake(bit, lsb, NORMAL_MOVE);
             attackable ^= 1ull << lsb;
         }
         
@@ -227,7 +227,7 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
         
         while(attackable != 0){
             lsb = getLSB(attackable);
-            moves[(*size)++] = MoveMake(bit,lsb,NormalMove);
+            moves[(*size)++] = MoveMake(bit, lsb, NORMAL_MOVE);
             attackable ^= 1ull << lsb;
         }
         
@@ -236,38 +236,38 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
     
     // GENERATE CASTLES
     if (isNotInCheck(board,board->turn)){
-        if (board->turn == ColourWhite){
+        if (board->turn == WHITE){
             
             // KING SIDE
-            if ((notEmpty & WhiteCastleKingSideMap) == 0)
-                if (board->castleRights & WhiteKingRights)
-                    if (board->squares[7] == WhiteRook)
-                        if (!squareIsAttacked(board,ColourWhite,5))
-                            moves[(*size)++] = MoveMake(4,6,CastleMove);
+            if ((notEmpty & WHITE_CASTLE_KING_SIDE_MAP) == 0)
+                if (board->castleRights & WHITE_KING_RIGHTS)
+                    if (board->squares[7] == WHITE_ROOK)
+                        if (!squareIsAttacked(board, WHITE, 5))
+                            moves[(*size)++] = MoveMake(4, 6, CASTLE_MOVE);
                         
             // QUEEN SIDE
-            if ((notEmpty & WhiteCastleQueenSideMap) == 0)
-                if (board->castleRights & WhiteQueenRights)
-                    if (board->squares[0] == WhiteRook)
-                        if (!squareIsAttacked(board,ColourWhite,3))
-                            moves[(*size)++] = MoveMake(4,2,CastleMove);
+            if ((notEmpty & WHITE_CASTLE_QUEEN_SIDE_MAP) == 0)
+                if (board->castleRights & WHITE_QUEEN_RIGHTS)
+                    if (board->squares[0] == WHITE_ROOK)
+                        if (!squareIsAttacked(board, WHITE, 3))
+                            moves[(*size)++] = MoveMake(4, 2, CASTLE_MOVE);
         }
         
         else {
             
             // KING SIDE
-            if ((notEmpty & BlackCastleKingSideMap) == 0)
-                if (board->castleRights & BlackKingRights)
-                    if (board->squares[63] == BlackRook)
-                        if (!squareIsAttacked(board,ColourBlack,61))
-                            moves[(*size)++] = MoveMake(60,62,CastleMove);
+            if ((notEmpty & BLACK_CASTLE_KING_SIDE_MAP) == 0)
+                if (board->castleRights & BLACK_KING_RIGHTS)
+                    if (board->squares[63] == BLACK_ROOK)
+                        if (!squareIsAttacked(board, BLACK, 61))
+                            moves[(*size)++] = MoveMake(60, 62, CASTLE_MOVE);
                         
             // QUEEN SIDE
-            if ((notEmpty & BlackCastleQueenSideMap) == 0)
-                if (board->castleRights & BlackQueenRights)
-                    if (board->squares[56] == BlackRook)
-                        if (!squareIsAttacked(board,ColourBlack,59))
-                            moves[(*size)++] = MoveMake(60,58,CastleMove);
+            if ((notEmpty & BLACK_CASTLE_QUEEN_SIDE_MAP) == 0)
+                if (board->castleRights & BLACK_QUEEN_RIGHTS)
+                    if (board->squares[56] == BLACK_ROOK)
+                        if (!squareIsAttacked(board, BLACK, 59))
+                            moves[(*size)++] = MoveMake(60, 58, CASTLE_MOVE);
         }
     }
 }
@@ -299,25 +299,25 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
     int forwardShift, leftShift, rightShift;
     int epSquare = board->epSquare;
     
-    uint64_t friendly = board->colourBitBoards[board->turn];
-    uint64_t enemy = board->colourBitBoards[!board->turn];
+    uint64_t friendly = board->colours[board->turn];
+    uint64_t enemy = board->colours[!board->turn];
     
     uint64_t empty = ~(friendly | enemy);
     uint64_t notEmpty = ~empty;
     
-    uint64_t myPawns   = friendly & board->pieceBitBoards[0];
-    uint64_t myKnights = friendly & board->pieceBitBoards[1];
-    uint64_t myBishops = friendly & board->pieceBitBoards[2];
-    uint64_t myRooks   = friendly & board->pieceBitBoards[3];
-    uint64_t myQueens  = friendly & board->pieceBitBoards[4];
-    uint64_t myKings   = friendly & board->pieceBitBoards[5];
+    uint64_t myPawns   = friendly & board->pieces[PAWN];
+    uint64_t myKnights = friendly & board->pieces[KNIGHT];
+    uint64_t myBishops = friendly & board->pieces[BISHOP];
+    uint64_t myRooks   = friendly & board->pieces[ROOK];
+    uint64_t myQueens  = friendly & board->pieces[QUEEN];
+    uint64_t myKings   = friendly & board->pieces[KING];
     
     // Generate queen moves as if they were rooks and bishops
     myBishops |= myQueens;
     myRooks |= myQueens;
     
     // Generate Pawn BitBoards and Generate Enpass Moves
-    if (board->turn == ColourWhite){
+    if (board->turn == WHITE){
         forwardShift = 8;
         leftShift = 7;
         rightShift = 9;
@@ -334,11 +334,11 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
         pawnRight &= ~RANK_8;
         
         if(epSquare >= 40){
-            if (board->squares[epSquare-7] == WhitePawn && epSquare != 47)
-                moves[(*size)++] = MoveMake(epSquare-7,epSquare,EnpassMove);
+            if (board->squares[epSquare-7] == WHITE_PAWN && epSquare != 47)
+                moves[(*size)++] = MoveMake(epSquare-7, epSquare, ENPASS_MOVE);
             
-            if (board->squares[epSquare-9] == WhitePawn && epSquare != 40)
-                moves[(*size)++] = MoveMake(epSquare-9,epSquare,EnpassMove);
+            if (board->squares[epSquare-9] == WHITE_PAWN && epSquare != 40)
+                moves[(*size)++] = MoveMake(epSquare-9, epSquare, ENPASS_MOVE);
         }
         
     } else {
@@ -358,51 +358,51 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
         pawnRight &= ~RANK_1;
         
         if(epSquare > 0 && epSquare < 40){
-            if (board->squares[epSquare+7] == BlackPawn && epSquare != 16)
-                moves[(*size)++] = MoveMake(epSquare+7,epSquare,EnpassMove);
+            if (board->squares[epSquare+7] == BLACK_PAWN && epSquare != 16)
+                moves[(*size)++] = MoveMake(epSquare+7, epSquare, ENPASS_MOVE);
             
-            if (board->squares[epSquare+9] == BlackPawn && epSquare != 23)
-                moves[(*size)++] = MoveMake(epSquare+9,epSquare,EnpassMove);
+            if (board->squares[epSquare+9] == BLACK_PAWN && epSquare != 23)
+                moves[(*size)++] = MoveMake(epSquare+9, epSquare, ENPASS_MOVE);
         }
     }
     
     // Generate Pawn Moves
     while(pawnLeft != 0){
         lsb = getLSB(pawnLeft);
-        moves[(*size)++] = MoveMake(lsb-leftShift,lsb,NormalMove);
+        moves[(*size)++] = MoveMake(lsb-leftShift, lsb, NORMAL_MOVE);
         pawnLeft ^= 1ull << lsb;
     }
     
     while(pawnRight != 0){
         lsb = getLSB(pawnRight);
-        moves[(*size)++] = MoveMake(lsb-rightShift,lsb,NormalMove);
+        moves[(*size)++] = MoveMake(lsb-rightShift, lsb, NORMAL_MOVE);
         pawnRight ^= 1ull << lsb;
     }
     
     while(pawnPromoForward != 0){
         lsb = getLSB(pawnPromoForward);
-        moves[(*size)++] = MoveMake(lsb-forwardShift,lsb,PromotionMove|PromoteToQueen);
-        moves[(*size)++] = MoveMake(lsb-forwardShift,lsb,PromotionMove|PromoteToRook);
-        moves[(*size)++] = MoveMake(lsb-forwardShift,lsb,PromotionMove|PromoteToBishop);
-        moves[(*size)++] = MoveMake(lsb-forwardShift,lsb,PromotionMove|PromoteToKnight);
+        moves[(*size)++] = MoveMake(lsb - forwardShift, lsb, PROMOTION_MOVE | PROMOTE_TO_QUEEN);
+        moves[(*size)++] = MoveMake(lsb - forwardShift, lsb, PROMOTION_MOVE | PROMOTE_TO_ROOK);
+        moves[(*size)++] = MoveMake(lsb - forwardShift, lsb, PROMOTION_MOVE | PROMOTE_TO_BISHOP);
+        moves[(*size)++] = MoveMake(lsb - forwardShift, lsb, PROMOTION_MOVE | PROMOTE_TO_KNIGHT);
         pawnPromoForward ^= 1ull << lsb;
     }
     
     while(pawnPromoLeft != 0){
         lsb = getLSB(pawnPromoLeft);
-        moves[(*size)++] = MoveMake(lsb-leftShift,lsb,PromotionMove|PromoteToQueen);
-        moves[(*size)++] = MoveMake(lsb-leftShift,lsb,PromotionMove|PromoteToRook);
-        moves[(*size)++] = MoveMake(lsb-leftShift,lsb,PromotionMove|PromoteToBishop);
-        moves[(*size)++] = MoveMake(lsb-leftShift,lsb,PromotionMove|PromoteToKnight);
+        moves[(*size)++] = MoveMake(lsb - leftShift, lsb, PROMOTION_MOVE | PROMOTE_TO_QUEEN);
+        moves[(*size)++] = MoveMake(lsb - leftShift, lsb, PROMOTION_MOVE | PROMOTE_TO_ROOK);
+        moves[(*size)++] = MoveMake(lsb - leftShift, lsb, PROMOTION_MOVE | PROMOTE_TO_BISHOP);
+        moves[(*size)++] = MoveMake(lsb - leftShift, lsb, PROMOTION_MOVE | PROMOTE_TO_KNIGHT);
         pawnPromoLeft ^= 1ull << lsb;
     }
     
     while(pawnPromoRight != 0){
         lsb = getLSB(pawnPromoRight);
-        moves[(*size)++] = MoveMake(lsb-rightShift,lsb,PromotionMove|PromoteToQueen);
-        moves[(*size)++] = MoveMake(lsb-rightShift,lsb,PromotionMove|PromoteToRook);
-        moves[(*size)++] = MoveMake(lsb-rightShift,lsb,PromotionMove|PromoteToBishop);
-        moves[(*size)++] = MoveMake(lsb-rightShift,lsb,PromotionMove|PromoteToKnight);
+        moves[(*size)++] = MoveMake(lsb - rightShift, lsb, PROMOTION_MOVE | PROMOTE_TO_QUEEN);
+        moves[(*size)++] = MoveMake(lsb - rightShift, lsb, PROMOTION_MOVE | PROMOTE_TO_ROOK);
+        moves[(*size)++] = MoveMake(lsb - rightShift, lsb, PROMOTION_MOVE | PROMOTE_TO_BISHOP);
+        moves[(*size)++] = MoveMake(lsb - rightShift, lsb, PROMOTION_MOVE | PROMOTE_TO_KNIGHT);
         pawnPromoRight ^= 1ull << lsb;
     }
     
@@ -413,7 +413,7 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
         
         while(attackable != 0){
             lsb = getLSB(attackable);
-            moves[(*size)++] = MoveMake(bit,lsb,NormalMove);
+            moves[(*size)++] = MoveMake(bit, lsb, NORMAL_MOVE);
             attackable ^= 1ull << lsb;
         }
         
@@ -427,7 +427,7 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
         
         while(attackable != 0){
             lsb = getLSB(attackable);
-            moves[(*size)++] = MoveMake(bit,lsb,NormalMove);
+            moves[(*size)++] = MoveMake(bit, lsb, NORMAL_MOVE);
             attackable ^= 1ull << lsb;
         }
         
@@ -441,7 +441,7 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
         
         while(attackable != 0){
             lsb = getLSB(attackable);
-            moves[(*size)++] = MoveMake(bit,lsb,NormalMove);
+            moves[(*size)++] = MoveMake(bit, lsb, NORMAL_MOVE);
             attackable ^= 1ull << lsb;
         }
         
@@ -455,7 +455,7 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
         
         while(attackable != 0){
             lsb = getLSB(attackable);
-            moves[(*size)++] = MoveMake(bit,lsb,NormalMove);
+            moves[(*size)++] = MoveMake(bit, lsb, NORMAL_MOVE);
             attackable ^= 1ull << lsb;
         }
         
@@ -473,7 +473,7 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
  * @return          1 for not in check, 0 for in check
  */
 int isNotInCheck(Board * board, int turn){
-    int kingsq = getLSB(board->colourBitBoards[turn] & board->pieceBitBoards[5]);
+    int kingsq = getLSB(board->colours[turn] & board->pieces[KING]);
     assert(board->squares[kingsq] == WhiteKing + turn);
     return !squareIsAttacked(board, turn, kingsq);
 }
@@ -492,23 +492,23 @@ int squareIsAttacked(Board * board, int turn, int sq){
     
     uint64_t square;
     
-    uint64_t friendly = board->colourBitBoards[turn];
-    uint64_t enemy = board->colourBitBoards[!turn];
+    uint64_t friendly = board->colours[turn];
+    uint64_t enemy = board->colours[!turn];
     uint64_t notEmpty = friendly | enemy;
     
-    uint64_t enemyPawns   = enemy & board->pieceBitBoards[0];
-    uint64_t enemyKnights = enemy & board->pieceBitBoards[1];
-    uint64_t enemyBishops = enemy & board->pieceBitBoards[2];
-    uint64_t enemyRooks   = enemy & board->pieceBitBoards[3];
-    uint64_t enemyQueens  = enemy & board->pieceBitBoards[4];
-    uint64_t enemyKings   = enemy & board->pieceBitBoards[5];
+    uint64_t enemyPawns   = enemy & board->pieces[PAWN];
+    uint64_t enemyKnights = enemy & board->pieces[KNIGHT];
+    uint64_t enemyBishops = enemy & board->pieces[BISHOP];
+    uint64_t enemyRooks   = enemy & board->pieces[ROOK];
+    uint64_t enemyQueens  = enemy & board->pieces[QUEEN];
+    uint64_t enemyKings   = enemy & board->pieces[KING];
     
     enemyBishops |= enemyQueens;
     enemyRooks |= enemyQueens;
     square = (1ull << sq);
     
     // Pawns
-    if (turn == ColourWhite){
+    if (turn == WHITE){
         if (((square << 7) & ~FILE_H) & enemyPawns) return 1;
         if (((square << 9) & ~FILE_A) & enemyPawns) return 1;
     } else {

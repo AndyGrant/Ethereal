@@ -75,8 +75,8 @@ void getSetBits(uint64_t bb, int * arr){
 }
 
 unsigned int popcount(uint64_t bb){
-    return  BitCounts[(bb >>  0) & 0xFFFF] + 
-            BitCounts[(bb >> 16) & 0xFFFF] + 
-            BitCounts[(bb >> 32) & 0xFFFF] + 
+    return  BitCounts[(bb >>  0) & 0xFFFF] +
+            BitCounts[(bb >> 16) & 0xFFFF] +
+            BitCounts[(bb >> 32) & 0xFFFF] +
             BitCounts[(bb >> 48) & 0xFFFF];
 }
