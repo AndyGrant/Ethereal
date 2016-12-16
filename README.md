@@ -4,7 +4,7 @@ Ethereal is a UCI-compliant chess engine. It uses the traditional alpha-beta fra
 
 # Development
 
-As of now, I am the sole contributor to the project. However, I will happily review any Pull Requests and consider merging them into the project. The License on this project allows any individual to use, modify, and release my code and any derivatives made using my code. For any questions or comments, feel free to contact me at <Andrew@Grantnet.us>
+I will happily review any Pull Requests and consider merging them into the project. The License on this project allows any individual to use, modify, and release my code and any derivatives made using my code. For any questions or comments, feel free to contact me at <Andrew@Grantnet.us>
 
 # Special Thanks
 
