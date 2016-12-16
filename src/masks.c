@@ -130,7 +130,7 @@ void initalizeMasks(){
     }
     
     // INITALIZE PAWN-CONNECTED MASKS
-    for (i = 8 ; i < 54; i++){
+    for (i = 8 ; i < 56; i++){
         file = i % 8;
         
         if (file == 0){
