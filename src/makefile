@@ -18,4 +18,4 @@ SRC = bitboards.c       \
       zorbist.c         \
 
 all:
-	$(CC) $(CFLAGS) $(SRC) -o Ethereal7.89
+	$(CC) $(CFLAGS) $(SRC) -o PawnAttacks

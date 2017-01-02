@@ -14,7 +14,7 @@ mv $1-Android $1/Android/$1
 
 cp -r ../src/* $1/Source
 
-echo "CC = gcc"                                               >> $1/Source/makefile
+echo "CC = gcc"                                                > $1/Source/makefile
 echo "CFLAGS = -DNDEBUG -O3 -Wall -Wextra -pedantic -std=c99" >> $1/Source/makefile
 echo "SRC = bitboards.c       \\"                             >> $1/Source/makefile
 echo "      bitutils.c        \\"                             >> $1/Source/makefile
