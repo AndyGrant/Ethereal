@@ -318,6 +318,13 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
         tempRooks = myPieces & rooks;
         tempQueens = myPieces & queens;
         
+        // Get the attack counts for the pawns
+        attacks = pawnAttacks[colour] & kingAreas[!colour];
+        if (attacks != 0ull){
+            attackCounts[colour] += 2 * popcount(attacks);
+            attackerCounts[colour] += 1;
+        }
+        
         // Generate the attack boards for each Knight,
         // and evaluate any other bonuses / penalties
         while (tempKnights != 0){
@@ -503,7 +510,7 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
             eg += KING_CAN_CASTLE;
         }
         
-        if (attackerCounts[!colour] > 2){
+        if (attackerCounts[!colour] >= 2){
             int n = attackCounts[!colour];
             if (n >= 100) n = 99;
             

@@ -63,7 +63,7 @@ int main(){
         getInput(str);
         
         if (stringEquals(str, "uci")){
-            printf("id name Ethereal7.89\n");
+            printf("id name Ethereal7.92\n");
             printf("id author Andrew Grant\n");
             printf("uciok\n");
             fflush(stdout);
