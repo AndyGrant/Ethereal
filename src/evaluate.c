@@ -89,8 +89,15 @@ int RookMobility[PHASE_NB][15] = {
 };
 
 int QueenMobility[PHASE_NB][28] = {
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {-50, -40, -20,   0,   2,   4,   6,
+       8,  11,  15,  19,  20,  21,  22,
+      24,  24,  24,  24,  24,  24,  24,
+      24,  24,  24,  24,  24,  24,  24},
+    
+    {-50, -40, -20, -10,  0,  4,  8,
+      12,  15,  18,  21, 24, 27, 30,
+      35,  43,  43, 43, 43, 43, 43,
+      43,  43,  43, 43, 43, 43, 43}
 };
 
 int BishopHasWings[PHASE_NB] = {13, 36};
@@ -224,7 +231,7 @@ void evaluatePawns(int * mid, int * end, Board * board){
                 eg -= PAWN_ISOLATED_END;
             }
             
-            else if (Files[file] & myPawns){
+            if (Files[file] & myPawns){
                 mg -= PAWN_STACKED_MID;
                 eg -= PAWN_STACKED_END;
             }
@@ -463,17 +470,16 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
             attacks = RookAttacks(bit, occupiedMinusMyRooks, ~0ull)
                 | BishopAttacks(bit, occupiedMinusMyBishops, ~0ull);
                 
-            //// Queen gains a mobility bonus based off of the number
-            //// of attacked or defended squares within the mobility area
-            //mobiltyCount = countSetBits((mobilityArea & attacks));
-            //mg += QueenMobility[MG][mobiltyCount];
-            //eg += QueenMobility[EG][mobiltyCount];
-            //
+            // Queen gains a mobility bonus based off of the number
+            // of attacked or defended squares within the mobility area
+            mobiltyCount = popcount((mobilityArea & attacks));
+            mg += QueenMobility[MG][mobiltyCount];
+            eg += QueenMobility[EG][mobiltyCount];
             
             // Get the attack counts for this piece
             attacks = attacks & kingAreas[!colour];
             if (attacks != 0ull){
-                attackCounts[colour] += 5 * popcount(attacks);
+                attackCounts[colour] += 4 * popcount(attacks);
                 attackerCounts[colour]++;
             }
         }

@@ -401,11 +401,10 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             && depth >= 3
             && ((100 * HistoryGood[currentMove]) / HistoryTotal[currentMove]) < 80
             && !inCheck
-            && nodeType != PVNODE
             && MoveType(currentMove) == NORMAL_MOVE
             && undo[0].capturePiece == EMPTY
             && isNotInCheck(board, board->turn))
-            newDepth = depth - ((valid >= 12) ? 3 : 2);
+            newDepth = depth - 2 - (valid >= 12) - (nodeType != PVNODE);
         else
             newDepth = depth-1;
          
