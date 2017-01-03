@@ -23,7 +23,7 @@
 
 int evaluateBoard(Board * board, PawnTable * ptable);
 void evaluatePawns(int * mid, int * end, Board* board);
-void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int * bishopCount, int * rookCount, int * queenCount);
+int evaluatePieces(Board * board, int mid, int end);
 
 #define MG          (0)
 #define EG          (1)
