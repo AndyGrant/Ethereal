@@ -107,12 +107,6 @@ int BishopPair[PHASE_NB] = {46, 64};
 int evaluateBoard(Board * board, PawnTable * ptable){
     
     int mid = 0, end = 0;
-    int curPhase, midEval, endEval, eval;
-    
-    int knightCount = 0;
-    int bishopCount = 0;
-    int rookCount   = 0;
-    int queenCount  = 0;
     
     uint64_t white   = board->colours[WHITE];
     uint64_t black   = board->colours[BLACK];
@@ -123,43 +117,36 @@ int evaluateBoard(Board * board, PawnTable * ptable){
     uint64_t queens  = board->pieces[QUEEN];
     uint64_t kings   = board->pieces[KING];
     
-    // CHECK FOR RECOGNIZED DRAWS
-    if (pawns == 0 && rooks == 0 && queens == 0){
+    // Check for recognized draws
+    if ((pawns | rooks | queens) == 0ull){
         
         // K v K
         if (kings == (white | black))
             return 0;
         
-        // K+B v K and K+N v K
-        if (countSetBits(white & (knights | bishops)) <= 1 && 
-            countSetBits(black) == 1)
-            return 0;
-        else if (countSetBits(black & (knights | bishops)) <= 1 && 
-            countSetBits(white) == 1)
-            return 0;
-         
-        // K+B+N v K 
-        /* Pawel Koziol pointed out that this should not be here! Will add
-            a PSQT table to find the mates 
-        if (countSetBits(black) == 1 &&
-            countSetBits(white & bishops) == 1 &&
-            countSetBits(white & knights) == 1)
-            return 0;
-        else if (countSetBits(white) == 1 &&
-            countSetBits(black & bishops) == 1 &&
-            countSetBits(black & knights) == 1)
-            return 0;
-        */
+        if ((white & kings) == white){
+            
+            // K vs K+B or K vs K+N
+            if (popcount(black & (knights | bishops)) <= 1)
+                return 0;
+            
+            // K vs K+N+N
+            if (popcount(black & knights) == 2 
+                && popcount(black & bishops) == 0)
+                return 0;
+        }
         
-        // K+N+N v K
-        if (countSetBits(black) == 1 &&
-            countSetBits(white & knights) == 2 &&
-            countSetBits(white & bishops) == 0)
-            return 0;
-        else if (countSetBits(white) == 1 &&
-            countSetBits(black & knights) == 2 &&
-            countSetBits(black & bishops) == 0)
-            return 0;
+        if ((black & kings) == black){
+            
+            // K+B vs K or K+N vs K
+            if (popcount(white & (knights | bishops)) <= 1)
+                return 0;
+            
+            // K+N+N vs K
+            if (popcount(white & knights) == 2 
+                && popcount(white & bishops) == 0)
+                return 0;
+        }
     }
     
     
@@ -178,22 +165,7 @@ int evaluateBoard(Board * board, PawnTable * ptable){
         storePawnEntry(ptable, board->phash, mid, end);
     }
     
-    evaluatePieces(&mid, &end, board, &knightCount, &bishopCount, &rookCount, &queenCount);
-    
-    midEval = board->opening + mid;
-    endEval = board->endgame + end;
-    
-    midEval += (board->turn == WHITE) ? 5 : -5;
-    endEval += (board->turn == WHITE) ? 7 : -7;
-    
-    curPhase = 24 - (1 * (knightCount + bishopCount))
-                  - (2 * rookCount)
-                  - (4 * queenCount);
-    curPhase = (curPhase * 256 + 12) / 24;
-    
-    eval = ((midEval * (256 - curPhase)) + (endEval * curPhase)) / 256;
-    
-    return board->turn == WHITE ? eval : -eval;
+    return evaluatePieces(board, mid, end);
 }
 
 void evaluatePawns(int * mid, int * end, Board * board){
@@ -202,7 +174,7 @@ void evaluatePawns(int * mid, int * end, Board * board){
     uint64_t myPawns, enemyPawns, allMyPawns;
     
     int mg = 0, eg = 0;
-    int colour, i, sq, file, rank;
+    int colour, sq, file, rank;
     
     for (colour = BLACK; colour >= WHITE; colour--){
         
@@ -213,7 +185,7 @@ void evaluatePawns(int * mid, int * end, Board * board){
         allMyPawns = myPawns;
         enemyPawns = allPawns ^ myPawns;
         
-        for (i = 0; myPawns != 0; i++){
+        while(myPawns != 0ull){
             
             sq = getLSB(myPawns);
             myPawns ^= (1ull << sq);
@@ -247,11 +219,10 @@ void evaluatePawns(int * mid, int * end, Board * board){
     *end += eg;
 }
 
-void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int * bishopCount, int * rookCount, int * queenCount){
+int evaluatePieces(Board * board, int mid, int end){
     
-    uint64_t white = board->colours[WHITE];
-    uint64_t black = board->colours[BLACK];
-    
+    uint64_t white   = board->colours[WHITE];
+    uint64_t black   = board->colours[BLACK];
     uint64_t pawns   = board->pieces[PAWN];
     uint64_t knights = board->pieces[KNIGHT];
     uint64_t bishops = board->pieces[BISHOP];
@@ -268,7 +239,7 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
     uint64_t occupiedMinusMyBishops, occupiedMinusMyRooks;
     uint64_t attacks, mobilityArea;
     
-    int mg = 0, eg = 0;
+    int mg = 0, eg = 0, eval, curPhase;
     int mobiltyCount, defended;
     int colour, bit, rank, file;
     
@@ -318,6 +289,36 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
         tempRooks = myPieces & rooks;
         tempQueens = myPieces & queens;
         
+        // Bishop gains a bonus for pawn wings
+        if (tempBishops != 0
+            && (myPawns & (FILE_A|FILE_B|FILE_C))
+            && (myPawns & (FILE_F|FILE_G|FILE_H))){
+                
+            mg += BishopHasWings[MG];
+            eg += BishopHasWings[EG];
+        }
+        
+        // Bishop gains a bonus for being in a pair
+        if ((tempBishops & WHITE_SQUARES)
+            && (tempBishops & BLACK_SQUARES)){
+                
+            mg += BishopPair[MG];
+            eg += BishopPair[EG];
+        }
+        
+        // King gains a bonus if it has already castled
+        if (board->hasCastled[colour]){
+            mg += KING_HAS_CASTLED;
+            eg += KING_HAS_CASTLED;
+        } 
+        
+        // King gains a bonus if it still may castle
+        else if (board->castleRights & (3 << (2*colour))){
+            mg += KING_CAN_CASTLE;
+            eg += KING_CAN_CASTLE;
+        }
+        
+        
         // Get the attack counts for the pawns
         attacks = pawnAttacks[colour] & kingAreas[!colour];
         if (attacks != 0ull){
@@ -325,14 +326,12 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
             attackerCounts[colour] += 1;
         }
         
-        // Generate the attack boards for each Knight,
-        // and evaluate any other bonuses / penalties
+        // Evaluate all of this colour's Knights
         while (tempKnights != 0){
             
             // Pop the next Knight off
             bit = getLSB(tempKnights);
             tempKnights ^= (1ull << bit);
-            (*knightCount)++;
             
             // Generate the attack board
             attacks = KnightAttacks(bit, ~0ull);
@@ -355,7 +354,7 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
             mg += KnightMobility[MG][mobiltyCount];
             eg += KnightMobility[EG][mobiltyCount];
             
-            // Get the attack counts for this piece
+            // Get the attack counts for this Knight
             attacks = attacks & kingAreas[!colour];
             if (attacks != 0ull){
                 attackCounts[colour] += 2 * popcount(attacks);
@@ -363,32 +362,12 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
             }
         }
         
-        
-        // Bishop gains a bonus for pawn wings
-        if (tempBishops != 0
-            && (myPawns & (FILE_A|FILE_B|FILE_C))
-            && (myPawns & (FILE_F|FILE_G|FILE_H))){
-                
-            mg += BishopHasWings[MG];
-            eg += BishopHasWings[EG];
-        }
-        
-        // Bishop gains a bonus for being in a pair
-        if ((tempBishops & WHITE_SQUARES)
-            && (tempBishops & BLACK_SQUARES)){
-                
-            mg += BishopPair[MG];
-            eg += BishopPair[EG];
-        }
-        
-        // Generate the attack boards for each Bishop,
-        // and evaluate any other bonuses / penalties
+        // Evaluate all of this colour's Bishops
         while (tempBishops != 0){
             
             // Pop the next Bishop off
             bit = getLSB(tempBishops);
             tempBishops ^= (1ull << bit);
-            (*bishopCount)++;
             
             // Generate the attack board
             attacks = BishopAttacks(bit, occupiedMinusMyBishops, ~0ull);
@@ -411,7 +390,7 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
             mg += BishopMobility[MG][mobiltyCount];
             eg += BishopMobility[EG][mobiltyCount];
             
-            // Get the attack counts for this piece
+            // Get the attack counts for this Bishop
             attacks = attacks & kingAreas[!colour];
             if (attacks != 0ull){
                 attackCounts[colour] += 2 * popcount(attacks);
@@ -419,14 +398,13 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
             }
         }
         
-        // Generate the attack boards for each Rook,
-        // and evaluate any other bonuses / penalties
+        
+        // Evaluate all of this colour's Rooks
         while (tempRooks != 0){
             
             // Pop the next Rook off
             bit = getLSB(tempRooks);
             tempRooks ^= (1ull << bit);
-            (*rookCount)++;
             
             // Generate the attack board
             attacks = RookAttacks(bit, occupiedMinusMyRooks, ~0ull);
@@ -435,7 +413,7 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
             file = bit & 7;
             
             // Rook is on a semi-open file if there are no
-            // pawns of the rook's colour on the file. If
+            // pawns of the Rook's colour on the file. If
             // there are no pawns at all, it is an open file
             if (!(myPawns & Files[file])){
                 if (!(enemyPawns & Files[file])){
@@ -461,7 +439,7 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
             mg += RookMobility[MG][mobiltyCount];
             eg += RookMobility[EG][mobiltyCount];
             
-            // Get the attack counts for this piece
+            // Get the attack counts for this Rook
             attacks = attacks & kingAreas[!colour];
             if (attacks != 0ull){
                 attackCounts[colour] += 3 * popcount(attacks);
@@ -469,11 +447,15 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
             }
         }
         
+        
+        // Evaluate all of this colour's Queens
         while (tempQueens != 0){
+            
+            // Pop the next Queen off
             bit = getLSB(tempQueens);
             tempQueens ^= (1ull << bit);
-            (*queenCount)++;
             
+            // Generate the attack board
             attacks = RookAttacks(bit, occupiedMinusMyRooks, ~0ull)
                 | BishopAttacks(bit, occupiedMinusMyBishops, ~0ull);
                 
@@ -483,7 +465,7 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
             mg += QueenMobility[MG][mobiltyCount];
             eg += QueenMobility[EG][mobiltyCount];
             
-            // Get the attack counts for this piece
+            // Get the attack counts for this Queen
             attacks = attacks & kingAreas[!colour];
             if (attacks != 0ull){
                 attackCounts[colour] += 4 * popcount(attacks);
@@ -497,18 +479,6 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
         // Negate the scores so that the scores are from
         // White's perspective after the loop completes
         mg = -mg; eg = -eg;
-        
-        // King gains a bonus if it has already castled
-        if (board->hasCastled[colour]){
-            mg += KING_HAS_CASTLED;
-            eg += KING_HAS_CASTLED;
-        } 
-        
-        // King gains a bonus if it still may castle
-        else if (board->castleRights & (3 << (2*colour))){
-            mg += KING_CAN_CASTLE;
-            eg += KING_CAN_CASTLE;
-        }
         
         if (attackerCounts[!colour] >= 2){
             int n = attackCounts[!colour];
@@ -525,6 +495,19 @@ void evaluatePieces(int * mid, int * end, Board * board, int * knightCount, int 
         }
     }
     
-    *mid += mg;
-    *end += eg;
+    mid += mg + board->opening;
+    end += eg + board->endgame;
+    
+    mid += (board->turn == WHITE) ? 5 : -5;
+    end += (board->turn == WHITE) ? 7 : -7;
+    
+    curPhase = 24 - (popcount(knights | bishops))
+                  - (popcount(rooks) << 1)
+                  - (popcount(queens) << 2);
+                  
+    curPhase = (curPhase * 256 + 12) / 24;
+    
+    eval = ((mid * (256 - curPhase)) + (end * curPhase)) / 256;
+    
+    return board->turn == WHITE ? eval : -eval;
 }
