@@ -22,8 +22,7 @@
 #include "types.h"
 
 int evaluateBoard(Board * board, PawnTable * ptable);
-void evaluatePawns(int * mid, int * end, Board* board);
-int evaluatePieces(Board * board, int mid, int end);
+int evaluatePieces(Board * board, PawnTable * ptable);
 
 #define MG          (0)
 #define EG          (1)
