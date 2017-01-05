@@ -22,7 +22,7 @@
 #include <stdint.h>
 
 #define MATE        (16000)
-#define MAX_DEPTH   (32)
+#define MAX_DEPTH   (64)
 #define MAX_HEIGHT  (128)
 #define MAX_MOVES   (256)
 
