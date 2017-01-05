@@ -106,8 +106,6 @@ int BishopPair[PHASE_NB] = {46, 64};
 
 int evaluateBoard(Board * board, PawnTable * ptable){
     
-    int mid = 0, end = 0;
-    
     uint64_t white   = board->colours[WHITE];
     uint64_t black   = board->colours[BLACK];
     uint64_t pawns   = board->pieces[PAWN];
@@ -149,77 +147,10 @@ int evaluateBoard(Board * board, PawnTable * ptable){
         }
     }
     
-    
-    // ATTEMPT TO USE PREVIOUS PAWN EVALUATION
-    PawnEntry * pentry = getPawnEntry(ptable, board->phash);
-    
-    // PAWN ENTRY FOUND
-    if (pentry != NULL){
-        mid = pentry->mg;
-        end = pentry->eg;
-    } 
-    
-    // NO ENTRY FOUND, EVALUATE AND STORE
-    else {
-        evaluatePawns(&mid, &end, board);
-        storePawnEntry(ptable, board->phash, mid, end);
-    }
-    
-    return evaluatePieces(board, mid, end);
+    return evaluatePieces(board, ptable);
 }
 
-void evaluatePawns(int * mid, int * end, Board * board){
-    
-    uint64_t allPawns = board->pieces[PAWN];
-    uint64_t myPawns, enemyPawns, allMyPawns;
-    
-    int mg = 0, eg = 0;
-    int colour, sq, file, rank;
-    
-    for (colour = BLACK; colour >= WHITE; colour--){
-        
-        mg = -mg;
-        eg = -eg;
-        
-        myPawns = allPawns & board->colours[colour];
-        allMyPawns = myPawns;
-        enemyPawns = allPawns ^ myPawns;
-        
-        while(myPawns != 0ull){
-            
-            sq = getLSB(myPawns);
-            myPawns ^= (1ull << sq);
-            
-            file = sq & 7;
-            rank = (colour == BLACK) ? (7 - (sq >> 3)) : (sq >> 3);
-            
-            if (!(PassedPawnMasks[colour][sq] & enemyPawns)){
-                mg += PawnPassedMid[rank];
-                eg += PawnPassedEnd[rank];
-            }
-            
-            if (!(IsolatedPawnMasks[sq] & myPawns)){
-                mg -= PAWN_ISOLATED_MID;
-                eg -= PAWN_ISOLATED_END;
-            }
-            
-            if (Files[file] & myPawns){
-                mg -= PAWN_STACKED_MID;
-                eg -= PAWN_STACKED_END;
-            }
-            
-            if (PawnConnectedMasks[colour][sq] & allMyPawns){
-                mg += PawnConnected[colour][sq];
-                eg += PawnConnected[colour][sq];
-            }
-        }
-    }
-    
-    *mid += mg;
-    *end += eg;
-}
-
-int evaluatePieces(Board * board, int mid, int end){
+int evaluatePieces(Board * board, PawnTable * ptable){
     
     uint64_t white   = board->colours[WHITE];
     uint64_t black   = board->colours[BLACK];
@@ -235,11 +166,13 @@ int evaluatePieces(Board * board, int mid, int end){
     uint64_t notEmpty = white | black;
     
     uint64_t myPieces, myPawns, enemyPawns;
-    uint64_t tempKnights, tempBishops, tempRooks, tempQueens;
+    uint64_t tempPawns, tempKnights, tempBishops, tempRooks, tempQueens;
     uint64_t occupiedMinusMyBishops, occupiedMinusMyRooks;
     uint64_t attacks, mobilityArea;
     
-    int mg = 0, eg = 0, eval, curPhase;
+    int mg = 0, eg = 0;
+    int pawnmg = 0, pawneg = 0;
+    int eval, curPhase;
     int mobiltyCount, defended;
     int colour, bit, rank, file;
     
@@ -264,16 +197,24 @@ int evaluatePieces(Board * board, int mid, int end){
         ((KingMap[blackKingSq] | (1ull << blackKingSq)) | (KingMap[blackKingSq] >> 8))
     };
     
+    PawnEntry * pentry = getPawnEntry(ptable, board->phash);
     
     for (colour = BLACK; colour >= WHITE; colour--){
         
         // Negate the scores so that the scores are from
         // White's perspective after the loop completes
-        mg = -mg; eg = -eg;
+        mg = -mg; pawnmg = -pawnmg; 
+        eg = -eg; pawneg = -pawneg;
         
         myPieces = board->colours[colour];
         myPawns = myPieces & pawns;
         enemyPawns = pawns ^ myPawns;
+        
+        tempPawns = myPawns;
+        tempKnights = myPieces & knights;
+        tempBishops = myPieces & bishops;
+        tempRooks = myPieces & rooks;
+        tempQueens = myPieces & queens;
         
         occupiedMinusMyBishops = notEmpty ^ (myPieces & (bishops | queens));
         occupiedMinusMyRooks = notEmpty ^ (myPieces & (rooks | queens));
@@ -283,11 +224,6 @@ int evaluatePieces(Board * board, int mid, int end){
         // in our mobilityArea. This definition of mobilityArea is
         // derived directly from Stockfish's evaluation features. 
         mobilityArea = ~(pawnAttacks[!colour] | (myPieces & kings) | blockedPawns[colour]);
-        
-        tempKnights = myPieces & knights;
-        tempBishops = myPieces & bishops;
-        tempRooks = myPieces & rooks;
-        tempQueens = myPieces & queens;
         
         // Bishop gains a bonus for pawn wings
         if (tempBishops != 0
@@ -325,6 +261,46 @@ int evaluatePieces(Board * board, int mid, int end){
             attackCounts[colour] += 2 * popcount(attacks);
             attackerCounts[colour] += 1;
         }
+        
+        // If we were able to retrieve a Pawn Entry from the
+        // pawn table, we can skip this part of the pawn eval
+        if (pentry != NULL) goto AfterPawnLoop;
+        
+        // Evaluate all of this colour's Pawns
+        while(tempPawns != 0ull){
+            
+            // Pop the next Pawn off
+            bit = getLSB(tempPawns);
+            tempPawns ^= (1ull << bit);
+            
+            file = bit & 7;
+            rank = (colour == BLACK) ? (7 - (bit >> 3)) : (bit >> 3);
+            
+            // Apply a bonus of the pawn is passed
+            if (!(PassedPawnMasks[colour][bit] & enemyPawns)){
+                pawnmg += PawnPassedMid[rank];
+                pawneg += PawnPassedEnd[rank];
+            }
+            
+            // Apply a penalty if the pawn is isolated
+            if (!(IsolatedPawnMasks[bit] & tempPawns)){
+                pawnmg -= PAWN_ISOLATED_MID;
+                pawneg -= PAWN_ISOLATED_END;
+            }
+            
+            // Apply a penalty if the pawn is stacked
+            if (Files[file] & tempPawns){
+                pawnmg -= PAWN_STACKED_MID;
+                pawneg -= PAWN_STACKED_END;
+            }
+            
+            // Apply a bonus if the pawn is connected
+            if (PawnConnectedMasks[colour][bit] & myPawns){
+                pawnmg += PawnConnected[colour][bit];
+                pawneg += PawnConnected[colour][bit];
+            }
+            
+        } AfterPawnLoop:
         
         // Evaluate all of this colour's Knights
         while (tempKnights != 0){
@@ -474,6 +450,17 @@ int evaluatePieces(Board * board, int mid, int end){
         }
     }
     
+    if (pentry == NULL){
+        storePawnEntry(ptable, board->phash, pawnmg, pawneg);
+        mg += pawnmg;
+        eg += pawneg;
+    } 
+    
+    else {
+        mg += pentry->mg;
+        eg += pentry->eg;
+    }
+
     for (colour = BLACK; colour >= WHITE; colour--){
         
         // Negate the scores so that the scores are from
@@ -495,11 +482,11 @@ int evaluatePieces(Board * board, int mid, int end){
         }
     }
     
-    mid += mg + board->opening;
-    end += eg + board->endgame;
+    mg += board->opening;
+    eg += board->endgame;
     
-    mid += (board->turn == WHITE) ? 5 : -5;
-    end += (board->turn == WHITE) ? 7 : -7;
+    mg += (board->turn == WHITE) ? 5 : -5;
+    eg += (board->turn == WHITE) ? 7 : -7;
     
     curPhase = 24 - (popcount(knights | bishops))
                   - (popcount(rooks) << 1)
@@ -507,7 +494,7 @@ int evaluatePieces(Board * board, int mid, int end){
                   
     curPhase = (curPhase * 256 + 12) / 24;
     
-    eval = ((mid * (256 - curPhase)) + (end * curPhase)) / 256;
+    eval = ((mg * (256 - curPhase)) + (eg * curPhase)) / 256;
     
     return board->turn == WHITE ? eval : -eval;
 }
