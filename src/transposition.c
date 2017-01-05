@@ -204,11 +204,12 @@ PawnEntry * getPawnEntry(PawnTable * ptable, uint64_t phash){
     return NULL;
 }
 
-void storePawnEntry(PawnTable * ptable, uint64_t phash, int mg, int eg){
+void storePawnEntry(PawnTable * ptable, uint64_t phash, uint64_t passed, int mg, int eg){
     
     PawnEntry * pentry = &(ptable->entries[phash >> 48]);
     
     pentry->phash = phash;
+    pentry->passed = passed;
     pentry->mg = mg;
     pentry->eg = eg;
 }

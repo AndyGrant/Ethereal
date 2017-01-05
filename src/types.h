@@ -109,6 +109,7 @@ typedef struct SearchInfo {
 
 typedef struct PawnEntry {
     uint64_t phash;
+    uint64_t passed;
     int mg, eg;
     
 } PawnEntry;

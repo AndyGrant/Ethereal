@@ -33,7 +33,7 @@ void dumpTranspositionTable(TransTable * table);
 void initalizePawnTable(PawnTable * ptable);
 void destoryPawnTable(PawnTable * ptable);
 PawnEntry * getPawnEntry(PawnTable * ptable, uint64_t phash);
-void storePawnEntry(PawnTable * ptable, uint64_t phash, int mg, int eg);
+void storePawnEntry(PawnTable * ptable, uint64_t phash, uint64_t passed, int mg, int eg);
 
 extern TransTable Table;
 extern PawnTable PTable;

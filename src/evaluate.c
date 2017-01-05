@@ -161,26 +161,24 @@ int evaluatePieces(Board * board, PawnTable * ptable){
     uint64_t queens  = board->pieces[QUEEN];
     uint64_t kings   = board->pieces[KING];
     
-    uint64_t whitePawns = white & pawns;
-    uint64_t blackPawns = black & pawns;
-    uint64_t notEmpty = white | black;
-    
     uint64_t myPieces, myPawns, enemyPawns;
     uint64_t tempPawns, tempKnights, tempBishops, tempRooks, tempQueens;
     uint64_t occupiedMinusMyBishops, occupiedMinusMyRooks;
     uint64_t attacks, mobilityArea;
+    uint64_t passedPawns = 0ull;
     
     int mg = 0, eg = 0;
     int pawnmg = 0, pawneg = 0;
     int eval, curPhase;
     int mobiltyCount, defended;
-    int colour, bit, rank, file;
+    int colour, bit, rank;
     
     int whiteKingSq = getLSB(white & kings);
     int blackKingSq = getLSB(black & kings);
     
-    int attackCounts[COLOUR_NB] = {0, 0};
-    int attackerCounts[COLOUR_NB] = {0, 0};
+    uint64_t whitePawns = white & pawns;
+    uint64_t blackPawns = black & pawns;
+    uint64_t notEmpty = white | black;
     
     uint64_t pawnAttacks[COLOUR_NB] = {
         (((whitePawns << 9) & ~FILE_A) | ((whitePawns << 7) & ~FILE_H)),
@@ -196,6 +194,14 @@ int evaluatePieces(Board * board, PawnTable * ptable){
         ((KingMap[whiteKingSq] | (1ull << whiteKingSq)) | (KingMap[whiteKingSq] << 8)),
         ((KingMap[blackKingSq] | (1ull << blackKingSq)) | (KingMap[blackKingSq] >> 8))
     };
+    
+    uint64_t allAttackBoards[COLOUR_NB] = {
+        KingAttacks(whiteKingSq, ~0ull),
+        KingAttacks(blackKingSq, ~0ull)
+    };
+    
+    int attackCounts[COLOUR_NB] = {0, 0};
+    int attackerCounts[COLOUR_NB] = {0, 0};
     
     PawnEntry * pentry = getPawnEntry(ptable, board->phash);
     
@@ -255,8 +261,11 @@ int evaluatePieces(Board * board, PawnTable * ptable){
         }
         
         
-        // Get the attack counts for the pawns
+        // Get the attack board for the pawns
         attacks = pawnAttacks[colour] & kingAreas[!colour];
+        allAttackBoards[colour] |= pawnAttacks[colour];
+        
+        // Update the counters for the safety evaluation
         if (attacks != 0ull){
             attackCounts[colour] += 2 * popcount(attacks);
             attackerCounts[colour] += 1;
@@ -273,14 +282,10 @@ int evaluatePieces(Board * board, PawnTable * ptable){
             bit = getLSB(tempPawns);
             tempPawns ^= (1ull << bit);
             
-            file = bit & 7;
-            rank = (colour == BLACK) ? (7 - (bit >> 3)) : (bit >> 3);
-            
-            // Apply a bonus of the pawn is passed
-            if (!(PassedPawnMasks[colour][bit] & enemyPawns)){
-                pawnmg += PawnPassedMid[rank];
-                pawneg += PawnPassedEnd[rank];
-            }
+            // Save the fact that this pawn is passed. We will
+            // use it later in order to apply a proper bonus
+            if (!(PassedPawnMasks[colour][bit] & enemyPawns))
+                passedPawns |= (1ull << bit);
             
             // Apply a penalty if the pawn is isolated
             if (!(IsolatedPawnMasks[bit] & tempPawns)){
@@ -289,7 +294,7 @@ int evaluatePieces(Board * board, PawnTable * ptable){
             }
             
             // Apply a penalty if the pawn is stacked
-            if (Files[file] & tempPawns){
+            if (Files[bit & 7] & tempPawns){
                 pawnmg -= PAWN_STACKED_MID;
                 pawneg -= PAWN_STACKED_END;
             }
@@ -311,6 +316,7 @@ int evaluatePieces(Board * board, PawnTable * ptable){
             
             // Generate the attack board
             attacks = KnightAttacks(bit, ~0ull);
+            allAttackBoards[colour] |= attacks;
             
             // Knight is in an outpost square, unable to be
             // attacked by enemy pawns, on or between ranks
@@ -347,6 +353,7 @@ int evaluatePieces(Board * board, PawnTable * ptable){
             
             // Generate the attack board
             attacks = BishopAttacks(bit, occupiedMinusMyBishops, ~0ull);
+            allAttackBoards[colour] |= attacks;
             
             // Bishop is in an outpost square, unable to be
             // attacked by enemy pawns, on or between ranks
@@ -384,15 +391,13 @@ int evaluatePieces(Board * board, PawnTable * ptable){
             
             // Generate the attack board
             attacks = RookAttacks(bit, occupiedMinusMyRooks, ~0ull);
-            
-            rank = bit >> 3;
-            file = bit & 7;
+            allAttackBoards[colour] |= attacks;
             
             // Rook is on a semi-open file if there are no
             // pawns of the Rook's colour on the file. If
             // there are no pawns at all, it is an open file
-            if (!(myPawns & Files[file])){
-                if (!(enemyPawns & Files[file])){
+            if (!(myPawns & Files[bit & 7])){
+                if (!(enemyPawns & Files[bit & 7])){
                     mg += ROOK_OPEN_FILE_MID;
                     eg += ROOK_OPEN_FILE_END;
                 }
@@ -404,7 +409,7 @@ int evaluatePieces(Board * board, PawnTable * ptable){
             
             // Rook gains a bonus for being located
             // on seventh rank relative to its colour
-            if (rank == (colour == BLACK ? 1 : 6)){
+            if ((bit >> 3) == (colour == BLACK ? 1 : 6)){
                 mg += ROOK_ON_7TH_MID;
                 eg += ROOK_ON_7TH_END;
             }
@@ -434,6 +439,7 @@ int evaluatePieces(Board * board, PawnTable * ptable){
             // Generate the attack board
             attacks = RookAttacks(bit, occupiedMinusMyRooks, ~0ull)
                 | BishopAttacks(bit, occupiedMinusMyBishops, ~0ull);
+            allAttackBoards[colour] |= attacks;
                 
             // Queen gains a mobility bonus based off of the number
             // of attacked or defended squares within the mobility area
@@ -450,15 +456,57 @@ int evaluatePieces(Board * board, PawnTable * ptable){
         }
     }
     
+    // If we were unable to find an entry, store one now
     if (pentry == NULL){
-        storePawnEntry(ptable, board->phash, pawnmg, pawneg);
+        storePawnEntry(ptable, board->phash, passedPawns, pawnmg, pawneg);
         mg += pawnmg;
         eg += pawneg;
     } 
     
+    // Otherwise, read the entry for the needed information
     else {
         mg += pentry->mg;
         eg += pentry->eg;
+        passedPawns = pentry->passed;
+    }
+    
+    // Evaluate the passed pawns for both colours
+    for (colour = BLACK; colour >= WHITE; colour--){
+        
+        // Negate the scores so that the scores are from
+        // White's perspective after the loop completes
+        mg = -mg; eg = -eg;
+        
+        tempPawns = board->colours[colour] & passedPawns;
+        
+        while (tempPawns != 0ull){
+            
+            // Pop off the next Passed Pawn
+            bit = getLSB(tempPawns);
+            tempPawns ^= (1ull << bit);
+            
+            rank = (colour == BLACK) ? (7 - (bit >> 3)) : (bit >> 3);
+            
+            uint64_t dest = (colour == BLACK) 
+                ? ((1ull << bit) >> 8)
+                : ((1ull << bit) << 8);
+                
+            if ((dest & allAttackBoards[!colour]) == 0ull
+                && (dest & (white | black)) == 0ull){
+                mg += 1.8 * PawnPassedMid[rank];
+                eg += 2.2 * PawnPassedEnd[rank];
+            }
+            
+            else if ((dest & (white | black)) == 0ull){
+                mg += 1.4 * PawnPassedMid[rank];
+                eg += 1.6 * PawnPassedEnd[rank];
+            }
+            
+            else {
+                mg += PawnPassedMid[rank];
+                eg += PawnPassedEnd[rank];
+            }
+        }
     }
 
     for (colour = BLACK; colour >= WHITE; colour--){
