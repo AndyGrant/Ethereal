@@ -1,5 +1,9 @@
 CC = gcc
-CFLAGS = -DNDEBUG -O3 -Wall -Wextra -pedantic -std=c99
+
+CFLAGS = -m64 -DNDEBUG -O3 -Wall -Wextra -pedantic -std=c99
+
+LIBS = -static
+
 SRC = bitboards.c       \
       bitutils.c        \
       board.c           \
@@ -17,5 +21,8 @@ SRC = bitboards.c       \
       uci.c             \
       zorbist.c         \
 
+EXE = EtherealBitBoard
+
 all:
-	$(CC) $(CFLAGS) $(SRC) -o Ethereal7.95.exe
+	$(CC) $(CFLAGS) $(SRC) -o $(EXE) $(LIBS)
+	
