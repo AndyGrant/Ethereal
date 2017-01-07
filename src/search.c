@@ -242,7 +242,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     TotalNodes++;
     
     // LOOKUP CURRENT POSITION IN TRANSPOSITION TABLE
-    entry = getTranspositionEntry(&Table, board->hash, board->turn);
+    entry = getTranspositionEntry(&Table, board->hash);
     
     if (entry != NULL){
         
@@ -321,16 +321,12 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         && board->history[board->numMoves-1] != NULL_MOVE
         && eval >= beta){
             
-        // APPLY NULL MOVE
-        board->turn = !board->turn;
-        board->history[board->numMoves++] = NULL_MOVE;
+        applyNullMove(board, undo);
         
         // PERFORM NULL MOVE SEARCH
         value = -alphaBetaSearch(board, -beta, -beta+1, depth-4, height+1, CUTNODE);
         
-        // REVERT NULL MOVE
-        board->numMoves--;
-        board->turn = !board->turn;
+        revertNullMove(board, undo);
         
         if (value >= beta)
             return value;
@@ -348,7 +344,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
             value = alphaBetaSearch(board, -MATE, beta, depth-2, height, PVNODE);
         
         // GET TABLE MOVE FROM TRANSPOSITION TABLE
-        entry = getTranspositionEntry(&Table, board->hash, board->turn);
+        entry = getTranspositionEntry(&Table, board->hash);
         if (entry != NULL)
             tableMove = entry->bestMove;
     }
@@ -486,11 +482,11 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     // STORE RESULTS IN TRANSPOSITION TABLE
     if (!Info->searchIsTimeLimited || getRealTime() < Info->endTime2){
         if (best > oldAlpha && best < beta)
-            storeTranspositionEntry(&Table, depth, board->turn,  PVNODE, best, bestMove, board->hash);
+            storeTranspositionEntry(&Table, depth,  PVNODE, best, bestMove, board->hash);
         else if (best >= beta)
-            storeTranspositionEntry(&Table, depth, board->turn, CUTNODE, best, bestMove, board->hash);
+            storeTranspositionEntry(&Table, depth, CUTNODE, best, bestMove, board->hash);
         else if (best <= oldAlpha)
-            storeTranspositionEntry(&Table, depth, board->turn, ALLNODE, best, bestMove, board->hash);
+            storeTranspositionEntry(&Table, depth, ALLNODE, best, bestMove, board->hash);
     }
     
     return best;

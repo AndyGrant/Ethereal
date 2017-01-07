@@ -23,6 +23,10 @@
 
 #include "types.h"
 
+#define CASTLE (2)
+#define ENPASS (3)
+#define TURN   (6)
+
 void initalizeZorbist();
 uint64_t genRandomBitstring();
 

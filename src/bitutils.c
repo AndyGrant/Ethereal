@@ -53,6 +53,21 @@ unsigned int countSetBits(uint64_t bb){
 }
 
 /**
+ * Count the number of set bits in a given 64-bit Integer.
+ * Faster than countSetBits, but requires BitCounts first
+ * be initialized using countsetBits.
+ *
+ * @param   bb  BitBoard to count set bits in
+ * @return      Count of all set bits in bb
+ */
+unsigned int popcount(uint64_t bb){
+    return  BitCounts[(bb >>  0) & 0xFFFF] +
+            BitCounts[(bb >> 16) & 0xFFFF] +
+            BitCounts[(bb >> 32) & 0xFFFF] +
+            BitCounts[(bb >> 48) & 0xFFFF];
+}
+
+/**
  * Fill an array with the bit indexes of all set bits
  * in a given 64-bit Integer. Set the array index after
  * the last bit index location to -1 to indicate that
@@ -72,11 +87,4 @@ void getSetBits(uint64_t bb, int * arr){
     }
     
     arr[count] = -1;
-}
-
-unsigned int popcount(uint64_t bb){
-    return  BitCounts[(bb >>  0) & 0xFFFF] +
-            BitCounts[(bb >> 16) & 0xFFFF] +
-            BitCounts[(bb >> 32) & 0xFFFF] +
-            BitCounts[(bb >> 48) & 0xFFFF];
 }

@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include "bitboards.h"
 #include "bitutils.h"
 #include "board.h"
 #include "castle.h"
@@ -71,7 +72,6 @@ void initalizeBoard(Board * board, char * fen){
                 case 'r': board->squares[sq++] = BLACK_ROOK;   break;
                 case 'q': board->squares[sq++] = BLACK_QUEEN;  break;
                 case 'k': board->squares[sq++] = BLACK_KING;   break;
-                default : assert("Unable to decode piece in init_board()" && 0);
             }
         }
     }
@@ -80,7 +80,6 @@ void initalizeBoard(Board * board, char * fen){
     switch(fen[++i]){
         case 'w': board->turn = WHITE; break;
         case 'b': board->turn = BLACK; break;
-        default : assert("Unable to determine player to move in init_board()" && 0);
     }
     
     i++; // Skip over space between turn and rights
@@ -94,7 +93,6 @@ void initalizeBoard(Board * board, char * fen){
             case 'k' : board->castleRights |= BLACK_KING_RIGHTS; break;
             case 'q' : board->castleRights |= BLACK_QUEEN_RIGHTS; break;
             case '-' : break;
-            default  : assert("Unable to decode castle rights in init_board()" && 0);
         }
     }
     
@@ -103,12 +101,8 @@ void initalizeBoard(Board * board, char * fen){
     if (fen[++i] != '-'){
         r = fen[i];
         f = fen[++i];
-        assert("Unable to decode enpass rank in init_board()" && r>='a' && r<='h');
-        assert("Unable to decode enpass file in init_board()" && f>='1' && f<='8');
         
         board->epSquare = (r - 'a') + (8 * (f - '1'));
-        
-        assert("Incorrectly decoded enpass square in init_board()" && board->epSquare >= 0 && board->epSquare <= 63);
     }
     
     i++; // Skip over space between ensquare and halfmove count
@@ -126,8 +120,6 @@ void initalizeBoard(Board * board, char * fen){
         // One Digit Number
         else
             board->fiftyMoveRule = fen[i] - '0';
-        
-        assert("Incorrectly decoded half-move count in init_board()" && (board->fiftyMoveRule >=0 && board->fiftyMoveRule < 100));
     }
     
     // Set BitBoards to default values
@@ -150,9 +142,27 @@ void initalizeBoard(Board * board, char * fen){
         board->pieces[PieceType(board->squares[i])]    |= (1ull << i);
     }
     
+    // Update the enpass square to reflect not only a potential
+    // enpass, but that an enpass may actuall be possible
+    if (board->epSquare != -1){
+        
+        uint64_t enemyPawns;
+        enemyPawns = board->colours[!board->turn] & board->pieces[PAWN];
+        enemyPawns &= IsolatedPawnMasks[board->epSquare];;
+        enemyPawns &= (board->turn == BLACK) ? RANK_4 : RANK_5;
+        if (enemyPawns == 0ull) board->epSquare = -1;
+    }
+    
     // Inititalize Zorbist Hash
     for(i = 0, board->hash = 0; i < 64; i++)
         board->hash ^= ZorbistKeys[board->squares[i]][i];
+    
+    // Factor in the castling rights
+    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    
+    // Factor in the enpass square
+    if (board->epSquare != -1)
+        board->hash ^= ZorbistKeys[ENPASS][File(board->epSquare)];
     
     // Inititalize Pawn Hash
     for (i = 0, board->phash = 0; i < 64; i++)
@@ -199,7 +209,7 @@ void printBoard(Board * board){
             switch(c){
                 case WHITE: printf("| *%c ",table[c][t]); break;
                 case BLACK: printf("|  %c ",table[c][t]); break;
-                default         : printf("|    "); break;
+                default   : printf("|    "); break;
             }
         }
         
@@ -234,7 +244,7 @@ int perft(Board * board, int depth){
     for(size -= 1; size >= 0; size--){
         applyMove(board,moves[size],&undo);
         if (isNotInCheck(board,!board->turn))
-            found += perft(board,depth-1);
+            found += perft(board,depth-1);        
         revertMove(board,moves[size],&undo);
     }
     

@@ -25,6 +25,8 @@
 
 void applyMove(Board * board, uint16_t move, Undo * undo);
 void revertMove(Board * board, uint16_t move, Undo * undo);
+void applyNullMove(Board * board, Undo * undo);
+void revertNullMove(Board * board, Undo * undo);
 void printMove(uint16_t move);
 
 #define NULL_MOVE (11)

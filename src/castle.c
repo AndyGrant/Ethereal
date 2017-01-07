@@ -29,5 +29,5 @@ int CastleMask[64] = {
      7, 15, 15, 15,  3, 15, 15, 11 
 };
 
-int RookFromLookupTable[5] = {-4,0,0,0,3};
-int RookToLookupTable[5] = {-1,0,0,0,1};
+int RookFromLookupTable[2] = {-4, 3};
+int RookToLookupTable[2] = {-1, 1};

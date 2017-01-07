@@ -22,6 +22,7 @@
 #include <assert.h>
 #include <time.h>
 
+#include "castle.h"
 #include "piece.h"
 #include "types.h"
 #include "zorbist.h"
@@ -50,12 +51,41 @@ void initalizeZorbist(){
     }
     
     // Fill ZorbistKeys for each piece type and square
-    for(p = 0; p <= 5; p++){
+    for (p = 0; p <= 5; p++){
         for(s = 0; s < SQUARE_NB; s++){
             ZorbistKeys[(p*4) + 0][s] = genRandomBitstring();
             ZorbistKeys[(p*4) + 1][s] = genRandomBitstring();
         }
     }
+    
+    // Fill ZorbistKeys for the file of the enpass square
+    for (p = 0; p < 8; p++)
+        ZorbistKeys[ENPASS][p] = genRandomBitstring();
+    
+    // Fill ZorbistKeys for the state of the castle rights
+    ZorbistKeys[CASTLE][WHITE_KING_RIGHTS] = genRandomBitstring();
+    ZorbistKeys[CASTLE][WHITE_QUEEN_RIGHTS] = genRandomBitstring();
+    ZorbistKeys[CASTLE][BLACK_KING_RIGHTS] = genRandomBitstring();
+    ZorbistKeys[CASTLE][BLACK_QUEEN_RIGHTS] = genRandomBitstring();
+    
+    // Set each location as a combination of the four we just defined
+    for (p = 0; p < 16; p++){
+        
+        if (p & WHITE_KING_RIGHTS)
+            ZorbistKeys[CASTLE][p] ^= ZorbistKeys[CASTLE][WHITE_KING_RIGHTS];
+        
+        if (p & WHITE_QUEEN_RIGHTS)
+            ZorbistKeys[CASTLE][p] ^= ZorbistKeys[CASTLE][WHITE_QUEEN_RIGHTS];
+        
+        if (p & BLACK_KING_RIGHTS)
+            ZorbistKeys[CASTLE][p] ^= ZorbistKeys[CASTLE][BLACK_KING_RIGHTS];
+        
+        if (p & BLACK_QUEEN_RIGHTS)
+            ZorbistKeys[CASTLE][p] ^= ZorbistKeys[CASTLE][BLACK_QUEEN_RIGHTS];
+    }
+    
+    // Fill in the key for side to move
+    ZorbistKeys[TURN][0] = genRandomBitstring();
     
     // Fill PawnKeys for each pawn colour and square
     for (s = 0; s < SQUARE_NB; s++){

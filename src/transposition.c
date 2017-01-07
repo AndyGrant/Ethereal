@@ -79,24 +79,22 @@ void clearTranspositionTable(TransTable * table){
 }
 
 /**
- * Fetch a matching entry from the table. A matching entry has
- * the same hash signature and the same turn.
+ * Fetch a matching entry from the table. A
+ * matching entry has the same hash signature
  *
  * @param   table   TransTable pointer to table location
  * @param   hash    64-bit hash-key to be matched
- * @param   turn    Game turn to be matched
  *
  * @return          Found entry or NULL
  */
-TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash, int turn){
+TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash){
     
     TransBucket * bucket = &(table->buckets[hash & (table->maxSize - 1)]);
     int i; uint16_t hash16 = hash >> 48;
     
     // SEARCH FOR MATCHING ENTRY, UPDATE GENERATION IF FOUND
     for (i = 0; i < 4; i++){
-        if (EntryHash16(bucket->entries[i]) == hash16
-            && EntryTurn(bucket->entries[i]) == turn){
+        if (EntryHash16(bucket->entries[i]) == hash16){
             EntrySetAge(&(bucket->entries[i]), table->generation);
             return &(bucket->entries[i]);
         }
@@ -116,13 +114,12 @@ TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash, int turn){
  *
  * @param   table       TransTable pointer to table location
  * @param   depth       Depth from the current search
- * @param   turn        Turn from current search
  * @param   type        Entry type based on alpha-beta window
  * @param   value       Value to be returned by the search
  * @param   bestMove    Best move found during the search
  * @param   hash        64-bit hash-key corresponding to the board
 */
-void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t turn, uint8_t type, int16_t value, uint16_t bestMove, uint64_t hash){
+void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t type, int16_t value, uint16_t bestMove, uint64_t hash){
     
     TransBucket * bucket = &(table->buckets[hash & (table->maxSize - 1)]);
     
@@ -134,7 +131,6 @@ void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t turn, ui
     
     // VALIDATE PARAMETERS
     assert(depth < MaxDepth);
-    assert(turn == 0 || turn == 1);
     assert(type >= 1 && type <= 3);
     assert(value <= 32766 && value >= -32766);
     
@@ -148,9 +144,7 @@ void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t turn, ui
         }
         
         // FOUND AN ENTRY WITH THE SAME HASH
-        if (EntryHash16(bucket->entries[i]) == hash16
-            && EntryTurn(bucket->entries[i]) == turn){
-            
+        if (EntryHash16(bucket->entries[i]) == hash16){
             toReplace = &(bucket->entries[i]);
             goto Replace;
         }
@@ -178,7 +172,7 @@ void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t turn, ui
     
     Replace:
         toReplace->depth = depth;
-        toReplace->data = (table->generation << 3) | (type << 1) | (turn);
+        toReplace->data = (table->generation << 2) | (type);
         toReplace->value = value;
         toReplace->bestMove = bestMove;
         toReplace->hash16 = hash16;
