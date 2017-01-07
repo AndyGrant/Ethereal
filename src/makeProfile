@@ -1,6 +1,6 @@
 CC = gcc
 
-CFLAGS = -m64 -DNDEBUG -O3 -Wall -Wextra -pedantic -std=c99 -g -pg
+CFLAGS = -m64 -DNDEBUG -Wall -Wextra -pedantic -std=c99 -g -pg
 
 LIBS = -static
 

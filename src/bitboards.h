@@ -21,14 +21,14 @@
 
 #include <stdint.h>
 
-#define RANK_8 (0xFF00000000000000)
-#define RANK_7 (0x00FF000000000000)
-#define RANK_6 (0x0000FF0000000000)
-#define RANK_5 (0x000000FF00000000)
-#define RANK_4 (0x00000000FF000000)
-#define RANK_3 (0x0000000000FF0000)
-#define RANK_2 (0x000000000000FF00)
-#define RANK_1 (0x00000000000000FF)
+#define RANK_8 (0xFF00000000000000ull)
+#define RANK_7 (0x00FF000000000000ull)
+#define RANK_6 (0x0000FF0000000000ull)
+#define RANK_5 (0x000000FF00000000ull)
+#define RANK_4 (0x00000000FF000000ull)
+#define RANK_3 (0x0000000000FF0000ull)
+#define RANK_2 (0x000000000000FF00ull)
+#define RANK_1 (0x00000000000000FFull)
 
 #define FILE_A (0x0101010101010101ull)
 #define FILE_B (0x0202020202020202ull)
@@ -39,10 +39,13 @@
 #define FILE_G (0x4040404040404040ull)
 #define FILE_H (0x8080808080808080ull)
 
-#define WHITE_SQUARES (0x55AA55AA55AA55AA)
-#define BLACK_SQUARES (0xAA55AA55AA55AA55)
+#define WHITE_SQUARES (0x55AA55AA55AA55AAull)
+#define BLACK_SQUARES (0xAA55AA55AA55AA55ull)
 
 extern uint64_t Files[8];
 extern uint64_t Ranks[8];
+
+#define File(sq)            ((sq) & 7)
+#define Rank(sq)            ((sq) >> 3)
 
 #endif

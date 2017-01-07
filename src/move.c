@@ -21,9 +21,11 @@
 #include <stdint.h>
 #include <assert.h>
 
+#include "bitboards.h"
 #include "board.h"
 #include "castle.h"
 #include "types.h"
+#include "masks.h"
 #include "move.h"
 #include "piece.h"
 #include "psqt.h"
@@ -38,8 +40,8 @@
  * @param   board   Board pointer to current position
  * @param   move    Move to be applied to the board
  * @param   undo    Undo object to be filled with information
-                    which is either hard or impossible to reverse
-                    with only the board and the move
+ *                  which is either hard or impossible to reverse
+ *                  with only the board and the move
  */
 void applyMove(Board * board, uint16_t move, Undo * undo){
     
@@ -56,6 +58,10 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
     uint64_t rShiftFrom, rShiftTo;
     uint64_t shiftEnpass;
     
+    uint64_t enemyPawns;
+    
+    // Save information that is either hard to reverse,
+    // or is not worth the time in order to do so
     undo->epSquare = board->epSquare;
     undo->turn = board->turn;
     undo->castleRights = board->castleRights;
@@ -65,6 +71,9 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
     undo->hash = board->hash;
     
     board->history[board->numMoves++] = board->hash;
+    
+    // Update the key to include the turn change
+    board->hash ^= ZorbistKeys[TURN][0];
     
     if (MoveType(move) == NORMAL_MOVE){
         to = MoveTo(move);
@@ -79,36 +88,73 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
         fromType = PieceType(fromPiece);
         toType = PieceType(toPiece);
         
+        // Update the colour bitboards
         board->colours[board->turn] ^= shiftFrom | shiftTo;
         board->colours[PieceColour(toPiece)] ^= shiftTo;
         
+        // Update the piece bitboards
         board->pieces[toType] ^= shiftTo;
         board->pieces[fromType] ^= shiftFrom | shiftTo;
         
+        // Save the captured piece and update the board array
         undo->capturePiece = toPiece;
         board->squares[to] = fromPiece;
         board->squares[from] = EMPTY;
         
+        // Bitwise-and out the castle changes
+        board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
         board->castleRights &= CastleMask[from];
+        board->castleRights &= CastleMask[to];
+        board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+        
+        // Swap the turn
         board->turn = !board->turn;
         
+        // Update the PSQT value for the opening
         board->opening += PSQTopening[fromPiece][to]
                         - PSQTopening[fromPiece][from]
                         - PSQTopening[toPiece][to];
-                        
+        
+        // Update the PSQT value for the endgame
         board->endgame += PSQTendgame[fromPiece][to]
                         - PSQTendgame[fromPiece][from]
                         - PSQTendgame[toPiece][to];
-        
+                        
+        // Update the main zorbist hash
         board->hash ^= ZorbistKeys[fromPiece][from]
                     ^  ZorbistKeys[fromPiece][to]
                     ^  ZorbistKeys[toPiece][to];
                     
+        // Update the pawn zorbist hash
         board->phash^= PawnKeys[fromPiece][from]
                     ^  PawnKeys[fromPiece][to]
                     ^  PawnKeys[toPiece][to];
                     
-        board->epSquare = ((!fromType) & (abs(to-from) == 16)) * (from + ((to-from)>>1));
+        // If there was a possible enpass move, we must
+        // xor the main zorbist key for it before moving on
+        if (board->epSquare != -1)
+            board->hash ^= ZorbistKeys[ENPASS][File(board->epSquare)];
+        
+        // Zero out the enpass square for now
+        board->epSquare = -1;
+        
+        // Check to see if this move creates an enpass square
+        if (fromType == PAWN && abs(to-from) == 16){
+            
+            enemyPawns = board->colours[board->turn] & board->pieces[PAWN];
+            enemyPawns &= IsolatedPawnMasks[from];;
+            enemyPawns &= (board->turn == BLACK) ? RANK_4 : RANK_5;
+            
+            // Only set the enpass square if there is a     
+            // pawn that could actually perform the enpass
+            if (enemyPawns){
+                
+                // Update the main zorbist key to include the enpass file
+                board->epSquare = from + ((to-from) >> 1);
+                board->hash ^= ZorbistKeys[ENPASS][File(from)];
+            } 
+        }
+        
         return;
     }
     
@@ -130,41 +176,52 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
         rShiftFrom = 1ull << rFrom;
         rShiftTo = 1ull << rTo;
         
+        // Update the colour bitboard
         board->colours[board->turn] ^= shiftTo | shiftFrom | rShiftTo | rShiftFrom;
         
+        // Update the piece bitboards
         board->pieces[KING] ^= shiftFrom | shiftTo;
         board->pieces[ROOK] ^= rShiftFrom | rShiftTo;
         
+        // Update the board array
         board->squares[to] = fromPiece;
         board->squares[from] = EMPTY;
-        
         board->squares[rTo] = rFromPiece;
         board->squares[rFrom] = EMPTY;
         
+        // Bitwise-and out the castle changes
+        board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
         board->castleRights &= CastleMask[from];
+        board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+        
+        // Swap the turn
         board->turn = !board->turn;
         
+        // Update the PSQT value for the opening
         board->opening += PSQTopening[fromPiece][to]
                         - PSQTopening[fromPiece][from]
                         + PSQTopening[rFromPiece][to]
                         - PSQTopening[rFromPiece][from];
                         
+        // Update the PSQT value for the endgame
         board->endgame += PSQTendgame[fromPiece][to]
                         - PSQTendgame[fromPiece][from]
                         + PSQTendgame[rFromPiece][to]
                         - PSQTendgame[rFromPiece][from];
         
+        // Update the main zorbist hash
         board->hash ^= ZorbistKeys[fromPiece][from]
                     ^  ZorbistKeys[fromPiece][to]
                     ^  ZorbistKeys[rFromPiece][rFrom]
                     ^  ZorbistKeys[rFromPiece][rTo];
-                    
-        board->phash^= PawnKeys[fromPiece][from]
-                    ^  PawnKeys[fromPiece][to]
-                    ^  PawnKeys[rFromPiece][rFrom]
-                    ^  PawnKeys[rFromPiece][rTo];
         
-        board->epSquare = -1;
+        // If there was a possible enpass move, we must
+        // xor the main zorbist key for it before moving on
+        if (board->epSquare != -1){
+            board->hash ^= ZorbistKeys[ENPASS][File(board->epSquare)];
+            board->epSquare = -1;
+        }
+        
         return;
     }
     
@@ -183,36 +240,51 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
         shiftFrom = 1ull << from;
         shiftTo = 1ull << to;
     
+        // Update the colour bitboards
         board->colours[board->turn] ^= shiftFrom | shiftTo;
         board->colours[PieceColour(toPiece)] ^= shiftTo;
         
+        // Update the piece bitboards
         board->pieces[PAWN] ^= shiftFrom;
         board->pieces[promotype] ^= shiftTo;
         board->pieces[toType] ^= shiftTo;
         
+        // Save the captured piece and update the board array
         undo->capturePiece = toPiece;
         board->squares[to] = promoPiece;
         board->squares[from] = EMPTY;
         
+        // Bitwise-and out the castle changes
+        board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+        board->castleRights &= CastleMask[to];
+        board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+        
+        // Swap the turn
         board->turn = !board->turn;
         
+        // Update the PSQT value for the opening
         board->opening += PSQTopening[promoPiece][to]
                         - PSQTopening[fromPiece][from] 
                         - PSQTopening[toPiece][to];
                         
+        // Update the PSQT value for the endgame
         board->endgame += PSQTendgame[promoPiece][to]
                         - PSQTendgame[fromPiece][from]
                         - PSQTendgame[toPiece][to];
         
+        // Update the main zorbist hash
         board->hash ^= ZorbistKeys[fromPiece][from]
                     ^  ZorbistKeys[promoPiece][to]
                     ^  ZorbistKeys[toPiece][to];
                     
-        board->phash^= PawnKeys[fromPiece][from]
-                    ^  PawnKeys[promoPiece][to]
-                    ^  PawnKeys[toPiece][to];
+        // Update the pawn zorbist hash
+        board->phash^= PawnKeys[fromPiece][from];
         
-        board->epSquare = -1;
+        if (board->epSquare != -1){
+            board->hash ^= ZorbistKeys[ENPASS][File(board->epSquare)];
+            board->epSquare = -1;
+        }
+        
         return;
     }
     
@@ -228,37 +300,46 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
         shiftTo = 1ull << to;
         shiftEnpass = 1ull << ep;
         
+        // Update the colour bitboards
         board->colours[!board->turn] ^= shiftEnpass;
-        board->pieces[PAWN] ^= shiftEnpass;
-        
         board->colours[board->turn] ^= shiftFrom | shiftTo;
-        board->pieces[PAWN] ^= shiftFrom | shiftTo;
         
+        // Update the piece bitboard
+        board->pieces[PAWN] ^= shiftEnpass | shiftFrom | shiftTo;
+        
+        // Save the captured piece and update the board array
+        undo->capturePiece = enpassPiece;
         board->squares[to] = fromPiece;
         board->squares[from] = EMPTY;
-        
-        undo->capturePiece = enpassPiece;
         board->squares[ep] = EMPTY;
         
+        // Swap the turn
         board->turn = !board->turn;
         
+        // Update the PSQT value for the opening
         board->opening += PSQTopening[fromPiece][to]
                         - PSQTopening[fromPiece][from]
                         - PSQTopening[enpassPiece][ep];
                         
+        // Update the PSQT value for the endgame
         board->endgame += PSQTendgame[fromPiece][to]
                         - PSQTendgame[fromPiece][from]
                         - PSQTendgame[enpassPiece][ep];
         
+        // Update the main zorbist key
         board->hash ^= ZorbistKeys[fromPiece][from]
                     ^  ZorbistKeys[fromPiece][to]
-                    ^  ZorbistKeys[enpassPiece][ep];
+                    ^  ZorbistKeys[enpassPiece][ep]
+                    ^  ZorbistKeys[ENPASS][File(ep)];
                     
+        // Update the pawn zorbist key
         board->phash^= PawnKeys[fromPiece][from]
                     ^  PawnKeys[fromPiece][to]
                     ^  PawnKeys[enpassPiece][ep];
         
+        // Reset the enpass square
         board->epSquare = -1;
+        
         return;
     }
 }
@@ -407,6 +488,53 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
         board->hash = undo->hash;
         return;
     }
+}
+
+
+/**
+ * Apply a null move to the given board. Store crucial
+ * information in the undo pointer passed to the function
+ *
+ * @param   board   Board pointer to current position
+ * @param   undo    Undo object to be filled with information
+ *                  which is either hard or impossible to reverse
+ *                  with only the board and the move
+ */                  
+void applyNullMove(Board * board, Undo * undo){
+    
+    // Store turn, hash and epSquare
+    undo->turn = board->turn;
+    undo->hash = board->hash;
+    undo->epSquare = board->epSquare;
+    
+    // Swap the turn and update the history
+    board->turn = !board->turn;
+    board->history[board->numMoves++] = NULL_MOVE;
+    
+    // Update the key to include the turn change
+    board->hash ^= ZorbistKeys[TURN][0];
+    
+    // Must empty the enpass square and update hash
+    if (board->epSquare != -1){
+        board->hash ^= ZorbistKeys[ENPASS][File(board->epSquare)];
+        board->epSquare = -1;
+    }
+}
+
+/**
+ * Revert a null move from the given board.
+ *
+ * @param   board   Board pointer to current position
+ * @param   undo    Undo object with the missing information needed
+ */
+void revertNullMove(Board * board, Undo * undo){
+    
+    // Revert turn, hash, epSquare, and history
+    board->turn = !board->turn;
+    board->hash = undo->hash;
+    board->epSquare = undo->epSquare;
+    board->numMoves--;
+    
 }
 
 /**
