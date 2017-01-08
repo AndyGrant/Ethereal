@@ -52,8 +52,7 @@ int evaluatePieces(Board * board, PawnTable * ptable);
 #define PSQT_MULTIPLIER      (1)
 
 extern int PawnConnected[COLOUR_NB][SQUARE_NB];
-extern int PawnPassedMid[8];
-extern int PawnPassedEnd[8];
+extern int PawnPassed[PHASE_NB][2][2][RANK_NB];
 extern int PieceValues[8];
 extern int KnightOutpost[PHASE_NB][2];
 extern int BishopOutpost[PHASE_NB][2];

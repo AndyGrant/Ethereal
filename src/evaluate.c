@@ -68,8 +68,21 @@ int PawnConnected[COLOUR_NB][64] = {
 int KnightOutpostValues[PHASE_NB][2] = {{20, 40}, {10, 20}};
 int BishopOutpostValues[PHASE_NB][2] = {{15, 30}, { 3,  5}};
 
-int PawnPassedMid[8] = { 0,  10, 10, 23, 39, 58, 70, 0};
-int PawnPassedEnd[8] = { 0,  12, 12, 26, 44, 66, 90, 0};
+// [phase][canAdvance][safeAdvance][rank]
+int PawnPassed[PHASE_NB][2][2][RANK_NB] = {
+
+   {{{0,  10, 10, 23, 39, 58, 70, 0},
+     {0,  10, 10, 23, 39, 58, 70, 0}},
+
+    {{0,  10, 15, 34, 58, 88,105, 0},
+     {0,  18, 20, 40, 76,116,199, 0}}},
+     
+   {{{0,  12, 12, 26, 44, 66, 90, 0},
+     {0,  12, 12, 26, 44, 66, 90, 0}},
+
+    {{0,  20, 21, 42, 70,105,140, 0},
+     {0,  25, 27, 52, 98,135,220, 0}}},
+};
 
 int PieceValues[8] = {PawnValue, KnightValue, BishopValue, RookValue, QueenValue, KingValue, 0, 0};
 
@@ -96,8 +109,8 @@ int QueenMobility[PHASE_NB][28] = {
     
     {-50, -40, -20, -10,  0,  4,  8,
       12,  15,  18,  21, 24, 27, 30,
-      35,  43,  43, 43, 43, 43, 43,
-      43,  43,  43, 43, 43, 43, 43}
+      35,  43,  43,  43, 43, 43, 43,
+      43,  43,  43,  43, 43, 43, 43}
 };
 
 int BishopHasWings[PHASE_NB] = {13, 36};
@@ -172,6 +185,7 @@ int evaluatePieces(Board * board, PawnTable * ptable){
     int eval, curPhase;
     int mobiltyCount, defended;
     int colour, bit, rank;
+    int canAdvance, safeAdvance;
     
     int whiteKingSq = getLSB(white & kings);
     int blackKingSq = getLSB(black & kings);
@@ -491,21 +505,11 @@ int evaluatePieces(Board * board, PawnTable * ptable){
                 ? ((1ull << bit) >> 8)
                 : ((1ull << bit) << 8);
                 
-            if ((dest & allAttackBoards[!colour]) == 0ull
-                && (dest & (white | black)) == 0ull){
-                mg += 1.8 * PawnPassedMid[rank];
-                eg += 2.2 * PawnPassedEnd[rank];
-            }
+            canAdvance = (dest & notEmpty) == 0ull;
+            safeAdvance = (dest & allAttackBoards[!colour]) == 0ull;
             
-            else if ((dest & (white | black)) == 0ull){
-                mg += 1.4 * PawnPassedMid[rank];
-                eg += 1.6 * PawnPassedEnd[rank];
-            }
-            
-            else {
-                mg += PawnPassedMid[rank];
-                eg += PawnPassedEnd[rank];
-            }
+            mg += PawnPassed[MG][canAdvance][safeAdvance][rank];
+            eg += PawnPassed[EG][canAdvance][safeAdvance][rank];
         }
     }
 

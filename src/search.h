@@ -34,13 +34,10 @@ void sortMoveList(MoveList * moveList);
 int canDoNull(Board * board);
 
 #define USE_STATIC_NULL_PRUNING             (1)
-#define USE_RAZOR_PRUNING                   (0)
 #define USE_FUTILITY_PRUNING                (1)
 #define USE_NULL_MOVE_PRUNING               (1)
 #define USE_LATE_MOVE_REDUCTIONS            (1)
 #define USE_INTERNAL_ITERATIVE_DEEPENING    (1)
 #define USE_TRANSPOSITION_TABLE             (1)
-
-extern int RazorMargins[4];
 
 #endif
