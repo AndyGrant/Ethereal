@@ -63,7 +63,7 @@ int main(){
         getInput(str);
         
         if (stringEquals(str, "uci")){
-            printf("id name Ethereal7.92\n");
+            printf("id name Ethereal7.99\n");
             printf("id author Andrew Grant\n");
             printf("uciok\n");
             fflush(stdout);
@@ -71,6 +71,10 @@ int main(){
         
         else if (stringEquals(str, "movegentest")){
             moveGenTest();
+        }
+        
+        else if (stringStartsWith(str, "perft")){
+            printf("%d\n", perft(&(info.board), atoi(str + 6)));
         }
         
         else if (stringStartsWith(str, "debug")){
