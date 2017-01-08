@@ -55,6 +55,7 @@ SearchInfo * Info;
 uint16_t getBestMove(SearchInfo * info){
     
     int i, depth, value = 0;
+    uint16_t bestMove = NONE_MOVE;
     
     // INITALIZE SEARCH GLOBALS
     TotalNodes = 0;
@@ -67,6 +68,7 @@ uint16_t getBestMove(SearchInfo * info){
     MoveList rootMoveList;
     rootMoveList.size = 0;
     genAllMoves(&(info->board),rootMoveList.moves,&(rootMoveList.size));
+    bestMove = rootMoveList.moves[0];
     
     // CLEAR HISTORY COUNTERS
     for (i = 0; i < 0x10000; i++){
@@ -80,19 +82,6 @@ uint16_t getBestMove(SearchInfo * info){
         // Perform full search on Root
         value = aspirationWindow(&(info->board), &rootMoveList, depth, value);
         
-        printf("info depth %d ", depth);
-        printf("score cp %d ", value);
-        printf("time %d ", (int)(getRealTime() - info->startTime));
-        printf("nodes %d ", (int)(TotalNodes));
-        printf("nps %d ", (int)(1000 * (TotalNodes / (1 + getRealTime() - info->startTime))));
-        printf("hashfull %d ", (250 * Table.used) / Table.maxSize);
-        
-        printf("pv ");
-        printMove(rootMoveList.bestMove);
-        printf("\n");
-        
-        fflush(stdout);
-        
         if (info->searchIsDepthLimited && info->depthLimit == depth)
             break;
             
@@ -104,12 +93,26 @@ uint16_t getBestMove(SearchInfo * info){
             if (getRealTime() > info->endTime1)
                 break;
         }
+        
+        printf("info depth %d ", depth);
+        printf("score cp %d ", value);
+        printf("time %d ", (int)(getRealTime() - info->startTime));
+        printf("nodes %d ", (int)(TotalNodes));
+        printf("nps %d ", (int)(1000 * (TotalNodes / (1 + getRealTime() - info->startTime))));
+        printf("hashfull %d ", (250 * Table.used) / Table.maxSize);
+        
+        printf("pv ");
+        bestMove = rootMoveList.bestMove;
+        printMove(bestMove);
+        printf("\n");
+        
+        fflush(stdout);
     }
     
     // Free the Pawn Table
     destoryPawnTable(&PTable);
     
-    return rootMoveList.bestMove;
+    return bestMove;
 }
 
 int aspirationWindow(Board * board, MoveList * moveList, int depth, int previousScore){
