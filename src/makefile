@@ -18,4 +18,4 @@ SRC = bitboards.c       \
       zorbist.c         \
 
 all:
-	$(CC) $(CFLAGS) $(SRC) -o Ethreal7.98
+	$(CC) $(CFLAGS) $(SRC) -o Ethereal8.00.exe

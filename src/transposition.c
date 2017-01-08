@@ -39,7 +39,7 @@ void initalizeTranspositionTable(TransTable * table, unsigned int keySize){
     
     // TABLE HAS ALREADY BEEN INITALIZED
     if (table->keySize == keySize){
-        table->generation = (table->generation + 1) % 32;
+        table->generation = (table->generation + 1) % 64;
         return;
     }
     

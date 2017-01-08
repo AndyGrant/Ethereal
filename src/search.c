@@ -36,8 +36,6 @@
 #include "move.h"
 #include "movegen.h"
 
-int RazorMargins[4] = {0, 325, 345, 395};
-
 int TotalNodes;
 
 int EvaluatingPlayer;
@@ -79,6 +77,9 @@ uint16_t getBestMove(SearchInfo * info){
         
         // Perform full search on Root
         value = aspirationWindow(&(info->board), &rootMoveList, depth, value);
+        
+        // Don't print a partial search
+        if (info->terminateSearch) break;
         
         printf("info depth %d ", depth);
         printf("score cp %d ", value);
@@ -213,8 +214,10 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
     Undo undo[1];
     
     // SEARCH TIME HAS EXPIRED
-    if (Info->searchIsTimeLimited && getRealTime() >= Info->endTime2)
+    if (Info->searchIsTimeLimited && getRealTime() >= Info->endTime2){
+        Info->terminateSearch = 1;
         return board->turn == EvaluatingPlayer ? -MATE : MATE;
+    }
     
     // DETERMINE 3-FOLD REPITION
     for (i = board->numMoves-2; i >= 0; i-=2)
@@ -294,21 +297,6 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         value = eval - (depth * (PawnValue + 15));
         
         if (value > beta)
-            return value;
-    }
-    
-    // RAZOR PRUNING
-    if (USE_RAZOR_PRUNING
-        && nodeType != PVNODE
-        && tableMove == NONE_MOVE
-        && depth <= 3
-        && nodeType != PVNODE
-        && eval + RazorMargins[depth] < beta){
-            
-        value = quiescenceSearch(board, alpha, beta, height);
-        
-        // EVEN GAINING A LARGE MARGIN WOULD FAIL LOW
-        if (value + RazorMargins[depth] < beta)
             return value;
     }
     
