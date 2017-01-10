@@ -23,7 +23,8 @@
 
 #include "types.h"
 
-void initalizeTranspositionTable(TransTable * table, unsigned int keySize);
+void initalizeTranspositionTable(TransTable * table, uint64_t megabytes);
+void updateTranspositionTable(TransTable * table);
 void destroyTranspositionTable(TransTable * table);
 void clearTranspositionTable(TransTable * table);
 TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash);
