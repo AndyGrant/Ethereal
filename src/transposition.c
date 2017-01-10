@@ -26,29 +26,32 @@
 #include "transposition.h"
 
 /**
- * Perform one of two operations:
- *  1)  Allocate memory for the transposition table and
- *      set the data members to their inital states
- *  2)  Update the generation of the table because it has
- *      already been created and can be used between searches
+ * Allocate memory for the transposition table and
+ * set the data members to their inital states
  *
- * @param   table   TransTable pointer to allocation destination
- * @param   keySize Number of bits per key, also the size of the table
+ * @param   table       Location to allocate the table
+ * @param   megabytes   Table size in megabytes
  */
-void initalizeTranspositionTable(TransTable * table, unsigned int keySize){
+void initalizeTranspositionTable(TransTable * table, uint64_t megabytes){
     
-    // TABLE HAS ALREADY BEEN INITALIZED
-    if (table->keySize == keySize){
-        table->generation = (table->generation + 1) % 64;
-        return;
-    }
+    uint64_t keySize = 16ull;
     
-    // SET TABLE'S DATA MEMEBERS
-    table->buckets = calloc(1 << keySize,sizeof(TransBucket));
+    // Determine the keysize for the first power of
+    // two less than than or equal to megaBytes
+    for (;1ull << (keySize + 5) <= megabytes << 20 ; keySize++);
+    keySize -= 1;
+    
+    // Setup Table's data members
+    table->buckets = calloc(1 << keySize, sizeof(TransBucket));
     table->maxSize = 1 << keySize;
     table->keySize = keySize;
     table->generation = 0;
     table->used = 0;
+}
+
+void updateTranspositionTable(TransTable * table){
+    
+    table->generation = (table->generation + 1) % 64;
 }
 
 void destroyTranspositionTable(TransTable * table){

@@ -57,7 +57,7 @@ uint16_t getBestMove(SearchInfo * info){
     // INITALIZE SEARCH GLOBALS
     TotalNodes = 0;
     EvaluatingPlayer = info->board.turn;
-    initalizeTranspositionTable(&Table, 22);
+    updateTranspositionTable(&Table);
     initalizePawnTable(&PTable);
     Info = info;
     

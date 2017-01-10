@@ -55,18 +55,27 @@ int main(){
     
     SearchInfo info;
     initalizeBoard(&(info.board), startPos);
-    
-    initalizeTranspositionTable(&Table, 22);
+    initalizeTranspositionTable(&Table, 16);
     
     while (1){
         
         getInput(str);
         
         if (stringEquals(str, "uci")){
-            printf("id name Ethereal8.00\n");
+            printf("id name Ethereal8.01\n");
             printf("id author Andrew Grant\n");
+            printf("option name Hash type spin default 16 min 1 max 2048\n");
             printf("uciok\n");
             fflush(stdout);
+        }
+        
+        else if (stringStartsWith(str, "setoption")){
+            
+            if (stringStartsWith(str, "setoption name Hash value")){
+                int megaBytes = atoi(str + strlen("setoption name Hash value"));
+                destroyTranspositionTable(&Table);
+                initalizeTranspositionTable(&Table, megaBytes);
+            }
         }
         
         else if (stringEquals(str, "movegentest")){
