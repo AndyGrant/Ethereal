@@ -544,6 +544,8 @@ void revertNullMove(Board * board, Undo * undo){
  */
 void printMove(uint16_t move){
     
+    static char promoteDict[4] = {'n', 'b', 'r', 'q'};
+    
     int from = MoveFrom(move);
     int to = MoveTo(move);
     
@@ -553,5 +555,12 @@ void printMove(uint16_t move){
     char fromRank = 'a' + (from % 8);
     char toRank = 'a' + (to % 8);
     
-    printf("%c%c%c%c", fromRank, fromFile, toRank, toFile);
+    if (MoveType(move) == PROMOTION_MOVE){
+        char promo = promoteDict[move >> 14];
+        printf("%c%c%c%c%c", fromRank, fromFile, toRank, toFile, promo);
+    }
+    
+    else{
+        printf("%c%c%c%c", fromRank, fromFile, toRank, toFile);
+    }
 }
