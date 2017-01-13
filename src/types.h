@@ -119,4 +119,10 @@ typedef struct PawnTable {
     
 } PawnTable;
 
+typedef struct PVariation {
+    uint16_t line[MAX_HEIGHT];
+    int length;
+    
+} PVariation;
+
 #endif

@@ -37,10 +37,8 @@
 #include "movegen.h"
 
 int TotalNodes;
-
 int EvaluatingPlayer;
-
-uint16_t KillerMoves[MAX_HEIGHT][2];
+SearchInfo * Info;
 
 TransTable Table;
 PawnTable PTable;
@@ -48,25 +46,31 @@ PawnTable PTable;
 int HistoryGood[0x10000];
 int HistoryTotal[0x10000];
 
-SearchInfo * Info;
+uint16_t KillerMoves[MAX_HEIGHT][2];
 
 uint16_t getBestMove(SearchInfo * info){
     
     int i, depth, value = 0;
     
-    // INITALIZE SEARCH GLOBALS
+    // Create the main Principle Variation
+    PVariation pv;
+    pv.length = 0;
+    
+    // Initialize search globals
     TotalNodes = 0;
     EvaluatingPlayer = info->board.turn;
-    updateTranspositionTable(&Table);
-    initalizePawnTable(&PTable);
     Info = info;
     
-    // POPULATE ROOT'S MOVELIST
+    // Prepare the transposition tables
+    updateTranspositionTable(&Table);
+    initalizePawnTable(&PTable);
+    
+    // Populate the root's movelist
     MoveList rootMoveList;
     rootMoveList.size = 0;
     genAllMoves(&(info->board),rootMoveList.moves,&(rootMoveList.size));
     
-    // CLEAR HISTORY COUNTERS
+    // Clear out the history counters
     for (i = 0; i < 0x10000; i++){
         HistoryGood[i] = 1;
         HistoryTotal[i] = 1;
@@ -76,7 +80,7 @@ uint16_t getBestMove(SearchInfo * info){
     for (depth = 1; depth < MAX_DEPTH; depth++){
         
         // Perform full search on Root
-        value = aspirationWindow(&(info->board), &rootMoveList, depth, value);
+        value = aspirationWindow(&pv, &(info->board), &rootMoveList, depth, value);
         
         // Don't print a partial search
         if (info->terminateSearch) break;
@@ -87,11 +91,15 @@ uint16_t getBestMove(SearchInfo * info){
         printf("nodes %d ", (int)(TotalNodes));
         printf("nps %d ", (int)(1000 * (TotalNodes / (1 + getRealTime() - info->startTime))));
         printf("hashfull %d ", (250 * Table.used) / Table.maxSize);
-        
         printf("pv ");
-        printMove(rootMoveList.bestMove);
-        printf("\n");
         
+        // Print out each move in the Principle Variation
+        for (i = 0; i < pv.length; i++){
+            printMove(pv.line[i]);
+            printf(" ");
+        }
+        
+        printf("\n");
         fflush(stdout);
         
         if (info->searchIsDepthLimited && info->depthLimit == depth)
@@ -113,7 +121,7 @@ uint16_t getBestMove(SearchInfo * info){
     return rootMoveList.bestMove;
 }
 
-int aspirationWindow(Board * board, MoveList * moveList, int depth, int previousScore){
+int aspirationWindow(PVariation * pv, Board * board, MoveList * moveList, int depth, int previousScore){
     
     int alpha, beta, value, margin;
     
@@ -122,7 +130,7 @@ int aspirationWindow(Board * board, MoveList * moveList, int depth, int previous
             alpha = previousScore - margin;
             beta  = previousScore + margin;
             
-            value = rootSearch(board, moveList, alpha, beta, depth);
+            value = rootSearch(pv, board, moveList, alpha, beta, depth);
             
             if (value > alpha && value < beta)
                 return value;
@@ -132,14 +140,18 @@ int aspirationWindow(Board * board, MoveList * moveList, int depth, int previous
         }
     }
     
-    return rootSearch(board, moveList, -MATE*2, MATE*2, depth);
+    return rootSearch(pv, board, moveList, -MATE, MATE, depth);
 }
 
-int rootSearch(Board * board, MoveList * moveList, int alpha, int beta, int depth){
+int rootSearch(PVariation * pv, Board * board, MoveList * moveList, int alpha, int beta, int depth){
     
-    int i, valid = 0, best =-2*MATE, value;
+    int i, valid = 0, best = -MATE, value;
     int currentNodes;
     Undo undo[1];
+    
+    pv->length = 0;
+    PVariation lpv;
+    lpv.length = 0;
    
     for (i = 0; i < moveList->size; i++){
         
@@ -158,15 +170,15 @@ int rootSearch(Board * board, MoveList * moveList, int alpha, int beta, int dept
         
         // FULL WINDOW SEARCH ON FIRST MOVE
         if (valid == 1)
-            value = -alphaBetaSearch(board, -beta, -alpha, depth-1, 1, PVNODE);
+            value = -alphaBetaSearch(&lpv, board, -beta, -alpha, depth-1, 1, PVNODE);
         
         // NULL WINDOW SEARCH ON NON-FIRST MOVES
         else{
-            value = -alphaBetaSearch(board, -alpha-1, -alpha, depth-1, 1, CUTNODE);
+            value = -alphaBetaSearch(&lpv, board, -alpha-1, -alpha, depth-1, 1, CUTNODE);
             
             // NULL WINDOW FAILED HIGH, RESEARCH
             if (value > alpha)
-                value = -alphaBetaSearch(board, -beta, -alpha, depth-1, 1, PVNODE);
+                value = -alphaBetaSearch(&lpv, board, -beta, -alpha, depth-1, 1, PVNODE);
         }
         
         // REVERT MOVE FROM BOARD
@@ -180,14 +192,20 @@ int rootSearch(Board * board, MoveList * moveList, int alpha, int beta, int dept
             moveList->values[i] = value; // EXACT VALUE
         
         
-        // IMPROVED CURRENT VALUE
+        // Improved current value
         if (value > best){
             best = value;
             moveList->bestMove = moveList->moves[i];
             
             // IMPROVED CURRENT LOWER VALUE
-            if (value > alpha)
+            if (value > alpha){
                 alpha = value;
+                
+                // Update the Principle Variation
+                pv->length = 1 + lpv.length;
+                pv->line[0] = moveList->moves[i];
+                memcpy(pv->line + 1, lpv.line, sizeof(uint16_t) * lpv.length);
+            }
         }
         
         // IMPROVED AND FAILED HIGH
@@ -200,15 +218,19 @@ int rootSearch(Board * board, MoveList * moveList, int alpha, int beta, int dept
     return best;
 }
 
-int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, int nodeType){
+int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int depth, int height, int nodeType){
     
     int i, value, newDepth, entryValue, entryType;
     int min, max, inCheck, values[MAX_MOVES];
     int valid = 0, size = 0, avoidedQS = 0, eval = 0;
-    int oldAlpha = alpha, best = -2 * MATE, optimalValue = -MATE;
+    int oldAlpha = alpha, best = -MATE, optimalValue = -MATE;
     
     uint16_t currentMove, tableMove = NONE_MOVE, bestMove = NONE_MOVE;
     uint16_t moves[MAX_MOVES], played[MAX_MOVES];
+    
+    pv->length = 0;
+    PVariation lpv;
+    lpv.length = 0;
     
     TransEntry * entry;
     Undo undo[1];
@@ -312,7 +334,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         applyNullMove(board, undo);
         
         // PERFORM NULL MOVE SEARCH
-        value = -alphaBetaSearch(board, -beta, -beta+1, depth-4, height+1, CUTNODE);
+        value = -alphaBetaSearch(&lpv, board, -beta, -beta+1, depth-4, height+1, CUTNODE);
         
         revertNullMove(board, undo);
         
@@ -327,9 +349,9 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         && nodeType == PVNODE){
         
         // SEARCH AT A LOWER DEPTH
-        value = alphaBetaSearch(board, alpha, beta, depth-2, height, PVNODE);
+        value = alphaBetaSearch(&lpv, board, alpha, beta, depth-2, height, nodeType);
         if (value <= alpha)
-            value = alphaBetaSearch(board, -MATE, beta, depth-2, height, PVNODE);
+            value = alphaBetaSearch(&lpv, board, -MATE, beta, depth-2, height, PVNODE);
         
         // GET TABLE MOVE FROM TRANSPOSITION TABLE
         entry = getTranspositionEntry(&Table, board->hash);
@@ -395,36 +417,42 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
         // FULL WINDOW SEARCH ON FIRST MOVE
         if (valid == 1 || nodeType != PVNODE){
             
-            value = -alphaBetaSearch(board, -beta, -alpha, newDepth, height+1, nodeType);
+            value = -alphaBetaSearch(&lpv, board, -beta, -alpha, newDepth, height+1, nodeType);
             
             // IMPROVED BOUND, BUT WAS REDUCED DEPTH?
             if (value > alpha
                 && newDepth != depth-1){
                     
-                value = -alphaBetaSearch(board, -beta, -alpha, depth-1, height+1, nodeType);
+                value = -alphaBetaSearch(&lpv, board, -beta, -alpha, depth-1, height+1, nodeType);
             }
         }
         
         // NULL WINDOW SEARCH ON NON-FIRST / PV MOVES
         else{
-            value = -alphaBetaSearch(board, -alpha-1, -alpha, newDepth, height+1, CUTNODE);
+            value = -alphaBetaSearch(&lpv, board, -alpha-1, -alpha, newDepth, height+1, CUTNODE);
             
             // NULL WINDOW FAILED HIGH, RESEARCH
             if (value > alpha)
-                value = -alphaBetaSearch(board, -beta, -alpha, depth-1, height+1, PVNODE);
+                value = -alphaBetaSearch(&lpv, board, -beta, -alpha, depth-1, height+1, PVNODE);
         }
         
         // REVERT MOVE FROM BOARD
         revertMove(board, currentMove, undo);
         
-        // IMPROVED CURRENT VALUE
+        // Improved current value
         if (value > best){
             best = value;
             bestMove = currentMove;
             
             // IMPROVED CURRENT LOWER VALUE
-            if (value > alpha)
+            if (value > alpha){
                 alpha = value;
+                
+                // Update the Principle Variation
+                pv->length = 1 + lpv.length;
+                pv->line[0] = currentMove;
+                memcpy(pv->line + 1, lpv.line, sizeof(uint16_t) * lpv.length);
+            }
         }
         
         // IMPROVED AND FAILED HIGH
@@ -482,7 +510,7 @@ int alphaBetaSearch(Board * board, int alpha, int beta, int depth, int height, i
 
 int quiescenceSearch(Board * board, int alpha, int beta, int height){
     
-    int i, size = 0, eval, value = -2*MATE, best = -2*MATE, values[256];
+    int i, size = 0, eval, value, best, values[256];
     uint16_t moves[MAX_MOVES], currentMove, maxValueGain;
     Undo undo[1];
     
