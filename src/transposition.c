@@ -30,55 +30,36 @@
  * set the data members to their inital states
  *
  * @param   table       Location to allocate the table
- * @param   megabytes   Table size in megabytes
+ * @param   megabytes   Table size in megabytes (upperbound)
  */
 void initalizeTranspositionTable(TransTable * table, uint64_t megabytes){
     
+    // Default table size uses a 16bit key, which
+    // results in a table using 16MB of memory.
     uint64_t keySize = 16ull;
     
     // Determine the keysize for the first power of
-    // two less than than or equal to megaBytes
+    // two less than than or equal to megaBytes. We
+    // assume here that every bucket is 256 bits
     for (;1ull << (keySize + 5) <= megabytes << 20 ; keySize++);
     keySize -= 1;
     
     // Setup Table's data members
     table->buckets = calloc(1 << keySize, sizeof(TransBucket));
-    table->maxSize = 1 << keySize;
+    table->numBuckets = 1 << keySize;
     table->keySize = keySize;
     table->generation = 0;
     table->used = 0;
 }
 
-void updateTranspositionTable(TransTable * table){
-    
-    table->generation = (table->generation + 1) % 64;
-}
-
+/**
+ * Free the memory allocated for the transposition table
+ *
+ * @param   table   Location of table to free
+ */
 void destroyTranspositionTable(TransTable * table){
     
     free(table->buckets);
-}
-
-void clearTranspositionTable(TransTable * table){
-    
-    unsigned int i;
-    int j;
-    TransEntry * entry;
-    
-    table->generation = 0;
-    table->used = 0;
-    
-    for (i = 0; i < table->maxSize; i++){
-        for (j = 0; j < 4; j++){
-            entry = &(table->buckets[i].entries[j]);
-            
-            entry->depth = 0;
-            entry->data = 0;
-            entry->value = 0;
-            entry->bestMove = 0;
-            entry->hash16 = 0;
-        }
-    }
 }
 
 /**
@@ -86,24 +67,24 @@ void clearTranspositionTable(TransTable * table){
  * matching entry has the same hash signature
  *
  * @param   table   TransTable pointer to table location
- * @param   hash    64-bit hash-key to be matched
+ * @param   hash    64-bit zorbist key to be matched
  *
  * @return          Found entry or NULL
  */
 TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash){
     
-    TransBucket * bucket = &(table->buckets[hash & (table->maxSize - 1)]);
+    TransBucket * bucket = &(table->buckets[hash & (table->numBuckets - 1)]);
     int i; uint16_t hash16 = hash >> 48;
     
-    // SEARCH FOR MATCHING ENTRY, UPDATE GENERATION IF FOUND
-    for (i = 0; i < 4; i++){
+    // Search for a matching entry. Update the generation if found.
+    for (i = 0; i < BUCKET_SIZE; i++){
         if (EntryHash16(bucket->entries[i]) == hash16){
             EntrySetAge(&(bucket->entries[i]), table->generation);
             return &(bucket->entries[i]);
         }
     }
     
-    // NO MATCHING ENTRY FOUND
+    // No entry found
     return NULL;
 }
 
@@ -120,39 +101,38 @@ TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash){
  * @param   type        Entry type based on alpha-beta window
  * @param   value       Value to be returned by the search
  * @param   bestMove    Best move found during the search
- * @param   hash        64-bit hash-key corresponding to the board
+ * @param   hash        64bit zorbist key corresponding to the board
 */
-void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t type, int16_t value, uint16_t bestMove, uint64_t hash){
+void storeTranspositionEntry(TransTable * table, int depth, int type, int value, int bestMove, uint64_t hash){
     
-    TransBucket * bucket = &(table->buckets[hash & (table->maxSize - 1)]);
+    // Validate Parameters
+    assert(depth < MaxDepth && depth >= 0);
+    assert(type == PVNODE || type == CUTNODE || type == ALLNODE);
+    assert(value <= MATE && value >= -MATE);
     
+    TransBucket * bucket = &(table->buckets[hash & (table->numBuckets - 1)]);
     TransEntry * oldCandidate = NULL;
     TransEntry * lowDraftCandidate = NULL;
     TransEntry * toReplace = NULL;
     
     int i; uint16_t hash16 = hash >> 48;
     
-    // VALIDATE PARAMETERS
-    assert(depth < MaxDepth);
-    assert(type >= 1 && type <= 3);
-    assert(value <= 32766 && value >= -32766);
-    
-    for (i = 0; i < 4; i++){
+    for (i = 0; i < BUCKET_SIZE; i++){
         
-        // FOUND AN UNUSED ENTRY
+        // Found an unused entry
         if (EntryType(bucket->entries[i]) == 0){
             table->used += 1;
             toReplace = &(bucket->entries[i]);
             goto Replace;
         }
         
-        // FOUND AN ENTRY WITH THE SAME HASH
+        // Found an entry with the same hash key
         if (EntryHash16(bucket->entries[i]) == hash16){
             toReplace = &(bucket->entries[i]);
             goto Replace;
         }
         
-        // SEARCH FOR THE LOWEST DRAFT OF AN OLD ENTRY
+        // Search for the lowest draft of an old entry
         if (EntryAge(bucket->entries[i]) != table->generation){
             if (oldCandidate == NULL
                 || EntryDepth(*oldCandidate) >= EntryDepth(bucket->entries[i])){
@@ -161,7 +141,7 @@ void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t type, in
             }
         }
         
-        // SEARCH FOR LOWEST DRAFT IF NO OLD ENTRY FOUND YET
+        // Search for the lowest draft if no old entry has been found yet
         if (oldCandidate == NULL){
             if (lowDraftCandidate == NULL 
                 || EntryDepth(*lowDraftCandidate) >= EntryDepth(bucket->entries[i])){
@@ -171,6 +151,7 @@ void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t type, in
         }
     }
     
+    // If no old candidate, use the lowest draft
     toReplace = oldCandidate != NULL ? oldCandidate : lowDraftCandidate;
     
     Replace:
@@ -181,30 +162,92 @@ void storeTranspositionEntry(TransTable * table, uint8_t depth, uint8_t type, in
         toReplace->hash16 = hash16;
 }
 
+/**
+ * Update the age / generation of the transposition table
+ *
+ * @param   table   TransTable pointer to table location
+ */
+void updateTranspositionTable(TransTable * table){
+    
+    table->generation = (table->generation + 1) % 64;
+}
+
+/**
+ * Zero out all entries in the transposition table
+ *
+ * @param   table   TransTable pointer to table location
+ */
+void clearTranspositionTable(TransTable * table){
+    
+    unsigned int i; int j;
+    TransEntry * entry;
+    
+    table->generation = 0;
+    table->used = 0;
+    
+    for (i = 0; i < table->numBuckets; i++){
+        for (j = 0; j < BUCKET_SIZE; j++){
+            entry = &(table->buckets[i].entries[j]);
+            entry->depth = 0;
+            entry->data = 0;
+            entry->value = 0;
+            entry->bestMove = 0;
+            entry->hash16 = 0;
+        }
+    }
+}
+
+/**
+ * Allocate memory for the pawn structure hash table
+ *
+ * @param   ptable  Location to allocate table
+ */
 void initalizePawnTable(PawnTable * ptable){
     
     ptable->entries = calloc(0x10000, sizeof(PawnEntry));
 }
 
+/**
+ * Delete memory used by the pawn structure hash table
+ *
+ * @param   ptable  Location of table to free
+ */
 void destoryPawnTable(PawnTable * ptable){
     
     free(ptable->entries);
 }
 
+/**
+ * Fetch a matching entry from the pawn table.
+ * Matching entries share the same pawn key.
+ *
+ * @param   ptable  Location of pawn table
+ * @param   phash   Pawn hash to match
+ */
 PawnEntry * getPawnEntry(PawnTable * ptable, uint64_t phash){
     
     PawnEntry * pentry = &(ptable->entries[phash >> 48]);
     
+    // Check for a matching hash signature
     if (pentry->phash == phash)
         return pentry;
         
+    // No entry found
     return NULL;
 }
 
+/**
+ * Store a pawn entry into the table
+ *
+ * @param   ptable  Location of pawn table
+ * @param   phash   Pawn hash of the current board
+ * @param   passed  Bitboard of the passed pawns
+ * @param   mg      Evaluation for the mid game
+ * @param   eg      Evaluation for the end game
+ */
 void storePawnEntry(PawnTable * ptable, uint64_t phash, uint64_t passed, int mg, int eg){
     
     PawnEntry * pentry = &(ptable->entries[phash >> 48]);
-    
     pentry->phash = phash;
     pentry->passed = passed;
     pentry->mg = mg;
