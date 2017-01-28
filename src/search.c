@@ -90,7 +90,7 @@ uint16_t getBestMove(SearchInfo * info){
         printf("time %d ", (int)(getRealTime() - info->startTime));
         printf("nodes %d ", (int)(TotalNodes));
         printf("nps %d ", (int)(1000 * (TotalNodes / (1 + getRealTime() - info->startTime))));
-        printf("hashfull %d ", (250 * Table.used) / Table.maxSize);
+        printf("hashfull %d ", (int)((1000 * Table.used) / (Table.numBuckets * BUCKET_SIZE)));
         printf("pv ");
         
         // Print out each move in the Principle Variation

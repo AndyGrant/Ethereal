@@ -24,12 +24,11 @@
 #include "types.h"
 
 void initalizeTranspositionTable(TransTable * table, uint64_t megabytes);
-void updateTranspositionTable(TransTable * table);
 void destroyTranspositionTable(TransTable * table);
-void clearTranspositionTable(TransTable * table);
 TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash);
-void storeTranspositionEntry(TransTable * table, uint8_t depth,uint8_t type, int16_t value, uint16_t bestMove, uint64_t hash);
-void dumpTranspositionTable(TransTable * table);
+void storeTranspositionEntry(TransTable * table, int depth, int type, int value, int bestMove, uint64_t hash);
+void updateTranspositionTable(TransTable * table);
+void clearTranspositionTable(TransTable * table);
 
 void initalizePawnTable(PawnTable * ptable);
 void destoryPawnTable(PawnTable * ptable);
@@ -42,6 +41,8 @@ extern PawnTable PTable;
 #define PVNODE  (1)
 #define CUTNODE (2)
 #define ALLNODE (3)
+
+#define BUCKET_SIZE (4)
 
 #define EntrySetAge(e,a)    ((e)->data = ((a) << 2) | ((e)->data & 3))
 #define EntryDepth(e)       ((e).depth)
