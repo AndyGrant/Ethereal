@@ -468,7 +468,7 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
  */
 int isNotInCheck(Board * board, int turn){
     int kingsq = getLSB(board->colours[turn] & board->pieces[KING]);
-    assert(board->squares[kingsq] == WhiteKing + turn);
+    assert(board->squares[kingsq] == WHITE_KING + turn);
     return !squareIsAttacked(board, turn, kingsq);
 }
 

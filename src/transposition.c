@@ -106,7 +106,7 @@ TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash){
 void storeTranspositionEntry(TransTable * table, int depth, int type, int value, int bestMove, uint64_t hash){
     
     // Validate Parameters
-    assert(depth < MaxDepth && depth >= 0);
+    assert(depth < MAX_DEPTH && depth >= 0);
     assert(type == PVNODE || type == CUTNODE || type == ALLNODE);
     assert(value <= MATE && value >= -MATE);
     
