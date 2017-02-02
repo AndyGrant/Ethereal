@@ -26,6 +26,8 @@
 #define MAX_HEIGHT  (128)
 #define MAX_MOVES   (256)
 
+#define BUCKET_SIZE (3)
+
 #define SQUARE_NB   (64)
 #define COLOUR_NB   ( 2)
 #define RANK_NB     ( 8)
@@ -67,13 +69,15 @@ typedef struct TransEntry {
     uint8_t depth;
     uint8_t data;
     int16_t value;
+    int16_t eval;
     uint16_t bestMove;
     uint16_t hash16;
     
 } TransEntry;
 
 typedef struct TransBucket {
-    TransEntry entries[4];
+    TransEntry entries[BUCKET_SIZE];
+    uint16_t padding;
     
 } TransBucket;
 
