@@ -100,11 +100,10 @@ TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash){
  * @param   depth       Depth from the current search
  * @param   type        Entry type based on alpha-beta window
  * @param   value       Value to be returned by the search
- * @param   eval        Static evaluation of the board
  * @param   bestMove    Best move found during the search
  * @param   hash        64bit zorbist key corresponding to the board
 */
-void storeTranspositionEntry(TransTable * table, int depth, int type, int value, int eval, int bestMove, uint64_t hash){
+void storeTranspositionEntry(TransTable * table, int depth, int type, int value, int bestMove, uint64_t hash){
     
     // Validate Parameters
     assert(depth < MAX_DEPTH && depth >= 0);
@@ -159,7 +158,6 @@ void storeTranspositionEntry(TransTable * table, int depth, int type, int value,
         toReplace->depth = depth;
         toReplace->data = (table->generation << 2) | (type);
         toReplace->value = value;
-        toReplace->eval = eval;
         toReplace->bestMove = bestMove;
         toReplace->hash16 = hash16;
 }
@@ -193,7 +191,6 @@ void clearTranspositionTable(TransTable * table){
             entry->depth = 0;
             entry->data = 0;
             entry->value = 0;
-            entry->eval = 0;
             entry->bestMove = 0;
             entry->hash16 = 0;
         }

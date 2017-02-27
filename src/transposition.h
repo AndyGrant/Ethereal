@@ -26,7 +26,7 @@
 void initalizeTranspositionTable(TransTable * table, uint64_t megabytes);
 void destroyTranspositionTable(TransTable * table);
 TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash);
-void storeTranspositionEntry(TransTable * table, int depth, int type, int value, int eval, int bestMove, uint64_t hash);
+void storeTranspositionEntry(TransTable * table, int depth, int type, int value, int bestMove, uint64_t hash);
 void updateTranspositionTable(TransTable * table);
 void clearTranspositionTable(TransTable * table);
 
@@ -42,6 +42,8 @@ extern PawnTable PTable;
 #define CUTNODE (2)
 #define ALLNODE (3)
 
+#define BUCKET_SIZE (4)
+
 #define EntrySetAge(e,a)    ((e)->data = ((a) << 2) | ((e)->data & 3))
 #define EntryDepth(e)       ((e).depth)
 #define EntryHash16(e)      ((e).hash16)
@@ -49,6 +51,5 @@ extern PawnTable PTable;
 #define EntryType(e)        ((e).data & 3)
 #define EntryMove(e)        ((e).bestMove)
 #define EntryValue(e)       ((e).value)
-#define EntryEval(e)        ((e).eval)
 
 #endif 
