@@ -222,7 +222,7 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int dep
     
     int i, value, newDepth, entryValue, entryType;
     int min, max, inCheck, values[MAX_MOVES];
-    int valid = 0, size = 0, avoidedQS = 0, eval = -MATE;
+    int valid = 0, size = 0, avoidedQS = 0, eval = 0;
     int oldAlpha = alpha, best = -MATE, optimalValue = -MATE;
     
     uint16_t currentMove, tableMove = NONE_MOVE, bestMove = NONE_MOVE;
@@ -274,9 +274,6 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int dep
         // ENTRY MOVE MAY BE CANDIDATE
         tableMove = EntryMove(*entry);
         
-        // Save the score from the entry
-        eval = EntryEval(*entry);
-        
         // ENTRY MAY IMPROVE BOUNDS
         if (USE_TRANSPOSITION_TABLE
             && EntryDepth(*entry) >= depth
@@ -310,8 +307,8 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int dep
     if (!avoidedQS)
         inCheck = !isNotInCheck(board, board->turn);
     
-    // Evaluate the board if it was not saved in the transposition table
-    if (eval == -MATE) eval = evaluateBoard(board, &PTable);
+    if (nodeType != PVNODE)
+        eval = evaluateBoard(board, &PTable);
     
     // STATIC NULL MOVE PRUNING
     if (USE_STATIC_NULL_PRUNING
@@ -356,9 +353,10 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int dep
         if (value <= alpha)
             value = alphaBetaSearch(&lpv, board, -MATE, beta, depth-2, height, PVNODE);
         
-        // Get the move from the newly stored transposition
+        // GET TABLE MOVE FROM TRANSPOSITION TABLE
         entry = getTranspositionEntry(&Table, board->hash);
-        if (entry != NULL) tableMove = entry->bestMove;
+        if (entry != NULL)
+            tableMove = entry->bestMove;
     }
     
     // GENERATE AND PREPARE MOVE ORDERING
@@ -500,11 +498,11 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int dep
     // STORE RESULTS IN TRANSPOSITION TABLE
     if (!Info->searchIsTimeLimited || getRealTime() < Info->endTime2){
         if (best > oldAlpha && best < beta)
-            storeTranspositionEntry(&Table, depth,  PVNODE, best, eval, bestMove, board->hash);
+            storeTranspositionEntry(&Table, depth,  PVNODE, best, bestMove, board->hash);
         else if (best >= beta)
-            storeTranspositionEntry(&Table, depth, CUTNODE, best, eval, bestMove, board->hash);
+            storeTranspositionEntry(&Table, depth, CUTNODE, best, bestMove, board->hash);
         else if (best <= oldAlpha)
-            storeTranspositionEntry(&Table, depth, ALLNODE, best, eval, bestMove, board->hash);
+            storeTranspositionEntry(&Table, depth, ALLNODE, best, bestMove, board->hash);
     }
     
     return best;
@@ -513,10 +511,7 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int dep
 int quiescenceSearch(Board * board, int alpha, int beta, int height){
     
     int i, size = 0, eval, value, best, values[256];
-    int entryValue, entryType, min, max;
     uint16_t moves[MAX_MOVES], currentMove, maxValueGain;
-    uint16_t tableMove = NONE_MOVE;
-    TransEntry * entry;
     Undo undo[1];
     
     // MAX HEIGHT REACHED, STOP HERE
@@ -526,45 +521,8 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
     // INCREMENT TOTAL NODE COUNTER
     TotalNodes++;
     
-    // LOOKUP CURRENT POSITION IN TRANSPOSITION TABLE
-    entry = getTranspositionEntry(&Table, board->hash);
-    
-    if (entry != NULL){
-        
-        // ENTRY MOVE MAY BE CANDIDATE
-        tableMove = EntryMove(*entry);
-        
-        // Save the score from the entry
-        eval = EntryEval(*entry);
-        
-        entryValue = EntryValue(*entry);
-        entryType = EntryType(*entry);
-        
-        min = alpha;
-        max = beta;
-        
-        // EXACT VALUE STORED
-        if (entryType == PVNODE)
-            return entryValue;
-        
-        // LOWER BOUND STORED
-        else if (entryType == CUTNODE)
-            min = entryValue > alpha ? entryValue : alpha;
-        
-        // UPPER BOUND STORED
-        else if (entryType == ALLNODE)
-            max = entryValue < beta ? entryValue : beta;
-        
-        // BOUNDS NOW OVERLAP?
-        if (min >= max)
-            return entryValue;
-    }
-    
-    else {
-        // GET A STANDING-EVAL OF THE CURRENT BOARD
-        eval = evaluateBoard(board, &PTable);
-    }
-    
+    // GET A STANDING-EVAL OF THE CURRENT BOARD
+    eval = evaluateBoard(board, &PTable);
     value = eval;
     
     // UPDATE LOWER BOUND
@@ -591,7 +549,7 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
     
     // GENERATE AND PREPARE QUIET MOVE ORDERING
     genAllNonQuiet(board, moves, &size);
-    evaluateMoves(board, values, moves, size, height, tableMove);
+    evaluateMoves(board, values, moves, size, height, NONE_MOVE);
     
     best = value;
     
