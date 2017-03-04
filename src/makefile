@@ -1,5 +1,8 @@
 CC = gcc
 CFLAGS = -DNDEBUG -O3 -Wall -Wextra -pedantic -std=c99
+
+PFLAGS = -DNDEBUG -Wall -Wextra -pedantic -std=c99 -p -pg
+
 SRC = bitboards.c       \
       bitutils.c        \
       board.c           \
@@ -17,5 +20,9 @@ SRC = bitboards.c       \
       uci.c             \
       zorbist.c         \
 
+
 all:
-	$(CC) $(CFLAGS) $(SRC) -o Ethereal8.03.exe
+	$(CC) $(CFLAGS) $(SRC) -o Ethereal.exe
+    
+profile:
+	$(CC) $(PFLAGS) $(SRC) -o Ethereal.exe

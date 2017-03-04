@@ -86,6 +86,10 @@ int main(){
             printf("%d\n", perft(&(info.board), atoi(str + 6)));
         }
         
+        else if (stringStartsWith(str, "bench")){
+            runBenchmark(atoi(str + 6));
+        }
+        
         else if (stringStartsWith(str, "debug")){
             // NOT IMPLEMENTED
         } 
