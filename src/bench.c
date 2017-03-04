@@ -16,14 +16,21 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _BOARD_H
-#define _BOARD_H
+#include <stdio.h>
 
+#include "board.h"
+#include "search.h"
+#include "time.h"
+#include "transposition.h"
 #include "types.h"
 
-void initalizeBoard(Board * board, char * fen);
-void printBoard(Board * board);
-int perft(Board * board, int depth);
-void runBenchmark(int depth);
 
-#endif
+
+
+
+
+
+
+
+
+
