@@ -33,34 +33,33 @@
 #define PHASE_NB    ( 2)
 
 typedef struct Board {
-    int squares[SQUARE_NB];
+    uint8_t squares[SQUARE_NB];
+    uint64_t pieces[8]; 
     uint64_t colours[3];
-    uint64_t pieces[7]; 
+    uint64_t hash;
+    uint64_t phash;
     int turn;
     int castleRights;
-    int fiftyMoveRule;
     int epSquare;
-    uint64_t phash;
-    uint64_t hash;
     int opening;
     int endgame;
-    uint64_t history[2048];
     int numMoves;
+    int fiftyMoveRule;
     int hasCastled[2];
+    uint64_t history[2048];
     
 } Board;
 
-typedef struct Undo {
-    int captureSquare;
-    int capturePiece;
+typedef struct Undo {    
+    uint64_t hash;
+    uint64_t phash;
     int turn;
     int castleRights;
+    int epSquare;
     int opening;
     int endgame;
-    int epSquare;
-    uint64_t phash;
-    uint64_t hash;
-    
+    int captureSquare;
+    int capturePiece;
 } Undo;
 
 typedef struct TransEntry {
