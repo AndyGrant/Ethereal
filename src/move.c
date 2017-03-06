@@ -65,6 +65,7 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
     undo->epSquare = board->epSquare;
     undo->turn = board->turn;
     undo->castleRights = board->castleRights;
+    undo->fiftyMoveRule = board->fiftyMoveRule;
     undo->opening = board->opening;
     undo->endgame = board->endgame;
     undo->phash = board->phash;
@@ -74,6 +75,10 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
     
     // Update the key to include the turn change
     board->hash ^= ZorbistKeys[TURN][0];
+    
+    // Always increment the fifty counter. We will reset
+    // it within the code for each move type
+    board->fiftyMoveRule += 1;
     
     if (MoveType(move) == NORMAL_MOVE){
         to = MoveTo(move);
@@ -87,6 +92,12 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
         
         fromType = PieceType(fromPiece);
         toType = PieceType(toPiece);
+        
+        // Reset fifty move rule on a pawn move
+        if (fromType == PAWN) board->fiftyMoveRule = 0;
+        
+        // Reset fifty move rule on a capture
+        else if (toPiece != EMPTY) board->fiftyMoveRule = 0;
         
         // Update the colour bitboards
         board->colours[board->turn] ^= shiftFrom | shiftTo;
@@ -239,6 +250,9 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
         
         shiftFrom = 1ull << from;
         shiftTo = 1ull << to;
+        
+        // Reset fifty move rule on a pawn move
+        board->fiftyMoveRule = 0;
     
         // Update the colour bitboards
         board->colours[board->turn] ^= shiftFrom | shiftTo;
@@ -289,6 +303,7 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
     }
     
     if (MoveType(move) == ENPASS_MOVE){
+        
         to = MoveTo(move);
         from = MoveFrom(move);
         ep = board->epSquare - 8 + (board->turn << 4);
@@ -299,6 +314,9 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
         shiftFrom = 1ull << from;
         shiftTo = 1ull << to;
         shiftEnpass = 1ull << ep;
+        
+        // Reset fifty move rule on a pawn move
+        board->fiftyMoveRule = 0;
         
         // Update the colour bitboards
         board->colours[!board->turn] ^= shiftEnpass;
@@ -366,6 +384,15 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
     
     board->numMoves--;
     
+    board->turn = undo->turn;
+    board->castleRights = undo->castleRights;
+    board->epSquare = undo->epSquare;
+    board->fiftyMoveRule = undo->fiftyMoveRule;
+    board->opening = undo->opening;
+    board->endgame = undo->endgame;
+    board->phash = undo->phash;
+    board->hash = undo->hash;
+    
     if (MoveType(move) == NORMAL_MOVE){
         to = MoveTo(move);
         from = MoveFrom(move);
@@ -384,14 +411,6 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
         
         board->squares[from] = board->squares[to];
         board->squares[to] = undo->capturePiece;
-        
-        board->castleRights = undo->castleRights;
-        board->turn = undo->turn;
-        board->epSquare = undo->epSquare;
-        board->opening = undo->opening;
-        board->endgame = undo->endgame;
-        board->phash = undo->phash;
-        board->hash = undo->hash;
         return;
     }
     
@@ -420,14 +439,6 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
         
         board->squares[rFrom] = board->squares[rTo];
         board->squares[rTo] = EMPTY;
-        
-        board->castleRights = undo->castleRights;
-        board->turn = undo->turn;
-        board->epSquare = undo->epSquare;
-        board->opening = undo->opening;
-        board->endgame = undo->endgame;
-        board->phash = undo->phash;
-        board->hash = undo->hash;
         return;
     }
     
@@ -451,13 +462,6 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
         
         board->squares[to] = undo->capturePiece;
         board->squares[from] = WHITE_PAWN + undo->turn;
-        
-        board->turn = undo->turn;
-        board->epSquare = undo->epSquare;
-        board->opening = undo->opening;
-        board->endgame = undo->endgame;
-        board->phash = undo->phash;
-        board->hash = undo->hash;
         return;
     }
     
@@ -479,13 +483,6 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
         board->squares[from] = board->squares[to];
         board->squares[to] = EMPTY;
         board->squares[ep] = undo->capturePiece;
-        
-        board->turn = undo->turn;
-        board->epSquare = undo->epSquare;
-        board->opening = undo->opening;
-        board->endgame = undo->endgame;
-        board->phash = undo->phash;
-        board->hash = undo->hash;
         return;
     }
 }
