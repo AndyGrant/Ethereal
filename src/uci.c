@@ -62,7 +62,7 @@ int main(){
         getInput(str);
         
         if (stringEquals(str, "uci")){
-            printf("id name Ethereal 8.11\n");
+            printf("id name Ethereal 8.12\n");
             printf("id author Andrew Grant\n");
             printf("option name Hash type spin default 16 min 1 max 2048\n");
             printf("uciok\n");
@@ -153,7 +153,21 @@ int main(){
                 
                 while (*ptr == ' ')
                     ptr++;
+                
+                // Reset the history of hashes if we just reset
+                // the fifty move rule. This way, the numMoves
+                // can never be greated than ~100 (128)
+                if (info.board.fiftyMoveRule == 0)
+                    info.board.numMoves = 0;
             }
+            
+            // Reset has castled so that we only evaluate having
+            // castled if it was done since the root. Believe I
+            // saw this same idea in Robert Hyatt's Crafty.
+            info.board.hasCastled[0] = 0;
+            info.board.hasCastled[1] = 0;
+            
+            
         }
         
         else if (stringStartsWith(str, "go")){

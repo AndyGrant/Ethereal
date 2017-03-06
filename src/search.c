@@ -228,12 +228,12 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int dep
     uint16_t currentMove, tableMove = NONE_MOVE, bestMove = NONE_MOVE;
     uint16_t moves[MAX_MOVES], played[MAX_MOVES];
     
-    pv->length = 0;
-    PVariation lpv;
-    lpv.length = 0;
-    
     TransEntry * entry;
     Undo undo[1];
+    
+    PVariation lpv;
+    lpv.length = 0;
+    pv->length = 0;
     
     // SEARCH TIME HAS EXPIRED
     if (Info->searchIsTimeLimited && getRealTime() >= Info->endTime2){
@@ -241,7 +241,11 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int dep
         return board->turn == EvaluatingPlayer ? -MATE : MATE;
     }
     
-    // DETERMINE 3-FOLD REPITION
+    // Check for the fifty move rule
+    if (board->fiftyMoveRule > 100)
+        return 0;
+    
+    // Check for three-fold repitition
     for (i = board->numMoves-2; i >= 0; i-=2)
         if (board->history[i] == board->hash)
             return 0;
