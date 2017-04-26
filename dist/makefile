@@ -8,22 +8,7 @@ CWIN64FLAGS = -DNDEBUG -O3 -Wall -Wextra -pedantic -std=c99 -m64
 CDROIDFLAGS = -DNDEBUG -O3 -Wall -Wextra -pedantic -std=c99 -march=armv5t
 LIBS = -static
 
-SRC = ../src/bitboards.c       \
-      ../src/bitutils.c        \
-      ../src/board.c           \
-      ../src/castle.c          \
-      ../src/evaluate.c        \
-      ../src/magics.c          \
-      ../src/masks.c           \
-      ../src/move.c            \
-      ../src/movegen.c         \
-      ../src/movegentest.c     \
-      ../src/psqt.c            \
-      ../src/search.c          \
-      ../src/time.c            \
-      ../src/transposition.c   \
-      ../src/uci.c             \
-      ../src/zorbist.c         \
+SRC = ../src/*.c
       
 all:
 	$(CCDROID) $(CDROIDFLAGS) $(SRC) -o $(EXE)-Android $(LIBS)

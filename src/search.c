@@ -27,6 +27,7 @@
 #include "board.h"
 #include "castle.h"
 #include "evaluate.h"
+#include "history.h"
 #include "piece.h"
 #include "psqt.h"
 #include "search.h"
@@ -39,12 +40,11 @@
 int TotalNodes;
 int EvaluatingPlayer;
 SearchInfo * Info;
+HistoryTable History;
 
 TransTable Table;
 PawnTable PTable;
 
-int HistoryGood[0x10000];
-int HistoryTotal[0x10000];
 
 uint16_t KillerMoves[MAX_HEIGHT][2];
 
@@ -64,17 +64,12 @@ uint16_t getBestMove(SearchInfo * info){
     // Prepare the transposition tables
     updateTranspositionTable(&Table);
     initalizePawnTable(&PTable);
+    clearHistory(History);
     
     // Populate the root's movelist
     MoveList rootMoveList;
     rootMoveList.size = 0;
     genAllMoves(&(info->board),rootMoveList.moves,&(rootMoveList.size));
-    
-    // Clear out the history counters
-    for (i = 0; i < 0x10000; i++){
-        HistoryGood[i] = 1;
-        HistoryTotal[i] = 1;
-    }
     
     // PERFORM ITERATIVE DEEPENING
     for (depth = 1; depth < MAX_DEPTH; depth++){
@@ -409,7 +404,7 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int dep
         if (USE_LATE_MOVE_REDUCTIONS
             && valid >= 5
             && depth >= 3
-            && ((100 * HistoryGood[currentMove]) / HistoryTotal[currentMove]) < 80
+            && getHistoryScore(History, currentMove, !board->turn, 100) < 80
             && !inCheck
             && MoveType(currentMove) == NORMAL_MOVE
             && undo[0].capturePiece == EMPTY
@@ -465,7 +460,7 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int dep
             // UPDATE KILLER MOVES
             if (MoveType(currentMove) == NORMAL_MOVE
                 && undo[0].capturePiece == EMPTY
-                && KillerMoves[height][0] != currentMove){
+                && KillerMoves[height][1] != currentMove){
                 KillerMoves[height][1] = KillerMoves[height][0];
                 KillerMoves[height][0] = currentMove;
             }
@@ -489,15 +484,11 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int dep
     Cut:
     
     if (best >= beta && bestMove != NONE_MOVE)
-        HistoryGood[bestMove]++;
+        updateHistory(History, bestMove, board->turn, 1, depth*depth);
     
-    for (i = valid - 1; i >= 0; i--){
-        HistoryTotal[played[i]]++;
-        if (HistoryTotal[played[i]] >= 16384){
-            HistoryTotal[played[i]] = (HistoryTotal[played[i]] + 1) / 2;
-            HistoryGood[played[i]] = (HistoryGood[played[i]] + 1) / 2;
-        }
-    }
+    for (i = valid - 2; i >= 0; i--)
+        updateHistory(History, played[i], board->turn, 0, depth*depth);
+    
     
     // STORE RESULTS IN TRANSPOSITION TABLE
     if (!Info->searchIsTimeLimited || getRealTime() < Info->endTime2){
@@ -641,7 +632,7 @@ void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int 
         value += PSQTopening[fromType][MoveTo(moves[i])] - PSQTopening[fromType][MoveFrom(moves[i])];
         
         // HISTORY ORDERING
-        value += ((512 * HistoryGood[moves[i]]) / HistoryTotal[moves[i]]);
+        value += getHistoryScore(History, moves[i], board->turn, 512);
         
         values[i] = value;
     }

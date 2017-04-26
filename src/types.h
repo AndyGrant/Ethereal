@@ -21,6 +21,8 @@
 
 #include <stdint.h>
 
+#include "piece.h"
+
 #define MATE        (16000)
 #define MAX_DEPTH   (64)
 #define MAX_HEIGHT  (128)
@@ -124,5 +126,7 @@ typedef struct PVariation {
     int length;
     
 } PVariation;
+
+typedef uint16_t HistoryTable[COLOUR_NB][SQUARE_NB][SQUARE_NB][2]; 
 
 #endif
