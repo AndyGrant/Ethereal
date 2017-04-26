@@ -8,6 +8,7 @@ SRC = bitboards.c       \
       board.c           \
       castle.c          \
       evaluate.c        \
+      history.c         \
       magics.c          \
       masks.c           \
       move.c            \
