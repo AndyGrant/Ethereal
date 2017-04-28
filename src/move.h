@@ -42,6 +42,11 @@ void printMove(uint16_t move);
 #define PROMOTE_TO_ROOK   (2 << 14)
 #define PROMOTE_TO_QUEEN  (3 << 14)
 
+#define KNIGHT_PROMO_MOVE   (PROMOTION_MOVE | PROMOTE_TO_KNIGHT)
+#define BISHOP_PROMO_MOVE   (PROMOTION_MOVE | PROMOTE_TO_BISHOP)
+#define ROOK_PROMO_MOVE     (PROMOTION_MOVE | PROMOTE_TO_ROOK  )
+#define QUEEN_PROMO_MOVE    (PROMOTION_MOVE | PROMOTE_TO_QUEEN )
+
 #define MoveFrom(move)         (((move) >> 0) & 63)
 #define MoveTo(move)           (((move) >> 6) & 63)
 #define MoveType(move)         ((move) & (3 << 12))
