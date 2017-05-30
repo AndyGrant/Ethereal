@@ -23,7 +23,7 @@
 
 void initalizeBoard(Board * board, char * fen);
 void printBoard(Board * board);
-int perft(Board * board, int depth);
+uint64_t perft(Board * board, int depth);
 void runBenchmark(int depth);
 
 #endif

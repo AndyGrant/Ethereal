@@ -308,6 +308,7 @@ void initalizePSQT(){
         PSQTendgame[WHITE_KING][i+4] = KingValue + KingEndgameMap32[j+3];
     }
     
+    // Mirror each value for black
     for(i = BLACK_PAWN; i <= BLACK_KING; i+= 4){
         for(j = 0; j < SQUARE_NB; j++){
             PSQTopening[i][j] = -PSQTopening[i-1][InversionTable[j]];

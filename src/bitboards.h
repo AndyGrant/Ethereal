@@ -39,13 +39,16 @@
 #define FILE_G (0x4040404040404040ull)
 #define FILE_H (0x8080808080808080ull)
 
+#define LEFT_WING  (FILE_A | FILE_B | FILE_C)
+#define RIGHT_WING (FILE_F | FILE_G | FILE_H)
+
 #define WHITE_SQUARES (0x55AA55AA55AA55AAull)
 #define BLACK_SQUARES (0xAA55AA55AA55AA55ull)
 
-extern uint64_t Files[8];
-extern uint64_t Ranks[8];
+extern const uint64_t Files[8];
+extern const uint64_t Ranks[8];
 
-#define File(sq)            ((sq) & 7)
-#define Rank(sq)            ((sq) >> 3)
+#define File(sq) ((sq) & 7)
+#define Rank(sq) ((sq) >> 3)
 
 #endif

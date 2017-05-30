@@ -24,16 +24,26 @@
 #include "types.h"
 
 void initalizeTranspositionTable(TransTable * table, uint64_t megabytes);
+
 void destroyTranspositionTable(TransTable * table);
+
 TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash);
-void storeTranspositionEntry(TransTable * table, int depth, int type, int value, int bestMove, uint64_t hash);
+
+void storeTranspositionEntry(TransTable * table, int depth, int type,
+                             int value, int bestMove, uint64_t hash);
+                             
 void updateTranspositionTable(TransTable * table);
+
 void clearTranspositionTable(TransTable * table);
 
 void initalizePawnTable(PawnTable * ptable);
+
 void destoryPawnTable(PawnTable * ptable);
+
 PawnEntry * getPawnEntry(PawnTable * ptable, uint64_t phash);
-void storePawnEntry(PawnTable * ptable, uint64_t phash, uint64_t passed, int mg, int eg);
+
+void storePawnEntry(PawnTable * ptable, uint64_t phash, uint64_t passed,
+                                                        int mg, int eg);
 
 extern TransTable Table;
 extern PawnTable PTable;

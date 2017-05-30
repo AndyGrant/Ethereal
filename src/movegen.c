@@ -29,6 +29,33 @@
 #include "types.h"
 
 /**
+ * Generate all of the legal moves for a given board. The moves will
+ * be stored in a pointer passed to the function, and an integer 
+ * pointer passed to the function will be updated to reflect the
+ * total number of psuedo legal moves found.
+ *
+ * @param   board   Board pointer with the current position
+ * @param   moves   Destination for the found legal moves
+ * @param   size    Pointer to keep track of the number of moves
+ */
+void genAllLegalMoves(Board * board, uint16_t * moves, int * size){
+    
+    Undo undo[1];
+    int i, psuedoSize = 0;    
+    uint16_t psuedoMoves[MAX_MOVES];
+    
+    genAllMoves(board, psuedoMoves, &psuedoSize);
+    
+    // Copy over moves from psuedoMoves that are proven to be legal
+    for (i = 0; i < psuedoSize; i++){
+        applyMove(board, psuedoMoves[i], undo);
+        if (isNotInCheck(board, !board->turn))
+            moves[(*size)++] = psuedoMoves[i];
+        revertMove(board, psuedoMoves[i], undo);
+    }
+}
+
+/**
  * Generate all of the psudeo legal moves for a given board.
  * The moves will be stored in a pointer passed to the function,
  * and an integer pointer passed to the function will be updated
@@ -68,10 +95,8 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
     uint64_t myQueens  = friendly & board->pieces[QUEEN];
     uint64_t myKings   = friendly & board->pieces[KING];
     
-    // Generate the queens' moves as if 
-    // they were rooks and bishops
-    myBishops |= myQueens;
-    myRooks |= myQueens;
+    // Generate the queens' moves as if they were rooks and bishops
+    myBishops |= myQueens; myRooks |= myQueens;
     
     // DEFINE PAWN BITBOARDS AND FIND ENPASS MOVES
     if (board->turn == WHITE){
@@ -94,10 +119,10 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
         
         if(epSquare != -1){
             if (board->squares[epSquare - 7] == WHITE_PAWN && epSquare != 47)
-                moves[(*size)++] = MoveMake(epSquare - 7, epSquare, ENPASS_MOVE);
+                moves[(*size)++] = MoveMake(epSquare-7, epSquare, ENPASS_MOVE);
             
             if (board->squares[epSquare - 9] == WHITE_PAWN && epSquare != 40)
-                moves[(*size)++] = MoveMake(epSquare - 9, epSquare, ENPASS_MOVE);
+                moves[(*size)++] = MoveMake(epSquare-9, epSquare, ENPASS_MOVE);
         }
         
     } else {
@@ -120,10 +145,10 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
         
         if(epSquare != -1){
             if (board->squares[epSquare + 7] == BLACK_PAWN && epSquare != 16)
-                moves[(*size)++] = MoveMake(epSquare + 7, epSquare, ENPASS_MOVE);
+                moves[(*size)++] = MoveMake(epSquare+7, epSquare, ENPASS_MOVE);
             
             if (board->squares[epSquare + 9] == BLACK_PAWN && epSquare != 23)
-                moves[(*size)++] = MoveMake(epSquare + 9, epSquare, ENPASS_MOVE);
+                moves[(*size)++] = MoveMake(epSquare+9, epSquare, ENPASS_MOVE);
         }
     }
     
@@ -218,8 +243,7 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
     uint64_t myKings   = friendly & board->pieces[KING];
     
     // Generate queen moves as if they were rooks and bishops
-    myBishops |= myQueens;
-    myRooks |= myQueens;
+    myBishops |= myQueens; myRooks |= myQueens;
     
     // Generate Pawn BitBoards and Generate Enpass Moves
     if (board->turn == WHITE){
@@ -331,10 +355,10 @@ int squareIsAttacked(Board * board, int turn, int sq){
     
     // Pawns
     if (turn == WHITE){
-        if ((((square << 7) & ~FILE_H) | ((square << 9) & ~FILE_A)) & enemyPawns)
+        if (((square << 7 & ~FILE_H) | (square << 9 & ~FILE_A)) & enemyPawns)
             return 1;
     } else {
-        if ((((square >> 7) & ~FILE_A) | ((square >> 9) & ~FILE_H)) & enemyPawns)
+        if (((square >> 7 & ~FILE_A) | (square >> 9 & ~FILE_H)) & enemyPawns)
             return 1;
     }
     

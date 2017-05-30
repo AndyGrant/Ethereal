@@ -18,7 +18,7 @@
 
 #include "castle.h"
 
-int CastleMask[64] = {
+const int CastleMask[64] = {
     13, 15, 15, 15, 12, 15, 15, 14,
     15, 15, 15, 15, 15, 15, 15, 15,
     15, 15, 15, 15, 15, 15, 15, 15,
@@ -29,5 +29,5 @@ int CastleMask[64] = {
      7, 15, 15, 15,  3, 15, 15, 11 
 };
 
-int RookFromLookupTable[2] = {-4, 3};
-int RookToLookupTable[2] = {-1, 1};
+const int RookFromLookupTable[2] = {-4, 3};
+const int RookToLookupTable[2] = {-1, 1};

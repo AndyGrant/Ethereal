@@ -41,6 +41,7 @@ void initalizeTranspositionTable(TransTable * table, uint64_t megabytes){
     // Determine the keysize for the first power of
     // two less than than or equal to megaBytes. We
     // assume here that every bucket is 256 bits
+    assert(sizeof(TransBucket) == 32);
     for (;1ull << (keySize + 5) <= megabytes << 20 ; keySize++);
     keySize -= 1;
     
@@ -103,7 +104,8 @@ TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash){
  * @param   bestMove    Best move found during the search
  * @param   hash        64bit zorbist key corresponding to the board
 */
-void storeTranspositionEntry(TransTable * table, int depth, int type, int value, int bestMove, uint64_t hash){
+void storeTranspositionEntry(TransTable * table, int depth, int type, 
+                             int value, int bestMove, uint64_t hash){
     
     // Validate Parameters
     assert(depth < MAX_DEPTH && depth >= 0);
@@ -111,8 +113,9 @@ void storeTranspositionEntry(TransTable * table, int depth, int type, int value,
     assert(value <= MATE && value >= -MATE);
     
     TransBucket * bucket = &(table->buckets[hash & (table->numBuckets - 1)]);
-    TransEntry * oldCandidate = NULL;
-    TransEntry * lowDraftCandidate = NULL;
+    TransEntry * entries = bucket->entries;
+    TransEntry * oldOption = NULL;
+    TransEntry * lowDraftOption = NULL;
     TransEntry * toReplace = NULL;
     
     int i; uint16_t hash16 = hash >> 48;
@@ -120,39 +123,39 @@ void storeTranspositionEntry(TransTable * table, int depth, int type, int value,
     for (i = 0; i < BUCKET_SIZE; i++){
         
         // Found an unused entry
-        if (EntryType(bucket->entries[i]) == 0){
+        if (EntryType(entries[i]) == 0){
             table->used += 1;
-            toReplace = &(bucket->entries[i]);
+            toReplace = &(entries[i]);
             goto Replace;
         }
         
         // Found an entry with the same hash key
-        if (EntryHash16(bucket->entries[i]) == hash16){
-            toReplace = &(bucket->entries[i]);
+        if (EntryHash16(entries[i]) == hash16){
+            toReplace = &(entries[i]);
             goto Replace;
         }
         
         // Search for the lowest draft of an old entry
-        if (EntryAge(bucket->entries[i]) != table->generation){
-            if (oldCandidate == NULL
-                || EntryDepth(*oldCandidate) >= EntryDepth(bucket->entries[i])){
+        if (EntryAge(entries[i]) != table->generation){
+            if (oldOption == NULL
+                || EntryDepth(*oldOption) >= EntryDepth(entries[i])){
                     
-                oldCandidate = &(bucket->entries[i]);
+                oldOption = &(entries[i]);
             }
         }
         
         // Search for the lowest draft if no old entry has been found yet
-        if (oldCandidate == NULL){
-            if (lowDraftCandidate == NULL 
-                || EntryDepth(*lowDraftCandidate) >= EntryDepth(bucket->entries[i])){
+        if (oldOption == NULL){
+            if (lowDraftOption == NULL 
+                || EntryDepth(*lowDraftOption) >= EntryDepth(entries[i])){
                     
-                lowDraftCandidate = &(bucket->entries[i]);
+                lowDraftOption = &(entries[i]);
             }
         }
     }
     
-    // If no old candidate, use the lowest draft
-    toReplace = oldCandidate != NULL ? oldCandidate : lowDraftCandidate;
+    // If no old option, use the lowest draft
+    toReplace = oldOption != NULL ? oldOption : lowDraftOption;
     
     Replace:
         toReplace->depth = depth;
@@ -185,14 +188,14 @@ void clearTranspositionTable(TransTable * table){
     table->generation = 0;
     table->used = 0;
     
-    for (i = 0; i < table->numBuckets; i++){
+    for (i = 0u; i < table->numBuckets; i++){
         for (j = 0; j < BUCKET_SIZE; j++){
             entry = &(table->buckets[i].entries[j]);
-            entry->depth = 0;
-            entry->data = 0;
+            entry->depth = 0u;
+            entry->data = 0u;
             entry->value = 0;
-            entry->bestMove = 0;
-            entry->hash16 = 0;
+            entry->bestMove = 0u;
+            entry->hash16 = 0u;
         }
     }
 }
@@ -223,6 +226,8 @@ void destoryPawnTable(PawnTable * ptable){
  *
  * @param   ptable  Location of pawn table
  * @param   phash   Pawn hash to match
+ *
+ * @return          Corresponding pawn hash entry
  */
 PawnEntry * getPawnEntry(PawnTable * ptable, uint64_t phash){
     
@@ -245,7 +250,8 @@ PawnEntry * getPawnEntry(PawnTable * ptable, uint64_t phash){
  * @param   mg      Evaluation for the mid game
  * @param   eg      Evaluation for the end game
  */
-void storePawnEntry(PawnTable * ptable, uint64_t phash, uint64_t passed, int mg, int eg){
+void storePawnEntry(PawnTable * ptable, uint64_t phash, uint64_t passed, 
+                                                        int mg, int eg){
     
     PawnEntry * pentry = &(ptable->entries[phash >> 48]);
     pentry->phash = phash;

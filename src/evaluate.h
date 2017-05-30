@@ -49,19 +49,18 @@ int evaluatePieces(Board * board, PawnTable * ptable);
 #define PAWN_ISOLATED_MID    (10)
 #define PAWN_ISOLATED_END    (20)
 
-#define PSQT_MULTIPLIER      (1)
-
-extern int PawnConnected[COLOUR_NB][SQUARE_NB];
-extern int PawnPassed[PHASE_NB][2][2][RANK_NB];
-extern int PieceValues[8];
-extern int KnightOutpost[PHASE_NB][2];
-extern int BishopOutpost[PHASE_NB][2];
-extern int KnightMobility[PHASE_NB][9];
-extern int BishopMobility[PHASE_NB][14];
-extern int RookMobility[PHASE_NB][15];
-extern int QueenMobility[PHASE_NB][28];
-extern int SafetyTable[100];
-extern int BishopHasWings[PHASE_NB];
-extern int BishopPair[PHASE_NB];
+extern const int PawnConnected[COLOUR_NB][SQUARE_NB];
+extern const int PawnPassed[PHASE_NB][2][2][RANK_NB];
+extern const int PieceValues[8];
+extern const int KnightOutpost[PHASE_NB][2];
+extern const int BishopOutpost[PHASE_NB][2];
+extern const int KnightMobility[PHASE_NB][9];
+extern const int BishopMobility[PHASE_NB][14];
+extern const int RookMobility[PHASE_NB][15];
+extern const int QueenMobility[PHASE_NB][28];
+extern const int SafetyTable[100];
+extern const int BishopHasWings[PHASE_NB];
+extern const int BishopPair[PHASE_NB];
+extern const int Tempo[PHASE_NB];
 
 #endif

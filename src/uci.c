@@ -16,10 +16,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <inttypes.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
 
 #include "board.h"
 #include "magics.h"
@@ -36,24 +37,21 @@
 #include "uci.h"
 #include "zorbist.h"
 
+char * startPos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
 int main(){
     
+    int size, megabytes;
+    Undo undo[1];
+    SearchInfo info;
+    uint16_t moves[MAX_MOVES];
+    char str[2048], moveStr[6], testStr[6], * ptr;
+    
+    // Initalze all components of the chess engine
     initalizeMagics();
     initalizeZorbist();
     initalizePSQT();
     initalizeMasks();
-    
-    char * startPos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    
-    char str[2048];
-    char * ptr;
-    
-    char moveStr[6], testStr[6];
-    uint16_t moves[MAX_MOVES];
-    int size;
-    Undo undo;
-    
-    SearchInfo info;
     initalizeBoard(&(info.board), startPos);
     initalizeTranspositionTable(&Table, 16);
     
@@ -61,38 +59,32 @@ int main(){
         
         getInput(str);
         
-        if (stringEquals(str, "uci")){
-            printf("id name Ethereal 8.13\n");
-            printf("id author Andrew Grant\n");
-            printf("option name Hash type spin default 16 min 1 max 2048\n");
-            printf("uciok\n");
-            fflush(stdout);
-        }
+        /* Non Universal Chess Interface commands */
         
-        else if (stringStartsWith(str, "setoption")){
-            
-            if (stringStartsWith(str, "setoption name Hash value")){
-                int megaBytes = atoi(str + strlen("setoption name Hash value"));
-                destroyTranspositionTable(&Table);
-                initalizeTranspositionTable(&Table, megaBytes);
-            }
-        }
-        
-        else if (stringEquals(str, "movegentest")){
+        if (stringEquals(str, "movegentest")){
             moveGenTest();
         }
         
         else if (stringStartsWith(str, "perft")){
-            printf("%d\n", perft(&(info.board), atoi(str + 6)));
+            printf("%"PRIu64"\n", perft(&info.board, atoi(str + 6)));
+            fflush(stdout);
         }
         
         else if (stringStartsWith(str, "bench")){
             runBenchmark(atoi(str + 6));
         }
         
-        else if (stringStartsWith(str, "debug")){
-            // NOT IMPLEMENTED
-        } 
+        /* Universal Chess Interface commands
+           Full documentation can be found here:
+           http://wbec-ridderkerk.nl/html/UCIProtocol.html */
+            
+        if (stringEquals(str, "uci")){
+            printf("id name Ethereal 8.15\n");
+            printf("id author Andrew Grant\n");
+            printf("option name Hash type spin default 16 min 1 max 2048\n");
+            printf("uciok\n");
+            fflush(stdout);
+        }
         
         else if (stringEquals(str, "isready")){
             printf("readyok\n");
@@ -100,12 +92,13 @@ int main(){
         } 
         
         else if (stringStartsWith(str, "setoption")){
-            // NOT IMPLEMENTED
-        } 
-        
-        else if (stringEquals(str, "register")){
-            // NOT NEEDED
-        } 
+            
+            if (stringStartsWith(str, "setoption name Hash value")){
+                megabytes = atoi(str + strlen("setoption name Hash value"));
+                destroyTranspositionTable(&Table);
+                initalizeTranspositionTable(&Table, megabytes);
+            }
+        }
         
         else if (stringEquals(str, "ucinewgame")){
             clearTranspositionTable(&Table);
@@ -113,10 +106,11 @@ int main(){
         
         else if (stringStartsWith(str, "position")){
             
+            // Determine form of the position command
             if (stringContains(str, "fen"))
-                initalizeBoard(&(info.board), strstr(str, "fen") + 4);
+                initalizeBoard(&info.board, strstr(str, "fen") + 4);
             else if (stringContains(str, "startpos"))
-                initalizeBoard(&(info.board), startPos);
+                initalizeBoard(&info.board, startPos);
             else
                 exit(EXIT_FAILURE);
             
@@ -124,33 +118,40 @@ int main(){
             if (ptr != NULL) ptr += 6;
             
             while (ptr != NULL && *ptr != '\0'){
+                
+                // Move is in long algebraic notation
                 moveStr[0] = *ptr++;
                 moveStr[1] = *ptr++;
                 moveStr[2] = *ptr++;
                 moveStr[3] = *ptr++;
                 
+                // NULL terminate a non promotional move
                 if (*ptr == '\0' || *ptr == ' ')
                     moveStr[4] = '\0';
+                
+                // Move is a promotion move
                 else{
                     moveStr[4] = *ptr++;
                     moveStr[5] = '\0';
                 }
                 
                 size = 0;
-                genAllMoves(&(info.board), moves, &size);
+                genAllMoves(&info.board, moves, &size);
                 
+                // Search for the matching move
                 for (size -= 1; size >= 0; size--){
                     moveToString(testStr, moves[size]);
-                    
                     if (stringEquals(moveStr, testStr)){
-                        applyMove(&(info.board), moves[size], &undo);
+                        applyMove(&info.board, moves[size], undo);
                         break;
                     }
                 }
                 
+                // Move was unable to be found on the current board
                 if (size == -1)
                     exit(EXIT_FAILURE);
                 
+                // Skip over all white space
                 while (*ptr == ' ')
                     ptr++;
                 
@@ -162,12 +163,10 @@ int main(){
             }
             
             // Reset has castled so that we only evaluate having
-            // castled if it was done since the root. Believe I
+            // castled if it was done since the root. I Believe I
             // saw this same idea in Robert Hyatt's Crafty.
             info.board.hasCastled[0] = 0;
             info.board.hasCastled[1] = 0;
-            
-            
         }
         
         else if (stringStartsWith(str, "go")){
@@ -180,22 +179,15 @@ int main(){
             double btime = -1;
             double winc = 0;
             double binc = 0;
-            int mtg = -1;
+            double mtg = -1;
             int depth = -1;
             double movetime = -1;
             int infinite = -1;
             
+            // Parse all of the parameters in the go command
             for (ptr = strtok(NULL, " "); ptr != NULL; ptr = strtok(NULL, " ")){
                 
-                if (stringEquals(ptr, "searchmoves")){
-                    // NOT IMPLEMENTED
-                }
-                
-                else if (stringEquals(ptr, "ponder")){
-                    // NOT IMPLEMENTED
-                }
-                
-                else if (stringEquals(ptr, "wtime")){
+                if (stringEquals(ptr, "wtime")){
                     ptr = strtok(NULL, " ");
                     if (ptr == NULL) exit(EXIT_FAILURE);
                     wtime = (double)(atoi(ptr));
@@ -222,21 +214,13 @@ int main(){
                 else if (stringEquals(ptr, "movestogo")){
                     ptr = strtok(NULL, " ");
                     if (ptr == NULL) exit(EXIT_FAILURE);
-                    mtg = atoi(ptr);
+                    mtg = (double)(atoi(ptr));
                 }
                 
                 else if (stringEquals(ptr, "depth")){
                     ptr = strtok(NULL, " ");
                     if (ptr == NULL) exit(EXIT_FAILURE);
                     depth = atoi(ptr);
-                }
-                
-                else if (stringEquals(ptr, "nodes")){
-                    // NOT IMPLEMENTED
-                }
-                
-                else if (stringEquals(ptr, "mate")){
-                    // NOT IMPLEMENTED
                 }
                 
                 else if (stringEquals(ptr, "movetime")){
@@ -250,14 +234,12 @@ int main(){
                 }
             }
             
-            if (info.board.turn == WHITE){
-                time = wtime;
-                inc = winc;
-            } else {
-                time = btime;
-                inc = binc;
-            }
             
+            // Pick the Time Controls for the colour we are playing
+            time = (info.board.turn == WHITE) ? wtime : btime;
+            inc  = (info.board.turn == WHITE) ?  winc :  binc;
+            
+            // Setup the default search information
             info.searchIsInfinite = 0;
             info.searchIsDepthLimited = 0;
             info.searchIsTimeLimited = 0;
@@ -286,29 +268,22 @@ int main(){
                 
                 // NOT USING REPEATING TIME CONTROL
                 if (mtg == -1){
-                    info.endTime1 = info.startTime + .5 * (time / (double)(30));
-                    info.endTime2 = info.startTime + (time / (double)(30)) + inc;
+                    info.endTime1 = info.startTime + .5 * (time / 30);
+                    info.endTime2 = info.startTime + (time / 30) + inc;
                 }
                 
                 // USING REPEATING TIME CONTROL
                 else {
-                    info.endTime1 = info.startTime + .5 * (time / (double)(mtg+2));
-                    info.endTime2 = info.startTime + (time / (double)(mtg+2));
+                    info.endTime1 = info.startTime + .5 * (time / (mtg+2));
+                    info.endTime2 = info.startTime + (time / (mtg+2));
                 }
             }
             
+            // Execute the search and report the best move
             moveToString(moveStr, getBestMove(&info));
             printf("bestmove %s\n",moveStr);
             fflush(stdout);
         }
-        
-        else if (stringEquals(str, "stop")){
-            info.terminateSearch = 1;
-        } 
-        
-        else if (stringEquals(str, "ponderhit")){
-            // NOT IMPLEMENTED
-        } 
         
         else if (stringEquals(str, "quit")){
             destroyTranspositionTable(&Table);

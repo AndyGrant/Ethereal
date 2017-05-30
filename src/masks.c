@@ -27,7 +27,6 @@
 uint64_t IsolatedPawnMasks[SQUARE_NB];
 uint64_t PassedPawnMasks[COLOUR_NB][SQUARE_NB];
 uint64_t PawnAttackMasks[COLOUR_NB][SQUARE_NB];
-uint64_t PawnAdvanceMasks[COLOUR_NB][SQUARE_NB];
 uint64_t PawnConnectedMasks[COLOUR_NB][SQUARE_NB];
 uint64_t OutpostSquareMasks[COLOUR_NB][SQUARE_NB];
 uint64_t OutpostRanks[COLOUR_NB];
@@ -35,16 +34,17 @@ uint64_t OutpostRanks[COLOUR_NB];
 /**
  * Fill the various masks used to aid in the evaluation
  * function. These masks provide an easy and cheap way
- * to cheap determine various components for the evaluation.
+ * to determine various components for the evaluation.
  */
 void initalizeMasks(){
     
     int i, j, file, rank;
     uint64_t files;
     
-    // INITALIZE ISOLATED PAWN MASKS
+    // Initalize isolated pawn masks
     for (i = 0; i < SQUARE_NB; i++){
-        file = i % 8;
+        
+        file = File(i);
         
         if (file > 0 && file < 7)
             IsolatedPawnMasks[i] = Files[file+1] | Files[file-1];
@@ -54,11 +54,10 @@ void initalizeMasks(){
             IsolatedPawnMasks[i] = Files[file+1];
     }
     
-    // INITALIZE PASSED PAWN MASKS AND OUTPOST MASKS
+    // Initalize passed pawn masks and outpost masks
     for (i = 0; i < SQUARE_NB; i++){
-        file = i % 8;
-        rank = i / 8;
         
+        file = File(i); rank = Rank(i);
         files = IsolatedPawnMasks[i] | Files[file];
         
         PassedPawnMasks[WHITE][i] = files;
@@ -73,14 +72,14 @@ void initalizeMasks(){
         OutpostSquareMasks[BLACK][i] = PassedPawnMasks[BLACK][i] & ~Files[file];
     }
     
+    // Initalize relative outpost ranks
     OutpostRanks[WHITE] = RANK_4 | RANK_5 | RANK_6;
     OutpostRanks[BLACK] = RANK_3 | RANK_4 | RANK_5;
     
-    // INITALIZE ATTACK-SQ PAWN MASKS
+    // Initalize attack square pawn masks
     for (i = 0; i < SQUARE_NB; i++){
-        file = i % 8;
-        rank = i / 8;
         
+        file = File(i); rank = Rank(i);
         PawnAttackMasks[WHITE][i] = 0ull;
         PawnAttackMasks[BLACK][i] = 0ull;
         
@@ -112,26 +111,10 @@ void initalizeMasks(){
         }
     }
     
-    // INITALIZE PAWN-MAY-ADVANCE MASKS
-    for (i = 0; i < SQUARE_NB; i++){
-        rank = i / 8;
-        
-        PawnAdvanceMasks[WHITE][i] = 0ull;
-        PawnAdvanceMasks[BLACK][i] = 0ull;
-        
-        if (rank == 0)
-            PawnAdvanceMasks[WHITE][i] = (1ull << i) << 8;
-        else if (rank == 7)
-            PawnAdvanceMasks[BLACK][i] = (1ull << i) >> 8;
-        else {
-            PawnAdvanceMasks[WHITE][i] = (1ull << i) << 8;
-            PawnAdvanceMasks[BLACK][i] = (1ull << i) >> 8;
-        }
-    }
-    
-    // INITALIZE PAWN-CONNECTED MASKS
+    // Initalize pawn connected masks
     for (i = 8 ; i < 56; i++){
-        file = i % 8;
+        
+        file = File(i);
         
         if (file == 0){
             PawnConnectedMasks[WHITE][i] = (1ull << (i+1)) | (1ull << (i-7));
@@ -144,8 +127,11 @@ void initalizeMasks(){
         }
         
         else {
-            PawnConnectedMasks[WHITE][i] = (1ull << (i-1)) | (1ull << (i-9)) | (1ull << (i+1)) | (1ull << (i-7));
-            PawnConnectedMasks[BLACK][i] = (1ull << (i-1)) | (1ull << (i+7)) | (1ull << (i+1)) | (1ull << (i+9));
+            PawnConnectedMasks[WHITE][i] = (1ull << (i-1)) | (1ull << (i-9)) 
+                                         | (1ull << (i+1)) | (1ull << (i-7));
+                                         
+            PawnConnectedMasks[BLACK][i] = (1ull << (i-1)) | (1ull << (i+7)) 
+                                         | (1ull << (i+1)) | (1ull << (i+9));
         }
     }
 }

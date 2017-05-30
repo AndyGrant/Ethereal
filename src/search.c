@@ -17,9 +17,10 @@
 */
 
 #include <assert.h>
+#include <inttypes.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #include "bitutils.h"
@@ -37,7 +38,7 @@
 #include "move.h"
 #include "movegen.h"
 
-int TotalNodes;
+uint64_t TotalNodes;
 int EvaluatingPlayer;
 SearchInfo * Info;
 HistoryTable History;
@@ -45,19 +46,28 @@ HistoryTable History;
 TransTable Table;
 PawnTable PTable;
 
-
 uint16_t KillerMoves[MAX_HEIGHT][2];
 
+/**
+ * Determine the best move for the current position. Information about
+ * the position, as well as the parameters of the search, are provided
+ * in the info parameter. We will continue searching deeper and deeper
+ * until one of our terminatiation conditions becomes true.
+ *
+ * @param   info    Information about the Board and the search parameters
+ *
+ * @return          The best move we can come up with
+ */
 uint16_t getBestMove(SearchInfo * info){
     
-    int i, depth, value = 0;
+    int i, depth, elapsed, hashfull, value = 0;
     
     // Create the main Principle Variation
     PVariation pv;
     pv.length = 0;
     
     // Initialize search globals
-    TotalNodes = 0;
+    TotalNodes = 0ull;
     EvaluatingPlayer = info->board.turn;
     Info = info;
     
@@ -66,29 +76,32 @@ uint16_t getBestMove(SearchInfo * info){
     initalizePawnTable(&PTable);
     clearHistory(History);
     
-    // Populate the root's movelist
-    MoveList rootMoveList;
-    rootMoveList.size = 0;
-    genAllMoves(&(info->board),rootMoveList.moves,&(rootMoveList.size));
+    // Populate the root's moves
+    MoveList rootMoves;
+    rootMoves.size = 0;
+    genAllLegalMoves(&info->board, rootMoves.moves, &rootMoves.size);
     
-    // PERFORM ITERATIVE DEEPENING
+    // Perform interative deepening
     for (depth = 1; depth < MAX_DEPTH; depth++){
         
         // Perform full search on Root
-        value = aspirationWindow(&pv, &(info->board), &rootMoveList, depth, value);
+        value = aspirationWindow(&pv, &info->board, &rootMoves, depth, value);
         
         // Don't print a partial search
         if (info->terminateSearch) break;
         
+        elapsed = (int)(getRealTime() - info->startTime);
+        hashfull = (1000 * Table.used) / (Table.numBuckets * BUCKET_SIZE);
+        
         printf("info depth %d ", depth);
         printf("score cp %d ", value);
-        printf("time %d ", (int)(getRealTime() - info->startTime));
-        printf("nodes %d ", (int)(TotalNodes));
-        printf("nps %d ", (int)(1000 * (TotalNodes / (1 + getRealTime() - info->startTime))));
-        printf("hashfull %d ", (int)((1000 * Table.used) / (Table.numBuckets * BUCKET_SIZE)));
+        printf("time %d ", elapsed);
+        printf("nodes %"PRIu64" ", TotalNodes);
+        printf("nps %d ", (int)(1000 * (TotalNodes / (1 + elapsed))));
+        printf("hashfull %d ", hashfull);
         printf("pv ");
         
-        // Print out each move in the Principle Variation
+        // Print the Principle Variation
         for (i = 0; i < pv.length; i++){
             printMove(pv.line[i]);
             printf(" ");
@@ -97,90 +110,111 @@ uint16_t getBestMove(SearchInfo * info){
         printf("\n");
         fflush(stdout);
         
+        // Check for depth based termination
         if (info->searchIsDepthLimited && info->depthLimit == depth)
             break;
             
+        // Check for time based termination 
         if (info->searchIsTimeLimited){
-            
-            if (getRealTime() > info->endTime2)
-                break;
-            
-            if (getRealTime() > info->endTime1)
-                break;
+            if (getRealTime() > info->endTime2) break;
+            if (getRealTime() > info->endTime1) break;
         }
     }
     
     // Free the Pawn Table
     destoryPawnTable(&PTable);
     
-    return rootMoveList.bestMove;
+    return rootMoves.bestMove;
 }
 
-int aspirationWindow(PVariation * pv, Board * board, MoveList * moveList, int depth, int previousScore){
+/**
+ * Wrap the calls to rootSearch within a series of updating apsiration windows.
+ * Current window margins of [30, 60, 120, 240] are quite arbitrary. Extensive
+ * testing could likely find a better initial window and window updates. If no
+ * window returns a valid score, we are forced to do a full windowed search.
+ * 
+ * @param   pv          Main principle variation line
+ * @param   board       Board that we are searching on
+ * @param   moveList    List of moves from the root of the search
+ * @param   depth       Depth of this particular search
+ * @param   lastScore   Score from the previous depth
+ *
+ * @return              Value of the search
+ */
+int aspirationWindow(PVariation * pv, Board * board, MoveList * moveList, 
+                                               int depth, int lastScore){
     
     int alpha, beta, value, margin;
     
-    if (depth > 4 && abs(previousScore) < MATE / 2){
+    // Only use an aspiration window on searches that are greater
+    // than 4 depth, and did not recently return a MATE score
+    if (depth > 4 && abs(lastScore) < MATE / 2){
+        
+        // Use the windows [30, 60, 120, 240]
         for (margin = 30; margin < 250; margin *= 2){
-            alpha = previousScore - margin;
-            beta  = previousScore + margin;
             
+            // Adjust the bounds. There is some debate about
+            // how this should be done after we know value.
+            alpha = lastScore - margin;
+            beta  = lastScore + margin;
+            
+            // Perform the search on the modified window
             value = rootSearch(pv, board, moveList, alpha, beta, depth);
             
+            // Result was within our window
             if (value > alpha && value < beta)
                 return value;
             
+            // Result was a mate score, force a full search
             if (abs(value) > MATE/2)
                 break;
         }
     }
     
+    // No searches scored within our aspiration windows, search full window
     return rootSearch(pv, board, moveList, -MATE, MATE, depth);
 }
 
-int rootSearch(PVariation * pv, Board * board, MoveList * moveList, int alpha, int beta, int depth){
+
+int rootSearch(PVariation * pv, Board * board, MoveList * moveList, int alpha,
+                                                         int beta, int depth){
     
-    int i, valid = 0, best = -MATE, value;
-    int currentNodes;
     Undo undo[1];
+    uint64_t currentNodes;
+    int i, value, best = -MATE;
     
+    // Zero out the root and local principle variations
     pv->length = 0;
     PVariation lpv;
     lpv.length = 0;
    
+    // Search through each move in the root's legal move list
     for (i = 0; i < moveList->size; i++){
         
         currentNodes = TotalNodes;
         
-        // APPLY AND VALIDATE MOVE BEFORE SEARCHING
+        // Apply the current move to the board
         applyMove(board, moveList->moves[i], undo);
-        if (!isNotInCheck(board, !board->turn)){
-            revertMove(board, moveList->moves[i], undo);
-            moveList->values[i] = -6 * MATE;
-            continue;
-        }
         
-        // INCREMENT COUNTER OF VALID MOVES FOUND
-        valid++;
-        
-        // FULL WINDOW SEARCH ON FIRST MOVE
-        if (valid == 1)
+        // Full window search for the first move
+        if (i == 0)
             value = -alphaBetaSearch(&lpv, board, -beta, -alpha, depth-1, 1, PVNODE);
         
-        // NULL WINDOW SEARCH ON NON-FIRST MOVES
+        // Null window search on all other moves
         else{
             value = -alphaBetaSearch(&lpv, board, -alpha-1, -alpha, depth-1, 1, CUTNODE);
             
-            // NULL WINDOW FAILED HIGH, RESEARCH
+            // Null window failed high, we must search on a full window
             if (value > alpha)
                 value = -alphaBetaSearch(&lpv, board, -beta, -alpha, depth-1, 1, PVNODE);
         }
         
-        // REVERT MOVE FROM BOARD
+        // Revert the board state
         revertMove(board, moveList->moves[i], undo);
         
+        
         if (value <= alpha)
-            moveList->values[i] = -(1<<28) + (TotalNodes - currentNodes); // UPPER VALUE
+            moveList->values[i] = -(1<<28) + (int)(TotalNodes - currentNodes); // UPPER VALUE
         else if (value >= beta)
             moveList->values[i] = beta;  // LOWER VALUE
         else
@@ -213,7 +247,8 @@ int rootSearch(PVariation * pv, Board * board, MoveList * moveList, int alpha, i
     return best;
 }
 
-int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int depth, int height, int nodeType){
+int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, 
+                                   int depth, int height, int nodeType){
     
     int i, value, newDepth, entryValue, entryType;
     int min, max, inCheck, values[MAX_MOVES];
@@ -230,7 +265,7 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int dep
     lpv.length = 0;
     pv->length = 0;
     
-    // SEARCH TIME HAS EXPIRED
+    // Check to see if search time has expired
     if (Info->searchIsTimeLimited && getRealTime() >= Info->endTime2){
         Info->terminateSearch = 1;
         return board->turn == EvaluatingPlayer ? -MATE : MATE;
@@ -257,9 +292,8 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int dep
             depth += 1;
         }
 
-        else{
+        else
             return quiescenceSearch(board, alpha, beta, height);
-        }
     }
     
     // INCREMENT TOTAL NODE COUNTER

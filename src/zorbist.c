@@ -101,11 +101,11 @@ void initalizeZorbist(){
  */
 uint64_t genRandomBitstring(){
     
-    uint64_t str = 0;
     int i;
+    uint64_t str = 0ull;
     
     for(i = 0; i < 64; i++)
-        str ^= ((uint64_t)(rand())) << (i);
+        str ^= ((uint64_t)(rand())) << i;
     
     return str;
 }
