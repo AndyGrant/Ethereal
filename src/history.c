@@ -21,11 +21,17 @@
 #include "move.h"
 #include "types.h"
 
-
+/**
+ * Reset the History counters for a new search
+ *
+ * @param   history HistoryTable struct to clear
+ */
 void clearHistory(HistoryTable history){
     
     int colour, from, to, counter;
     
+    // Fill all History entries with ones. By using
+    // ones instead of zeros we avoid division by zero
     for (colour = 0; colour < COLOUR_NB; colour++)
         for (from = 0; from < SQUARE_NB; from++)
             for (to = 0; to < SQUARE_NB; to++)
@@ -33,7 +39,17 @@ void clearHistory(HistoryTable history){
                     history[colour][from][to][counter] = 1;
 }
 
-void updateHistory(HistoryTable history, uint16_t move, int colour, int isGood, int delta){
+/**
+ * Update the History of a particular move
+ *
+ * @param   history HistoryTable containing the move
+ * @param   move    The move we are updating
+ * @param   colour  Colour of player who made the move
+ * @param   isGood  Whether or not the move was the best
+ * @param   delta   Amount to increment by
+ */
+void updateHistory(HistoryTable history, uint16_t move, int colour, int isGood,
+                                                                    int delta){
     
     int from = MoveFrom(move);
     int to = MoveTo(move);
@@ -41,13 +57,23 @@ void updateHistory(HistoryTable history, uint16_t move, int colour, int isGood, 
     if (isGood) history[colour][from][to][HISTORY_GOOD] += delta;
     history[colour][from][to][HISTORY_TOTAL] += delta;
     
+    // Divide counters by two if we have exceeded the max values
     if (history[colour][from][to][HISTORY_TOTAL] >= HISTORY_MAX){
         history[colour][from][to][HISTORY_GOOD] >>= 1;
         history[colour][from][to][HISTORY_TOTAL] >>= 1;
     }
 }
 
-int getHistoryScore(HistoryTable history, uint16_t move, int colour, int factor){
+/**
+ * Fetch the History of particular move
+ *
+ * @param   history HistoryTable containing the move
+ * @param   move    The move we are updating
+ * @param   colour  Colour of player who made the move
+ * @param   factor  Maximum value of history score
+ */
+int getHistoryScore(HistoryTable history, uint16_t move, int colour,
+                                                        int factor){
     
     int from = MoveFrom(move);
     int to = MoveTo(move);

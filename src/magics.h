@@ -26,6 +26,8 @@
 void initalizeMagics();
 void generateKnightMap();
 void generateKingMap();
+void generateRookIndexes();
+void generateBishopIndexes();
 void generateOccupancyMaskRook();
 void generateOccupancyMaskBishop();
 void generateOccupancyVariationsRook();
@@ -48,10 +50,10 @@ extern uint64_t * MoveDatabaseBishop;
 extern int MagicRookIndexes[SQUARE_NB];
 extern int MagicBishopIndexes[SQUARE_NB];
 
-extern int MagicShiftsRook[SQUARE_NB];
-extern int MagicShiftsBishop[SQUARE_NB];
+extern const int MagicShiftsRook[SQUARE_NB];
+extern const int MagicShiftsBishop[SQUARE_NB];
 
-extern uint64_t MagicNumberRook[SQUARE_NB];
-extern uint64_t MagicNumberBishop[SQUARE_NB];
+extern const uint64_t MagicNumberRook[SQUARE_NB];
+extern const uint64_t MagicNumberBishop[SQUARE_NB];
 
 #endif

@@ -31,10 +31,10 @@
 #define BLACK_KING_RIGHTS     (4)
 #define BLACK_QUEEN_RIGHTS    (8)
 
-extern int CastleMask[64];
+extern const int CastleMask[64];
 
-extern int RookFromLookupTable[2];
-extern int RookToLookupTable[2];
+extern const int RookFromLookupTable[2];
+extern const int RookToLookupTable[2];
 
 #define CastleGetRookFrom(from,to)   (from + RookFromLookupTable[(to) > (from)])
 #define CastleGetRookTo(from,to)     (from + RookToLookupTable[(to) > (from)])

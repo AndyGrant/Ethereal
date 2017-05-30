@@ -63,10 +63,7 @@ char Benchmarks[NUM_BENCHMARKS][256] = { // StockFish:benchmark.cpp
 };
 
 /**
- * Initalize a given board struct based on the passed
- * FEN position. Once the position has been setup in 
- * the BitBoards, determine the hash-signature of the 
- * current board as well as the opening and endgame values.
+ * Initalize a given board struct based on the passed FEN position
  *
  * @param   board   Board pointer to store information
  * @param   fen     FEN string to create position from
@@ -74,19 +71,24 @@ char Benchmarks[NUM_BENCHMARKS][256] = { // StockFish:benchmark.cpp
 void initalizeBoard(Board * board, char * fen){
     
     int i, j, sq;
-    char r, f;
+    char rank, file;
+    uint64_t enemyPawns;
     
-    // Init board->squares from fen notation;
+    // Init board->squares from FEN notation;
     for(i = 0, sq = 56; fen[i] != ' '; i++){
+        
+        // End of a row of the FEN notation
         if (fen[i] == '/' || fen[i] == '\\'){
             sq -= 16;
             continue;
         }
         
+        // Initalize any empty squares
         else if (fen[i] <= '8' && fen[i] >= '1')
             for(j = 0; j < fen[i] - '0'; j++, sq++)
                 board->squares[sq] = EMPTY;
             
+        // Index contains an actual piece, determine its type
         else {
             switch(fen[i]){
                 case 'P': board->squares[sq++] = WHITE_PAWN;   break;
@@ -117,9 +119,9 @@ void initalizeBoard(Board * board, char * fen){
     board->castleRights = 0;
     while(fen[++i] != ' '){
         switch(fen[i]){
-            case 'K' : board->castleRights |= WHITE_KING_RIGHTS; break;
+            case 'K' : board->castleRights |= WHITE_KING_RIGHTS;  break;
             case 'Q' : board->castleRights |= WHITE_QUEEN_RIGHTS; break;
-            case 'k' : board->castleRights |= BLACK_KING_RIGHTS; break;
+            case 'k' : board->castleRights |= BLACK_KING_RIGHTS;  break;
             case 'q' : board->castleRights |= BLACK_QUEEN_RIGHTS; break;
             case '-' : break;
         }
@@ -128,21 +130,21 @@ void initalizeBoard(Board * board, char * fen){
     // Determine Enpass Square
     board->epSquare = -1;
     if (fen[++i] != '-'){
-        r = fen[i];
-        f = fen[++i];
+        rank = fen[i] - 'a';
+        file = fen[++i] - '1';
         
-        board->epSquare = (r - 'a') + (8 * (f - '1'));
+        board->epSquare = rank + (8 * file);
     }
     
     i++; // Skip over space between ensquare and halfmove count
         
-    // Determine Number of half moves into fiftymoverule
+    // Determine Number of half moves into the fifty move rule
     board->fiftyMoveRule = 0;
     if (fen[++i] != '-'){
         
         // Two Digit Number
         if (fen[i+1] != ' '){ 
-            board->fiftyMoveRule = (10 * (fen[i] - '0')) + fen[1+i] - '0';
+            board->fiftyMoveRule = (10 * (fen[i] - '0')) + fen[i+1] - '0';
             i++;
         }
         
@@ -151,7 +153,7 @@ void initalizeBoard(Board * board, char * fen){
             board->fiftyMoveRule = fen[i] - '0';
     }
     
-    // Set BitBoards to default values
+    // Zero out each of the used BitBoards
     board->colours[WHITE] = 0ull;
     board->colours[BLACK] = 0ull;
     board->pieces[PAWN]   = 0ull;
@@ -161,21 +163,15 @@ void initalizeBoard(Board * board, char * fen){
     board->pieces[QUEEN]  = 0ull;
     board->pieces[KING]   = 0ull;
     
-    // Set Empty BitBoards to filled
-    board->colours[2] = 0xFFFFFFFFFFFFFFFFull;
-    board->pieces[6]  = 0xFFFFFFFFFFFFFFFFull;
-    
-    // Fill BitBoards
+    // Initalize each of the BitBoards
     for(i = 0; i < 64; i++){
         board->colours[PieceColour(board->squares[i])] |= (1ull << i);
         board->pieces[PieceType(board->squares[i])]    |= (1ull << i);
     }
     
     // Update the enpass square to reflect not only a potential
-    // enpass, but that an enpass may actuall be possible
+    // enpass, but that an enpass is actually possible
     if (board->epSquare != -1){
-        
-        uint64_t enemyPawns;
         enemyPawns = board->colours[!board->turn] & board->pieces[PAWN];
         enemyPawns &= IsolatedPawnMasks[board->epSquare];;
         enemyPawns &= (board->turn == BLACK) ? RANK_4 : RANK_5;
@@ -196,17 +192,19 @@ void initalizeBoard(Board * board, char * fen){
     // Inititalize Pawn Hash
     for (i = 0, board->phash = 0; i < 64; i++)
         board->phash ^= PawnKeys[board->squares[i]][i];
-    
-    board->opening = 0;
-    board->endgame = 0;
-    
-    for(i = 0; i < 64; i++){
+        
+    // Initalize Piece Square and Material value counters
+    for(i = 0, board->opening = 0, board->endgame = 0; i < 64; i++){
         board->opening += PSQTopening[board->squares[i]][i];
         board->endgame += PSQTendgame[board->squares[i]][i];
     }
     
+    // Number of moves since this position
     board->numMoves = 0;
     
+    // We cannot actually determine whether or not a castle took
+    // place, but we do not care, as we only put value on castles
+    // that have occured after the root of a search.
     board->hasCastled[0] = 0;
     board->hasCastled[1] = 0;
 }
@@ -226,18 +224,20 @@ void printBoard(Board * board){
         {' ',' ',' ',' ',' ',' '} 
     };
     
+    // Print each row of the board, starting from the top
     for(i = 56, f = 8; i >= 0; i-=8, f--){
         
         printf("\n     |----|----|----|----|----|----|----|----|\n");
         printf("    %d",f);
         
+        // Print each square in a row, starting from the left
         for(j = 0; j < 8; j++){
             c = PieceColour(board->squares[i+j]);
             t = PieceType(board->squares[i+j]);
             
             switch(c){
-                case WHITE: printf("| *%c ",table[c][t]); break;
-                case BLACK: printf("|  %c ",table[c][t]); break;
+                case WHITE: printf("| *%c ", table[c][t]); break;
+                case BLACK: printf("|  %c ", table[c][t]); break;
                 default   : printf("|    "); break;
             }
         }
@@ -250,36 +250,42 @@ void printBoard(Board * board){
 }
 
 /**
- * Perform the Performance test move path enumeration
- * recursivly. This is only used for testing the algorithm
- * in movegen.c.
+ * Perform the Performance test move path enumeration recursivly.
+ * This is only used for testing the move generation algorithm.
  *
  * @param   board   Board pointer to current position
  * @param   depth   Counter for recursive cut-off
  *
  * @return          Number of positions found
  */
-int perft(Board * board, int depth){
+uint64_t perft(Board * board, int depth){
     
-    Undo undo;
-    int size = 0, found = 0;
+    Undo undo[1];
+    int size = 0;
+    uint64_t found = 0ull;
     uint16_t moves[MAX_MOVES];
     
-    if (depth == 0)
-        return 1;
+    if (depth == 0) return 1ull;
     
-    genAllMoves(board,moves,&size);
+    genAllMoves(board, moves, &size);
     
+    // Recurse on all valid moves
     for(size -= 1; size >= 0; size--){
-        applyMove(board,moves[size],&undo);
-        if (isNotInCheck(board,!board->turn))
-            found += perft(board,depth-1);        
-        revertMove(board,moves[size],&undo);
+        applyMove(board, moves[size], undo);
+        if (isNotInCheck(board, !board->turn))
+            found += perft(board, depth-1);        
+        revertMove(board, moves[size], undo);
     }
     
     return found;
 }
 
+/**
+ * Search each of the benchmark positions to a given depth.
+ * Quick way of checking non functional speedups.
+ *
+ * @param   depth   Search depth for each position
+ */
 void runBenchmark(int depth){
 
     int i;
@@ -294,15 +300,15 @@ void runBenchmark(int depth){
 
     start = getRealTime();
     
+    // Search each benchmark position
     for (i = 0; i < NUM_BENCHMARKS; i++){
         info.startTime = getRealTime();
         initalizeBoard((&info.board), Benchmarks[i]);
         clearTranspositionTable(&Table);
         getBestMove(&info);
-        
     }
     
     end = getRealTime();
     
-    printf("Benchtime = %dms\n", (int)(end-start));    
+    printf("Benchtime = %dms\n", (int)(end - start));    
 }

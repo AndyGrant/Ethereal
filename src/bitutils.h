@@ -21,13 +21,13 @@
 
 #include <stdint.h>
 
-unsigned int countSetBits(uint64_t bb);
+int countSetBits(uint64_t bb);
 void getSetBits(uint64_t bb, int * arr);
-unsigned int popcount(uint64_t bb);
+int popcount(uint64_t bb);
 
-extern int LsbLookupTable[64];
+extern const int LsbTable[64];
 extern int BitCounts[0x10000];
 
-#define getLSB(bb) (LsbLookupTable[(((bb) ^ ((bb)-1)) * 0x03f79d71b4cb0a89ull) >> 58])
+#define getLSB(bb) (LsbTable[(((bb) ^ ((bb)-1)) * 0x03f79d71b4cb0a89ull) >> 58])
 
 #endif

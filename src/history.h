@@ -25,7 +25,11 @@
 #define HISTORY_MAX     (0x7FFF)
 
 void clearHistory(HistoryTable history);
-void updateHistory(HistoryTable history, uint16_t move, int colour, int isGood, int delta);
-int getHistoryScore(HistoryTable history, uint16_t move, int colour, int factor);
+
+void updateHistory(HistoryTable history, uint16_t move, int colour, int isGood,
+                                                                    int delta);
+
+int getHistoryScore(HistoryTable history, uint16_t move, int colour,
+                                                        int factor);
 
 #endif

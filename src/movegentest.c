@@ -16,12 +16,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 
-#include "move.h"
 #include "board.h"
+#include "move.h"
 #include "types.h"
 
 /**
@@ -36,6 +37,7 @@
  */
 void moveGenTest(){
     
+    Board board;
     int i, j, depth;
     int passed = 0, failed = 0;
     uint64_t total = 0, found, nodes[128];
@@ -46,8 +48,8 @@ void moveGenTest(){
     
     while(1){
         
-        Board board;
-        for(i = 0;; i++){
+        // Read the position
+        for(i = 0; ; i++){
             j = fgetc(input);
             c = (char)(j);
             if (j == EOF) goto EndOfMainLoop;
@@ -57,11 +59,10 @@ void moveGenTest(){
         
         str[i++] = '\0';
         
-        initalizeBoard(&board,str);
-        
         depth = 0;
         nodes[0] = 0;
         
+        // Read the node counts for each depth
         while(1){
             c = fgetc(input);
             
@@ -84,29 +85,36 @@ void moveGenTest(){
             }
         }
         
+        initalizeBoard(&board, str);
+        
+        // Run the PERFT test on each depth
         for(i = 1; i <= depth; i++){
             found = perft(&board,i);
             total += found;
             
             if (found == nodes[i-1]){
-                printf("PASSED %s %d of %d\n",str,(int)(found),(int)(nodes[i-1]));
+                printf("PASSED %s ", str);
+                printf(": %"PRIu64" of %"PRIu64"\n", found, nodes[i-1]);
                 passed++;
-            } else {
-                printf("FAILED %s %d of %d\n",str,(int)(found),(int)(nodes[i-1]));
+            } 
+            
+            else {
+                printf("FAILED %s ", str);
+                printf(": %"PRIu64" of %"PRIu64"\n", found, nodes[i-1]);
                 failed++;
             }
         }
     }
     
     EndOfMainLoop:
-    fclose(input);
     
-    end = clock();
+        fclose(input);
+        end = clock();
     
-    printf("\n\n");
-    printf("Passed : %d\n",passed);
-    printf("Failed : %d\n",failed);
-    printf("Nodes  : %d\n",(int)(total));
-    printf("Seconds: %f\n",(double)(end - start) / CLOCKS_PER_SEC);
-    printf("MNPS   : %.3f",(total/(float)(1000000 * ((end-start)/CLOCKS_PER_SEC))));
+        printf("\n\n");
+        printf("Passed : %d\n",passed);
+        printf("Failed : %d\n",failed);
+        printf("Nodes  : %"PRIu64"\n", total);
+        printf("Seconds: %f\n",(double)(end - start) / CLOCKS_PER_SEC);
+        printf("MNPS   : %.3f", total / (1e6f * (end-start)/CLOCKS_PER_SEC));
 }

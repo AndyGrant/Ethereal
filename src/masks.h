@@ -28,7 +28,6 @@ void initalizeMasks();
 extern uint64_t IsolatedPawnMasks[SQUARE_NB];
 extern uint64_t PassedPawnMasks[COLOUR_NB][SQUARE_NB];
 extern uint64_t PawnAttackMasks[COLOUR_NB][SQUARE_NB];
-extern uint64_t PawnAdvanceMasks[COLOUR_NB][SQUARE_NB];
 extern uint64_t PawnConnectedMasks[COLOUR_NB][SQUARE_NB];
 extern uint64_t OutpostSquareMasks[COLOUR_NB][SQUARE_NB];
 extern uint64_t OutpostRanks[COLOUR_NB];

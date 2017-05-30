@@ -22,7 +22,7 @@
 #include "bitboards.h"
 #include "bitutils.h"
 
-int LsbLookupTable[64] = {
+const int LsbTable[64] = {
     0, 47,  1, 56, 48, 27,  2, 60,
    57, 49, 41, 37, 28, 16,  3, 61,
    54, 58, 35, 52, 50, 42, 21, 44,
@@ -41,11 +41,12 @@ int BitCounts[0x10000];
  * @param   bb  BitBoard to count set bits in
  * @return      Count of all set bits in bb
  */
-unsigned int countSetBits(uint64_t bb){
+int countSetBits(uint64_t bb){
+    
     int count = 0;
     
-    while(bb){
-        bb ^= (1ull << getLSB(bb));
+    while (bb){
+        bb ^= 1ull << getLSB(bb);
         count += 1;
     }
     
@@ -60,11 +61,11 @@ unsigned int countSetBits(uint64_t bb){
  * @param   bb  BitBoard to count set bits in
  * @return      Count of all set bits in bb
  */
-unsigned int popcount(uint64_t bb){
-    return  BitCounts[(bb >>  0) & 0xFFFF] +
-            BitCounts[(bb >> 16) & 0xFFFF] +
-            BitCounts[(bb >> 32) & 0xFFFF] +
-            BitCounts[(bb >> 48) & 0xFFFF];
+int popcount(uint64_t bb){
+    return  BitCounts[bb >>  0 & 0xFFFF]
+          + BitCounts[bb >> 16 & 0xFFFF]
+          + BitCounts[bb >> 32 & 0xFFFF]
+          + BitCounts[bb >> 48 & 0xFFFF];
 }
 
 /**
@@ -77,12 +78,12 @@ unsigned int popcount(uint64_t bb){
  * @param   arr Integer Array to fill with bit indexes
  */
 void getSetBits(uint64_t bb, int * arr){
-    int count = 0;
     
-    while(bb){
-        int lsb = getLSB(bb);
-        arr[count] = lsb;
-        count += 1;
+    int lsb, count = 0;
+    
+    while (bb){
+        lsb = getLSB(bb);
+        arr[count++] = lsb;
         bb ^= 1ull << lsb;
     }
     

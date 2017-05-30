@@ -32,8 +32,8 @@
 #include "zorbist.h"
 
 /**
- * Apply a given move to a given board and update all of the
- * necessary information including, opening and endgame values
+ * Apply a given move to a board and update all of the
+ * necessary information, including: opening and endgame values
  * hash signature, piece counts, castling rights, enpassant
  * potentials, and the history of moves made.
  *
@@ -71,13 +71,14 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
     undo->phash = board->phash;
     undo->hash = board->hash;
     
+    // Update the hash history and the move count
     board->history[board->numMoves++] = board->hash;
     
     // Update the key to include the turn change
     board->hash ^= ZorbistKeys[TURN][0];
     
-    // Always increment the fifty counter. We will reset
-    // it within the code for each move type
+    // Always increment the fifty counter
+    // We will reset later if needed
     board->fiftyMoveRule += 1;
     
     if (MoveType(move) == NORMAL_MOVE){
@@ -153,7 +154,7 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
         if (fromType == PAWN && abs(to-from) == 16){
             
             enemyPawns = board->colours[board->turn] & board->pieces[PAWN];
-            enemyPawns &= IsolatedPawnMasks[from];;
+            enemyPawns &= IsolatedPawnMasks[from];
             enemyPawns &= (board->turn == BLACK) ? RANK_4 : RANK_5;
             
             // Only set the enpass square if there is a     
@@ -188,7 +189,8 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
         rShiftTo = 1ull << rTo;
         
         // Update the colour bitboard
-        board->colours[board->turn] ^= shiftTo | shiftFrom | rShiftTo | rShiftFrom;
+        board->colours[board->turn] ^= shiftTo | shiftFrom 
+                                    | rShiftTo | rShiftFrom;
         
         // Update the piece bitboards
         board->pieces[KING] ^= shiftFrom | shiftTo;
@@ -429,7 +431,8 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
         rShiftFrom = 1ull << rFrom;
         rShiftTo = 1ull << rTo;
     
-        board->colours[undo->turn] ^= shiftFrom | shiftTo | rShiftTo | rShiftFrom;
+        board->colours[undo->turn] ^= shiftTo | shiftFrom
+                                   | rShiftTo | rShiftFrom;
         
         board->pieces[KING] ^= shiftFrom | shiftTo;
         board->pieces[ROOK] ^= rShiftFrom | rShiftTo;
