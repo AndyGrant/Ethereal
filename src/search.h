@@ -36,11 +36,6 @@ int alphaBetaSearch(PVariation * PV, Board * board, int alpha, int beta,
 
 int quiescenceSearch(Board * board, int alpha, int beta, int height);
 
-void evaluateMoves(Board * board, int * values, uint16_t * moves, int size,
-                                           int height, uint16_t tableMove);
-
-uint16_t getNextMove(uint16_t * moves, int * values, int index, int size);
-
 void sortMoveList(MoveList * moveList);
 
 int canDoNull(Board * board);

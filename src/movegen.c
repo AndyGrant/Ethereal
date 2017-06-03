@@ -206,16 +206,16 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
 
 /**
  * Generate all of the psudeo legal moves which are considered
- * non quiet, IE captures, promotions, enpassant, for a given board
+ * noisy, IE captures, promotions, enpassant, for a given board
  * The moves will be stored in a pointer passed to the function,
  * and an integer pointer passed to the function will be updated
- * to reflect the total number of psuedo legal moves found.
+ * to reflect the total number of psuedo legal noisy moves found.
  *
  * @param   board   Board pointer with the current position
  * @param   moves   Destination for the found psuedo legal moves
  * @param   size    Pointer to keep track of the number of moves
  */
-void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
+void genAllNoisyMoves(Board * board, uint16_t * moves, int * size){
     
     uint64_t pawnLeft;
     uint64_t pawnRight;
@@ -307,6 +307,97 @@ void genAllNonQuiet(Board * board, uint16_t * moves, int * size){
     buildBishopAndQueenMoves(moves, size, myBishops, notEmpty, enemy);
     buildRookAndQueenMoves(moves, size, myRooks, notEmpty, enemy);
     buildKingMoves(moves, size, myKings, enemy);
+}
+
+
+/**
+ * Generate all of the psudeo legal moves which are considered
+ * quiet, IE not captures, promotions, or enpassant, for a given board
+ * The moves will be stored in a pointer passed to the function,
+ * and an integer pointer passed to the function will be updated
+ * to reflect the total number of psuedo legal quiet moves found.
+ *
+ * @param   board   Board pointer with the current position
+ * @param   moves   Destination for the found psuedo legal moves
+ * @param   size    Pointer to keep track of the number of moves
+ */
+void genAllQuietMoves(Board * board, uint16_t * moves, int * size){
+     
+    int bit, lsb;
+    
+    uint64_t pawnForwardOne;
+    uint64_t pawnForwardTwo;
+    
+    uint64_t friendly = board->colours[board->turn];
+    uint64_t enemy = board->colours[!board->turn];
+    
+    uint64_t empty = ~(friendly | enemy);
+    uint64_t notEmpty = ~empty;
+    uint64_t attackable;
+    
+    uint64_t myPawns   = friendly & board->pieces[PAWN];
+    uint64_t myKnights = friendly & board->pieces[KNIGHT];
+    uint64_t myBishops = friendly & board->pieces[BISHOP];
+    uint64_t myRooks   = friendly & board->pieces[ROOK];
+    uint64_t myQueens  = friendly & board->pieces[QUEEN];
+    uint64_t myKings   = friendly & board->pieces[KING];
+    
+    // Generate the queens' moves as if they were rooks and bishops
+    myBishops |= myQueens; myRooks |= myQueens;
+    
+    // Generate the pawn advances
+    if (board->turn == WHITE){
+        pawnForwardOne = (myPawns << 8) & empty & ~RANK_8;
+        pawnForwardTwo = ((pawnForwardOne & RANK_3) << 8) & empty;
+        buildPawnMoves(moves, size, pawnForwardOne, -8);
+        buildPawnMoves(moves, size, pawnForwardTwo, -16);
+    } 
+    
+    else {
+        pawnForwardOne = (myPawns >> 8) & empty & ~RANK_1;
+        pawnForwardTwo = ((pawnForwardOne & RANK_6) >> 8) & empty;
+        buildPawnMoves(moves, size, pawnForwardOne, 8);
+        buildPawnMoves(moves, size, pawnForwardTwo, 16);
+    }
+    
+    // Generate all moves for all non pawns aside from Castles
+    buildKnightMoves(moves, size, myKnights, empty);
+    buildBishopAndQueenMoves(moves, size, myBishops, notEmpty, empty);
+    buildRookAndQueenMoves(moves, size, myRooks, notEmpty, empty);
+    buildKingMoves(moves, size, myKings, empty);
+    
+    // GENERATE CASTLES
+    if (isNotInCheck(board,board->turn)){
+        if (board->turn == WHITE){
+            
+            // KING SIDE
+            if ((notEmpty & WHITE_CASTLE_KING_SIDE_MAP) == 0)
+                if (board->castleRights & WHITE_KING_RIGHTS)
+                    if (!squareIsAttacked(board, WHITE, 5))
+                        moves[(*size)++] = MoveMake(4, 6, CASTLE_MOVE);
+                        
+            // QUEEN SIDE
+            if ((notEmpty & WHITE_CASTLE_QUEEN_SIDE_MAP) == 0)
+                if (board->castleRights & WHITE_QUEEN_RIGHTS)
+                    if (!squareIsAttacked(board, WHITE, 3))
+                        moves[(*size)++] = MoveMake(4, 2, CASTLE_MOVE);
+        }
+        
+        else {
+            
+            // KING SIDE
+            if ((notEmpty & BLACK_CASTLE_KING_SIDE_MAP) == 0)
+                if (board->castleRights & BLACK_KING_RIGHTS)
+                    if (!squareIsAttacked(board, BLACK, 61))
+                        moves[(*size)++] = MoveMake(60, 62, CASTLE_MOVE);
+                        
+            // QUEEN SIDE
+            if ((notEmpty & BLACK_CASTLE_QUEEN_SIDE_MAP) == 0)
+                if (board->castleRights & BLACK_QUEEN_RIGHTS)
+                    if (!squareIsAttacked(board, BLACK, 59))
+                        moves[(*size)++] = MoveMake(60, 58, CASTLE_MOVE);
+        }
+    }
 }
 
 /**

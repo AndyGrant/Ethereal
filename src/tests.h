@@ -16,9 +16,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _MOVEGENTEST_H
-#define _MOVEGENTEST_H
+#ifndef _TESTS_H
+#define _TESTS_H
 
-void moveGenTest();
+#include "types.h"
+
+void runTestSuite();
+int perftTesting(Board * board, int depth);
+void printMoveErrorMessage(Board * board, uint16_t move, char * msg);
 
 #endif
