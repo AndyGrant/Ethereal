@@ -26,7 +26,8 @@
 
 void genAllLegalMoves(Board * board, uint16_t * moves, int * size);
 void genAllMoves(Board * board, uint16_t * moves, int * size);
-void genAllNonQuiet(Board * board, uint16_t * moves, int * size);
+void genAllNoisyMoves(Board * board, uint16_t * moves, int * size);
+void genAllQuietMoves(Board * board, uint16_t * moves, int * size);
 int isNotInCheck(Board * board, int turn);
 int squareIsAttacked(Board * board, int turn, int sq);
 
@@ -47,7 +48,7 @@ int squareIsAttacked(Board * board, int turn, int sq);
 
 // For the move generating macros:
 //
-//     int lsb is a required declaration in any function using these macros
+//     int lsb and uint64_t attackable are required declarations
 //
 //     arr     = uint16_t array of moves
 //     size    = a pointer to an int for the size

@@ -37,6 +37,7 @@
 #include "time.h"
 #include "move.h"
 #include "movegen.h"
+#include "movepicker.h"
 
 uint64_t TotalNodes;
 int EvaluatingPlayer;
@@ -251,12 +252,14 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
                                    int depth, int height, int nodeType){
     
     int i, value, newDepth, entryValue, entryType;
-    int min, max, inCheck, values[MAX_MOVES];
-    int valid = 0, size = 0, avoidedQS = 0, eval = 0;
+    int min, max, inCheck;
+    int valid = 0, avoidedQS = 0, eval = 0;
     int oldAlpha = alpha, best = -MATE, optimalValue = -MATE;
     
     uint16_t currentMove, tableMove = NONE_MOVE, bestMove = NONE_MOVE;
-    uint16_t moves[MAX_MOVES], played[MAX_MOVES];
+    uint16_t killer1, killer2, played[MAX_MOVES];
+    
+    MovePicker movePicker;
     
     TransEntry * entry;
     Undo undo[1];
@@ -392,16 +395,15 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
             tableMove = entry->bestMove;
     }
     
-    // GENERATE AND PREPARE MOVE ORDERING
-    genAllMoves(board, moves, &size);
-    evaluateMoves(board, values, moves, size, height, tableMove);
-   
     // CHECK EXTENSION
     depth += (!avoidedQS && inCheck && (nodeType == PVNODE || depth <= 6));
     
-    for (i = 0; i < size; i++){
-        
-        currentMove = getNextMove(moves, values, i, size);
+    // Setup the Move Picker
+    killer1 = KillerMoves[height][0];
+    killer2 = KillerMoves[height][1];
+    initalizeMovePicker(&movePicker, 0, tableMove, killer1, killer2);
+    
+    while((currentMove = selectNextMove(&movePicker, board)) != NONE_MOVE){
         
         // USE FUTILITY PRUNING
         if (USE_FUTILITY_PRUNING
@@ -539,9 +541,10 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
 
 int quiescenceSearch(Board * board, int alpha, int beta, int height){
     
-    int i, size = 0, eval, value, best, values[256];
-    uint16_t moves[MAX_MOVES], currentMove, maxValueGain;
+    int eval, value, best, maxValueGain;
+    uint16_t currentMove;
     Undo undo[1];
+    MovePicker movePicker;
     
     // MAX HEIGHT REACHED, STOP HERE
     if (height >= MAX_HEIGHT)
@@ -576,14 +579,11 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
         return value;
     
     
-    // GENERATE AND PREPARE QUIET MOVE ORDERING
-    genAllNonQuiet(board, moves, &size);
-    evaluateMoves(board, values, moves, size, height, NONE_MOVE);
-    
     best = value;
     
-    for (i = 0; i < size; i++){
-        currentMove = getNextMove(moves, values, i, size);
+    initalizeMovePicker(&movePicker, 1, NONE_MOVE, NONE_MOVE, NONE_MOVE);
+    
+    while ((currentMove = selectNextMove(&movePicker, board)) != NONE_MOVE){
         
         value = eval + 55 + PieceValues[PieceType(board->squares[MoveTo(currentMove)])];
         

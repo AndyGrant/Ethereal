@@ -27,10 +27,10 @@
 #include "masks.h"
 #include "move.h"
 #include "movegen.h"
-#include "movegentest.h"
 #include "piece.h"
 #include "psqt.h"
 #include "search.h"
+#include "tests.h"
 #include "time.h"
 #include "transposition.h"
 #include "types.h"
@@ -61,8 +61,8 @@ int main(){
         
         /* Non Universal Chess Interface commands */
         
-        if (stringEquals(str, "movegentest")){
-            moveGenTest();
+        if (stringEquals(str, "runTestSuite")){
+            runTestSuite();
         }
         
         else if (stringStartsWith(str, "perft")){
@@ -79,7 +79,7 @@ int main(){
            http://wbec-ridderkerk.nl/html/UCIProtocol.html */
             
         if (stringEquals(str, "uci")){
-            printf("id name Ethereal 8.15\n");
+            printf("id name Ethereal 8.16\n");
             printf("id author Andrew Grant\n");
             printf("option name Hash type spin default 16 min 1 max 2048\n");
             printf("uciok\n");

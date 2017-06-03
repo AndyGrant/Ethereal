@@ -129,4 +129,13 @@ typedef struct PVariation {
 
 typedef uint16_t HistoryTable[COLOUR_NB][SQUARE_NB][SQUARE_NB][2]; 
 
+typedef struct MovePicker {
+    int isQuiescencePick, stage, split;
+    int noisySize, badSize, quietSize;
+    uint16_t tableMove, killer1, killer2;
+    uint16_t moves[MAX_MOVES];
+    int values[MAX_MOVES];
+    
+} MovePicker;
+
 #endif
