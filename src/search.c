@@ -343,7 +343,7 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
     if (!avoidedQS)
         inCheck = !isNotInCheck(board, board->turn);
     
-    if (nodeType != PVNODE)
+    if (nodeType != PVNODE && !inCheck)
         eval = evaluateBoard(board, &PTable);
     
     // STATIC NULL MOVE PRUNING
@@ -389,14 +389,12 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
         if (value <= alpha)
             value = alphaBetaSearch(&lpv, board, -MATE, beta, depth-2, height, PVNODE);
         
-        // GET TABLE MOVE FROM TRANSPOSITION TABLE
-        entry = getTranspositionEntry(&Table, board->hash);
-        if (entry != NULL)
-            tableMove = entry->bestMove;
+        // Get the best move from the PV
+        tableMove = lpv.line[0];
     }
     
     // CHECK EXTENSION
-    depth += (!avoidedQS && inCheck && (nodeType == PVNODE || depth <= 6));
+    depth += !avoidedQS && inCheck && (nodeType == PVNODE || depth <= 6);
     
     // Setup the Move Picker
     killer1 = KillerMoves[height][0];
@@ -440,10 +438,10 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
         if (USE_LATE_MOVE_REDUCTIONS
             && valid >= 5
             && depth >= 3
-            && getHistoryScore(History, currentMove, !board->turn, 100) < 80
             && !inCheck
             && MoveType(currentMove) == NORMAL_MOVE
             && undo[0].capturePiece == EMPTY
+            && getHistoryScore(History, currentMove, !board->turn, 100) < 80
             && isNotInCheck(board, board->turn))
             newDepth = depth - 2 - (valid >= 12) - (nodeType != PVNODE);
         else
@@ -496,34 +494,24 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
             // UPDATE KILLER MOVES
             if (MoveType(currentMove) == NORMAL_MOVE
                 && undo[0].capturePiece == EMPTY
-                && KillerMoves[height][1] != currentMove){
+                && KillerMoves[height][0] != currentMove){
                 KillerMoves[height][1] = KillerMoves[height][0];
                 KillerMoves[height][0] = currentMove;
             }
             
-            goto Cut;
+            break;
         }
     }
     
-    // BOARD IS STALEMATE OR CHECKMATE
-    if (valid == 0){
-        
-        // BOARD IS STALEMATE
-        if (isNotInCheck(board, board->turn))
-            return 0;
-        
-        // BOARD IS CHECKMATE
-        else 
-            return -MATE+height;
-    }
+    // Board is Checkmate or Stalemate
+    if (valid == 0) return inCheck ? -MATE + height : 0;
     
-    Cut:
-    
-    if (best >= beta && bestMove != NONE_MOVE)
+    if (best >= oldAlpha && bestMove != NONE_MOVE)
         updateHistory(History, bestMove, board->turn, 1, depth*depth);
     
-    for (i = valid - 2; i >= 0; i--)
-        updateHistory(History, played[i], board->turn, 0, depth*depth);
+    for (i = valid - 1; i >= 0; i--)
+        if (played[i] != bestMove)
+            updateHistory(History, played[i], board->turn, 0, depth*depth);
     
     
     // STORE RESULTS IN TRANSPOSITION TABLE
@@ -546,149 +534,78 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
     Undo undo[1];
     MovePicker movePicker;
     
-    // MAX HEIGHT REACHED, STOP HERE
+    // Max height reached, stop here
     if (height >= MAX_HEIGHT)
         return evaluateBoard(board, &PTable);
     
-    // INCREMENT TOTAL NODE COUNTER
     TotalNodes++;
     
-    // GET A STANDING-EVAL OF THE CURRENT BOARD
-    eval = evaluateBoard(board, &PTable);
-    value = eval;
+    // Get a standing eval of the current board
+    best = value = eval = evaluateBoard(board, &PTable);
     
-    // UPDATE LOWER BOUND
-    if (value > alpha)
-        alpha = value;
+    // Update lower bound
+    if (value > alpha) alpha = value;
     
-    // BOUNDS NOW OVERLAP?
-    if (alpha >= beta)
-        return value;
+    // QSearch can be terminated
+    if (alpha >= beta) return value;
     
-    
-    if (board->colours[!board->turn] & board->pieces[4])
+    // Take a guess at the best case gain for a non promotion capture
+    if (board->colours[!board->turn] & board->pieces[QUEEN])
         maxValueGain = QueenValue + 55;
-    else
+    else if (board->colours[!board->turn] & board->pieces[ROOK])
         maxValueGain = RookValue + 35;
+    else
+        maxValueGain = BishopValue + 15;
     
-    // DELTA PRUNING IN WHEN NO PROMOTIONS AND NOT EXTREME LATE GAME
+    // Delta pruning when no promotions and not extreme late game
     if (value + maxValueGain < alpha
-        && popcount(board->colours[0] | board->colours[1]) >= 6
-        && !(board->colours[0] & board->pieces[0] & RANK_7)
-        && !(board->colours[1] & board->pieces[0] & RANK_2))
+        && popcount(board->colours[WHITE] | board->colours[BLACK]) >= 6
+        && !(board->colours[WHITE] & board->pieces[PAWN] & RANK_7)
+        && !(board->colours[BLACK] & board->pieces[PAWN] & RANK_2))
         return value;
     
-    
-    best = value;
     
     initalizeMovePicker(&movePicker, 1, NONE_MOVE, NONE_MOVE, NONE_MOVE);
     
     while ((currentMove = selectNextMove(&movePicker, board)) != NONE_MOVE){
         
+        // Take a guess at the best case value of this current move
         value = eval + 55 + PieceValues[PieceType(board->squares[MoveTo(currentMove)])];
-        
         if (MoveType(currentMove) == PROMOTION_MOVE)
-            value += PieceValues[PieceType(1 + (MovePromoType(currentMove) >> 14))];
+            value += PieceValues[1 + (MovePromoType(currentMove) >> 14)];
         
+        // If the best case is not good enough, continue
         if (value < alpha)
             continue;
         
-        // APPLY AND VALIDATE MOVE BEFORE SEARCHING
+        // Apply and validate move before searching
         applyMove(board, currentMove, undo);
         if (!isNotInCheck(board, !board->turn)){
             revertMove(board, currentMove, undo);
             continue;
         }
         
-        // SEARCH NEXT DEPTH
+        // Search next depth
         value = -quiescenceSearch(board, -beta, -alpha, height+1);
         
-        // REVERT MOVE FROM BOARD
+        // Revert move from board
         revertMove(board, currentMove, undo);
         
-        // IMPROVED CURRENT VALUE
+        // Improved current value
         if (value > best){
             best = value;
             
-            // IMPROVED CURRENT LOWER VALUE
+            // Improved current lower value
             if (value > alpha)
                 alpha = value;
         }
         
-        // IMPROVED AND FAILED HIGH
+        // Search has failed high
         if (alpha >= beta)
-            break;
+            return best;
     }
     
     return best;
-}
-
-void evaluateMoves(Board * board, int * values, uint16_t * moves, int size, int height, uint16_t tableMove){
-    
-    int i, value;
-    int fromType, toType;
-    int toVal;
-    
-    // GET KILLER MOVES
-    uint16_t killer1 = KillerMoves[height][0];
-    uint16_t killer2 = KillerMoves[height][1];
-    
-    for (i = 0; i < size; i++){
-        
-        // TABLEMOVE FIRST
-        value  = 16384 * ( tableMove == moves[i]);
-        
-        // THEN KILLERS, UNLESS OTHER GOOD CAPTURE
-        value += 256   * (   killer1 == moves[i]);
-        value += 256   * (   killer2 == moves[i]);
-        
-        // INFO FOR POSSIBLE CAPTURE
-        fromType = PieceType(board->squares[MoveFrom(moves[i])]);
-        toType = PieceType(board->squares[MoveTo(moves[i])]);
-        toVal = PieceValues[toType];
-        
-        // ENCOURAGE CAPTURING HIGH VALUE
-        value += 5 * toVal;
-        
-        // ENPASS CAPTURE IS TREATED SEPERATLY
-        if (MoveType(moves[i]) == ENPASS_MOVE)
-            value += 2*PawnValue;
-        
-        // WE ARE ONLY CONCERED WITH QUEEN PROMOTIONS
-        else if (MoveType(moves[i]) & PROMOTE_TO_QUEEN)
-            value += 5*QueenValue;
-        
-        // CASTLING IS USUALLY A GOOD MOVE
-        else if (MoveType(moves[i]) == CASTLE_MOVE)
-            value += 256;
-        
-        // PIECE SQUARE TABLE ORDERING
-        value += PSQTopening[fromType][MoveTo(moves[i])] - PSQTopening[fromType][MoveFrom(moves[i])];
-        
-        // HISTORY ORDERING
-        value += getHistoryScore(History, moves[i], board->turn, 512);
-        
-        values[i] = value;
-    }
-}
-
-uint16_t getNextMove(uint16_t * moves, int * values, int index, int size){
-    int i, best = 0;
-    uint16_t bestMove;
-    
-    // FIND GREATEST VALUE
-    for (i = 1; i < size - index; i++)
-        if (values[i] > values[best])
-            best = i;
-        
-    bestMove = moves[best];
-    
-    // MOVE LAST PAIR TO BEST SO WE
-    // CAN REDUCE THE EFFECTIVE LIST SIZE
-    moves[best] = moves[size-index-1];
-    values[best] = values[size-index-1];
-    
-    return bestMove;
 }
 
 void sortMoveList(MoveList * moveList){
