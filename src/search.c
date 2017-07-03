@@ -251,8 +251,8 @@ int rootSearch(PVariation * pv, Board * board, MoveList * moveList, int alpha,
 int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, 
                                    int depth, int height, int nodeType){
     
-    int i, value, newDepth, entryValue, entryType;
-    int min, max, inCheck;
+    int i, value, entryValue, entryType;
+    int min, max, inCheck, R, tableIsTactical = 0, hist;
     int valid = 0, avoidedQS = 0, eval = 0;
     int oldAlpha = alpha, best = -MATE, optimalValue = -MATE;
     
@@ -309,6 +309,10 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
         
         // ENTRY MOVE MAY BE CANDIDATE
         tableMove = EntryMove(*entry);
+        
+        // Determine if the table move is tactical. This will
+        // allow us to increase the LMR on quiet moves later on
+        tableIsTactical = moveIsTactical(board, tableMove);
         
         // ENTRY MAY IMPROVE BOUNDS
         if (USE_TRANSPOSITION_TABLE
@@ -391,6 +395,9 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
         
         // Get the best move from the PV
         tableMove = lpv.line[0];
+        
+        // Update tableIsTactical for LMR
+        tableIsTactical = moveIsTactical(board, tableMove);
     }
     
     // CHECK EXTENSION
@@ -429,40 +436,43 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
         }
         
         // STORE MOVE IN PLAYED
-        played[valid] = currentMove;
+        played[valid++] = currentMove;
     
-        // INCREMENT COUNTER OF VALID MOVES FOUND
-        valid++;
-        
         // DETERMINE IF WE CAN USE LATE MOVE REDUCTIONS
         if (USE_LATE_MOVE_REDUCTIONS
-            && valid >= 5
+            && valid >= 4
             && depth >= 3
             && !inCheck
-            && MoveType(currentMove) == NORMAL_MOVE
-            && undo[0].capturePiece == EMPTY
-            && getHistoryScore(History, currentMove, !board->turn, 100) < 80
-            && isNotInCheck(board, board->turn))
-            newDepth = depth - 2 - (valid >= 12) - (nodeType != PVNODE);
-        else
-            newDepth = depth-1;
+            && !moveWasTactical(undo, currentMove)
+            && isNotInCheck(board, board->turn)){
+        
+            hist = getHistoryScore(History, currentMove, !board->turn, 128);
+            
+            R = 2;
+            R += (valid - 4) / 8;
+            R += 2 * (nodeType != PVNODE);
+            R += tableIsTactical && bestMove == tableMove;
+            R -= hist / 24;
+            R = R >= 1 ? R : 1;
+        }
+        
+        else {
+            R = 1;
+        }
          
         // FULL WINDOW SEARCH ON FIRST MOVE
         if (valid == 1 || nodeType != PVNODE){
             
-            value = -alphaBetaSearch(&lpv, board, -beta, -alpha, newDepth, height+1, nodeType);
+            value = -alphaBetaSearch(&lpv, board, -beta, -alpha, depth-R, height+1, nodeType);
             
             // IMPROVED BOUND, BUT WAS REDUCED DEPTH?
-            if (value > alpha
-                && newDepth != depth-1){
-                    
+            if (value > alpha && R != 1)
                 value = -alphaBetaSearch(&lpv, board, -beta, -alpha, depth-1, height+1, nodeType);
-            }
         }
         
         // NULL WINDOW SEARCH ON NON-FIRST / PV MOVES
         else{
-            value = -alphaBetaSearch(&lpv, board, -alpha-1, -alpha, newDepth, height+1, CUTNODE);
+            value = -alphaBetaSearch(&lpv, board, -alpha-1, -alpha, depth-R, height+1, CUTNODE);
             
             // NULL WINDOW FAILED HIGH, RESEARCH
             if (value > alpha)
@@ -506,13 +516,12 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
     // Board is Checkmate or Stalemate
     if (valid == 0) return inCheck ? -MATE + height : 0;
     
-    if (best >= oldAlpha && bestMove != NONE_MOVE)
+    // Update History Scores
+    if (best >= beta && !moveIsTactical(board, bestMove)){
         updateHistory(History, bestMove, board->turn, 1, depth*depth);
-    
-    for (i = valid - 1; i >= 0; i--)
-        if (played[i] != bestMove)
+        for (i = 0; i < valid - 1; i++)
             updateHistory(History, played[i], board->turn, 0, depth*depth);
-    
+    }
     
     // STORE RESULTS IN TRANSPOSITION TABLE
     if (!Info->searchIsTimeLimited || getRealTime() < Info->endTime2){
@@ -635,4 +644,16 @@ int canDoNull(Board * board){
     uint64_t pawns = board->pieces[0];
     
     return (friendly & (kings | pawns)) != friendly;
+}
+
+int moveIsTactical(Board * board, uint16_t move){
+    return board->squares[MoveTo(move)] != EMPTY
+        || MoveType(move) == PROMOTION_MOVE
+        || MoveType(move) == ENPASS_MOVE;
+}
+
+int moveWasTactical(Undo * undo, uint16_t move){
+    return undo->capturePiece != EMPTY
+        || MoveType(move) == PROMOTION_MOVE
+        || MoveType(move) == ENPASS_MOVE;
 }

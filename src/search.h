@@ -40,6 +40,10 @@ void sortMoveList(MoveList * moveList);
 
 int canDoNull(Board * board);
 
+int moveIsTactical(Board * board, uint16_t move);
+
+int moveWasTactical(Undo * undo, uint16_t move);
+
 #define USE_STATIC_NULL_PRUNING             (1)
 #define USE_FUTILITY_PRUNING                (1)
 #define USE_NULL_MOVE_PRUNING               (1)
