@@ -22,7 +22,9 @@
 #define HISTORY_GOOD    (0)
 #define HISTORY_TOTAL   (1)
 
-#define HISTORY_MAX     (0x7FFF)
+#define HISTORY_MAX     (0xFFFFF)
+
+void reduceHistory(HistoryTable history);
 
 void clearHistory(HistoryTable history);
 

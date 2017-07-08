@@ -21,8 +21,30 @@
 #include "move.h"
 #include "types.h"
 
+
 /**
- * Reset the History counters for a new search
+ * Reduce the History counters for a new search in the same
+ * game. Throwing away history between searches is a waste.
+ *
+ * @param   history HistoryTable struct to reduce
+ */
+void reduceHistory(HistoryTable history){
+    
+    int colour, from, to, counter;
+    
+    // Divide each history entry by 4
+    for (colour = 0; colour < COLOUR_NB; colour++)
+        for (from = 0; from < SQUARE_NB; from++)
+            for (to = 0; to < SQUARE_NB; to++)
+                for (counter = 0; counter < 2; counter++){
+                    history[colour][from][to][counter] >>= 2;
+                    history[colour][from][to][counter]++;
+                }
+}
+
+
+/**
+ * Reset the History counters for a new game
  *
  * @param   history HistoryTable struct to clear
  */

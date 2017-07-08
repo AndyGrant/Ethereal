@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "board.h"
+#include "history.h"
 #include "magics.h"
 #include "masks.h"
 #include "move.h"
@@ -36,6 +37,8 @@
 #include "types.h"
 #include "uci.h"
 #include "zorbist.h"
+
+extern HistoryTable History;
 
 char * startPos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -79,7 +82,7 @@ int main(){
            http://wbec-ridderkerk.nl/html/UCIProtocol.html */
             
         if (stringEquals(str, "uci")){
-            printf("id name Ethereal 8.19\n");
+            printf("id name Ethereal 8.20\n");
             printf("id author Andrew Grant\n");
             printf("option name Hash type spin default 16 min 1 max 2048\n");
             printf("uciok\n");
@@ -101,6 +104,7 @@ int main(){
         }
         
         else if (stringEquals(str, "ucinewgame")){
+            clearHistory(History);
             clearTranspositionTable(&Table);
         } 
         
