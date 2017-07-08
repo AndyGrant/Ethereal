@@ -75,7 +75,7 @@ uint16_t getBestMove(SearchInfo * info){
     // Prepare the transposition tables
     updateTranspositionTable(&Table);
     initalizePawnTable(&PTable);
-    clearHistory(History);
+    reduceHistory(History);
     
     // Populate the root's moves
     MoveList rootMoves;
@@ -251,13 +251,13 @@ int rootSearch(PVariation * pv, Board * board, MoveList * moveList, int alpha,
 int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, 
                                    int depth, int height, int nodeType){
     
-    int i, value, entryValue, entryType;
-    int min, max, inCheck, R, tableIsTactical = 0, hist;
-    int valid = 0, avoidedQS = 0, eval = 0;
-    int oldAlpha = alpha, best = -MATE, optimalValue = -MATE;
+    int i, value, inCheck, isQuiet, hist, R;
+    int min, max, entryValue, entryType, oldAlpha = alpha;
+    int quiets = 0, played = 0, avoidedQS = 0, tableIsTactical = 0; 
+    int best = -MATE, eval = -MATE, optimal = -MATE;
     
-    uint16_t currentMove, tableMove = NONE_MOVE, bestMove = NONE_MOVE;
-    uint16_t killer1, killer2, played[MAX_MOVES];
+    uint16_t currentMove, killer1, killer2, quietsTried[MAX_MOVES];
+    uint16_t tableMove = NONE_MOVE, bestMove = NONE_MOVE;
     
     MovePicker movePicker;
     
@@ -283,38 +283,30 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
         if (board->history[i] == board->hash)
             return 0;
     
-    // SEARCH HORIZON REACHED, QSEARCH
+    // Search horizon reached, go into Quiescence Search
     if (depth <= 0){
         
-        // DETERMINE CHECK STATUS
+        // Don't jump into the qsearch if we are in check
         inCheck = !isNotInCheck(board, board->turn);
-        
-        // DON'T JUMP INTO THE QSEARCH IF WE ARE IN CHECK
-        if (inCheck){
-            avoidedQS = 1;
-            depth += 1;
-        }
-
-        else
-            return quiescenceSearch(board, alpha, beta, height);
+        if (inCheck) avoidedQS = 1;
+        else return quiescenceSearch(board, alpha, beta, height);
     }
     
     // INCREMENT TOTAL NODE COUNTER
     TotalNodes++;
     
-    // LOOKUP CURRENT POSITION IN TRANSPOSITION TABLE
-    entry = getTranspositionEntry(&Table, board->hash);
-    
-    if (entry != NULL){
+    // Lookup current position in transposition table
+    if ((entry = getTranspositionEntry(&Table, board->hash)) != NULL){
         
-        // ENTRY MOVE MAY BE CANDIDATE
+        // Entry move may be good in this position
         tableMove = EntryMove(*entry);
         
         // Determine if the table move is tactical. This will
         // allow us to increase the LMR on quiet moves later on
         tableIsTactical = moveIsTactical(board, tableMove);
         
-        // ENTRY MAY IMPROVE BOUNDS
+        // Determine if Table may cause a cut off. We could perform
+        // cutoffs in PVNODEs, but doing so will truncate the PV line
         if (USE_TRANSPOSITION_TABLE
             && EntryDepth(*entry) >= depth
             && nodeType != PVNODE){
@@ -325,38 +317,41 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
             min = alpha;
             max = beta;
             
-            // EXACT VALUE STORED
+            // Exact value stored
             if (entryType == PVNODE)
                 return entryValue;
             
-            // LOWER BOUND STORED
+            // Lower bound stored
             else if (entryType == CUTNODE)
                 min = entryValue > alpha ? entryValue : alpha;
             
-            // UPPER BOUND STORED
+            // Upper bound stored
             else if (entryType == ALLNODE)
                 max = entryValue < beta ? entryValue : beta;
             
-            // BOUNDS NOW OVERLAP?
-            if (min >= max)
-                return entryValue;
+            // Bounds now overlap, therefore we can exit
+            if (min >= max) return entryValue;
         }
     }
     
-    // DETERMINE CHECK STATUS
+    // Determine check status if not done already
     if (!avoidedQS)
         inCheck = !isNotInCheck(board, board->turn);
     
-    if (nodeType != PVNODE && !inCheck)
+    // If not in check and not in a PVNODE, we will need
+    // a static eval for some pruning decisions later on
+    if (nodeType != PVNODE && !inCheck){
         eval = evaluateBoard(board, &PTable);
+        optimal = eval + depth * 1.25 * PawnValue;
+    }
     
-    // STATIC NULL MOVE PRUNING
+    // Static null move pruning
     if (USE_STATIC_NULL_PRUNING
         && depth <= 3
         && nodeType != PVNODE
         && !inCheck){
             
-        value = eval - (depth * (PawnValue + 15));
+        value = eval - depth * (PawnValue + 15);
         
         if (value > beta)
             return value;
@@ -401,55 +396,51 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
     }
     
     // CHECK EXTENSION
-    depth += !avoidedQS && inCheck && (nodeType == PVNODE || depth <= 6);
+    depth += inCheck && (nodeType == PVNODE || depth <= 6);
     
     // Setup the Move Picker
     killer1 = KillerMoves[height][0];
     killer2 = KillerMoves[height][1];
     initalizeMovePicker(&movePicker, 0, tableMove, killer1, killer2);
     
-    while((currentMove = selectNextMove(&movePicker, board)) != NONE_MOVE){
+    while ((currentMove = selectNextMove(&movePicker, board)) != NONE_MOVE){
         
-        // USE FUTILITY PRUNING
+        // Save this to the quiets list if it is quiet
+        isQuiet = !moveIsTactical(board, currentMove);
+        if (isQuiet) quietsTried[quiets++] = currentMove;
+        
+        // Use futility pruning
         if (USE_FUTILITY_PRUNING
             && nodeType != PVNODE
-            && valid >= 1
+            && played >= 1
             && depth <= 8
             && !inCheck
-            && MoveType(currentMove) == NORMAL_MOVE
-            && board->squares[MoveTo(currentMove)] == EMPTY){
-                
-            if (optimalValue == -MATE)
-                optimalValue = eval + (depth * 1.25 * PawnValue);
-            
-            value = optimalValue;
-            
-            if (value <= alpha)
-                continue;
-        }
+            && isQuiet
+            && optimal <= alpha)
+            continue;
         
-        // APPLY AND VALIDATE MOVE BEFORE SEARCHING
+        // Apply and validate move before searching
         applyMove(board, currentMove, undo);
         if (!isNotInCheck(board, !board->turn)){
             revertMove(board, currentMove, undo);
             continue;
         }
         
-        // STORE MOVE IN PLAYED
-        played[valid++] = currentMove;
+        // Update counter of moves actually played
+        played += 1;
     
         // DETERMINE IF WE CAN USE LATE MOVE REDUCTIONS
         if (USE_LATE_MOVE_REDUCTIONS
-            && valid >= 4
+            && played >= 4
             && depth >= 3
             && !inCheck
-            && !moveWasTactical(undo, currentMove)
+            && isQuiet
             && isNotInCheck(board, board->turn)){
         
             hist = getHistoryScore(History, currentMove, !board->turn, 128);
             
             R = 2;
-            R += (valid - 4) / 8;
+            R += (played - 4) / 8;
             R += 2 * (nodeType != PVNODE);
             R += tableIsTactical && bestMove == tableMove;
             R -= hist / 24;
@@ -461,7 +452,7 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
         }
          
         // FULL WINDOW SEARCH ON FIRST MOVE
-        if (valid == 1 || nodeType != PVNODE){
+        if (played == 1 || nodeType != PVNODE){
             
             value = -alphaBetaSearch(&lpv, board, -beta, -alpha, depth-R, height+1, nodeType);
             
@@ -501,10 +492,8 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
         // IMPROVED AND FAILED HIGH
         if (alpha >= beta){
             
-            // UPDATE KILLER MOVES
-            if (MoveType(currentMove) == NORMAL_MOVE
-                && undo[0].capturePiece == EMPTY
-                && KillerMoves[height][0] != currentMove){
+            // Update killer moves
+            if (isQuiet && KillerMoves[height][0] != currentMove){
                 KillerMoves[height][1] = KillerMoves[height][0];
                 KillerMoves[height][0] = currentMove;
             }
@@ -514,16 +503,16 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
     }
     
     // Board is Checkmate or Stalemate
-    if (valid == 0) return inCheck ? -MATE + height : 0;
+    if (played == 0) return inCheck ? -MATE + height : 0;
     
     // Update History Scores
     if (best >= beta && !moveIsTactical(board, bestMove)){
         updateHistory(History, bestMove, board->turn, 1, depth*depth);
-        for (i = 0; i < valid - 1; i++)
-            updateHistory(History, played[i], board->turn, 0, depth*depth);
+        for (i = 0; i < quiets - 1; i++)
+            updateHistory(History, quietsTried[i], board->turn, 0, depth*depth);
     }
     
-    // STORE RESULTS IN TRANSPOSITION TABLE
+    // Store results in transposition table
     if (!Info->searchIsTimeLimited || getRealTime() < Info->endTime2){
         if (best > oldAlpha && best < beta)
             storeTranspositionEntry(&Table, depth,  PVNODE, best, bestMove, board->hash);

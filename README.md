@@ -4,10 +4,12 @@ Ethereal is a UCI-compliant chess engine. It uses the traditional alpha-beta fra
 
 # Development
 
-I will happily review any Pull Requests and consider merging them into the project. The License on this project allows any individual to use, modify, and release my code and any derivatives made using my code. For any questions or comments, feel free to contact me at <Andrew@Grantnet.us>
+[Old Versions Of Ethereal](https://andygrant.github.io/)
+
+[Progression on CCRL 40/4](http://www.computerchess.org.uk/ccrl/404/cgi/compare_engines.cgi?family=Ethereal&print=Rating+list&print=Results+table&print=LOS+table&print=Ponder+hit+table&print=Eval+difference+table&print=Comopp+gamenum+table&print=Overlap+table&print=Score+with+common+opponents)
+
+[Progression on CCRL 40/40](http://www.computerchess.org.uk/ccrl/4040/cgi/compare_engines.cgi?family=Ethereal&print=Rating+list&print=Results+table&print=LOS+table&print=Ponder+hit+table&print=Eval+difference+table&print=Comopp+gamenum+table&print=Overlap+table&print=Score+with+common+opponents)
 
 # Special Thanks
 
 I would like to thank my previous instructor, Zachary Littrell, for all of his help in my endeavors. He served as my Computer Science instructor for a full year. His encouragement, mentoring, and assistance played a vital role in the development of my Computer Science skills. In addition to being a wonderful instructor, he is also a excellent friend. He provided the guidance I needed at such a crucial time in my life, allowing me to pursue Computer Science in a way I never imagined I could.
-
-
