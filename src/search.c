@@ -389,7 +389,7 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
             value = alphaBetaSearch(&lpv, board, -MATE, beta, depth-2, height, PVNODE);
         
         // Get the best move from the PV
-        tableMove = lpv.line[0];
+        if (lpv.length >= 1) tableMove = lpv.line[0];
         
         // Update tableIsTactical for LMR
         tableIsTactical = moveIsTactical(board, tableMove);
