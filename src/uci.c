@@ -48,7 +48,7 @@ int main(){
     Undo undo[1];
     SearchInfo info;
     uint16_t moves[MAX_MOVES];
-    char str[2048], moveStr[6], testStr[6], * ptr;
+    char str[8192], moveStr[6], testStr[6], * ptr;
     
     // Initalze all components of the chess engine
     initalizeMagics();
@@ -82,7 +82,7 @@ int main(){
            http://wbec-ridderkerk.nl/html/UCIProtocol.html */
             
         if (stringEquals(str, "uci")){
-            printf("id name Ethereal 8.20\n");
+            printf("id name Ethereal 8.21\n");
             printf("id author Andrew Grant\n");
             printf("option name Hash type spin default 16 min 1 max 2048\n");
             printf("uciok\n");
@@ -315,7 +315,7 @@ int stringContains(char * str, char * key){
 
 void getInput(char * str){
     
-    if (fgets(str, 2048, stdin) == NULL)
+    if (fgets(str, 8192, stdin) == NULL)
         exit(EXIT_FAILURE);
     
     char * ptr = strchr(str, '\n');
