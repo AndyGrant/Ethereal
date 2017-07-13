@@ -44,11 +44,14 @@ int moveIsTactical(Board * board, uint16_t move);
 
 int moveWasTactical(Undo * undo, uint16_t move);
 
+static const int LateMovePruningCounts[6] = {0, 6, 11, 15, 20, 25}; 
+
 #define USE_STATIC_NULL_PRUNING             (1)
 #define USE_FUTILITY_PRUNING                (1)
 #define USE_NULL_MOVE_PRUNING               (1)
 #define USE_LATE_MOVE_REDUCTIONS            (1)
 #define USE_INTERNAL_ITERATIVE_DEEPENING    (1)
 #define USE_TRANSPOSITION_TABLE             (1)
+#define USE_LATE_MOVE_PRUNING               (1)
 
 #endif

@@ -251,10 +251,11 @@ int rootSearch(PVariation * pv, Board * board, MoveList * moveList, int alpha,
 int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, 
                                    int depth, int height, int nodeType){
     
-    int i, value, inCheck, isQuiet, hist, R;
+    int i, value, inCheck, isQuiet, R;
     int min, max, entryValue, entryType, oldAlpha = alpha;
     int quiets = 0, played = 0, avoidedQS = 0, tableIsTactical = 0; 
     int best = -MATE, eval = -MATE, optimal = -MATE;
+    int hist = 0; // Fix bogus GCC warning
     
     uint16_t currentMove, killer1, killer2, quietsTried[MAX_MOVES];
     uint16_t tableMove = NONE_MOVE, bestMove = NONE_MOVE;
@@ -405,9 +406,23 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
     
     while ((currentMove = selectNextMove(&movePicker, board)) != NONE_MOVE){
         
-        // Save this to the quiets list if it is quiet
-        isQuiet = !moveIsTactical(board, currentMove);
-        if (isQuiet) quietsTried[quiets++] = currentMove;
+        // If this move is quiet we will save it to a list of attemped
+        // quiets, and we will need a history score for pruning decisions
+        if ((isQuiet = !moveIsTactical(board, currentMove))){
+            quietsTried[quiets++] = currentMove;
+            hist = getHistoryScore(History, currentMove, board->turn, 128);
+        }
+        
+        // Late Move Pruning
+        if (USE_LATE_MOVE_PRUNING
+            && nodeType != PVNODE
+            && played >= 1
+            && !inCheck
+            && isQuiet
+            && depth < 6
+            && quiets > LateMovePruningCounts[depth]
+            && hist < 32)
+            continue;
         
         // Use futility pruning
         if (USE_FUTILITY_PRUNING
@@ -436,8 +451,6 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
             && !inCheck
             && isQuiet
             && isNotInCheck(board, board->turn)){
-        
-            hist = getHistoryScore(History, currentMove, !board->turn, 128);
             
             R = 2;
             R += (played - 4) / 8;
