@@ -346,6 +346,26 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
         optimal = eval + depth * 1.25 * PawnValue;
     }
     
+    // Node Razoring at expected ALLNODEs
+    if (USE_RAZORING
+        && nodeType != PVNODE
+        && !inCheck
+        && depth <= 4
+        && !tableIsTactical
+        && hasNonPawnMaterial(board, board->turn)
+        && eval + RazorMargins[depth] < alpha){
+            
+            
+        if (depth <= 1)
+            return quiescenceSearch(board, alpha, beta, height);
+        
+        value = quiescenceSearch(board, alpha - RazorMargins[depth],
+                                beta - RazorMargins[depth], height);
+                                
+        if (value + RazorMargins[depth] < alpha)
+            return value;
+    }
+    
     // Static null move pruning
     if (USE_STATIC_NULL_PRUNING
         && depth <= 3
@@ -413,17 +433,6 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
             hist = getHistoryScore(History, currentMove, board->turn, 128);
         }
         
-        // Late Move Pruning
-        if (USE_LATE_MOVE_PRUNING
-            && nodeType != PVNODE
-            && played >= 1
-            && !inCheck
-            && isQuiet
-            && depth < 6
-            && quiets > LateMovePruningCounts[depth]
-            && hist < 32)
-            continue;
-        
         // Use futility pruning
         if (USE_FUTILITY_PRUNING
             && nodeType != PVNODE
@@ -437,6 +446,20 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
         // Apply and validate move before searching
         applyMove(board, currentMove, undo);
         if (!isNotInCheck(board, !board->turn)){
+            revertMove(board, currentMove, undo);
+            continue;
+        }
+        
+        // Late Move Pruning
+        if (USE_LATE_MOVE_PRUNING
+            && nodeType != PVNODE
+            && played >= 1
+            && !inCheck
+            && isQuiet
+            && depth <= 8
+            && quiets > LateMovePruningCounts[depth]
+            && isNotInCheck(board, board->turn)){
+        
             revertMove(board, currentMove, undo);
             continue;
         }
@@ -658,4 +681,11 @@ int moveWasTactical(Undo * undo, uint16_t move){
     return undo->capturePiece != EMPTY
         || MoveType(move) == PROMOTION_MOVE
         || MoveType(move) == ENPASS_MOVE;
+}
+
+int hasNonPawnMaterial(Board * board, int turn){
+    uint64_t friendly = board->colours[turn];
+    uint64_t kings = board->pieces[5];
+    uint64_t pawns = board->pieces[0];
+    return (friendly & (kings | pawns)) != friendly;
 }
