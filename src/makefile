@@ -16,11 +16,13 @@
 
 CC = gcc
 
-CFLAGS = -DNDEBUG -O3 -Wall -Wextra -Wshadow -std=c99
+WFLAGS = -Wall -Wextra -Wshadow -Wno-implicit-fallthrough
 
-PFLAGS = -DNDEBUG -O0 -Wall -Wextra -Wshadow -std=c99 -p -pg
+CFLAGS = -DNDEBUG -O3 $(WFLAGS) -std=c99
 
-DFLAGS = -O0 -Wall -Wextra -Wshadow -std=c99
+PFLAGS = -DNDEBUG -O0 $(WFLAGS) -std=c99 -p -pg
+
+DFLAGS = -O0 $(FLAGS) -std=c99
 
 SRC = *.c
 

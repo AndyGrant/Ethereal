@@ -14,18 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-CCWIN32 = gcc32
 CCWIN64 = gcc
 CCDROID = arm-linux-gnueabi-gcc
 
-CWIN32FLAGS = -DNDEBUG -O3 -Wall -Wextra -Wshadow -std=c99 -m32
-CWIN64FLAGS = -DNDEBUG -O3 -Wall -Wextra -Wshadow -std=c99 -m64
-CDROIDFLAGS = -DNDEBUG -O3 -Wall -Wextra -Wshadow -std=c99 -march=armv5t
+WFLAGS = -Wall -Wextra -Wshadow -Wno-implicit-fallthrough
+CWIN64FLAGS = -DNDEBUG -O3 $(WFLAGS) -std=c99 -m64
+CDROIDFLAGS = -DNDEBUG -O3 $(WFLAGS) -std=c99 -march=armv5t
 
 LIBS = -static
 SRC = ../src/*.c
       
 all:
 	$(CCDROID) $(CDROIDFLAGS) $(SRC) -o $(EXE)-Android $(LIBS)
-	$(CCWIN32) $(CWIN32FLAGS) $(SRC) -o $(EXE)-Win32.exe $(LIBS)
 	$(CCWIN64) $(CWIN64FLAGS) $(SRC) -o $(EXE)-Win64.exe $(LIBS)
