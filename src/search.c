@@ -275,6 +275,11 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
         return board->turn == EvaluatingPlayer ? -MATE : MATE;
     }
     
+    // Check to see if this line can't improve the mating / mated line
+    min = alpha > -MATE + height     ? alpha : -MATE + height;
+    max =  beta <  MATE - height - 1 ?  beta :  MATE - height - 1;
+    if (min >= max) return min;
+    
     // Check for the fifty move rule
     if (board->fiftyMoveRule > 100)
         return 0;
@@ -312,7 +317,7 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
             && EntryDepth(*entry) >= depth
             && nodeType != PVNODE){
                 
-            entryValue = EntryValue(*entry);
+            entryValue = valueFromTT(EntryValue(*entry), height);
             entryType = EntryType(*entry);
             
             min = alpha;
@@ -394,8 +399,11 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
         
         revertNullMove(board, undo);
         
-        if (value >= beta)
+        if (value >= beta){
+            if (value >= MATE - MAX_HEIGHT)
+                value = beta;
             return value;
+        }
     }
     
     // INTERNAL ITERATIVE DEEPING
@@ -542,22 +550,17 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta,
     if (played == 0) return inCheck ? -MATE + height : 0;
     
     // Update History Scores
-    if (best >= beta && !moveIsTactical(board, bestMove)){
+    else if (best >= beta && !moveIsTactical(board, bestMove)){
         updateHistory(History, bestMove, board->turn, 1, depth*depth);
         for (i = 0; i < quiets - 1; i++)
             updateHistory(History, quietsTried[i], board->turn, 0, depth*depth);
     }
     
     // Store results in transposition table
-    if (!Info->searchIsTimeLimited || getRealTime() < Info->endTime2){
-        if (best > oldAlpha && best < beta)
-            storeTranspositionEntry(&Table, depth,  PVNODE, best, bestMove, board->hash);
-        else if (best >= beta)
-            storeTranspositionEntry(&Table, depth, CUTNODE, best, bestMove, board->hash);
-        else if (best <= oldAlpha)
-            storeTranspositionEntry(&Table, depth, ALLNODE, best, bestMove, board->hash);
-    }
-    
+    if (!Info->searchIsTimeLimited || getRealTime() < Info->endTime2)
+        storeTranspositionEntry(&Table, depth, (best > oldAlpha && best < beta)
+                                ? PVNODE : best >= beta ? CUTNODE : ALLNODE,
+                                valueToTT(best, height), bestMove, board->hash);    
     return best;
 }
 
@@ -665,8 +668,8 @@ void sortMoveList(MoveList * moveList){
 
 int canDoNull(Board * board){
     uint64_t friendly = board->colours[board->turn];
-    uint64_t kings = board->pieces[5];
-    uint64_t pawns = board->pieces[0];
+    uint64_t kings = board->pieces[KING];
+    uint64_t pawns = board->pieces[PAWN];
     
     return (friendly & (kings | pawns)) != friendly;
 }
@@ -677,15 +680,21 @@ int moveIsTactical(Board * board, uint16_t move){
         || MoveType(move) == ENPASS_MOVE;
 }
 
-int moveWasTactical(Undo * undo, uint16_t move){
-    return undo->capturePiece != EMPTY
-        || MoveType(move) == PROMOTION_MOVE
-        || MoveType(move) == ENPASS_MOVE;
-}
-
 int hasNonPawnMaterial(Board * board, int turn){
     uint64_t friendly = board->colours[turn];
-    uint64_t kings = board->pieces[5];
-    uint64_t pawns = board->pieces[0];
+    uint64_t kings = board->pieces[KING];
+    uint64_t pawns = board->pieces[PAWN];
     return (friendly & (kings | pawns)) != friendly;
+}
+
+int valueFromTT(int value, int height){
+    return value >=  MATE - MAX_HEIGHT ? value - height
+         : value <= -MATE + MAX_HEIGHT ? value + height
+         : value;
+}
+
+int valueToTT(int value, int height){
+    return value >=  MATE - MAX_HEIGHT ? value + height
+         : value <= -MATE + MAX_HEIGHT ? value - height
+         : value;
 }
