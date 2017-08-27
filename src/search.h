@@ -42,9 +42,11 @@ int canDoNull(Board * board);
 
 int moveIsTactical(Board * board, uint16_t move);
 
-int moveWasTactical(Undo * undo, uint16_t move);
-
 int hasNonPawnMaterial(Board * board, int turn);
+
+int valueFromTT(int value, int height);
+
+int valueToTT(int value, int height);
 
 static const int LateMovePruningCounts[] = {0, 6, 9, 14, 21, 30, 41, 54, 69};
 
