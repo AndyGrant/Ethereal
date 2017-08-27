@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "bitboards.h"
 #include "bitutils.h"
@@ -188,6 +189,10 @@ void initalizeBoard(Board * board, char * fen){
     // Factor in the enpass square
     if (board->epSquare != -1)
         board->hash ^= ZorbistKeys[ENPASS][File(board->epSquare)];
+    
+    // Factor in the turn
+    if (board->turn == BLACK)
+        board->hash ^= ZorbistKeys[TURN][0];
     
     // Inititalize Pawn Hash
     for (i = 0, board->phash = 0; i < 64; i++)

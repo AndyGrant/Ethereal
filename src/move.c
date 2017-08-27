@@ -213,14 +213,14 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
         // Update the PSQT value for the opening
         board->opening += PSQTopening[fromPiece][to]
                         - PSQTopening[fromPiece][from]
-                        + PSQTopening[rFromPiece][to]
-                        - PSQTopening[rFromPiece][from];
+                        + PSQTopening[rFromPiece][rTo]
+                        - PSQTopening[rFromPiece][rFrom];
                         
         // Update the PSQT value for the endgame
         board->endgame += PSQTendgame[fromPiece][to]
                         - PSQTendgame[fromPiece][from]
-                        + PSQTendgame[rFromPiece][to]
-                        - PSQTendgame[rFromPiece][from];
+                        + PSQTendgame[rFromPiece][rTo]
+                        - PSQTendgame[rFromPiece][rFrom];
         
         // Update the main zorbist hash
         board->hash ^= ZorbistKeys[fromPiece][from]
