@@ -37,45 +37,41 @@
 #include "movegen.h"
 #include "zorbist.h"
 
+extern TransTable Table;
+
 #define NUM_BENCHMARKS (21)
 
 char Benchmarks[NUM_BENCHMARKS][256] = { // StockFish:benchmark.cpp
-	"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-	"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 10",
-	"8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 11",
-	"4rrk1/pp1n3p/3q2pQ/2p1pb2/2PP4/2P3N1/P2B2PP/4RRK1 b - - 7 19",
-	"rq3rk1/ppp2ppp/1bnpb3/3N2B1/3NP3/7P/PPPQ1PP1/2KR3R w - - 7 14",
-	"r1bq1r1k/1pp1n1pp/1p1p4/4p2Q/4Pp2/1BNP4/PPP2PPP/3R1RK1 w - - 2 14",
-	"r3r1k1/2p2ppp/p1p1bn2/8/1q2P3/2NPQN2/PPP3PP/R4RK1 b - - 2 15",
-	"r1bbk1nr/pp3p1p/2n5/1N4p1/2Np1B2/8/PPP2PPP/2KR1B1R w kq - 0 13",
-	"r1bq1rk1/ppp1nppp/4n3/3p3Q/3P4/1BP1B3/PP1N2PP/R4RK1 w - - 1 16",
-	"4r1k1/r1q2ppp/ppp2n2/4P3/5Rb1/1N1BQ3/PPP3PP/R5K1 w - - 1 17",
-	"2rqkb1r/ppp2p2/2npb1p1/1N1Nn2p/2P1PP2/8/PP2B1PP/R1BQK2R b KQ - 0 11",
-	"r1bq1r1k/b1p1npp1/p2p3p/1p6/3PP3/1B2NN2/PP3PPP/R2Q1RK1 w - - 1 16",
-	"3r1rk1/p5pp/bpp1pp2/8/q1PP1P2/b3P3/P2NQRPP/1R2B1K1 b - - 6 22",
-	"r1q2rk1/2p1bppp/2Pp4/p6b/Q1PNp3/4B3/PP1R1PPP/2K4R w - - 2 18",
-	"2K5/p7/7P/5pR1/8/5k2/r7/8 w - - 0 1",
-	"8/6pk/1p6/8/PP3p1p/5P2/4KP1q/3Q4 w - - 0 1",
-	"7k/3p2pp/4q3/8/4Q3/5Kp1/P6b/8 w - - 0 1",
-	"5k2/7R/4P2p/5K2/p1r2P1p/8/8/8 b - - 0 1",
-	"6k1/6p1/P6p/r1N5/5p2/7P/1b3PP1/4R1K1 w - - 0 1",
-	"1r3k2/4q3/2Pp3b/3Bp3/2Q2p2/1p1P2P1/1P2KP2/3N4 w - - 0 1",
-	"6k1/4pp1p/3p2p1/P1pPb3/R7/1r2P1PP/3B1P2/6K1 w - - 0 1",
+    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+    "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 10",
+    "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 11",
+    "4rrk1/pp1n3p/3q2pQ/2p1pb2/2PP4/2P3N1/P2B2PP/4RRK1 b - - 7 19",
+    "rq3rk1/ppp2ppp/1bnpb3/3N2B1/3NP3/7P/PPPQ1PP1/2KR3R w - - 7 14",
+    "r1bq1r1k/1pp1n1pp/1p1p4/4p2Q/4Pp2/1BNP4/PPP2PPP/3R1RK1 w - - 2 14",
+    "r3r1k1/2p2ppp/p1p1bn2/8/1q2P3/2NPQN2/PPP3PP/R4RK1 b - - 2 15",
+    "r1bbk1nr/pp3p1p/2n5/1N4p1/2Np1B2/8/PPP2PPP/2KR1B1R w kq - 0 13",
+    "r1bq1rk1/ppp1nppp/4n3/3p3Q/3P4/1BP1B3/PP1N2PP/R4RK1 w - - 1 16",
+    "4r1k1/r1q2ppp/ppp2n2/4P3/5Rb1/1N1BQ3/PPP3PP/R5K1 w - - 1 17",
+    "2rqkb1r/ppp2p2/2npb1p1/1N1Nn2p/2P1PP2/8/PP2B1PP/R1BQK2R b KQ - 0 11",
+    "r1bq1r1k/b1p1npp1/p2p3p/1p6/3PP3/1B2NN2/PP3PPP/R2Q1RK1 w - - 1 16",
+    "3r1rk1/p5pp/bpp1pp2/8/q1PP1P2/b3P3/P2NQRPP/1R2B1K1 b - - 6 22",
+    "r1q2rk1/2p1bppp/2Pp4/p6b/Q1PNp3/4B3/PP1R1PPP/2K4R w - - 2 18",
+    "2K5/p7/7P/5pR1/8/5k2/r7/8 w - - 0 1",
+    "8/6pk/1p6/8/PP3p1p/5P2/4KP1q/3Q4 w - - 0 1",
+    "7k/3p2pp/4q3/8/4Q3/5Kp1/P6b/8 w - - 0 1",
+    "5k2/7R/4P2p/5K2/p1r2P1p/8/8/8 b - - 0 1",
+    "6k1/6p1/P6p/r1N5/5p2/7P/1b3PP1/4R1K1 w - - 0 1",
+    "1r3k2/4q3/2Pp3b/3Bp3/2Q2p2/1p1P2P1/1P2KP2/3N4 w - - 0 1",
+    "6k1/4pp1p/3p2p1/P1pPb3/R7/1r2P1PP/3B1P2/6K1 w - - 0 1",
 };
 
-/**
- * Initalize a given board struct based on the passed FEN position
- *
- * @param   board   Board pointer to store information
- * @param   fen     FEN string to create position from
- */
 void initalizeBoard(Board * board, char * fen){
     
     int i, j, sq;
     char rank, file;
     uint64_t enemyPawns;
     
-    // Init board->squares from FEN notation;
+    // Initialze board->squares from FEN notation;
     for(i = 0, sq = 56; fen[i] != ' '; i++){
         
         // End of a row of the FEN notation
@@ -114,7 +110,7 @@ void initalizeBoard(Board * board, char * fen){
         case 'b': board->turn = BLACK; break;
     }
     
-    i++; // Skip over space between turn and rights
+    i++; // Skip over space between turn and castle rights
     
     // Determine Castle Rights
     board->castleRights = 0;
@@ -124,7 +120,7 @@ void initalizeBoard(Board * board, char * fen){
             case 'Q' : board->castleRights |= WHITE_QUEEN_RIGHTS; break;
             case 'k' : board->castleRights |= BLACK_KING_RIGHTS;  break;
             case 'q' : board->castleRights |= BLACK_QUEEN_RIGHTS; break;
-            case '-' : break;
+            case '-' : /* Indicates that no side may castle */    break;
         }
     }
     
@@ -133,14 +129,12 @@ void initalizeBoard(Board * board, char * fen){
     if (fen[++i] != '-'){
         rank = fen[i] - 'a';
         file = fen[++i] - '1';
-        
         board->epSquare = rank + (8 * file);
     }
     
     i++; // Skip over space between ensquare and halfmove count
         
-    // Determine Number of half moves into the fifty move rule
-    board->fiftyMoveRule = 0;
+    // Determine number of half moves into the fifty move rule
     if (fen[++i] != '-'){
         
         // Two Digit Number
@@ -153,6 +147,9 @@ void initalizeBoard(Board * board, char * fen){
         else
             board->fiftyMoveRule = fen[i] - '0';
     }
+    
+    else
+        board->fiftyMoveRule = 0;
     
     // Zero out each of the used BitBoards
     board->colours[WHITE] = 0ull;
@@ -173,8 +170,8 @@ void initalizeBoard(Board * board, char * fen){
     // Update the enpass square to reflect not only a potential
     // enpass, but that an enpass is actually possible
     if (board->epSquare != -1){
-        enemyPawns = board->colours[!board->turn] & board->pieces[PAWN];
-        enemyPawns &= IsolatedPawnMasks[board->epSquare];;
+        enemyPawns  = board->colours[!board->turn] & board->pieces[PAWN];
+        enemyPawns &= IsolatedPawnMasks[board->epSquare];
         enemyPawns &= (board->turn == BLACK) ? RANK_4 : RANK_5;
         if (enemyPawns == 0ull) board->epSquare = -1;
     }
@@ -199,9 +196,9 @@ void initalizeBoard(Board * board, char * fen){
         board->phash ^= PawnKeys[board->squares[i]][i];
         
     // Initalize Piece Square and Material value counters
-    for(i = 0, board->opening = 0, board->endgame = 0; i < 64; i++){
-        board->opening += PSQTopening[board->squares[i]][i];
-        board->endgame += PSQTendgame[board->squares[i]][i];
+    for(i = 0, board->midgame = 0, board->endgame = 0; i < 64; i++){
+        board->midgame += PSQTMidgame[board->squares[i]][i];
+        board->endgame += PSQTEndgame[board->squares[i]][i];
     }
     
     // Number of moves since this position
@@ -214,11 +211,6 @@ void initalizeBoard(Board * board, char * fen){
     board->hasCastled[1] = 0;
 }
 
-/**
- * Print a given board in a user-friendly manner.
- *
- * @param   board   Board pointer to board to print
- */
 void printBoard(Board * board){
     
     int i, j, f, c, t;
@@ -254,15 +246,6 @@ void printBoard(Board * board){
     printf("\n        A    B    C    D    E    F    G    H\n");
 }
 
-/**
- * Perform the Performance test move path enumeration recursivly.
- * This is only used for testing the move generation algorithm.
- *
- * @param   board   Board pointer to current position
- * @param   depth   Counter for recursive cut-off
- *
- * @return          Number of positions found
- */
 uint64_t perft(Board * board, int depth){
     
     Undo undo[1];
@@ -278,25 +261,19 @@ uint64_t perft(Board * board, int depth){
     for(size -= 1; size >= 0; size--){
         applyMove(board, moves[size], undo);
         if (isNotInCheck(board, !board->turn))
-            found += perft(board, depth-1);        
+            found += perft(board, depth-1);
         revertMove(board, moves[size], undo);
     }
     
     return found;
 }
 
-/**
- * Search each of the benchmark positions to a given depth.
- * Quick way of checking non functional speedups.
- *
- * @param   depth   Search depth for each position
- */
 void runBenchmark(int depth){
-
+    
     int i;
     double start, end;
-    
     SearchInfo info;
+    
     info.searchIsInfinite = 0;
     info.searchIsDepthLimited = 1;
     info.searchIsTimeLimited = 0;
@@ -315,5 +292,5 @@ void runBenchmark(int depth){
     
     end = getRealTime();
     
-    printf("Benchtime = %dms\n", (int)(end - start));    
+    printf("Benchtime = %dms\n", (int)(end - start));
 }

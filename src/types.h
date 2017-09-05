@@ -23,16 +23,19 @@
 
 #include "piece.h"
 
-#define MATE        (16000)
-#define MAX_DEPTH   (64)
-#define MAX_HEIGHT  (128)
-#define MAX_MOVES   (256)
+#define MATE       (16000)
+#define MAX_DEPTH  (64)
+#define MAX_HEIGHT (128)
+#define MAX_MOVES  (256)
 
-#define SQUARE_NB   (64)
-#define COLOUR_NB   ( 2)
-#define RANK_NB     ( 8)
-#define FILE_NB     ( 8)
-#define PHASE_NB    ( 2)
+#define SQUARE_NB (64)
+#define COLOUR_NB ( 2)
+#define RANK_NB   ( 8)
+#define FILE_NB   ( 8)
+#define PHASE_NB  ( 2)
+
+#define MG (0)
+#define EG (1)
 
 typedef struct Board {
     uint8_t squares[SQUARE_NB];
@@ -44,7 +47,7 @@ typedef struct Board {
     int castleRights;
     int epSquare;
     int fiftyMoveRule;
-    int opening;
+    int midgame;
     int endgame;
     int numMoves;
     int hasCastled[2];
@@ -52,14 +55,14 @@ typedef struct Board {
     
 } Board;
 
-typedef struct Undo {    
+typedef struct Undo {
     uint64_t hash;
     uint64_t phash;
     int turn;
     int castleRights;
     int epSquare;
     int fiftyMoveRule;
-    int opening;
+    int midgame;
     int endgame;
     int captureSquare;
     int capturePiece;
@@ -130,7 +133,7 @@ typedef struct PVariation {
 typedef int HistoryTable[COLOUR_NB][SQUARE_NB][SQUARE_NB][2]; 
 
 typedef struct MovePicker {
-    int isQuiescencePick, stage, split;
+    int pickQuiets, stage, split;
     int noisySize, badSize, quietSize;
     uint16_t tableMove, killer1, killer2;
     uint16_t moves[MAX_MOVES];

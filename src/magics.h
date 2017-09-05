@@ -41,9 +41,6 @@ extern uint64_t KingMap[SQUARE_NB];
 extern uint64_t OccupancyMaskRook[SQUARE_NB];
 extern uint64_t OccupancyMaskBishop[SQUARE_NB];
 
-extern uint64_t ** OccupancyVariationsRook;
-extern uint64_t ** OccupancyVariationsBishop;
-
 extern uint64_t * MoveDatabaseRook;
 extern uint64_t * MoveDatabaseBishop;
 

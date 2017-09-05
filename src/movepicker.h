@@ -19,27 +19,19 @@
 #ifndef _MOVEPICKER_H
 #define _MOVEPICKER_H
 
-#define STAGE_TABLE             (0)
-#define STAGE_GENERATE_NOISY    (1)
-#define STAGE_NOISY             (2)
-#define STAGE_KILLER_1          (3)
-#define STAGE_KILLER_2          (4)
-#define STAGE_GENERATE_QUIET    (5)
-#define STAGE_QUIET             (6)
-#define STAGE_DONE              (7)
-
-void initalizeMovePicker(MovePicker * mp, int isQuiescencePick,
-                          uint16_t tableMove, uint16_t killer1,
-                                             uint16_t killer2);
-
+void initalizeMovePicker(MovePicker * mp, int pickQuiets, uint16_t tableMove, uint16_t killer1, uint16_t killer2);
 uint16_t selectNextMove(MovePicker * mp, Board * board);
-
 void evaluateNoisyMoves(MovePicker * mp, Board * board);
-
 void evaluateQuietMoves(MovePicker * mp, Board * board);
-
-int moveIsGoodCapture(Board * board, uint16_t move);
-
 int moveIsPsuedoLegal(Board * board, uint16_t move);
+
+#define STAGE_TABLE          (0)
+#define STAGE_GENERATE_NOISY (1)
+#define STAGE_NOISY          (2)
+#define STAGE_KILLER_1       (3)
+#define STAGE_KILLER_2       (4)
+#define STAGE_GENERATE_QUIET (5)
+#define STAGE_QUIET          (6)
+#define STAGE_DONE           (7)
 
 #endif

@@ -31,45 +31,23 @@
 #include "psqt.h"
 #include "zorbist.h"
 
-/**
- * Apply a given move to a board and update all of the
- * necessary information, including: opening and endgame values
- * hash signature, piece counts, castling rights, enpassant
- * potentials, and the history of moves made.
- *
- * @param   board   Board pointer to current position
- * @param   move    Move to be applied to the board
- * @param   undo    Undo object to be filled with information
- *                  which is either hard or impossible to reverse
- *                  with only the board and the move
- */
 void applyMove(Board * board, uint16_t move, Undo * undo){
     
-    int to, from;
-    int rTo, rFrom;
-    int fromType, toType;
-    int promotype, ep;
-    
-    int fromPiece, toPiece;
-    int rFromPiece, enpassPiece;
-    int promoPiece;
-    
-    uint64_t shiftFrom, shiftTo;
-    uint64_t rShiftFrom, rShiftTo;
-    uint64_t shiftEnpass;
-    
-    uint64_t enemyPawns;
+    static void (*table[4])(Board *, uint16_t, Undo *) = {
+        applyNormalMove, applyCastleMove,
+        applyEnpassMove, applyPromotionMove
+    };
     
     // Save information that is either hard to reverse,
     // or is not worth the time in order to do so
-    undo->epSquare = board->epSquare;
+    undo->hash = board->hash;
+    undo->phash = board->phash;
     undo->turn = board->turn;
     undo->castleRights = board->castleRights;
+    undo->epSquare = board->epSquare;
     undo->fiftyMoveRule = board->fiftyMoveRule;
-    undo->opening = board->opening;
+    undo->midgame = board->midgame;
     undo->endgame = board->endgame;
-    undo->phash = board->phash;
-    undo->hash = board->hash;
     
     // Update the hash history and the move count
     board->history[board->numMoves++] = board->hash;
@@ -81,430 +59,304 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
     // We will reset later if needed
     board->fiftyMoveRule += 1;
     
-    if (MoveType(move) == NORMAL_MOVE){
-        to = MoveTo(move);
-        from = MoveFrom(move);
-        
-        shiftFrom = 1ull << from;
-        shiftTo = 1ull << to;
-        
-        fromPiece = board->squares[from];
-        toPiece = board->squares[to];
-        
-        fromType = PieceType(fromPiece);
-        toType = PieceType(toPiece);
-        
-        // Reset fifty move rule on a pawn move
-        if (fromType == PAWN) board->fiftyMoveRule = 0;
-        
-        // Reset fifty move rule on a capture
-        else if (toPiece != EMPTY) board->fiftyMoveRule = 0;
-        
-        // Update the colour bitboards
-        board->colours[board->turn] ^= shiftFrom | shiftTo;
-        board->colours[PieceColour(toPiece)] ^= shiftTo;
-        
-        // Update the piece bitboards
-        board->pieces[toType] ^= shiftTo;
-        board->pieces[fromType] ^= shiftFrom | shiftTo;
-        
-        // Save the captured piece and update the board array
-        undo->capturePiece = toPiece;
-        board->squares[to] = fromPiece;
-        board->squares[from] = EMPTY;
-        
-        // Bitwise-and out the castle changes
-        board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
-        board->castleRights &= CastleMask[from];
-        board->castleRights &= CastleMask[to];
-        board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
-        
-        // Swap the turn
-        board->turn = !board->turn;
-        
-        // Update the PSQT value for the opening
-        board->opening += PSQTopening[fromPiece][to]
-                        - PSQTopening[fromPiece][from]
-                        - PSQTopening[toPiece][to];
-        
-        // Update the PSQT value for the endgame
-        board->endgame += PSQTendgame[fromPiece][to]
-                        - PSQTendgame[fromPiece][from]
-                        - PSQTendgame[toPiece][to];
-                        
-        // Update the main zorbist hash
-        board->hash ^= ZorbistKeys[fromPiece][from]
-                    ^  ZorbistKeys[fromPiece][to]
-                    ^  ZorbistKeys[toPiece][to];
+    // Call the proper move application function
+    table[MoveType(move) >> 12](board, move, undo);
+}
+
+void applyNormalMove(Board * board, uint16_t move, Undo * undo){
+    
+    int to, from, fromType, toType, fromPiece, toPiece;
+    uint64_t shiftFrom, shiftTo, enemyPawns;
+    
+    to = MoveTo(move);
+    from = MoveFrom(move);
+    
+    shiftFrom = 1ull << from;
+    shiftTo = 1ull << to;
+    
+    fromPiece = board->squares[from];
+    toPiece = board->squares[to];
+    
+    fromType = PieceType(fromPiece);
+    toType = PieceType(toPiece);
+    
+    // Reset fifty move rule on a pawn move
+    if (fromType == PAWN) board->fiftyMoveRule = 0;
+    
+    // Reset fifty move rule on a capture
+    else if (toPiece != EMPTY) board->fiftyMoveRule = 0;
+    
+    // Update the colour bitboards
+    board->colours[board->turn] ^= shiftFrom | shiftTo;
+    board->colours[PieceColour(toPiece)] ^= shiftTo;
+    
+    // Update the piece bitboards
+    board->pieces[toType] ^= shiftTo;
+    board->pieces[fromType] ^= shiftFrom | shiftTo;
+    
+    // Save the captured piece and update the board array
+    undo->capturePiece = toPiece;
+    board->squares[to] = fromPiece;
+    board->squares[from] = EMPTY;
+    
+    // Bitwise-and out the castle changes for the hash
+    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    board->castleRights &= CastleMask[from];
+    board->castleRights &= CastleMask[to];
+    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    
+    // Swap the turn
+    board->turn = !board->turn;
+    
+    // Update the PSQT value for the midgame
+    board->midgame += PSQTMidgame[fromPiece][to]
+                    - PSQTMidgame[fromPiece][from]
+                    - PSQTMidgame[toPiece][to];
+    
+    // Update the PSQT value for the endgame
+    board->endgame += PSQTEndgame[fromPiece][to]
+                    - PSQTEndgame[fromPiece][from]
+                    - PSQTEndgame[toPiece][to];
                     
-        // Update the pawn zorbist hash
-        board->phash^= PawnKeys[fromPiece][from]
-                    ^  PawnKeys[fromPiece][to]
-                    ^  PawnKeys[toPiece][to];
-                    
-        // If there was a possible enpass move, we must
-        // xor the main zorbist key for it before moving on
-        if (board->epSquare != -1)
-            board->hash ^= ZorbistKeys[ENPASS][File(board->epSquare)];
-        
-        // Zero out the enpass square for now
-        board->epSquare = -1;
-        
-        // Check to see if this move creates an enpass square
-        if (fromType == PAWN && abs(to-from) == 16){
-            
-            enemyPawns = board->colours[board->turn] & board->pieces[PAWN];
-            enemyPawns &= IsolatedPawnMasks[from];
-            enemyPawns &= (board->turn == BLACK) ? RANK_4 : RANK_5;
-            
-            // Only set the enpass square if there is a     
-            // pawn that could actually perform the enpass
-            if (enemyPawns){
+    // Update the main zorbist hash
+    board->hash ^= ZorbistKeys[fromPiece][from]
+                ^  ZorbistKeys[fromPiece][to]
+                ^  ZorbistKeys[toPiece][to];
                 
-                // Update the main zorbist key to include the enpass file
-                board->epSquare = from + ((to-from) >> 1);
-                board->hash ^= ZorbistKeys[ENPASS][File(from)];
-            } 
-        }
+    // Update the pawn zorbist hash
+    board->phash^= PawnKeys[fromPiece][from]
+                ^  PawnKeys[fromPiece][to]
+                ^  PawnKeys[toPiece][to];
+                
+    // If there was a possible enpass move, we must
+    // xor the main zorbist key for it before moving on
+    if (board->epSquare != -1)
+        board->hash ^= ZorbistKeys[ENPASS][File(board->epSquare)];
+    
+    // Zero out the enpass square for now
+    board->epSquare = -1;
+    
+    // Check to see if this move creates an enpass square
+    if (fromType == PAWN && (to - from == 16 || from - to == 16)){
         
-        return;
+        // Determine if there is an enemy pawn that may perform an enpassant.
+        // If so, we must factor in the hash for the enpassant square.
+        enemyPawns  = board->pieces[PAWN] & board->colours[board->turn];
+        enemyPawns &= IsolatedPawnMasks[from];
+        enemyPawns &= (board->turn == BLACK) ? RANK_4 : RANK_5;
+        
+        if (enemyPawns){
+            board->epSquare = from + ((to-from) >> 1);
+            board->hash ^= ZorbistKeys[ENPASS][File(from)];
+        } 
     }
+}
+
+void applyCastleMove(Board * board, uint16_t move, Undo * undo){
     
-    if (MoveType(move) == CASTLE_MOVE){
-        
-        board->hasCastled[board->turn] = 1;
-        
-        to = MoveTo(move);
-        from = MoveFrom(move);
-        
-        rTo = CastleGetRookTo(from,to);
-        rFrom = CastleGetRookFrom(from,to);
-        
-        fromPiece = WHITE_KING + board->turn;
-        rFromPiece = fromPiece - 8;
-        
-        shiftFrom = 1ull << from;
-        shiftTo = 1ull << to;
-        rShiftFrom = 1ull << rFrom;
-        rShiftTo = 1ull << rTo;
-        
-        // Update the colour bitboard
-        board->colours[board->turn] ^= shiftTo | shiftFrom 
-                                    | rShiftTo | rShiftFrom;
-        
-        // Update the piece bitboards
-        board->pieces[KING] ^= shiftFrom | shiftTo;
-        board->pieces[ROOK] ^= rShiftFrom | rShiftTo;
-        
-        // Update the board array
-        board->squares[to] = fromPiece;
-        board->squares[from] = EMPTY;
-        board->squares[rTo] = rFromPiece;
-        board->squares[rFrom] = EMPTY;
-        
-        // Bitwise-and out the castle changes
-        board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
-        board->castleRights &= CastleMask[from];
-        board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
-        
-        // Swap the turn
-        board->turn = !board->turn;
-        
-        // Update the PSQT value for the opening
-        board->opening += PSQTopening[fromPiece][to]
-                        - PSQTopening[fromPiece][from]
-                        + PSQTopening[rFromPiece][rTo]
-                        - PSQTopening[rFromPiece][rFrom];
-                        
-        // Update the PSQT value for the endgame
-        board->endgame += PSQTendgame[fromPiece][to]
-                        - PSQTendgame[fromPiece][from]
-                        + PSQTendgame[rFromPiece][rTo]
-                        - PSQTendgame[rFromPiece][rFrom];
-        
-        // Update the main zorbist hash
-        board->hash ^= ZorbistKeys[fromPiece][from]
-                    ^  ZorbistKeys[fromPiece][to]
-                    ^  ZorbistKeys[rFromPiece][rFrom]
-                    ^  ZorbistKeys[rFromPiece][rTo];
-        
-        // If there was a possible enpass move, we must
-        // xor the main zorbist key for it before moving on
-        if (board->epSquare != -1){
-            board->hash ^= ZorbistKeys[ENPASS][File(board->epSquare)];
-            board->epSquare = -1;
-        }
-        
-        return;
-    }
+    int to, from, rTo, rFrom, fromPiece, rFromPiece;
+    uint64_t shiftFrom, shiftTo, rShiftFrom, rShiftTo;
     
-    if (MoveType(move) == PROMOTION_MOVE){
-        to = MoveTo(move);
-        from = MoveFrom(move);
-        
-        fromType = PieceType(board->squares[from]);
-        toType = PieceType(board->squares[to]);
-        promotype = 1 + (move >> 14);
-        
-        fromPiece = board->squares[from];
-        toPiece = board->squares[to];
-        promoPiece = (promotype << 2) + board->turn;
-        
-        shiftFrom = 1ull << from;
-        shiftTo = 1ull << to;
-        
-        // Reset fifty move rule on a pawn move
-        board->fiftyMoveRule = 0;
+    board->hasCastled[board->turn] = 1;
     
-        // Update the colour bitboards
-        board->colours[board->turn] ^= shiftFrom | shiftTo;
-        board->colours[PieceColour(toPiece)] ^= shiftTo;
-        
-        // Update the piece bitboards
-        board->pieces[PAWN] ^= shiftFrom;
-        board->pieces[promotype] ^= shiftTo;
-        board->pieces[toType] ^= shiftTo;
-        
-        // Save the captured piece and update the board array
-        undo->capturePiece = toPiece;
-        board->squares[to] = promoPiece;
-        board->squares[from] = EMPTY;
-        
-        // Bitwise-and out the castle changes
-        board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
-        board->castleRights &= CastleMask[to];
-        board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
-        
-        // Swap the turn
-        board->turn = !board->turn;
-        
-        // Update the PSQT value for the opening
-        board->opening += PSQTopening[promoPiece][to]
-                        - PSQTopening[fromPiece][from] 
-                        - PSQTopening[toPiece][to];
-                        
-        // Update the PSQT value for the endgame
-        board->endgame += PSQTendgame[promoPiece][to]
-                        - PSQTendgame[fromPiece][from]
-                        - PSQTendgame[toPiece][to];
-        
-        // Update the main zorbist hash
-        board->hash ^= ZorbistKeys[fromPiece][from]
-                    ^  ZorbistKeys[promoPiece][to]
-                    ^  ZorbistKeys[toPiece][to];
+    to = MoveTo(move);
+    from = MoveFrom(move);
+    
+    rTo = CastleGetRookTo(from,to);
+    rFrom = CastleGetRookFrom(from,to);
+    
+    fromPiece = MakePiece(KING, board->turn);
+    rFromPiece = MakePiece(ROOK, board->turn);
+    
+    shiftFrom = 1ull << from;
+    shiftTo = 1ull << to;
+    rShiftFrom = 1ull << rFrom;
+    rShiftTo = 1ull << rTo;
+    
+    // Update the colour bitboard
+    board->colours[board->turn] ^= shiftTo | shiftFrom | rShiftTo | rShiftFrom;
+    
+    // Update the piece bitboards
+    board->pieces[KING] ^=  shiftFrom |  shiftTo;
+    board->pieces[ROOK] ^= rShiftFrom | rShiftTo;
+    
+    // Update the board array
+    board->squares[to] = fromPiece;
+    board->squares[from] = EMPTY;
+    board->squares[rTo] = rFromPiece;
+    board->squares[rFrom] = EMPTY;
+    
+    // Bitwise-and out the castle changes
+    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    board->castleRights &= CastleMask[from];
+    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    
+    // Swap the turn
+    board->turn = !board->turn;
+    
+    // Update the PSQT value for the midgame
+    board->midgame += PSQTMidgame[fromPiece][to]
+                    - PSQTMidgame[fromPiece][from]
+                    + PSQTMidgame[rFromPiece][rTo]
+                    - PSQTMidgame[rFromPiece][rFrom];
                     
-        // Update the pawn zorbist hash
-        board->phash^= PawnKeys[fromPiece][from];
-        
-        if (board->epSquare != -1){
-            board->hash ^= ZorbistKeys[ENPASS][File(board->epSquare)];
-            board->epSquare = -1;
-        }
-        
-        return;
-    }
+    // Update the PSQT value for the endgame
+    board->endgame += PSQTEndgame[fromPiece][to]
+                    - PSQTEndgame[fromPiece][from]
+                    + PSQTEndgame[rFromPiece][rTo]
+                    - PSQTEndgame[rFromPiece][rFrom];
     
-    if (MoveType(move) == ENPASS_MOVE){
-        
-        to = MoveTo(move);
-        from = MoveFrom(move);
-        ep = board->epSquare - 8 + (board->turn << 4);
-        
-        fromPiece = WHITE_PAWN + board->turn;
-        enpassPiece = WHITE_PAWN + !board->turn;
-        
-        shiftFrom = 1ull << from;
-        shiftTo = 1ull << to;
-        shiftEnpass = 1ull << ep;
-        
-        // Reset fifty move rule on a pawn move
-        board->fiftyMoveRule = 0;
-        
-        // Update the colour bitboards
-        board->colours[!board->turn] ^= shiftEnpass;
-        board->colours[board->turn] ^= shiftFrom | shiftTo;
-        
-        // Update the piece bitboard
-        board->pieces[PAWN] ^= shiftEnpass | shiftFrom | shiftTo;
-        
-        // Save the captured piece and update the board array
-        undo->capturePiece = enpassPiece;
-        board->squares[to] = fromPiece;
-        board->squares[from] = EMPTY;
-        board->squares[ep] = EMPTY;
-        
-        // Swap the turn
-        board->turn = !board->turn;
-        
-        // Update the PSQT value for the opening
-        board->opening += PSQTopening[fromPiece][to]
-                        - PSQTopening[fromPiece][from]
-                        - PSQTopening[enpassPiece][ep];
-                        
-        // Update the PSQT value for the endgame
-        board->endgame += PSQTendgame[fromPiece][to]
-                        - PSQTendgame[fromPiece][from]
-                        - PSQTendgame[enpassPiece][ep];
-        
-        // Update the main zorbist key
-        board->hash ^= ZorbistKeys[fromPiece][from]
-                    ^  ZorbistKeys[fromPiece][to]
-                    ^  ZorbistKeys[enpassPiece][ep]
-                    ^  ZorbistKeys[ENPASS][File(ep)];
-                    
-        // Update the pawn zorbist key
-        board->phash^= PawnKeys[fromPiece][from]
-                    ^  PawnKeys[fromPiece][to]
-                    ^  PawnKeys[enpassPiece][ep];
-        
-        // Reset the enpass square
+    // Update the main zorbist hash
+    board->hash ^= ZorbistKeys[fromPiece][from]
+                ^  ZorbistKeys[fromPiece][to]
+                ^  ZorbistKeys[rFromPiece][rFrom]
+                ^  ZorbistKeys[rFromPiece][rTo];
+    
+    // If there was a possible enpass move, we must
+    // xor the main zorbist key for it before moving on
+    if (board->epSquare != -1){
+        board->hash ^= ZorbistKeys[ENPASS][File(board->epSquare)];
         board->epSquare = -1;
-        
-        return;
     }
+    
+    // We don't capture anything. We set this to be safe.
+    undo->capturePiece = EMPTY;
 }
 
-/**
- * Revert a given move to a given board and update all of the
- * necessary information including, opening and endgame values
- * hash signature, piece counts, castling rights, enpassant
- * potentials, and the history of moves made.
- *
- * @param   board   Board pointer to current position
- * @param   move    Move to be applied to the board
- * @param   undo    Undo object with the missing information needed
- */
-void revertMove(Board * board, uint16_t move, Undo * undo){
+void applyEnpassMove(Board * board, uint16_t move, Undo * undo){
     
-    int to, from;
-    int rTo, rFrom;
-    int fromType, toType;
-    int promotype, ep;
+    int to, from, ep, fromPiece, enpassPiece;
+    uint64_t shiftFrom, shiftTo, shiftEnpass;
+    
+    to = MoveTo(move);
+    from = MoveFrom(move);
+    ep = board->epSquare - 8 + (board->turn << 4);
+    
+    fromPiece = MakePiece(PAWN, board->turn);
+    enpassPiece = MakePiece(PAWN, !board->turn);
+    
+    shiftFrom = 1ull << from;
+    shiftTo = 1ull << to;
+    shiftEnpass = 1ull << ep;
+    
+    // Reset fifty move rule on a pawn move
+    board->fiftyMoveRule = 0;
+    
+    // Update the colour bitboards
+    board->colours[board->turn] ^= shiftFrom | shiftTo;
+    board->colours[!board->turn] ^= shiftEnpass;
+    
+    // Update the piece bitboard
+    board->pieces[PAWN] ^= shiftEnpass | shiftFrom | shiftTo;
+    
+    // Save the captured piece and update the board array
+    undo->capturePiece = enpassPiece;
+    board->squares[to] = fromPiece;
+    board->squares[from] = EMPTY;
+    board->squares[ep] = EMPTY;
+    
+    // Swap the turn
+    board->turn = !board->turn;
+    
+    // Update the PSQT value for the midgame
+    board->midgame += PSQTMidgame[fromPiece][to]
+                    - PSQTMidgame[fromPiece][from]
+                    - PSQTMidgame[enpassPiece][ep];
+                    
+    // Update the PSQT value for the endgame
+    board->endgame += PSQTEndgame[fromPiece][to]
+                    - PSQTEndgame[fromPiece][from]
+                    - PSQTEndgame[enpassPiece][ep];
+    
+    // Update the main zorbist key
+    board->hash ^= ZorbistKeys[fromPiece][from]
+                ^  ZorbistKeys[fromPiece][to]
+                ^  ZorbistKeys[enpassPiece][ep]
+                ^  ZorbistKeys[ENPASS][File(ep)];
+                
+    // Update the pawn zorbist key
+    board->phash^= PawnKeys[fromPiece][from]
+                ^  PawnKeys[fromPiece][to]
+                ^  PawnKeys[enpassPiece][ep];
+    
+    // Reset the enpass square
+    board->epSquare = -1;
+}
+
+void applyPromotionMove(Board * board, uint16_t move, Undo * undo){
+    
+    int to, from, toType, promotype, fromPiece, toPiece, promoPiece;
     uint64_t shiftFrom, shiftTo;
-    uint64_t rShiftFrom, rShiftTo;
-    uint64_t shiftEnpass;
     
-    board->numMoves--;
+    to = MoveTo(move);
+    from = MoveFrom(move);
     
-    board->turn = undo->turn;
-    board->castleRights = undo->castleRights;
-    board->epSquare = undo->epSquare;
-    board->fiftyMoveRule = undo->fiftyMoveRule;
-    board->opening = undo->opening;
-    board->endgame = undo->endgame;
-    board->phash = undo->phash;
-    board->hash = undo->hash;
+    toType = PieceType(board->squares[to]);
+    promotype = KNIGHT + (move >> 14);
     
-    if (MoveType(move) == NORMAL_MOVE){
-        to = MoveTo(move);
-        from = MoveFrom(move);
-        
-        fromType = PieceType(board->squares[to]);
-        toType = PieceType(undo->capturePiece);
-        
-        shiftFrom = 1ull << from;
-        shiftTo = 1ull << to;
-        
-        board->colours[undo->turn] ^= shiftFrom | shiftTo;
-        board->colours[PieceColour(undo->capturePiece)] |= shiftTo;
-        
-        board->pieces[fromType] ^= shiftTo | shiftFrom;
-        board->pieces[toType] |= shiftTo;
-        
-        board->squares[from] = board->squares[to];
-        board->squares[to] = undo->capturePiece;
-        return;
-    }
+    fromPiece = board->squares[from];
+    toPiece = board->squares[to];
+    promoPiece = MakePiece(promotype, board->turn);
     
-    if (MoveType(move) == CASTLE_MOVE){
-        
-        board->hasCastled[undo->turn] = 0;
-        
-        to = MoveTo(move);
-        from = MoveFrom(move);
+    shiftFrom = 1ull << from;
+    shiftTo = 1ull << to;
+    
+    // Reset fifty move rule on a pawn move
+    board->fiftyMoveRule = 0;
 
-        rTo = CastleGetRookTo(from,to);
-        rFrom = CastleGetRookFrom(from,to);
-        
-        shiftFrom = 1ull << from;
-        shiftTo = 1ull << to;
-        rShiftFrom = 1ull << rFrom;
-        rShiftTo = 1ull << rTo;
+    // Update the colour bitboards
+    board->colours[board->turn] ^= shiftFrom | shiftTo;
+    board->colours[PieceColour(toPiece)] ^= shiftTo;
     
-        board->colours[undo->turn] ^= shiftTo | shiftFrom
-                                   | rShiftTo | rShiftFrom;
-        
-        board->pieces[KING] ^= shiftFrom | shiftTo;
-        board->pieces[ROOK] ^= rShiftFrom | rShiftTo;
-        
-        board->squares[from] = board->squares[to];
-        board->squares[to] = EMPTY;
-        
-        board->squares[rFrom] = board->squares[rTo];
-        board->squares[rTo] = EMPTY;
-        return;
-    }
+    // Update the piece bitboards
+    board->pieces[PAWN] ^= shiftFrom;
+    board->pieces[promotype] ^= shiftTo;
+    board->pieces[toType] ^= shiftTo;
     
-    if (MoveType(move) == PROMOTION_MOVE){
-        to = MoveTo(move);
-        from = MoveFrom(move);
-        
-        fromType = WHITE_PAWN + undo->turn;
-        toType = PieceType(undo->capturePiece);
-        promotype = 1 + (move >> 14);
-        
-        shiftFrom = 1ull << from;
-        shiftTo = 1ull << to;
+    // Save the captured piece and update the board array
+    undo->capturePiece = toPiece;
+    board->squares[to] = promoPiece;
+    board->squares[from] = EMPTY;
     
-        board->colours[undo->turn] ^= shiftFrom | shiftTo;
-        board->colours[PieceColour(undo->capturePiece)] ^= shiftTo;
-        
-        board->pieces[PAWN] ^= shiftFrom;
-        board->pieces[promotype] ^= shiftTo;
-        board->pieces[toType] ^= shiftTo;
-        
-        board->squares[to] = undo->capturePiece;
-        board->squares[from] = WHITE_PAWN + undo->turn;
-        return;
-    }
+    // Bitwise-and out the castle changes
+    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    board->castleRights &= CastleMask[to];
+    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
     
-    if (MoveType(move) == ENPASS_MOVE){
-        to = MoveTo(move);
-        from = MoveFrom(move);
-        ep = undo->epSquare - 8 + (undo->turn << 4);
-        
-        shiftFrom = 1ull << from;
-        shiftTo = 1ull << to;
-        shiftEnpass = 1ull << ep;
-        
-        board->colours[!undo->turn] ^= shiftEnpass;
-        board->pieces[PAWN] ^= shiftEnpass;
-        
-        board->colours[undo->turn] ^= shiftFrom | shiftTo;
-        board->pieces[PAWN] ^= shiftFrom | shiftTo;
-        
-        board->squares[from] = board->squares[to];
-        board->squares[to] = EMPTY;
-        board->squares[ep] = undo->capturePiece;
-        return;
+    // Swap the turn
+    board->turn = !board->turn;
+    
+    // Update the PSQT value for the midgame
+    board->midgame += PSQTMidgame[promoPiece][to]
+                    - PSQTMidgame[fromPiece][from] 
+                    - PSQTMidgame[toPiece][to];
+                    
+    // Update the PSQT value for the endgame
+    board->endgame += PSQTEndgame[promoPiece][to]
+                    - PSQTEndgame[fromPiece][from]
+                    - PSQTEndgame[toPiece][to];
+    
+    // Update the main zorbist hash
+    board->hash ^= ZorbistKeys[fromPiece][from]
+                ^  ZorbistKeys[promoPiece][to]
+                ^  ZorbistKeys[toPiece][to];
+                
+    // Update the pawn zorbist hash
+    board->phash^= PawnKeys[fromPiece][from];
+    
+    // If there was a possible enpass move, we must
+    // xor the main zorbist key for it before moving on
+    if (board->epSquare != -1){
+        board->hash ^= ZorbistKeys[ENPASS][File(board->epSquare)];
+        board->epSquare = -1;
     }
 }
 
-
-/**
- * Apply a null move to the given board. Store crucial
- * information in the undo pointer passed to the function
- *
- * @param   board   Board pointer to current position
- * @param   undo    Undo object to be filled with information
- *                  which is either hard or impossible to reverse
- *                  with only the board and the move
- */                  
 void applyNullMove(Board * board, Undo * undo){
     
     // Store turn, hash and epSquare
-    undo->turn = board->turn;
     undo->hash = board->hash;
+    undo->turn = board->turn;
     undo->epSquare = board->epSquare;
     
     // Swap the turn and update the history
@@ -521,46 +373,125 @@ void applyNullMove(Board * board, Undo * undo){
     }
 }
 
-/**
- * Revert a null move from the given board.
- *
- * @param   board   Board pointer to current position
- * @param   undo    Undo object with the missing information needed
- */
-void revertNullMove(Board * board, Undo * undo){
+void revertMove(Board * board, uint16_t move, Undo * undo){
     
-    // Revert turn, hash, epSquare, and history
-    board->turn = !board->turn;
-    board->hash = undo->hash;
-    board->epSquare = undo->epSquare;
+    int to, from, rTo, rFrom, fromType, toType, promotype, ep;
+    uint64_t shiftFrom, shiftTo, rShiftFrom, rShiftTo, shiftEnpass;
+    
     board->numMoves--;
+    board->hash = undo->hash;
+    board->phash = undo->phash;
+    board->turn = undo->turn;
+    board->castleRights = undo->castleRights;
+    board->epSquare = undo->epSquare;
+    board->fiftyMoveRule = undo->fiftyMoveRule;
+    board->midgame = undo->midgame;
+    board->endgame = undo->endgame;
     
+    to = MoveTo(move);
+    from = MoveFrom(move);
+    
+    shiftFrom = 1ull << from;
+    shiftTo = 1ull << to;
+    
+    if (MoveType(move) == NORMAL_MOVE){
+        
+        fromType = PieceType(board->squares[to]);
+        toType = PieceType(undo->capturePiece);
+        
+        board->colours[undo->turn] ^= shiftFrom | shiftTo;
+        board->colours[PieceColour(undo->capturePiece)] |= shiftTo;
+        
+        board->pieces[fromType] ^= shiftTo | shiftFrom;
+        board->pieces[toType] |= shiftTo;
+        
+        board->squares[from] = board->squares[to];
+        board->squares[to] = undo->capturePiece;
+    }
+    
+    else if (MoveType(move) == CASTLE_MOVE){
+        
+        board->hasCastled[undo->turn] = 0;
+        
+        rTo = CastleGetRookTo(from,to);
+        rFrom = CastleGetRookFrom(from,to);
+        
+        rShiftFrom = 1ull << rFrom;
+        rShiftTo = 1ull << rTo;
+    
+        board->colours[undo->turn] ^= shiftTo | shiftFrom | rShiftTo | rShiftFrom;
+        
+        board->pieces[KING] ^= shiftFrom | shiftTo;
+        board->pieces[ROOK] ^= rShiftFrom | rShiftTo;
+        
+        board->squares[from] = board->squares[to];
+        board->squares[to] = EMPTY;
+        
+        board->squares[rFrom] = board->squares[rTo];
+        board->squares[rTo] = EMPTY;
+    }
+    
+    else if (MoveType(move) == PROMOTION_MOVE){
+        
+        fromType = MakePiece(PAWN, undo->turn);
+        toType = PieceType(undo->capturePiece);
+        promotype = KNIGHT + (move >> 14);
+        
+        board->colours[undo->turn] ^= shiftFrom | shiftTo;
+        board->colours[PieceColour(undo->capturePiece)] ^= shiftTo;
+        
+        board->pieces[PAWN] ^= shiftFrom;
+        board->pieces[promotype] ^= shiftTo;
+        board->pieces[toType] ^= shiftTo;
+        
+        board->squares[to] = undo->capturePiece;
+        board->squares[from] = WHITE_PAWN + undo->turn;
+    }
+    
+    else { // (MoveType(move) == ENPASS_MOVE)
+        
+        ep = undo->epSquare - 8 + (undo->turn << 4);
+        
+        shiftEnpass = 1ull << ep;
+        
+        board->colours[!undo->turn] ^= shiftEnpass;
+        board->pieces[PAWN] ^= shiftEnpass;
+        
+        board->colours[undo->turn] ^= shiftFrom | shiftTo;
+        board->pieces[PAWN] ^= shiftFrom | shiftTo;
+        
+        board->squares[from] = board->squares[to];
+        board->squares[to] = EMPTY;
+        board->squares[ep] = undo->capturePiece;
+    }
 }
 
-/**
- * Print a move in long algebraic form.
- *
- * @param   move    Move to be printed
- */
+void revertNullMove(Board * board, Undo * undo){
+    board->hash = undo->hash;
+    board->turn = !board->turn;
+    board->epSquare = undo->epSquare;
+    board->numMoves--;
+}
+
 void printMove(uint16_t move){
     
-    static char promoteDict[4] = {'n', 'b', 'r', 'q'};
+    int from, to;
+    char fromFile, toFile, fromRank, toRank;
     
-    int from = MoveFrom(move);
-    int to = MoveTo(move);
+    static char table[4] = {'n', 'b', 'r', 'q'};
     
-    char fromFile = '1' + (from / 8);
-    char toFile = '1' + (to / 8);
+    from = MoveFrom(move);
+    to = MoveTo(move);
     
-    char fromRank = 'a' + (from % 8);
-    char toRank = 'a' + (to % 8);
+    fromFile = '1' + (from / 8);
+    toFile = '1' + (to / 8);
     
-    if (MoveType(move) == PROMOTION_MOVE){
-        char promo = promoteDict[move >> 14];
-        printf("%c%c%c%c%c", fromRank, fromFile, toRank, toFile, promo);
-    }
+    fromRank = 'a' + (from % 8);
+    toRank = 'a' + (to % 8);
     
-    else{
+    if (MoveType(move) == PROMOTION_MOVE)
+        printf("%c%c%c%c%c", fromRank, fromFile, toRank, toFile, table[move >> 14]);
+    
+    else
         printf("%c%c%c%c", fromRank, fromFile, toRank, toFile);
-    }
 }

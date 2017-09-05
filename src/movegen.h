@@ -31,6 +31,19 @@ void genAllQuietMoves(Board * board, uint16_t * moves, int * size);
 int isNotInCheck(Board * board, int turn);
 int squareIsAttacked(Board * board, int turn, int sq);
 
+// For the move generating macros:
+//
+//     int lsb and uint64_t attackable are required declarations
+//
+//     arr     = uint16_t array of moves
+//     size    = a pointer to an int for the size
+//     bb      = uint64_t, either represents pieces, or destinations
+//     delta   = int to represent how a pawn will move
+//     sq      = int for the square that the piece is moving from
+//     ne      = uint64_t of non empty squares on the chess board
+//     tg      = uint64_t of valid targets. For the regular gen, this is simply
+//               non friendly squares. For the noisy gen, this is enemy peices
+
 #define KnightAttacks(sq, tg)     (KnightMap[(sq)] & (tg))
                                   
 #define BishopAttacks(sq, ne, tg) (MoveDatabaseBishop[MagicBishopIndexes[(sq)] \
@@ -44,20 +57,6 @@ int squareIsAttacked(Board * board, int turn, int sq);
                                   >> MagicShiftsRook[(sq)])] & (tg))           
                                   
 #define KingAttacks(sq, tg)       (KingMap[(sq)] & (tg))
-
-
-// For the move generating macros:
-//
-//     int lsb and uint64_t attackable are required declarations
-//
-//     arr     = uint16_t array of moves
-//     size    = a pointer to an int for the size
-//     bb      = uint64_t, either represents pieces, or destinations
-//     delta   = int to represent how a pawn will move
-//     sq      = int for the square that the piece is moving from
-//     ne      = uint64_t of non empty squares on the chess board
-//     tg      = uint64_t of valid targets. For the regular gen, this is simply
-//               non friendly squares. For the noisy gen, this is enemy peices
 
 #define buildPawnMoves(arr, size, bb, delta) do {                              \
         while ((bb) != 0ull) {                                                 \

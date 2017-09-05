@@ -32,19 +32,16 @@
 
 extern HistoryTable History;
 
-void initalizeMovePicker(MovePicker * mp, int isQuiescencePick,
-                          uint16_t tableMove, uint16_t killer1,
-                                             uint16_t killer2){
-                                 
-    mp->isQuiescencePick = isQuiescencePick;
-    mp->stage = STAGE_TABLE;
-    mp->split = 0;
-    mp->noisySize = 0;
-    mp->badSize = 0;
-    mp->quietSize = 0;
-    mp->tableMove = tableMove;
-    mp->killer1 = (killer1 != tableMove) ? killer1 : NONE_MOVE;
-    mp->killer2 = (killer2 != tableMove) ? killer2 : NONE_MOVE;
+void initalizeMovePicker(MovePicker * mp, int pickQuiets, uint16_t tableMove, uint16_t killer1, uint16_t killer2){
+    mp->pickQuiets = pickQuiets;
+    mp->stage      = STAGE_TABLE;
+    mp->split      = 0;
+    mp->noisySize  = 0;
+    mp->badSize    = 0;
+    mp->quietSize  = 0;
+    mp->tableMove  = tableMove;
+    mp->killer1    = (killer1 != tableMove) ? killer1 : NONE_MOVE;
+    mp->killer2    = (killer2 != tableMove) ? killer2 : NONE_MOVE;
 }
 
 uint16_t selectNextMove(MovePicker * mp, Board * board){
@@ -52,38 +49,35 @@ uint16_t selectNextMove(MovePicker * mp, Board * board){
     int i, best;
     uint16_t bestMove;
     
-    
     switch (mp->stage){
         
         case STAGE_TABLE:
         
-            // Advance to the next stage no matter what
+            // Play the table move if it is from this
+            // position, also advance to the next stage
             mp->stage = STAGE_GENERATE_NOISY;
-            
-            // See if the table move is an available move
             if (moveIsPsuedoLegal(board, mp->tableMove))
-                return mp->tableMove;            
-        
-        
+                return mp->tableMove;
+            
+            /* fallthrough */
+            
         case STAGE_GENERATE_NOISY:
         
-            // Generate all noisy moves and evaluate them
+            // Generate all noisy moves and evaluate them. Set up the
+            // split in the array to store quiet and noisy moves. Also,
+            // this stage is only a helper. Advance to the next one.
             genAllNoisyMoves(board, mp->moves, &mp->noisySize);
             evaluateNoisyMoves(mp, board);
-            
-            // Save the location of the split in the moves array.
-            // We will use just one array for noisy and quiet moves.
             mp->split = mp->noisySize;
-            
-            // This stage is only a helper, advance to move selection
             mp->stage = STAGE_NOISY ;
             
-        
+            /* fallthrough */
+            
         case STAGE_NOISY:
         
-            // Check to see if there are still noisy moves left
+            // Check to see if there are still more noisy moves
             if (mp->noisySize != 0){
-        
+                
                 // Find highest scoring move
                 for (best = 0, i = 1; i < mp->noisySize; i++)
                     if (mp->values[i] > mp->values[best])
@@ -108,53 +102,53 @@ uint16_t selectNextMove(MovePicker * mp, Board * board){
                 return bestMove;
             }
             
-            // If no noisy moves, or no good ones left, advance stages
-            mp->stage = STAGE_KILLER_1;
-            
             // If we are using this move picker for the quiescence
-            // search, we have exhausted all moves already
-            if (mp->isQuiescencePick){
-                mp->stage = STAGE_DONE;
-                return NONE_MOVE;
-            }
+            // search, we have exhausted all moves already. Otherwise,
+            // we should move onto the quiet moves (+ killers)
+            if (mp->pickQuiets)
+                return mp->stage = STAGE_DONE, NONE_MOVE;
+            else
+                mp->stage = STAGE_KILLER_1;
             
+            /* fallthrough */
             
         case STAGE_KILLER_1:
             
-            // Advance to the next stage no matter what
+            // Play the killer move if it is from this position.
+            // position, and also advance to the next stage
             mp->stage = STAGE_KILLER_2;
-            
             if (moveIsPsuedoLegal(board, mp->killer1))
                 return mp->killer1;
             
+            /* fallthrough */
             
         case STAGE_KILLER_2:
             
-            // Advance to the next stage no matter what
+            // Play the killer move if it is from this position.
+            // position, and also advance to the next stage
             mp->stage = STAGE_GENERATE_QUIET;
-            
             if (moveIsPsuedoLegal(board, mp->killer2))
                 return mp->killer2;
-        
+            
+            /* fallthrough */
         
         case STAGE_GENERATE_QUIET:
             
             // Generate all quiet moves and evaluate them
+            // and also advance to the final fruitful stage
             genAllQuietMoves(board, mp->moves + mp->split, &mp->quietSize);
             evaluateQuietMoves(mp, board);
-            
-            // This stage is only a helper, advance to move selection
             mp->stage = STAGE_QUIET;
             
+            /* fallthrough */
             
         case STAGE_QUIET:
         
-            // Check to see if there are still quiet moves left
+            // Check to see if there are still more quiet moves
             if (mp->quietSize != 0){
-        
+                
                 // Find highest scoring move
-                best = mp->split;
-                for (i = 1 + mp->split; i < mp->split + mp->quietSize; i++)
+                for (i = 1 + mp->split, best = mp->split; i < mp->split + mp->quietSize; i++)
                     if (mp->values[i] > mp->values[best])
                         best = i;
                    
@@ -167,7 +161,7 @@ uint16_t selectNextMove(MovePicker * mp, Board * board){
                 mp->values[best] = mp->values[mp->split + mp->quietSize];
                 
                 // Don't play a move more than once
-                if (bestMove == mp->tableMove
+                if (   bestMove == mp->tableMove
                     || bestMove == mp->killer1
                     || bestMove == mp->killer2)
                     return selectNextMove(mp, board);
@@ -178,15 +172,12 @@ uint16_t selectNextMove(MovePicker * mp, Board * board){
             // If no quiet moves left, advance stages
             mp->stage = STAGE_DONE;
             
+            /* fallthrough */
             
         case STAGE_DONE:
-        
-            // return NONE_MOVE to indicate all moves picked
             return NONE_MOVE;
             
         default:
-        
-            // This statement should never be reached
             assert(0);
             return NONE_MOVE;
     }
@@ -234,29 +225,10 @@ void evaluateQuietMoves(MovePicker * mp, Board * board){
         
         // Use the history score and PSQT to evaluate the move
         value =  getHistoryScore(History, move, board->turn, 512);
-        value += abs(PSQTopening[board->squares[from]][to]);
-        value -= abs(PSQTopening[board->squares[from]][from]);
+        value += abs(PSQTMidgame[board->squares[from]][to]);
+        value -= abs(PSQTMidgame[board->squares[from]][from]);
         mp->values[i] = value;
     }
-}
-
-int moveIsGoodCapture(Board * board, uint16_t move){
-    
-    int from, to, fromType, toType;
-    
-    if (MoveType(move) == PROMOTION_MOVE)
-        return MovePromoType(move) == PROMOTE_TO_QUEEN;
-    
-    if (MoveType(move) == ENPASS_MOVE)
-        return 1;
-    
-    from = MoveFrom(move);
-    to = MoveTo(move);
-    
-    fromType = PieceType(board->squares[from]);
-    toType = PieceType(board->squares[to]);
-    
-    return PieceValues[toType] >= PieceValues[fromType];    
 }
 
 int moveIsPsuedoLegal(Board * board, uint16_t move){
@@ -326,7 +298,7 @@ int moveIsPsuedoLegal(Board * board, uint16_t move){
             if (moveType == ENPASS_MOVE){
                 
                 // Make sure we can move to the enpass square
-                if ((leftward|rightward) & (1ull << board->epSquare)) return 1;
+                if (!((leftward | rightward) & (1ull << board->epSquare))) return 0;
                 
                 // If the square matchs the to, then the move is valid
                 return to == board->epSquare;
@@ -398,32 +370,19 @@ int moveIsPsuedoLegal(Board * board, uint16_t move){
                 // Determine the squares which must be unoccupied,
                 // the needed castle rights, and the crossover square
                 if (board->turn == WHITE){
-                    
-                    map = (to > from)       ? WHITE_CASTLE_KING_SIDE_MAP
-                                            : WHITE_CASTLE_QUEEN_SIDE_MAP;
-                                            
-                    rights = (to > from)    ? WHITE_KING_RIGHTS
-                                            : WHITE_QUEEN_RIGHTS;
-                                            
+                    map = (to > from)       ? WHITE_CASTLE_KING_SIDE_MAP : WHITE_CASTLE_QUEEN_SIDE_MAP;
+                    rights = (to > from)    ? WHITE_KING_RIGHTS : WHITE_QUEEN_RIGHTS;
                     crossover = (to > from) ? 5 : 3;
-                    
-                    castleStart = 4;
-                    
                     castleEnd = (to > from) ? 6 : 2;
-                    
-                } else {
-                    
-                    map = (to > from)       ? BLACK_CASTLE_KING_SIDE_MAP
-                                            : BLACK_CASTLE_QUEEN_SIDE_MAP;
-                                            
-                    rights = (to > from)    ? BLACK_KING_RIGHTS
-                                            : BLACK_QUEEN_RIGHTS;
-                                            
+                    castleStart = 4;
+                } 
+                
+                else {
+                    map = (to > from)       ? BLACK_CASTLE_KING_SIDE_MAP : BLACK_CASTLE_QUEEN_SIDE_MAP;
+                    rights = (to > from)    ? BLACK_KING_RIGHTS : BLACK_QUEEN_RIGHTS;
                     crossover = (to > from) ? 61 : 59;
-
-                    castleStart = 60;
-                    
                     castleEnd = (to > from) ? 62 : 58;
+                    castleStart = 60;
                 }
                 
                 // Inorder to be psuedo legal, the from square must
@@ -440,15 +399,10 @@ int moveIsPsuedoLegal(Board * board, uint16_t move){
                 return !squareIsAttacked(board, board->turn, crossover);
             }
             
-            else {
-                
-                // Move has a King either promoting or enpassing
+            else
                 return 0;
-            }
-        
+            
         default:
-        
-            // We should never get to this default case
             assert(0);
             return 0;
     }

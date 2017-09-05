@@ -21,6 +21,8 @@
 
 #include <stdint.h>
 
+#include "types.h"
+
 #define RANK_8 (0xFF00000000000000ull)
 #define RANK_7 (0x00FF000000000000ull)
 #define RANK_6 (0x0000FF0000000000ull)
@@ -45,10 +47,10 @@
 #define WHITE_SQUARES (0x55AA55AA55AA55AAull)
 #define BLACK_SQUARES (0xAA55AA55AA55AA55ull)
 
-extern const uint64_t Files[8];
-extern const uint64_t Ranks[8];
+extern const uint64_t Files[FILE_NB];
+extern const uint64_t Ranks[RANK_NB];
 
-#define File(sq) ((sq) & 7)
+#define File(sq) ((sq)  & 7)
 #define Rank(sq) ((sq) >> 3)
 
 #endif

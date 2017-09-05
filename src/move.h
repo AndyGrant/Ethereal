@@ -16,36 +16,42 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __MOVE_H
-#define __MOVE_H
+#ifndef _MOVE_H
+#define _MOVE_H
 
 #include <stdint.h>
 
 #include "types.h"
 
 void applyMove(Board * board, uint16_t move, Undo * undo);
-void revertMove(Board * board, uint16_t move, Undo * undo);
+void applyNormalMove(Board * board, uint16_t move, Undo * undo);
+void applyCastleMove(Board * board, uint16_t move, Undo * undo);
+void applyEnpassMove(Board * board, uint16_t move, Undo * undo);
+void applyPromotionMove(Board * board, uint16_t move, Undo * undo);
 void applyNullMove(Board * board, Undo * undo);
+
+void revertMove(Board * board, uint16_t move, Undo * undo);
 void revertNullMove(Board * board, Undo * undo);
+
 void printMove(uint16_t move);
 
 #define NULL_MOVE (11)
 #define NONE_MOVE ( 0)
 
-#define NORMAL_MOVE      (0 << 12)
-#define CASTLE_MOVE      (1 << 12)
-#define ENPASS_MOVE      (2 << 12)
-#define PROMOTION_MOVE   (3 << 12)
+#define NORMAL_MOVE    (0 << 12)
+#define CASTLE_MOVE    (1 << 12)
+#define ENPASS_MOVE    (2 << 12)
+#define PROMOTION_MOVE (3 << 12)
 
 #define PROMOTE_TO_KNIGHT (0 << 14)
 #define PROMOTE_TO_BISHOP (1 << 14)
 #define PROMOTE_TO_ROOK   (2 << 14)
 #define PROMOTE_TO_QUEEN  (3 << 14)
 
-#define KNIGHT_PROMO_MOVE   (PROMOTION_MOVE | PROMOTE_TO_KNIGHT)
-#define BISHOP_PROMO_MOVE   (PROMOTION_MOVE | PROMOTE_TO_BISHOP)
-#define ROOK_PROMO_MOVE     (PROMOTION_MOVE | PROMOTE_TO_ROOK  )
-#define QUEEN_PROMO_MOVE    (PROMOTION_MOVE | PROMOTE_TO_QUEEN )
+#define KNIGHT_PROMO_MOVE (PROMOTION_MOVE | PROMOTE_TO_KNIGHT)
+#define BISHOP_PROMO_MOVE (PROMOTION_MOVE | PROMOTE_TO_BISHOP)
+#define ROOK_PROMO_MOVE   (PROMOTION_MOVE | PROMOTE_TO_ROOK  )
+#define QUEEN_PROMO_MOVE  (PROMOTION_MOVE | PROMOTE_TO_QUEEN )
 
 #define MoveFrom(move)         (((move) >> 0) & 63)
 #define MoveTo(move)           (((move) >> 6) & 63)

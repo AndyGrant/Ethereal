@@ -16,7 +16,7 @@
 
 CC = gcc
 
-WFLAGS = -Wall -Wextra -Wshadow -Wno-implicit-fallthrough
+WFLAGS = -Wall -Wextra -Wshadow
 
 CFLAGS = -DNDEBUG -O3 $(WFLAGS) -std=c99
 

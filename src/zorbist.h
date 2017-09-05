@@ -23,12 +23,12 @@
 
 #include "types.h"
 
+void initalizeZorbist();
+uint64_t genRandomBitstring();
+
 #define CASTLE (2)
 #define ENPASS (3)
 #define TURN   (6)
-
-void initalizeZorbist();
-uint64_t genRandomBitstring();
 
 extern uint64_t ZorbistKeys[32][SQUARE_NB];
 extern uint64_t PawnKeys[32][SQUARE_NB];

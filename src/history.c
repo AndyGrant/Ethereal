@@ -21,87 +21,52 @@
 #include "move.h"
 #include "types.h"
 
-
-/**
- * Reduce the History counters for a new search in the same
- * game. Throwing away history between searches is a waste.
- *
- * @param   history HistoryTable struct to reduce
- */
 void reduceHistory(HistoryTable history){
     
-    int colour, from, to, counter;
+    int c, f, t, i;
     
-    // Divide each history entry by 4
-    for (colour = 0; colour < COLOUR_NB; colour++)
-        for (from = 0; from < SQUARE_NB; from++)
-            for (to = 0; to < SQUARE_NB; to++)
-                for (counter = 0; counter < 2; counter++){
-                    history[colour][from][to][counter] >>= 2;
-                    history[colour][from][to][counter]++;
-                }
+    // Divide each history entry by 4. 
+    // Add one to avoid division by zero
+    for (c = 0; c < COLOUR_NB; c++)
+        for (f = 0; f < SQUARE_NB; f++)
+            for (t = 0; t < SQUARE_NB; t++)
+                for (i = 0; i < 2; i++)
+                    history[c][f][t][i] = 1 + history[c][f][t][i] / 4;
 }
 
-
-/**
- * Reset the History counters for a new game
- *
- * @param   history HistoryTable struct to clear
- */
 void clearHistory(HistoryTable history){
     
-    int colour, from, to, counter;
+    int c, f, t, i;
     
     // Fill all History entries with ones. By using
     // ones instead of zeros we avoid division by zero
-    for (colour = 0; colour < COLOUR_NB; colour++)
-        for (from = 0; from < SQUARE_NB; from++)
-            for (to = 0; to < SQUARE_NB; to++)
-                for (counter = 0; counter < 2; counter++)
-                    history[colour][from][to][counter] = 1;
+    for (c = 0; c < COLOUR_NB; c++)
+        for (f = 0; f < SQUARE_NB; f++)
+            for (t = 0; t < SQUARE_NB; t++)
+                for (i = 0; i < 2; i++)
+                    history[c][f][t][i] = 1;
 }
 
-/**
- * Update the History of a particular move
- *
- * @param   history HistoryTable containing the move
- * @param   move    The move we are updating
- * @param   colour  Colour of player who made the move
- * @param   isGood  Whether or not the move was the best
- * @param   delta   Amount to increment by
- */
-void updateHistory(HistoryTable history, uint16_t move, int colour, int isGood,
-                                                                    int delta){
+void updateHistory(HistoryTable history, uint16_t move, int colour, int isGood, int delta){
     
-    int from = MoveFrom(move);
-    int to = MoveTo(move);
+    int from = MoveFrom(move), to = MoveTo(move);
     
+    // Update both counters by delta
     if (isGood) history[colour][from][to][HISTORY_GOOD] += delta;
     history[colour][from][to][HISTORY_TOTAL] += delta;
     
-    // Divide counters by two if we have exceeded the max values
+    // Divide the counters by two if we have exceeded the max value for history
     if (history[colour][from][to][HISTORY_TOTAL] >= HISTORY_MAX){
         history[colour][from][to][HISTORY_GOOD] >>= 1;
         history[colour][from][to][HISTORY_TOTAL] >>= 1;
     }
 }
 
-/**
- * Fetch the History of particular move
- *
- * @param   history HistoryTable containing the move
- * @param   move    The move we are updating
- * @param   colour  Colour of player who made the move
- * @param   factor  Maximum value of history score
- */
-int getHistoryScore(HistoryTable history, uint16_t move, int colour,
-                                                        int factor){
+int getHistoryScore(HistoryTable history, uint16_t move, int colour, int factor){
     
-    int from = MoveFrom(move);
-    int to = MoveTo(move);
-    
+    // History is scored on a scale from 0 to factor, where factor is 100%.
+    int from = MoveFrom(move), to = MoveTo(move);
     int good = history[colour][from][to][HISTORY_GOOD];
     int total = history[colour][from][to][HISTORY_TOTAL];
-    
     return (factor * good) / total;
 }
