@@ -28,25 +28,15 @@
 #include "piece.h"
 #include "types.h"
 
-/**
- * Generate all of the legal moves for a given board. The moves will
- * be stored in a pointer passed to the function, and an integer 
- * pointer passed to the function will be updated to reflect the
- * total number of psuedo legal moves found.
- *
- * @param   board   Board pointer with the current position
- * @param   moves   Destination for the found legal moves
- * @param   size    Pointer to keep track of the number of moves
- */
 void genAllLegalMoves(Board * board, uint16_t * moves, int * size){
     
     Undo undo[1];
-    int i, psuedoSize = 0;    
+    int i, psuedoSize = 0;
     uint16_t psuedoMoves[MAX_MOVES];
     
     genAllMoves(board, psuedoMoves, &psuedoSize);
     
-    // Copy over moves from psuedoMoves that are proven to be legal
+    // Check each move for legality before copying
     for (i = 0; i < psuedoSize; i++){
         applyMove(board, psuedoMoves[i], undo);
         if (isNotInCheck(board, !board->turn))
@@ -55,30 +45,13 @@ void genAllLegalMoves(Board * board, uint16_t * moves, int * size){
     }
 }
 
-/**
- * Generate all of the psudeo legal moves for a given board.
- * The moves will be stored in a pointer passed to the function,
- * and an integer pointer passed to the function will be updated
- * to reflect the total number of psuedo legal moves found.
- *
- * @param   board   Board pointer with the current position
- * @param   moves   Destination for the found psuedo legal moves
- * @param   size    Pointer to keep track of the number of moves
- */
 void genAllMoves(Board * board, uint16_t * moves, int * size){
      
-    uint64_t pawnForwardOne;
-    uint64_t pawnForwardTwo;
-    uint64_t pawnLeft;
-    uint64_t pawnRight;
+    uint64_t pawnForwardOne, pawnForwardTwo, pawnLeft, pawnRight;
+    uint64_t pawnPromoForward, pawnPromoLeft, pawnPromoRight;
     
-    uint64_t pawnPromoForward;
-    uint64_t pawnPromoLeft;
-    uint64_t pawnPromoRight;
-    
-    int bit, lsb;
-    int forwardShift, leftShift, rightShift;
-    int epSquare = board->epSquare;
+    int bit, lsb, forwardShift, leftShift, rightShift;
+    int epSquare = board->epSquare, castleKing, castleQueen;
     
     uint64_t friendly = board->colours[board->turn];
     uint64_t enemy = board->colours[!board->turn];
@@ -88,17 +61,13 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
     uint64_t notFriendly = ~friendly;
     uint64_t attackable;
     
-    uint64_t myPawns   = friendly & board->pieces[PAWN];
-    uint64_t myKnights = friendly & board->pieces[KNIGHT];
-    uint64_t myBishops = friendly & board->pieces[BISHOP];
-    uint64_t myRooks   = friendly & board->pieces[ROOK];
-    uint64_t myQueens  = friendly & board->pieces[QUEEN];
-    uint64_t myKings   = friendly & board->pieces[KING];
+    uint64_t myPawns   = friendly &  board->pieces[PAWN];
+    uint64_t myKnights = friendly &  board->pieces[KNIGHT];
+    uint64_t myBishops = friendly & (board->pieces[BISHOP] | board->pieces[QUEEN]);
+    uint64_t myRooks   = friendly & (board->pieces[ROOK]   | board->pieces[QUEEN]);
+    uint64_t myKings   = friendly &  board->pieces[KING];
     
-    // Generate the queens' moves as if they were rooks and bishops
-    myBishops |= myQueens; myRooks |= myQueens;
-    
-    // DEFINE PAWN BITBOARDS AND FIND ENPASS MOVES
+    // Define pawn bitboards and find enpass moves
     if (board->turn == WHITE){
         forwardShift = -8;
         leftShift = -7;
@@ -124,8 +93,9 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
             if (board->squares[epSquare - 9] == WHITE_PAWN && epSquare != 40)
                 moves[(*size)++] = MoveMake(epSquare-9, epSquare, ENPASS_MOVE);
         }
-        
-    } else {
+    } 
+    
+    else {
         forwardShift = 8;
         leftShift = 7;
         rightShift = 9;
@@ -169,52 +139,36 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
     buildRookAndQueenMoves(moves, size, myRooks, notEmpty, notFriendly);
     buildKingMoves(moves, size, myKings, notFriendly);
     
-    // GENERATE CASTLES
-    if (isNotInCheck(board,board->turn)){
-        if (board->turn == WHITE){
-            
-            // KING SIDE
-            if ((notEmpty & WHITE_CASTLE_KING_SIDE_MAP) == 0)
-                if (board->castleRights & WHITE_KING_RIGHTS)
-                    if (!squareIsAttacked(board, WHITE, 5))
-                        moves[(*size)++] = MoveMake(4, 6, CASTLE_MOVE);
-                        
-            // QUEEN SIDE
-            if ((notEmpty & WHITE_CASTLE_QUEEN_SIDE_MAP) == 0)
-                if (board->castleRights & WHITE_QUEEN_RIGHTS)
-                    if (!squareIsAttacked(board, WHITE, 3))
-                        moves[(*size)++] = MoveMake(4, 2, CASTLE_MOVE);
+    // Generate all the castling moves
+    if (board->turn == WHITE){
+        castleKing  =   ((notEmpty & WHITE_CASTLE_KING_SIDE_MAP) == 0)
+                     && (board->castleRights & WHITE_KING_RIGHTS)
+                     && !squareIsAttacked(board, WHITE, 5);
+        castleQueen =   ((notEmpty & WHITE_CASTLE_QUEEN_SIDE_MAP) == 0)
+                     && (board->castleRights & WHITE_QUEEN_RIGHTS)
+                     && !squareIsAttacked(board, WHITE, 3);
+                     
+        if ((castleKing || castleQueen) && isNotInCheck(board, board->turn)){
+            if (castleKing)  moves[(*size)++] = MoveMake(4, 6, CASTLE_MOVE);
+            if (castleQueen) moves[(*size)++] = MoveMake(4, 2, CASTLE_MOVE);
         }
-        
-        else {
-            
-            // KING SIDE
-            if ((notEmpty & BLACK_CASTLE_KING_SIDE_MAP) == 0)
-                if (board->castleRights & BLACK_KING_RIGHTS)
-                    if (!squareIsAttacked(board, BLACK, 61))
-                        moves[(*size)++] = MoveMake(60, 62, CASTLE_MOVE);
-                        
-            // QUEEN SIDE
-            if ((notEmpty & BLACK_CASTLE_QUEEN_SIDE_MAP) == 0)
-                if (board->castleRights & BLACK_QUEEN_RIGHTS)
-                    if (!squareIsAttacked(board, BLACK, 59))
-                        moves[(*size)++] = MoveMake(60, 58, CASTLE_MOVE);
+    }
+    
+    else {
+        castleKing  =   ((notEmpty & BLACK_CASTLE_KING_SIDE_MAP) == 0)
+                     && (board->castleRights & BLACK_KING_RIGHTS)
+                     && !squareIsAttacked(board, BLACK, 61);
+        castleQueen =   ((notEmpty & BLACK_CASTLE_QUEEN_SIDE_MAP) == 0)
+                     && (board->castleRights & BLACK_QUEEN_RIGHTS)
+                     && !squareIsAttacked(board, BLACK, 59);
+                     
+        if ((castleKing || castleQueen) && isNotInCheck(board, board->turn)){
+            if (castleKing)  moves[(*size)++] = MoveMake(60, 62, CASTLE_MOVE);
+            if (castleQueen) moves[(*size)++] = MoveMake(60, 58, CASTLE_MOVE);
         }
     }
 }
 
-
-/**
- * Generate all of the psudeo legal moves which are considered
- * noisy, IE captures, promotions, enpassant, for a given board
- * The moves will be stored in a pointer passed to the function,
- * and an integer pointer passed to the function will be updated
- * to reflect the total number of psuedo legal noisy moves found.
- *
- * @param   board   Board pointer with the current position
- * @param   moves   Destination for the found psuedo legal moves
- * @param   size    Pointer to keep track of the number of moves
- */
 void genAllNoisyMoves(Board * board, uint16_t * moves, int * size){
     
     uint64_t pawnLeft;
@@ -235,15 +189,11 @@ void genAllNoisyMoves(Board * board, uint16_t * moves, int * size){
     uint64_t notEmpty = ~empty;
     uint64_t attackable;
     
-    uint64_t myPawns   = friendly & board->pieces[PAWN];
-    uint64_t myKnights = friendly & board->pieces[KNIGHT];
-    uint64_t myBishops = friendly & board->pieces[BISHOP];
-    uint64_t myRooks   = friendly & board->pieces[ROOK];
-    uint64_t myQueens  = friendly & board->pieces[QUEEN];
-    uint64_t myKings   = friendly & board->pieces[KING];
-    
-    // Generate queen moves as if they were rooks and bishops
-    myBishops |= myQueens; myRooks |= myQueens;
+    uint64_t myPawns   = friendly &  board->pieces[PAWN];
+    uint64_t myKnights = friendly &  board->pieces[KNIGHT];
+    uint64_t myBishops = friendly & (board->pieces[BISHOP] | board->pieces[QUEEN]);
+    uint64_t myRooks   = friendly & (board->pieces[ROOK]   | board->pieces[QUEEN]);
+    uint64_t myKings   = friendly &  board->pieces[KING];
     
     // Generate Pawn BitBoards and Generate Enpass Moves
     if (board->turn == WHITE){
@@ -268,8 +218,9 @@ void genAllNoisyMoves(Board * board, uint16_t * moves, int * size){
             if (board->squares[epSquare-9] == WHITE_PAWN && epSquare != 40)
                 moves[(*size)++] = MoveMake(epSquare-9, epSquare, ENPASS_MOVE);
         }
-        
-    } else {
+    } 
+    
+    else {
         forwardShift = 8;
         leftShift = 7;
         rightShift = 9;
@@ -309,21 +260,9 @@ void genAllNoisyMoves(Board * board, uint16_t * moves, int * size){
     buildKingMoves(moves, size, myKings, enemy);
 }
 
-
-/**
- * Generate all of the psudeo legal moves which are considered
- * quiet, IE not captures, promotions, or enpassant, for a given board
- * The moves will be stored in a pointer passed to the function,
- * and an integer pointer passed to the function will be updated
- * to reflect the total number of psuedo legal quiet moves found.
- *
- * @param   board   Board pointer with the current position
- * @param   moves   Destination for the found psuedo legal moves
- * @param   size    Pointer to keep track of the number of moves
- */
 void genAllQuietMoves(Board * board, uint16_t * moves, int * size){
      
-    int bit, lsb;
+    int bit, lsb, castleKing, castleQueen;
     
     uint64_t pawnForwardOne;
     uint64_t pawnForwardTwo;
@@ -335,15 +274,11 @@ void genAllQuietMoves(Board * board, uint16_t * moves, int * size){
     uint64_t notEmpty = ~empty;
     uint64_t attackable;
     
-    uint64_t myPawns   = friendly & board->pieces[PAWN];
-    uint64_t myKnights = friendly & board->pieces[KNIGHT];
-    uint64_t myBishops = friendly & board->pieces[BISHOP];
-    uint64_t myRooks   = friendly & board->pieces[ROOK];
-    uint64_t myQueens  = friendly & board->pieces[QUEEN];
-    uint64_t myKings   = friendly & board->pieces[KING];
-    
-    // Generate the queens' moves as if they were rooks and bishops
-    myBishops |= myQueens; myRooks |= myQueens;
+    uint64_t myPawns   = friendly &  board->pieces[PAWN];
+    uint64_t myKnights = friendly &  board->pieces[KNIGHT];
+    uint64_t myBishops = friendly & (board->pieces[BISHOP] | board->pieces[QUEEN]);
+    uint64_t myRooks   = friendly & (board->pieces[ROOK]   | board->pieces[QUEEN]);
+    uint64_t myKings   = friendly &  board->pieces[KING];
     
     // Generate the pawn advances
     if (board->turn == WHITE){
@@ -366,65 +301,42 @@ void genAllQuietMoves(Board * board, uint16_t * moves, int * size){
     buildRookAndQueenMoves(moves, size, myRooks, notEmpty, empty);
     buildKingMoves(moves, size, myKings, empty);
     
-    // GENERATE CASTLES
-    if (isNotInCheck(board,board->turn)){
-        if (board->turn == WHITE){
-            
-            // KING SIDE
-            if ((notEmpty & WHITE_CASTLE_KING_SIDE_MAP) == 0)
-                if (board->castleRights & WHITE_KING_RIGHTS)
-                    if (!squareIsAttacked(board, WHITE, 5))
-                        moves[(*size)++] = MoveMake(4, 6, CASTLE_MOVE);
-                        
-            // QUEEN SIDE
-            if ((notEmpty & WHITE_CASTLE_QUEEN_SIDE_MAP) == 0)
-                if (board->castleRights & WHITE_QUEEN_RIGHTS)
-                    if (!squareIsAttacked(board, WHITE, 3))
-                        moves[(*size)++] = MoveMake(4, 2, CASTLE_MOVE);
+    // Generate all the castling moves
+    if (board->turn == WHITE){
+        castleKing  =   ((notEmpty & WHITE_CASTLE_KING_SIDE_MAP) == 0)
+                     && (board->castleRights & WHITE_KING_RIGHTS)
+                     && !squareIsAttacked(board, WHITE, 5);
+        castleQueen =   ((notEmpty & WHITE_CASTLE_QUEEN_SIDE_MAP) == 0)
+                     && (board->castleRights & WHITE_QUEEN_RIGHTS)
+                     && !squareIsAttacked(board, WHITE, 3);
+                     
+        if ((castleKing || castleQueen) && isNotInCheck(board, board->turn)){
+            if (castleKing)  moves[(*size)++] = MoveMake(4, 6, CASTLE_MOVE);
+            if (castleQueen) moves[(*size)++] = MoveMake(4, 2, CASTLE_MOVE);
         }
-        
-        else {
-            
-            // KING SIDE
-            if ((notEmpty & BLACK_CASTLE_KING_SIDE_MAP) == 0)
-                if (board->castleRights & BLACK_KING_RIGHTS)
-                    if (!squareIsAttacked(board, BLACK, 61))
-                        moves[(*size)++] = MoveMake(60, 62, CASTLE_MOVE);
-                        
-            // QUEEN SIDE
-            if ((notEmpty & BLACK_CASTLE_QUEEN_SIDE_MAP) == 0)
-                if (board->castleRights & BLACK_QUEEN_RIGHTS)
-                    if (!squareIsAttacked(board, BLACK, 59))
-                        moves[(*size)++] = MoveMake(60, 58, CASTLE_MOVE);
+    }
+    
+    else {
+        castleKing  =   ((notEmpty & BLACK_CASTLE_KING_SIDE_MAP) == 0)
+                     && (board->castleRights & BLACK_KING_RIGHTS)
+                     && !squareIsAttacked(board, BLACK, 61);
+        castleQueen =   ((notEmpty & BLACK_CASTLE_QUEEN_SIDE_MAP) == 0)
+                     && (board->castleRights & BLACK_QUEEN_RIGHTS)
+                     && !squareIsAttacked(board, BLACK, 59);
+                     
+        if ((castleKing || castleQueen) && isNotInCheck(board, board->turn)){
+            if (castleKing)  moves[(*size)++] = MoveMake(60, 62, CASTLE_MOVE);
+            if (castleQueen) moves[(*size)++] = MoveMake(60, 58, CASTLE_MOVE);
         }
     }
 }
 
-/**
- * Determine if the king of a certain colour is in check
- * on the board passed to the function
- *
- * @param   board   Board pointer to current position
- * @param   turn    Colour of the king to determine check status for
- *
- * @return          1 for not in check, 0 for in check
- */
 int isNotInCheck(Board * board, int turn){
     int kingsq = getLSB(board->colours[turn] & board->pieces[KING]);
     assert(board->squares[kingsq] == WHITE_KING + turn);
     return !squareIsAttacked(board, turn, kingsq);
 }
 
-/**
- * Determine if the enemy pieces are able to attacked
- * a given square. This is used by isNotInCheck.
- *
- * @param   board   Board pointer for current position
- * @param   turn    Colour of friendly side
- * @param   sq      Square to be attacked
- *
- * @return          1 if can be attacked, 0 if cannot
- */
 int squareIsAttacked(Board * board, int turn, int sq){
     
     uint64_t square;

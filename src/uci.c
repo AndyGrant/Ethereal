@@ -38,6 +38,7 @@
 #include "uci.h"
 #include "zorbist.h"
 
+extern TransTable Table;
 extern HistoryTable History;
 
 char * startPos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -57,6 +58,7 @@ int main(){
     initalizeMasks();
     initalizeBoard(&(info.board), startPos);
     initalizeTranspositionTable(&Table, 16);
+    clearHistory(History);
     
     while (1){
         
@@ -82,7 +84,7 @@ int main(){
            http://wbec-ridderkerk.nl/html/UCIProtocol.html */
             
         if (stringEquals(str, "uci")){
-            printf("id name Ethereal 8.25\n");
+            printf("id name Ethereal 8.27\n");
             printf("id author Andrew Grant\n");
             printf("option name Hash type spin default 16 min 1 max 2048\n");
             printf("uciok\n");
@@ -110,7 +112,7 @@ int main(){
         
         else if (stringStartsWith(str, "position")){
             
-            // Determine form of the position command
+            // Determine the form of the position command
             if (stringContains(str, "fen"))
                 initalizeBoard(&info.board, strstr(str, "fen") + 4);
             else if (stringContains(str, "startpos"))
@@ -299,26 +301,25 @@ int main(){
 }
 
 int stringEquals(char * s1, char * s2){
-    
     return strcmp(s1, s2) == 0;
 }
 
 int stringStartsWith(char * str, char * key){
-    
     return strstr(str, key) == str;
 }
 
 int stringContains(char * str, char * key){
-    
     return strstr(str, key) != NULL;
 }
 
 void getInput(char * str){
     
+    char * ptr;
+    
     if (fgets(str, 8192, stdin) == NULL)
         exit(EXIT_FAILURE);
     
-    char * ptr = strchr(str, '\n');
+    ptr = strchr(str, '\n');
     if (ptr != NULL) *ptr = '\0';
     
     ptr = strchr(str, '\r');
@@ -327,7 +328,7 @@ void getInput(char * str){
 
 void moveToString(char * str, uint16_t move){
     
-    static char promoteDict[4] = {'n', 'b', 'r', 'q'};
+    static char table[4] = {'n', 'b', 'r', 'q'};
     
     int from = MoveFrom(move);
     int to = MoveTo(move);
@@ -343,7 +344,7 @@ void moveToString(char * str, uint16_t move){
     str[3] = toFile;
     
     if (MoveType(move) == PROMOTION_MOVE){
-        str[4] = promoteDict[move >> 14];
+        str[4] = table[move >> 14];
         str[5] = '\0';
     } else
         str[4] = '\0';

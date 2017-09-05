@@ -24,41 +24,17 @@
 #include "types.h"
 
 uint16_t getBestMove(SearchInfo * info);
-
-int aspirationWindow(PVariation * PV, Board * board, MoveList * moveList, 
-                                               int depth, int lastScore);
-
-int rootSearch(PVariation * PV, Board * board, MoveList * moveList, int alpha,
-                                                         int beta, int depth);
-
-int alphaBetaSearch(PVariation * PV, Board * board, int alpha, int beta, 
-                                   int depth, int height, int nodeType);
-
+int aspirationWindow(PVariation * PV, Board * board, MoveList * moveList, int depth, int lastScore);
+int rootSearch(PVariation * PV, Board * board, MoveList * moveList, int alpha, int beta, int depth);
+int alphaBetaSearch(PVariation * PV, Board * board, int alpha, int beta, int depth, int height, int nodeType);
 int quiescenceSearch(Board * board, int alpha, int beta, int height);
-
 void sortMoveList(MoveList * moveList);
-
-int canDoNull(Board * board);
-
 int moveIsTactical(Board * board, uint16_t move);
-
 int hasNonPawnMaterial(Board * board, int turn);
-
 int valueFromTT(int value, int height);
-
 int valueToTT(int value, int height);
 
 static const int LateMovePruningCounts[] = {0, 6, 9, 14, 21, 30, 41, 54, 69};
-
 static const int RazorMargins[] = {0, 450, 480, 520, 580};
-
-#define USE_STATIC_NULL_PRUNING             (1)
-#define USE_FUTILITY_PRUNING                (1)
-#define USE_NULL_MOVE_PRUNING               (1)
-#define USE_LATE_MOVE_REDUCTIONS            (1)
-#define USE_INTERNAL_ITERATIVE_DEEPENING    (1)
-#define USE_TRANSPOSITION_TABLE             (1)
-#define USE_LATE_MOVE_PRUNING               (1)
-#define USE_RAZORING                        (1)
 
 #endif

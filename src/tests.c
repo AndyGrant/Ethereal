@@ -194,9 +194,6 @@ void runTestSuite(){
     Board board;
     int found, expected;
     
-    // Needed to avoid division by zero
-    clearHistory(History);
-    
     // Run through each test position
     for (i = 0; i < numberOfTests; i++){
         printf("Running %s\n", testPositions[i]);
@@ -285,9 +282,8 @@ int perftTesting(Board * board, int depth){
        every move presented for a given position */
        
     initalizeMovePicker(&mp, 0, NULL_MOVE, NULL_MOVE, NULL_MOVE);
-    while ((move = selectNextMove(&mp, board)) != NONE_MOVE){
+    while ((move = selectNextMove(&mp, board)) != NONE_MOVE)
         selectionMoves[selectionSize++] = move;
-    }
     
     for (i = 0; i < selectionSize; i++)
         for (j = 0; j < selectionSize; j++)
@@ -305,7 +301,7 @@ int perftTesting(Board * board, int depth){
     for(size -= 1; size >= 0; size--){
         applyMove(board, moves[size], undo);
         if (isNotInCheck(board, !board->turn))
-            found += perft(board, depth-1);        
+            found += perft(board, depth-1);
         revertMove(board, moves[size], undo);
     }
     
@@ -314,8 +310,7 @@ int perftTesting(Board * board, int depth){
 
 void printMoveErrorMessage(Board * board, uint16_t move, char * msg){
     
-    
-    static char * typeStrings[4] = {
+    static char * table[4] = {
         "Normal", "Castle", "Enpass", "Promotion"
     };
     
@@ -324,7 +319,7 @@ void printMoveErrorMessage(Board * board, uint16_t move, char * msg){
     int to = MoveTo(move);
     
     printf("%s\nMove: Type=%s From=%c%c To=%c%c\n",
-           msg, typeStrings[moveType >> 12],
+           msg, table[moveType >> 12],
            'A' + File(from), '1' + Rank(from),
            'A' + File(to), '1' + Rank(to));
     

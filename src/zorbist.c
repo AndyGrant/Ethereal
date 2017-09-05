@@ -30,25 +30,11 @@
 uint64_t ZorbistKeys[32][SQUARE_NB];
 uint64_t PawnKeys[32][SQUARE_NB];
 
-/**
- * Fill the ZorbistKeys[type][square] and the
- * PawnKeys[type][square] arrays with randomly
- * generated 64-bit Integers. Seed with zero
- * to generate consistent values for testing.
- */
 void initalizeZorbist(){
     
     int p, s;
     
     srand(0);
-    
-    // Zero out both arrays
-    for(p = 0; p < 32; p++){
-        for(s = 0; s < SQUARE_NB; s++){
-            ZorbistKeys[p][s] = 0ull;
-            PawnKeys[p][s] = 0ull;
-        }
-    }
     
     // Fill ZorbistKeys for each piece type and square
     for (p = 0; p <= 5; p++){
@@ -94,17 +80,12 @@ void initalizeZorbist(){
     }
 }
 
-/**
- * Generate a random 64-bit Integer.
- *
- * @return  Random 64-bit Integer.
- */
 uint64_t genRandomBitstring(){
     
     int i;
-    uint64_t str = 0ull;
+    uint64_t str;
     
-    for(i = 0; i < 64; i++)
+    for(i = 0, str = 0ull; i < 64; i++)
         str ^= ((uint64_t)(rand())) << i;
     
     return str;

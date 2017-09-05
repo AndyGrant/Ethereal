@@ -25,13 +25,9 @@
 #include "types.h"
 #include "transposition.h"
 
-/**
- * Allocate memory for the transposition table and
- * set the data members to their inital states
- *
- * @param   table       Location to allocate the table
- * @param   megabytes   Table size in megabytes (upperbound)
- */
+TransTable Table;
+PawnTable PTable;
+
 void initalizeTranspositionTable(TransTable * table, uint64_t megabytes){
     
     // Default table size uses a 16bit key, which
@@ -53,25 +49,10 @@ void initalizeTranspositionTable(TransTable * table, uint64_t megabytes){
     table->used = 0;
 }
 
-/**
- * Free the memory allocated for the transposition table
- *
- * @param   table   Location of table to free
- */
 void destroyTranspositionTable(TransTable * table){
-    
     free(table->buckets);
 }
 
-/**
- * Fetch a matching entry from the table. A
- * matching entry has the same hash signature
- *
- * @param   table   TransTable pointer to table location
- * @param   hash    64-bit zorbist key to be matched
- *
- * @return          Found entry or NULL
- */
 TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash){
     
     TransBucket * bucket = &(table->buckets[hash & (table->numBuckets - 1)]);
@@ -89,23 +70,7 @@ TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash){
     return NULL;
 }
 
-/**
- * Create and store a new entry in the Transposition Table. If
- * the bucket found with the lower N(keySize) bits of the hash
- * has an empty location, store it there. Otherwise replace the 
- * lowest depth entry that came from a previous search (has a 
- * different age/generation). Finally, if there are no old entries,
- * replace the lowest depth entry found in the bucket.
- *
- * @param   table       TransTable pointer to table location
- * @param   depth       Depth from the current search
- * @param   type        Entry type based on alpha-beta window
- * @param   value       Value to be returned by the search
- * @param   bestMove    Best move found during the search
- * @param   hash        64bit zorbist key corresponding to the board
-*/
-void storeTranspositionEntry(TransTable * table, int depth, int type, 
-                             int value, int bestMove, uint64_t hash){
+void storeTranspositionEntry(TransTable * table, int depth, int type, int value, int bestMove, uint64_t hash){
     
     // Validate Parameters
     assert(depth < MAX_DEPTH && depth >= 0);
@@ -136,22 +101,14 @@ void storeTranspositionEntry(TransTable * table, int depth, int type,
         }
         
         // Search for the lowest draft of an old entry
-        if (EntryAge(entries[i]) != table->generation){
-            if (oldOption == NULL
-                || EntryDepth(*oldOption) >= EntryDepth(entries[i])){
-                    
+        if (EntryAge(entries[i]) != table->generation)
+            if (oldOption == NULL || EntryDepth(*oldOption) >= EntryDepth(entries[i]))
                 oldOption = &(entries[i]);
-            }
-        }
         
         // Search for the lowest draft if no old entry has been found yet
-        if (oldOption == NULL){
-            if (lowDraftOption == NULL 
-                || EntryDepth(*lowDraftOption) >= EntryDepth(entries[i])){
-                    
+        if (oldOption == NULL)
+            if (lowDraftOption == NULL || EntryDepth(*lowDraftOption) >= EntryDepth(entries[i]))
                 lowDraftOption = &(entries[i]);
-            }
-        }
     }
     
     // If no old option, use the lowest draft
@@ -165,21 +122,10 @@ void storeTranspositionEntry(TransTable * table, int depth, int type,
         toReplace->hash16 = hash16;
 }
 
-/**
- * Update the age / generation of the transposition table
- *
- * @param   table   TransTable pointer to table location
- */
 void updateTranspositionTable(TransTable * table){
-    
     table->generation = (table->generation + 1) % 64;
 }
 
-/**
- * Zero out all entries in the transposition table
- *
- * @param   table   TransTable pointer to table location
- */
 void clearTranspositionTable(TransTable * table){
     
     unsigned int i; int j;
@@ -200,59 +146,20 @@ void clearTranspositionTable(TransTable * table){
     }
 }
 
-/**
- * Allocate memory for the pawn structure hash table
- *
- * @param   ptable  Location to allocate table
- */
 void initalizePawnTable(PawnTable * ptable){
-    
     ptable->entries = calloc(0x10000, sizeof(PawnEntry));
 }
 
-/**
- * Delete memory used by the pawn structure hash table
- *
- * @param   ptable  Location of table to free
- */
 void destoryPawnTable(PawnTable * ptable){
-    
     free(ptable->entries);
 }
 
-/**
- * Fetch a matching entry from the pawn table.
- * Matching entries share the same pawn key.
- *
- * @param   ptable  Location of pawn table
- * @param   phash   Pawn hash to match
- *
- * @return          Corresponding pawn hash entry
- */
 PawnEntry * getPawnEntry(PawnTable * ptable, uint64_t phash){
-    
     PawnEntry * pentry = &(ptable->entries[phash >> 48]);
-    
-    // Check for a matching hash signature
-    if (pentry->phash == phash)
-        return pentry;
-        
-    // No entry found
-    return NULL;
+    return pentry->phash == phash ? pentry : NULL;
 }
 
-/**
- * Store a pawn entry into the table
- *
- * @param   ptable  Location of pawn table
- * @param   phash   Pawn hash of the current board
- * @param   passed  Bitboard of the passed pawns
- * @param   mg      Evaluation for the mid game
- * @param   eg      Evaluation for the end game
- */
-void storePawnEntry(PawnTable * ptable, uint64_t phash, uint64_t passed, 
-                                                        int mg, int eg){
-    
+void storePawnEntry(PawnTable * ptable, uint64_t phash, uint64_t passed, int mg, int eg){
     PawnEntry * pentry = &(ptable->entries[phash >> 48]);
     pentry->phash = phash;
     pentry->passed = passed;

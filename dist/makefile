@@ -17,7 +17,7 @@
 CCWIN64 = gcc
 CCDROID = arm-linux-gnueabi-gcc
 
-WFLAGS = -Wall -Wextra -Wshadow -Wno-implicit-fallthrough
+WFLAGS = -Wall -Wextra -Wshadow
 CWIN64FLAGS = -DNDEBUG -O3 $(WFLAGS) -std=c99 -m64
 CDROIDFLAGS = -DNDEBUG -O3 $(WFLAGS) -std=c99 -march=armv5t
 

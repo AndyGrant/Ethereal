@@ -24,29 +24,15 @@
 #include "types.h"
 
 void initalizeTranspositionTable(TransTable * table, uint64_t megabytes);
-
 void destroyTranspositionTable(TransTable * table);
-
 TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash);
-
-void storeTranspositionEntry(TransTable * table, int depth, int type,
-                             int value, int bestMove, uint64_t hash);
-                             
+void storeTranspositionEntry(TransTable * table, int depth, int type, int value, int bestMove, uint64_t hash);
 void updateTranspositionTable(TransTable * table);
-
 void clearTranspositionTable(TransTable * table);
-
 void initalizePawnTable(PawnTable * ptable);
-
 void destoryPawnTable(PawnTable * ptable);
-
 PawnEntry * getPawnEntry(PawnTable * ptable, uint64_t phash);
-
-void storePawnEntry(PawnTable * ptable, uint64_t phash, uint64_t passed,
-                                                        int mg, int eg);
-
-extern TransTable Table;
-extern PawnTable PTable;
+void storePawnEntry(PawnTable * ptable, uint64_t phash, uint64_t passed, int mg, int eg);
 
 #define PVNODE  (1)
 #define CUTNODE (2)
@@ -54,12 +40,12 @@ extern PawnTable PTable;
 
 #define BUCKET_SIZE (4)
 
-#define EntrySetAge(e,a)    ((e)->data = ((a) << 2) | ((e)->data & 3))
-#define EntryDepth(e)       ((e).depth)
-#define EntryHash16(e)      ((e).hash16)
-#define EntryAge(e)         ((e).data >> 2)
-#define EntryType(e)        ((e).data & 3)
-#define EntryMove(e)        ((e).bestMove)
-#define EntryValue(e)       ((e).value)
+#define EntrySetAge(e,a) ((e)->data = ((a) << 2) | ((e)->data & 3))
+#define EntryDepth(e)    ((e).depth)
+#define EntryHash16(e)   ((e).hash16)
+#define EntryAge(e)      ((e).data >> 2)
+#define EntryType(e)     ((e).data & 3)
+#define EntryMove(e)     ((e).bestMove)
+#define EntryValue(e)    ((e).value)
 
 #endif 

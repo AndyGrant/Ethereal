@@ -19,29 +19,29 @@
 #ifndef _PIECE_H
 #define _PIECE_H
 
-#define WHITE       (0)
-#define BLACK       (1)
+#define WHITE (0)
+#define BLACK (1)
 
-#define PAWN    (0)
-#define KNIGHT  (1)
-#define BISHOP  (2)
-#define ROOK    (3)
-#define QUEEN   (4)
-#define KING    (5)
+#define PAWN   (0)
+#define KNIGHT (1)
+#define BISHOP (2)
+#define ROOK   (3)
+#define QUEEN  (4)
+#define KING   (5)
 
-#define WHITE_PAWN      ( 0)
-#define BLACK_PAWN      ( 1)
-#define WHITE_KNIGHT    ( 4)
-#define BLACK_KNIGHT    ( 5)
-#define WHITE_BISHOP    ( 8)
-#define BLACK_BISHOP    ( 9)
-#define WHITE_ROOK      (12)
-#define BLACK_ROOK      (13)
-#define WHITE_QUEEN     (16)
-#define BLACK_QUEEN     (17)
-#define WHITE_KING      (20)
-#define BLACK_KING      (21)
-#define EMPTY           (26)
+#define WHITE_PAWN   ( 0)
+#define BLACK_PAWN   ( 1)
+#define WHITE_KNIGHT ( 4)
+#define BLACK_KNIGHT ( 5)
+#define WHITE_BISHOP ( 8)
+#define BLACK_BISHOP ( 9)
+#define WHITE_ROOK   (12)
+#define BLACK_ROOK   (13)
+#define WHITE_QUEEN  (16)
+#define BLACK_QUEEN  (17)
+#define WHITE_KING   (20)
+#define BLACK_KING   (21)
+#define EMPTY        (26)
 
 #define PAWN_FLAG   ( 0)
 #define KNIGHT_FLAG ( 4)
@@ -50,9 +50,9 @@
 #define QUEEN_FLAG  (16)
 #define KING_FLAG   (20)
 
-#define PieceType(piece)       ((piece) >> 2)
-#define PieceColour(piece)     ((piece) & 3)
+#define PieceType(piece)   ((piece) >> 2)
+#define PieceColour(piece) ((piece)  & 3)
 
-#define MakePiece(flag,colour) ((flag) + (colour))
+#define MakePiece(type,colour) (((type) << 2) + (colour))
 
 #endif

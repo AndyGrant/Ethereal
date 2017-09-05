@@ -21,11 +21,31 @@
 
 #include "types.h"
 
-int evaluateBoard(Board * board, PawnTable * ptable);
-int evaluatePieces(Board * board, PawnTable * ptable);
+typedef struct EvalInfo {
+    uint64_t pawnAttacks[COLOUR_NB];
+    uint64_t blockedPawns[COLOUR_NB];
+    uint64_t kingAreas[COLOUR_NB];
+    uint64_t mobilityAreas[COLOUR_NB];
+    uint64_t attacked[COLOUR_NB];
+    uint64_t occupiedMinusBishops[COLOUR_NB];
+    uint64_t occupiedMinusRooks[COLOUR_NB];
+    uint64_t passedPawns;
+    int attackCounts[COLOUR_NB];
+    int attackerCounts[COLOUR_NB];
+    int midgame[COLOUR_NB];
+    int endgame[COLOUR_NB];
+    int pawnMidgame[COLOUR_NB];
+    int pawnEndgame[COLOUR_NB];
+} EvalInfo;
 
-#define MG          (0)
-#define EG          (1)
+int evaluateBoard(Board * board);
+void evaluatePawns(EvalInfo * ei, Board * board, int colour, PawnEntry * pentry);
+void evaluateKnights(EvalInfo * ei, Board * board, int colour);
+void evaluateBishops(EvalInfo * ei, Board * board, int colour);
+void evaluateRooks(EvalInfo * ei, Board * board, int colour);
+void evaluateQueens(EvalInfo * ei, Board * board, int colour);
+void evaluateKings(EvalInfo * ei, Board * board, int colour);
+void evaluatePassedPawns(EvalInfo * ei, Board * board, int colour);
 
 #define PawnValue   ( 100)
 #define KnightValue ( 325)
@@ -34,33 +54,6 @@ int evaluatePieces(Board * board, PawnTable * ptable);
 #define QueenValue  (1000)
 #define KingValue   ( 100)
 
-#define KING_HAS_CASTLED     (25)
-#define KING_CAN_CASTLE      (10)
-
-#define ROOK_OPEN_FILE_MID   (35)
-#define ROOK_OPEN_FILE_END   (20)
-#define ROOK_SEMI_FILE_MID   (12)
-#define ROOK_SEMI_FILE_END   (12)
-#define ROOK_ON_7TH_MID      (10)
-#define ROOK_ON_7TH_END      (15)
-
-#define PAWN_STACKED_MID     (10)
-#define PAWN_STACKED_END     (20)
-#define PAWN_ISOLATED_MID    (10)
-#define PAWN_ISOLATED_END    (20)
-
-extern const int PawnConnected[COLOUR_NB][SQUARE_NB];
-extern const int PawnPassed[PHASE_NB][2][2][RANK_NB];
 extern const int PieceValues[8];
-extern const int KnightOutpost[PHASE_NB][2];
-extern const int BishopOutpost[PHASE_NB][2];
-extern const int KnightMobility[PHASE_NB][9];
-extern const int BishopMobility[PHASE_NB][14];
-extern const int RookMobility[PHASE_NB][15];
-extern const int QueenMobility[PHASE_NB][28];
-extern const int SafetyTable[100];
-extern const int BishopHasWings[PHASE_NB];
-extern const int BishopPair[PHASE_NB];
-extern const int Tempo[PHASE_NB];
 
 #endif

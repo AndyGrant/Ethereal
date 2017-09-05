@@ -37,12 +37,12 @@ double getRealTime(){
     return (double)(GetTickCount());
 #else
     struct timeval tv;
-
+    double secsInMilli, usecsInMilli;
+    
     gettimeofday(&tv, NULL);
+    secsInMilli = ((double)tv.tv_sec) * 1000;
+    usecsInMilli = tv.tv_usec / 1000;
     
-    double secsInMilli = ((double)tv.tv_sec) * 1000;
-    double usecsInMilli = tv.tv_usec / 1000;
-    
-    return (secsInMilli + usecsInMilli);
+    return secsInMilli + usecsInMilli;
 #endif
 }

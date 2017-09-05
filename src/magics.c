@@ -46,7 +46,6 @@ uint64_t * MoveDatabaseRook;
 uint64_t * MoveDatabaseBishop;
 
 int MagicRookIndexes[SQUARE_NB];
-
 int MagicBishopIndexes[SQUARE_NB];
 
 const int MagicShiftsRook[SQUARE_NB] = {
@@ -72,82 +71,43 @@ const int MagicShiftsBishop[SQUARE_NB] = {
 };
 
 const uint64_t MagicNumberRook[SQUARE_NB] = {
-    0xa180022080400230ull, 0x0040100040022000ull, 
-    0x0080088020001002ull, 0x0080080280841000ull,
-    0x4200042010460008ull, 0x04800a0003040080ull, 
-    0x0400110082041008ull, 0x008000a041000880ull,
-    0x10138001a080c010ull, 0x0000804008200480ull, 
-    0x00010011012000c0ull, 0x0022004128102200ull,
-    0x000200081201200cull, 0x202a001048460004ull, 
-    0x0081000100420004ull, 0x4000800380004500ull,
-    0x0000208002904001ull, 0x0090004040026008ull, 
-    0x0208808010002001ull, 0x2002020020704940ull,
-    0x8048010008110005ull, 0x6820808004002200ull, 
-    0x0a80040008023011ull, 0x00b1460000811044ull,
-    0x4204400080008ea0ull, 0xb002400180200184ull, 
-    0x2020200080100380ull, 0x0010080080100080ull,
-    0x2204080080800400ull, 0x0000a40080360080ull, 
-    0x02040604002810b1ull, 0x008c218600004104ull,
-    0x8180004000402000ull, 0x488c402000401001ull, 
-    0x4018a00080801004ull, 0x1230002105001008ull,
-    0x8904800800800400ull, 0x0042000c42003810ull, 
-    0x008408110400b012ull, 0x0018086182000401ull,
-    0x2240088020c28000ull, 0x001001201040c004ull, 
-    0x0a02008010420020ull, 0x0010003009010060ull,
-    0x0004008008008014ull, 0x0080020004008080ull, 
-    0x0282020001008080ull, 0x50000181204a0004ull,
-    0x48fffe99fecfaa00ull, 0x48fffe99fecfaa00ull, 
-    0x497fffadff9c2e00ull, 0x613fffddffce9200ull,
-    0xffffffe9ffe7ce00ull, 0xfffffff5fff3e600ull, 
-    0x0010301802830400ull, 0x510ffff5f63c96a0ull,
-    0xebffffb9ff9fc526ull, 0x61fffeddfeedaeaeull, 
-    0x53bfffedffdeb1a2ull, 0x127fffb9ffdfb5f6ull,
-    0x411fffddffdbf4d6ull, 0x0801000804000603ull, 
-    0x0003ffef27eebe74ull, 0x7645fffecbfea79eull
+    0xa180022080400230ull, 0x0040100040022000ull, 0x0080088020001002ull, 0x0080080280841000ull,
+    0x4200042010460008ull, 0x04800a0003040080ull, 0x0400110082041008ull, 0x008000a041000880ull,
+    0x10138001a080c010ull, 0x0000804008200480ull, 0x00010011012000c0ull, 0x0022004128102200ull,
+    0x000200081201200cull, 0x202a001048460004ull, 0x0081000100420004ull, 0x4000800380004500ull,
+    0x0000208002904001ull, 0x0090004040026008ull, 0x0208808010002001ull, 0x2002020020704940ull,
+    0x8048010008110005ull, 0x6820808004002200ull, 0x0a80040008023011ull, 0x00b1460000811044ull,
+    0x4204400080008ea0ull, 0xb002400180200184ull, 0x2020200080100380ull, 0x0010080080100080ull,
+    0x2204080080800400ull, 0x0000a40080360080ull, 0x02040604002810b1ull, 0x008c218600004104ull,
+    0x8180004000402000ull, 0x488c402000401001ull, 0x4018a00080801004ull, 0x1230002105001008ull,
+    0x8904800800800400ull, 0x0042000c42003810ull, 0x008408110400b012ull, 0x0018086182000401ull,
+    0x2240088020c28000ull, 0x001001201040c004ull, 0x0a02008010420020ull, 0x0010003009010060ull,
+    0x0004008008008014ull, 0x0080020004008080ull, 0x0282020001008080ull, 0x50000181204a0004ull,
+    0x48fffe99fecfaa00ull, 0x48fffe99fecfaa00ull, 0x497fffadff9c2e00ull, 0x613fffddffce9200ull,
+    0xffffffe9ffe7ce00ull, 0xfffffff5fff3e600ull, 0x0010301802830400ull, 0x510ffff5f63c96a0ull,
+    0xebffffb9ff9fc526ull, 0x61fffeddfeedaeaeull, 0x53bfffedffdeb1a2ull, 0x127fffb9ffdfb5f6ull,
+    0x411fffddffdbf4d6ull, 0x0801000804000603ull, 0x0003ffef27eebe74ull, 0x7645fffecbfea79eull
 };
 
 const uint64_t MagicNumberBishop[SQUARE_NB] = {
-    0xffedf9fd7cfcffffull, 0xfc0962854a77f576ull, 
-    0x5822022042000000ull, 0x2ca804a100200020ull,
-    0x0204042200000900ull, 0x2002121024000002ull, 
-    0xfc0a66c64a7ef576ull, 0x7ffdfdfcbd79ffffull,
-    0xfc0846a64a34fff6ull, 0xfc087a874a3cf7f6ull, 
-    0x1001080204002100ull, 0x1810080489021800ull,
-    0x0062040420010a00ull, 0x5028043004300020ull, 
-    0xfc0864ae59b4ff76ull, 0x3c0860af4b35ff76ull,
-    0x73c01af56cf4cffbull, 0x41a01cfad64aaffcull, 
-    0x040c0422080a0598ull, 0x4228020082004050ull,
-    0x0200800400e00100ull, 0x020b001230021040ull, 
-    0x7c0c028f5b34ff76ull, 0xfc0a028e5ab4df76ull,
-    0x0020208050a42180ull, 0x001004804b280200ull,
-    0x2048020024040010ull, 0x0102c04004010200ull,
-    0x020408204c002010ull, 0x02411100020080c1ull, 
-    0x102a008084042100ull, 0x0941030000a09846ull,
-    0x0244100800400200ull, 0x4000901010080696ull, 
-    0x0000280404180020ull, 0x0800042008240100ull,
-    0x0220008400088020ull, 0x04020182000904c9ull, 
-    0x0023010400020600ull, 0x0041040020110302ull,
-    0xdcefd9b54bfcc09full, 0xf95ffa765afd602bull, 
-    0x1401210240484800ull, 0x0022244208010080ull,
-    0x1105040104000210ull, 0x2040088800c40081ull, 
-    0x43ff9a5cf4ca0c01ull, 0x4bffcd8e7c587601ull,
-    0xfc0ff2865334f576ull, 0xfc0bf6ce5924f576ull, 
-    0x80000b0401040402ull, 0x0020004821880a00ull,
-    0x8200002022440100ull, 0x0009431801010068ull, 
-    0xc3ffb7dc36ca8c89ull, 0xc3ff8a54f4ca2c89ull,
-    0xfffffcfcfd79edffull, 0xfc0863fccb147576ull, 
-    0x040c000022013020ull, 0x2000104000420600ull,
-    0x0400000260142410ull, 0x0800633408100500ull, 
-    0xfc087e8e4bb2f736ull, 0x43ff9e4ef4ca2c89ull
+    0xffedf9fd7cfcffffull, 0xfc0962854a77f576ull, 0x5822022042000000ull, 0x2ca804a100200020ull,
+    0x0204042200000900ull, 0x2002121024000002ull, 0xfc0a66c64a7ef576ull, 0x7ffdfdfcbd79ffffull,
+    0xfc0846a64a34fff6ull, 0xfc087a874a3cf7f6ull, 0x1001080204002100ull, 0x1810080489021800ull,
+    0x0062040420010a00ull, 0x5028043004300020ull, 0xfc0864ae59b4ff76ull, 0x3c0860af4b35ff76ull,
+    0x73c01af56cf4cffbull, 0x41a01cfad64aaffcull, 0x040c0422080a0598ull, 0x4228020082004050ull,
+    0x0200800400e00100ull, 0x020b001230021040ull, 0x7c0c028f5b34ff76ull, 0xfc0a028e5ab4df76ull,
+    0x0020208050a42180ull, 0x001004804b280200ull, 0x2048020024040010ull, 0x0102c04004010200ull,
+    0x020408204c002010ull, 0x02411100020080c1ull, 0x102a008084042100ull, 0x0941030000a09846ull,
+    0x0244100800400200ull, 0x4000901010080696ull, 0x0000280404180020ull, 0x0800042008240100ull,
+    0x0220008400088020ull, 0x04020182000904c9ull, 0x0023010400020600ull, 0x0041040020110302ull,
+    0xdcefd9b54bfcc09full, 0xf95ffa765afd602bull, 0x1401210240484800ull, 0x0022244208010080ull,
+    0x1105040104000210ull, 0x2040088800c40081ull, 0x43ff9a5cf4ca0c01ull, 0x4bffcd8e7c587601ull,
+    0xfc0ff2865334f576ull, 0xfc0bf6ce5924f576ull, 0x80000b0401040402ull, 0x0020004821880a00ull,
+    0x8200002022440100ull, 0x0009431801010068ull, 0xc3ffb7dc36ca8c89ull, 0xc3ff8a54f4ca2c89ull,
+    0xfffffcfcfd79edffull, 0xfc0863fccb147576ull, 0x040c000022013020ull, 0x2000104000420600ull,
+    0x0400000260142410ull, 0x0800633408100500ull, 0xfc087e8e4bb2f736ull, 0x43ff9e4ef4ca2c89ull
 };
 
-/**
- * Initalize the Knight and King attack lookup tables.
- * Initalize the needed data members for the Rook and
- * Bishop attack lookup tables. Initalize the Rook and
- * Bishop attack lookup tables. Set a flag so the process
- * Is not repeated more than once.
- */
 void initalizeMagics(){
     
     int i;
@@ -179,10 +139,6 @@ void initalizeMagics(){
         BitCounts[j] = countSetBits(j);
 }
 
-/**
- * Fill the KnightMap[SQUARE_NB] array with the correct 
- * BitBoards for generating knight moves
- */
 void generateKnightMap(){
     
     int i;
@@ -223,36 +179,26 @@ void generateKnightMap(){
     }
 }
 
-/**
- * Generate the Indexes for the Fancy Magic Bitboard look up for Rooks
- */
 void generateRookIndexes(){
     
     int i, sum;
     
     for (i = 0, sum = 0; i < SQUARE_NB; i++){
         MagicRookIndexes[i] = sum;
-        sum += (1 << (64-MagicShiftsRook[i]));
+        sum += (1 << (64 - MagicShiftsRook[i]));
     }
 }
 
-/**
- * Generate the Indexes for the Fancy Magic Bitboard look up for Bishops
- */
 void generateBishopIndexes(){
     
     int i, sum;
     
     for (i = 0, sum = 0; i < SQUARE_NB; i++){
         MagicBishopIndexes[i] = sum;
-        sum += (1 << (64-MagicShiftsBishop[i]));
+        sum += (1 << (64 - MagicShiftsBishop[i]));
     }
 }
 
-/**
- * Fill the KingMap[SQUARE_NB] array with the correct 
- * BitBoards for generating king moves
- */
 void generateKingMap(){
     
     int i;
@@ -293,11 +239,6 @@ void generateKingMap(){
     }
 }
 
-/**
- * Fill the OccupancyMaskRook[SQUARE_NB] array with the correct BitBoards
- * for what would be the proper moves (excluding the edge of the board)
- * if the only piece on the board was the rook in question.
- */
 void generateOccupancyMaskRook(){
     
     int i, bit;
@@ -325,11 +266,6 @@ void generateOccupancyMaskRook(){
     }
 }
 
-/**
- * Fill the OccupancyMaskBishop[SQUARE_NB] array with the correct BitBoards
- * for what would be the proper moves (excluding the edge of the board)
- * if the only piece on the board was the bishop in question.
- */
 void generateOccupancyMaskBishop(){
     
     int i, bit; 
@@ -357,10 +293,6 @@ void generateOccupancyMaskBishop(){
     }
 }
 
-/**
- * Fill the OccupancyVariationsRook array with each possible set of attacks
- * based on potential blockers along the rook's sliding path.
- */
 void generateOccupancyVariationsRook(){
     
     uint64_t mask;
@@ -388,10 +320,6 @@ void generateOccupancyVariationsRook(){
     }
 }
 
-/**
- * Fill the OccupancyVariationsBishop array with each possible set of attacks
- * based on potential blockers along the bishop's sliding path.
- */
 void generateOccupancyVariationsBishop(){
     
     uint64_t mask;
@@ -419,13 +347,6 @@ void generateOccupancyVariationsBishop(){
     }
 }
 
-/**
- * Fill the MoveDatabaseRook tables so that the moves
- * for a given rook can be found by calculating the 
- * database index and current location, then accessing
- * the table at MoveDatabaseRook[location][index], and 
- * then finally bit-wise anding it with empty | enemy
- */
 void generateMoveDatabaseRook(){
     
     uint64_t moves, occupancy, magic;
@@ -475,7 +396,7 @@ void generateMoveDatabaseRook(){
                     break;
             }
             
-            // Moving to the Left until we hit a blocker            
+            // Moving to the Left until we hit a blocker
             for (j = sq - 1; j % 8 != 7 && j >= 0; j--) {
                 moves |= (1ull << j);
                 if (occupancy & (1ull << j))
@@ -488,13 +409,6 @@ void generateMoveDatabaseRook(){
     }
 }
 
-/**
- * Fill the MoveDatabaseBishop tables so that the moves
- * for a given bishop can be found by calculating the 
- * database index and current location, then accessing
- * the table at MoveDatabaseBishop[location][index], and 
- * then finally bit-wise anding it with empty | enemy
- */
 void generateMoveDatabaseBishop(){
     
     uint64_t moves, occupancy, magic;
