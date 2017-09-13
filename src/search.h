@@ -24,17 +24,26 @@
 #include "types.h"
 
 uint16_t getBestMove(SearchInfo * info);
-int aspirationWindow(PVariation * PV, Board * board, MoveList * moveList, int depth, int lastScore);
-int rootSearch(PVariation * PV, Board * board, MoveList * moveList, int alpha, int beta, int depth);
-int alphaBetaSearch(PVariation * PV, Board * board, int alpha, int beta, int depth, int height, int nodeType);
-int quiescenceSearch(Board * board, int alpha, int beta, int height);
-void sortMoveList(MoveList * moveList);
+int aspirationWindow(PVariation * PV, Board * board, int depth, int lastScore);
+int search(PVariation * PV, Board * board, int alpha, int beta, int depth, int height);
+int qsearch(Board * board, int alpha, int beta, int height);
 int moveIsTactical(Board * board, uint16_t move);
 int hasNonPawnMaterial(Board * board, int turn);
 int valueFromTT(int value, int height);
 int valueToTT(int value, int height);
 
-static const int LateMovePruningCounts[] = {0, 6, 9, 14, 21, 30, 41, 54, 69};
+static const int RazorDepth = 4;
 static const int RazorMargins[] = {0, 450, 480, 520, 580};
+
+static const int BetaPruningDepth = 3;
+
+static const int InternalIterativeDeepeningDepth = 3;
+
+static const int NullMovePruningDepth = 2;
+
+static const int FutilityPruningDepth = 8;
+
+static const int LateMovePruningDepth = 8;
+static const int LateMovePruningCounts[] = {0, 6, 9, 14, 21, 30, 41, 54, 69};
 
 #endif
