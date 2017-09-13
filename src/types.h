@@ -91,14 +91,6 @@ typedef struct TransTable {
     
 } TransTable;
 
-typedef struct MoveList {
-    uint16_t moves[MAX_MOVES];
-    int values[MAX_MOVES];
-    uint16_t bestMove;
-    int size;
-    
-} MoveList;
-
 typedef struct SearchInfo {
     Board board;
     int searchIsInfinite;

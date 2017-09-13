@@ -67,16 +67,11 @@ uint16_t getBestMove(SearchInfo * info){
     initalizePawnTable(&PTable);
     reduceHistory(History);
     
-    // Populate the root's moves
-    MoveList rootMoves;
-    rootMoves.size = 0;
-    genAllLegalMoves(&info->board, rootMoves.moves, &rootMoves.size);
-    
     // Perform interative deepening
     for (depth = 1; depth < MAX_DEPTH; depth++){
         
         // Perform full search on Root
-        value = aspirationWindow(&pv, &info->board, &rootMoves, depth, value);
+        value = aspirationWindow(&pv, &info->board, depth, value);
         
         // Don't print a partial search
         if (info->terminateSearch) break;
@@ -115,10 +110,10 @@ uint16_t getBestMove(SearchInfo * info){
     // Free the Pawn Table
     destoryPawnTable(&PTable);
     
-    return rootMoves.bestMove;
+    return pv.line[0];
 }
 
-int aspirationWindow(PVariation * pv, Board * board, MoveList * moveList, int depth, int lastScore){
+int aspirationWindow(PVariation * pv, Board * board, int depth, int lastScore){
     
     int alpha, beta, value, margin;
     
@@ -135,7 +130,7 @@ int aspirationWindow(PVariation * pv, Board * board, MoveList * moveList, int de
             beta  = lastScore + margin;
             
             // Perform the search on the modified window
-            value = rootSearch(pv, board, moveList, alpha, beta, depth);
+            value = search(pv, board, alpha, beta, depth, 0);
             
             // Result was within our window
             if (value > alpha && value < beta)
@@ -148,203 +143,144 @@ int aspirationWindow(PVariation * pv, Board * board, MoveList * moveList, int de
     }
     
     // No searches scored within our aspiration windows, search full window
-    return rootSearch(pv, board, moveList, -MATE, MATE, depth);
+    return search(pv, board, -MATE, MATE, depth, 0);
 }
 
-
-int rootSearch(PVariation * pv, Board * board, MoveList * moveList, int alpha, int beta, int depth){
+int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int height){
     
-    Undo undo[1];
-    uint64_t currentNodes;
-    int i, value, best = -MATE;
+    const int PvNode   = (alpha != beta - 1);
+    const int RootNode = (height == 0);
     
-    // Zero out the root and local principle variations
-    pv->length = 0;
-    PVariation lpv;
-    lpv.length = 0;
-   
-    // Search through each move in the root's legal move list
-    for (i = 0; i < moveList->size; i++){
-        
-        currentNodes = TotalNodes;
-        
-        // Apply the current move to the board
-        applyMove(board, moveList->moves[i], undo);
-        
-        // Full window search for the first move
-        if (i == 0)
-            value = -alphaBetaSearch(&lpv, board, -beta, -alpha, depth-1, 1, PVNODE);
-        
-        // Null window search on all other moves
-        else{
-            value = -alphaBetaSearch(&lpv, board, -alpha-1, -alpha, depth-1, 1, CUTNODE);
-            
-            // Null window failed high, we must search on a full window
-            if (value > alpha)
-                value = -alphaBetaSearch(&lpv, board, -beta, -alpha, depth-1, 1, PVNODE);
-        }
-        
-        // Revert the board state
-        revertMove(board, moveList->moves[i], undo);
-        
-        
-        if (value <= alpha)
-            moveList->values[i] = -(1<<28) + (int)(TotalNodes - currentNodes); // UPPER VALUE
-        else if (value >= beta)
-            moveList->values[i] = beta;  // LOWER VALUE
-        else
-            moveList->values[i] = value; // EXACT VALUE
-        
-        
-        // Improved current value
-        if (value > best){
-            best = value;
-            moveList->bestMove = moveList->moves[i];
-            
-            // IMPROVED CURRENT LOWER VALUE
-            if (value > alpha){
-                alpha = value;
-                
-                // Update the Principle Variation
-                pv->length = 1 + lpv.length;
-                pv->line[0] = moveList->moves[i];
-                memcpy(pv->line + 1, lpv.line, sizeof(uint16_t) * lpv.length);
-            }
-        }
-        
-        // IMPROVED AND FAILED HIGH
-        if (alpha >= beta)
-            break;
-    }
-    
-    // SORT MOVELIST FOR NEXT ITERATION
-    sortMoveList(moveList);
-    return best;
-}
-
-int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int depth, int height, int nodeType){
-    
-    int i, value, inCheck, isQuiet, R;
-    int min, max, entryValue, entryType, oldAlpha = alpha;
-    int quiets = 0, played = 0, avoidedQS = 0, tableIsTactical = 0; 
-    int best = -MATE, eval = -MATE, optimal = -MATE;
+    int i, value, inCheck = 0, isQuiet, R, repetitions;
+    int rAlpha, rBeta, ttValue, ttType, oldAlpha = alpha;
+    int quiets = 0, played = 0, ttTactical = 0; 
+    int best = -MATE, eval = -MATE, futilityMargin = -MATE;
     int hist = 0; // Fix bogus GCC warning
     
     uint16_t currentMove, quietsTried[MAX_MOVES];
-    uint16_t tableMove = NONE_MOVE, bestMove = NONE_MOVE;
+    uint16_t ttMove = NONE_MOVE, bestMove = NONE_MOVE;
     
     MovePicker movePicker;
     
-    TransEntry * entry;
+    TransEntry * ttEntry;
     Undo undo[1];
     
     PVariation lpv;
     lpv.length = 0;
     pv->length = 0;
     
-    // Check to see if search time has expired
+    // Step 1. Check to see if search time has expired
     if (Info->searchIsTimeLimited && getRealTime() >= Info->endTime2){
         Info->terminateSearch = 1;
         return board->turn == EvaluatingPlayer ? -MATE : MATE;
     }
     
-    // Check to see if this line can't improve the mating / mated line
-    min = alpha > -MATE + height     ? alpha : -MATE + height;
-    max =  beta <  MATE - height - 1 ?  beta :  MATE - height - 1;
-    if (min >= max) return min;
+    // Step 2. Distance Mate Pruning. Check to see if this line is so
+    // good, or so bad, that being mated in the ply, or  mating in 
+    // the next one, would still not create a more extreme line
+    rAlpha = alpha > -MATE + height     ? alpha : -MATE + height;
+    rBeta  =  beta <  MATE - height - 1 ?  beta :  MATE - height - 1;
+    if (rAlpha >= rBeta) return rAlpha;
     
-    // Check for the fifty move rule
+    // Step 3. Check for the Fifty Move Rule
     if (board->fiftyMoveRule > 100)
         return 0;
     
-    // Check for three-fold repitition
-    for (i = board->numMoves-2; i >= 0; i-=2)
-        if (board->history[i] == board->hash)
-            return 0;
-    
-    // Search horizon reached, go into Quiescence Search
-    if (depth <= 0){
+    // Step 4. Check for three fold repetition. If the repetition occurs since
+    // the root move of this search, we will exit early as if it was a draw.
+    // Otherwise, we will look for an actual three fold repetition draw.
+    for (repetitions = 0, i = board->numMoves - 2; i >= 0; i -= 2){
         
-        // Don't jump into the qsearch if we are in check
+        // We can't have repeated positions before the most recent
+        // move which triggered a reset of the fifty move rule counter
+        if (i < board->numMoves - board->fiftyMoveRule) break;
+        
+        if (board->history[i] == board->hash){
+            
+            // Repetition occured after the root
+            if (i > board->numMoves - height)
+                return 0;
+            
+            // An actual three fold repetition
+            if (++repetitions == 2)
+                return 0;
+        }
+    }
+    
+    // Step 5. Go into the Quiescence Search if we have reached
+    // the search horizon and are not currently in check
+    if (depth <= 0){
         inCheck = !isNotInCheck(board, board->turn);
-        if (inCheck) avoidedQS = 1;
-        else return quiescenceSearch(board, alpha, beta, height);
+        if (!inCheck) return qsearch(board, alpha, beta, height);
     }
     
     // INCREMENT TOTAL NODE COUNTER
     TotalNodes++;
     
-    // Lookup current position in transposition table
-    if ((entry = getTranspositionEntry(&Table, board->hash)) != NULL){
+    // Step 6. Probe the Transposition Table for an entry
+    if ((ttEntry = getTranspositionEntry(&Table, board->hash)) != NULL){
         
-        // Entry move may be good in this position
-        tableMove = EntryMove(*entry);
+        // Entry move may be good in this position. If it is tactical,
+        // we may use it to increase reductions later on in LMR.
+        ttMove = EntryMove(*ttEntry);
+        ttTactical = moveIsTactical(board, ttMove);
         
-        // Determine if the table move is tactical. This will
-        // allow us to increase the LMR on quiet moves later on
-        tableIsTactical = moveIsTactical(board, tableMove);
-        
-        // Determine if Table may cause a cut off. We could perform
-        // cutoffs in PVNODEs, but doing so will truncate the PV line
-        if (    EntryDepth(*entry) >= depth
-            &&  nodeType != PVNODE){
+        // Step 6A. Check to see if this entry allows us to exit this
+        // node early. We choose not to do this in the PV line, not because
+        // we can't, but because don't want truncated PV lines
+        if (!PvNode && EntryDepth(*ttEntry) >= depth){
                 
-            entryValue = valueFromTT(EntryValue(*entry), height);
-            entryType = EntryType(*entry);
+            ttValue = valueFromTT(EntryValue(*ttEntry), height);
+            ttType = EntryType(*ttEntry);
+            rAlpha = alpha;
+            rBeta = beta;
             
-            min = alpha;
-            max = beta;
+            switch (ttType){
+                case  PVNODE: return ttValue;
+                case CUTNODE: rAlpha = ttValue > alpha ? ttValue : alpha; break;
+                case ALLNODE:  rBeta = ttValue <  beta ? ttValue :  beta; break;
+            }
             
-            // Exact value stored
-            if (entryType == PVNODE)
-                return entryValue;
-            
-            // Lower bound stored
-            else if (entryType == CUTNODE)
-                min = entryValue > alpha ? entryValue : alpha;
-            
-            // Upper bound stored
-            else if (entryType == ALLNODE)
-                max = entryValue < beta ? entryValue : beta;
-            
-            // Bounds now overlap, therefore we can exit
-            if (min >= max) return entryValue;
+            // Entry allows early exit
+            if (rAlpha >= rBeta) return ttValue;
         }
     }
     
+    // Step 7. Determine check status, and calculate the futility margin.
+    // We only need the futility margin if we are not in check, and we
+    // are not looking at a PV Node, as those are not subject to futility.
     // Determine check status if not done already
-    if (!avoidedQS)
-        inCheck = !isNotInCheck(board, board->turn);
-    
-    // If not in check and not in a PVNODE, we will need
-    // a static eval for some pruning decisions later on
-    if (nodeType != PVNODE && !inCheck){
+    inCheck = inCheck || !isNotInCheck(board, board->turn);
+    if (!PvNode && !inCheck){
         eval = evaluateBoard(board);
-        optimal = eval + depth * 1.25 * PawnValue;
+        futilityMargin = eval + depth * 1.25 * PawnValue;
     }
     
-    // Node Razoring at expected ALLNODEs
-    if (    nodeType != PVNODE
+    // Step 8. Razoring. If a Quiescence Search for the current position
+    // still falls way below alpha, we will assume that the score from
+    // the Quiescence search was sufficient. For depth 1, we will just
+    // return a Quiescence Search score because it is unlikely a quiet
+    // move would close the massive gap between the evaluation and alpha
+    if (   !PvNode
         && !inCheck
-        &&  depth <= 4
-        && !tableIsTactical
-        &&  hasNonPawnMaterial(board, board->turn)
-        &&  eval + RazorMargins[depth] < alpha){
-            
+        && !ttTactical
+        &&  depth <= RazorDepth
+        &&  eval + RazorMargins[depth] < alpha
+        &&  hasNonPawnMaterial(board, board->turn)){
             
         if (depth <= 1)
-            return quiescenceSearch(board, alpha, beta, height);
+            return qsearch(board, alpha, beta, height);
         
-        value = quiescenceSearch(board, alpha - RazorMargins[depth], beta - RazorMargins[depth], height);
-        
-        if (value + RazorMargins[depth] < alpha)
-            return value;
+        rAlpha = alpha - RazorMargins[depth];
+        value = qsearch(board, rAlpha, rAlpha + 1, height);
+        if (value <= rAlpha) return value;
     }
     
-    // Static null move pruning
-    if (    depth <= 3
-        &&  nodeType != PVNODE
-        && !inCheck){
+    // Step 9. Beta Pruning / Reverse Futility Pruning / Static Null
+    // Move Pruning. If the eval is few pawns above beta then exit early
+    if (   !PvNode
+        && !inCheck
+        && depth <= BetaPruningDepth){
             
         value = eval - depth * (PawnValue + 15);
         
@@ -352,17 +288,21 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int dep
             return value;
     }
     
-    // NULL MOVE PRUNING
-    if (    depth >= 2
-        &&  nodeType != PVNODE
-        &&  hasNonPawnMaterial(board, board->turn)
+    // Step 10. Null Move Pruning. If our position is so good that
+    // giving our opponent back-to-back moves is still not enough
+    // for them to gain control of the game, we can be somewhat safe
+    // in saying that our position is too good to be true
+    if (   !PvNode
         && !inCheck
-        &&  board->history[board->numMoves-1] != NULL_MOVE
-        &&  eval >= beta){
+        &&  depth >= NullMovePruningDepth
+        &&  eval >= beta
+        &&  hasNonPawnMaterial(board, board->turn)
+        &&  board->history[board->numMoves-1] != NULL_MOVE){
             
-        // Perform null move search
         applyNullMove(board, undo);
-        value = -alphaBetaSearch(&lpv, board, -beta, -beta+1, depth-4, height+1, CUTNODE);
+        
+        value = -search(&lpv, board, -beta, -beta+1, depth-4, height+1);
+        
         revertNullMove(board, undo);
         
         if (value >= beta){
@@ -372,27 +312,26 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int dep
         }
     }
     
-    // INTERNAL ITERATIVE DEEPING
-    if (    depth >= 3
-        &&  tableMove == NONE_MOVE
-        &&  nodeType == PVNODE){
+    // Step 11. Internal Iterative Deepening. Searching PV nodes without
+    // a known good move can be expensive, so a reduced search first
+    if (    PvNode
+        &&  ttMove == NONE_MOVE
+        &&  depth >= InternalIterativeDeepeningDepth){
         
-        // SEARCH AT A LOWER DEPTH
-        value = alphaBetaSearch(&lpv, board, alpha, beta, depth-2, height, nodeType);
-        if (value <= alpha)
-            value = alphaBetaSearch(&lpv, board, -MATE, beta, depth-2, height, PVNODE);
+        // Search with a reduced depth
+        value = search(&lpv, board, alpha, beta, depth-2, height);
         
-        // Get the best move from the PV
-        if (lpv.length >= 1) tableMove = lpv.line[0];
-        
-        // Update tableIsTactical for LMR
-        tableIsTactical = moveIsTactical(board, tableMove);
+        // Probe for the newly found move, and update ttMove / ttTactical
+        if ((ttEntry = getTranspositionEntry(&Table, board->hash)) != NULL){
+            ttMove = EntryMove(*ttEntry);
+            ttTactical = moveIsTactical(board, ttMove);
+        }
     }
     
-    // CHECK EXTENSION
-    depth += inCheck && (nodeType == PVNODE || depth <= 6);
+    // Step 12. Check Extension
+    depth += inCheck && !RootNode && (PvNode || depth <= 6);
     
-    initalizeMovePicker(&movePicker, 0, tableMove, KillerMoves[height][0], KillerMoves[height][1]);
+    initalizeMovePicker(&movePicker, 0, ttMove, KillerMoves[height][0], KillerMoves[height][1]);
     while ((currentMove = selectNextMove(&movePicker, board)) != NONE_MOVE){
         
         // If this move is quiet we will save it to a list of attemped
@@ -402,13 +341,14 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int dep
             hist = getHistoryScore(History, currentMove, board->turn, 128);
         }
         
-        // Use futility pruning
-        if (    nodeType != PVNODE
-            &&  played >= 1
-            &&  depth <= 8
+        // Step 13. Futility Pruning. If our score is far below alpha,
+        // and we don't expect anything from this move, skip it.
+        if (   !PvNode
             && !inCheck
             &&  isQuiet
-            &&  optimal <= alpha)
+            &&  played >= 1
+            &&  futilityMargin <= alpha
+            &&  depth <= FutilityPruningDepth)
             continue;
         
         // Apply and validate move before searching
@@ -418,12 +358,14 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int dep
             continue;
         }
         
-        // Late Move Pruning
-        if (    nodeType != PVNODE
-            &&  played >= 1
+        // Step 14. Late Move Pruning / Move Count Pruning. If we have
+        // tried many quiets in this position already, and we don't expect
+        // anything from this move, we can undo it and move on.
+        if (   !PvNode
             && !inCheck
             &&  isQuiet
-            &&  depth <= 8
+            &&  played >= 1
+            &&  depth <= LateMovePruningDepth
             &&  quiets > LateMovePruningCounts[depth]
             &&  isNotInCheck(board, board->turn)){
         
@@ -434,7 +376,9 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int dep
         // Update counter of moves actually played
         played += 1;
     
-        // DETERMINE IF WE CAN USE LATE MOVE REDUCTIONS
+        // Step 15. Late Move Reductions. We will search some moves at a
+        // lower depth. If they look poor at a lower depth, then we will
+        // move on. If they look good, we will search with a full depth.
         if (    played >= 4
             &&  depth >= 3
             && !inCheck
@@ -442,9 +386,10 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int dep
             &&  isNotInCheck(board, board->turn)){
             
             R = 2;
+            R -= RootNode;
             R += (played - 4) / 8;
-            R += 2 * (nodeType != PVNODE);
-            R += tableIsTactical && bestMove == tableMove;
+            R += 2 * !PvNode;
+            R += ttTactical && bestMove == ttMove;
             R -= hist / 24;
             R = R >= 1 ? R : 1;
         }
@@ -452,25 +397,17 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int dep
         else {
             R = 1;
         }
-         
-        // FULL WINDOW SEARCH ON FIRST MOVE
-        if (played == 1 || nodeType != PVNODE){
-            
-            value = -alphaBetaSearch(&lpv, board, -beta, -alpha, depth-R, height+1, nodeType);
-            
-            // IMPROVED BOUND, BUT WAS REDUCED DEPTH?
-            if (value > alpha && R != 1)
-                value = -alphaBetaSearch(&lpv, board, -beta, -alpha, depth-1, height+1, nodeType);
-        }
         
-        // NULL WINDOW SEARCH ON NON-FIRST / PV MOVES
-        else{
-            value = -alphaBetaSearch(&lpv, board, -alpha-1, -alpha, depth-R, height+1, CUTNODE);
-            
-            // NULL WINDOW FAILED HIGH, RESEARCH
-            if (value > alpha)
-                value = -alphaBetaSearch(&lpv, board, -beta, -alpha, depth-1, height+1, PVNODE);
-        }
+        // Search the move with a possibly reduced depth, on a full or null window
+        value =  (played == 1 || !PvNode)
+               ? -search(&lpv, board, -beta, -alpha, depth-R, height+1)
+               : -search(&lpv, board, -alpha-1, -alpha, depth-R, height+1);
+               
+        // If the search beat alpha, we may need to research, in the event that
+        // the previous search was not the full window, or was a reduced depth
+        value =  (value > alpha && (R != 1 || (played != 1 && PvNode)))
+               ? -search(&lpv, board, -beta, -alpha, depth-1, height+1)
+               :  value;
         
         // REVERT MOVE FROM BOARD
         revertMove(board, currentMove, undo);
@@ -522,7 +459,7 @@ int alphaBetaSearch(PVariation * pv, Board * board, int alpha, int beta, int dep
     return best;
 }
 
-int quiescenceSearch(Board * board, int alpha, int beta, int height){
+int qsearch(Board * board, int alpha, int beta, int height){
     
     int eval, value, best, maxValueGain;
     uint16_t currentMove;
@@ -581,7 +518,7 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
         }
         
         // Search next depth
-        value = -quiescenceSearch(board, -beta, -alpha, height+1);
+        value = -qsearch(board, -beta, -alpha, height+1);
         
         // Revert move from board
         revertMove(board, currentMove, undo);
@@ -601,27 +538,6 @@ int quiescenceSearch(Board * board, int alpha, int beta, int height){
     }
     
     return best;
-}
-
-void sortMoveList(MoveList * moveList){
-    int i, j, tempVal;
-    uint16_t tempMove;
-    
-    for (i = 0; i < moveList->size; i++){
-        for (j = i+1; j < moveList->size; j++){
-            if (moveList->values[j] > moveList->values[i]){
-                
-                tempVal = moveList->values[j];
-                tempMove = moveList->moves[j];
-                
-                moveList->values[j] = moveList->values[i];
-                moveList->moves[j] = moveList->moves[i];
-                
-                moveList->values[i] = tempVal;
-                moveList->moves[i] = tempMove;
-            }
-        }
-    }
 }
 
 int moveIsTactical(Board * board, uint16_t move){
