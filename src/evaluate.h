@@ -36,16 +36,20 @@ typedef struct EvalInfo {
     int endgame[COLOUR_NB];
     int pawnMidgame[COLOUR_NB];
     int pawnEndgame[COLOUR_NB];
+    PawnEntry * pentry;
 } EvalInfo;
 
 int evaluateBoard(Board * board);
-void evaluatePawns(EvalInfo * ei, Board * board, int colour, PawnEntry * pentry);
+int evaluateDraws(Board * board);
+void evaluatePieces(EvalInfo * ei, Board * board);
+void evaluatePawns(EvalInfo * ei, Board * board, int colour);
 void evaluateKnights(EvalInfo * ei, Board * board, int colour);
 void evaluateBishops(EvalInfo * ei, Board * board, int colour);
 void evaluateRooks(EvalInfo * ei, Board * board, int colour);
 void evaluateQueens(EvalInfo * ei, Board * board, int colour);
 void evaluateKings(EvalInfo * ei, Board * board, int colour);
 void evaluatePassedPawns(EvalInfo * ei, Board * board, int colour);
+void initializeEvalInfo(EvalInfo * ei, Board * board);
 
 #define PawnValue   ( 100)
 #define KnightValue ( 325)

@@ -134,6 +134,39 @@ const int Tempo[COLOUR_NB][PHASE_NB] = {{5, 7}, {-5, -7}};
 
 int evaluateBoard(Board * board){
     
+    EvalInfo ei;
+    int mg, eg, phase, eval;
+    
+    // evaluateDraws handles obvious drawn positions
+    if (evaluateDraws(board)) return 0;
+    
+    // Setup and perform the evaluation of all pieces
+    initializeEvalInfo(&ei, board);
+    evaluatePieces(&ei, board);
+        
+    // Combine evaluation terms for the mid game
+    mg = board->midgame + ei.midgame[WHITE] - ei.midgame[BLACK]
+       + ei.pawnMidgame[WHITE] - ei.pawnMidgame[BLACK] + Tempo[board->turn][MG];
+       
+    // Combine evaluation terms for the end game
+    eg = board->endgame + ei.endgame[WHITE] - ei.endgame[BLACK]
+       + ei.pawnEndgame[WHITE] - ei.pawnEndgame[BLACK] + Tempo[board->turn][EG];
+       
+    // Calcuate the game phase based on remaining material (Fruit Method)
+    phase = 24 - popcount(board->pieces[QUEEN]) * 4
+               - popcount(board->pieces[ROOK]) * 2
+               - popcount(board->pieces[KNIGHT] | board->pieces[BISHOP]);
+    phase = (phase * 256 + 12) / 24;
+          
+    // Compute the interpolated evaluation
+    eval  = (mg * (256 - phase) + eg * phase) / 256;
+    
+    // Return the evaluation relative to the side to move
+    return board->turn == WHITE ? eval : -eval;
+}
+
+int evaluateDraws(Board * board){
+    
     uint64_t white   = board->colours[WHITE];
     uint64_t black   = board->colours[BLACK];
     uint64_t pawns   = board->pieces[PAWN];
@@ -143,132 +176,74 @@ int evaluateBoard(Board * board){
     uint64_t queens  = board->pieces[QUEEN];
     uint64_t kings   = board->pieces[KING];
     
-    uint64_t whitePawns = white & pawns;
-    uint64_t blackPawns = black & pawns;
+    // Unlikely to have a draw if we have pawns, rooks, or queens left
+    if (pawns | rooks | queens)
+        return 0;
     
-    int wKingSq = getLSB((white & kings));
-    int bKingSq = getLSB((black & kings));
+    // Check for King Vs. King
+    if (kings == (white | black)) return 1;
     
-    int mg, eg, pmg, peg, phase, eval;
-    
-    EvalInfo ei;
-    
-    PawnEntry * pentry = getPawnEntry(&PTable, board->phash);
-    
-    // Check for a possible drawn position
-    if (!(pawns | rooks | queens)){
-    
-        // Check for King Vs. King
-        if (kings == (white | black)) return 0;
+    if ((white & kings) == white){
+        // Check for King Vs King and Knight/Bishop
+        if (popcount(black & (knights | bishops)) <= 1) return 1;
         
-        if ((white & kings) == white){
-            
-            // Check for King Vs King and Knight/Bishop
-            if (popcount(black & (knights | bishops)) <= 1) return 0;
-            
-            // Check for King Vs King and two Knights
-            if (popcount(black & knights) == 2 && (black & bishops) == 0ull) return 0;
-        }
+        // Check for King Vs King and two Knights
+        if (popcount(black & knights) == 2 && (black & bishops) == 0ull) return 1;
+    }
+    
+    if ((black & kings) == black){
+        // Check for King Vs King and Knight/Bishop
+        if (popcount(white & (knights | bishops)) <= 1) return 1;
         
-        if ((black & kings) == black){
-            
-            // Check for King Vs King and Knight/Bishop
-            if (popcount(white & (knights | bishops)) <= 1) return 0;
-            
-            // Check for King Vs King and two Knights
-            if (popcount(white & knights) == 2 && (white & bishops) == 0ull) return 0;
-        }
+        // Check for King Vs King and two Knights
+        if (popcount(white & knights) == 2 && (white & bishops) == 0ull) return 1;
     }
     
-    // Position has not been identified as a drawn one, so we may proceed. After we setup some
-    // initial information for the EvalInfo struct, we will evaluate each type of piece for each
-    // colour one at a time. After finishing this, we will need to evaluate the passed pawns for
-    // both of the players. That routine needs to know which pawns are passed (obviously) so we
-    // must first see what needs to be done with the pawn entry. Afterwards, we simply combine the
-    // various midgame and endgame scores, calculate the phase, and return the final eval.
-    
-    ei.pawnAttacks[WHITE] = ((whitePawns << 9) & ~FILE_A) | ((whitePawns << 7) & ~FILE_H);
-    ei.pawnAttacks[BLACK] = ((blackPawns >> 9) & ~FILE_H) | ((blackPawns >> 7) & ~FILE_A);
-    
-    ei.blockedPawns[WHITE] = ((whitePawns << 8) & black) >> 8;
-    ei.blockedPawns[BLACK] = ((blackPawns >> 8) & white) << 8,
-    
-    ei.kingAreas[WHITE] = KingMap[wKingSq] | (1ull << wKingSq) | (KingMap[wKingSq] << 8);
-    ei.kingAreas[BLACK] = KingMap[bKingSq] | (1ull << bKingSq) | (KingMap[bKingSq] >> 8);
-    
-    ei.mobilityAreas[WHITE] = ~(ei.pawnAttacks[BLACK] | (white & kings) | ei.blockedPawns[WHITE]);
-    ei.mobilityAreas[BLACK] = ~(ei.pawnAttacks[WHITE] | (black & kings) | ei.blockedPawns[BLACK]);
-    
-    ei.attacked[WHITE] = KingAttacks(wKingSq, ~0ull);
-    ei.attacked[BLACK] = KingAttacks(bKingSq, ~0ull);
-    
-    ei.occupiedMinusBishops[WHITE] = (white | black) ^ (white & (bishops | queens));
-    ei.occupiedMinusBishops[BLACK] = (white | black) ^ (black & (bishops | queens));
-    
-    ei.occupiedMinusRooks[WHITE] = (white | black) ^ (white & (rooks | queens));
-    ei.occupiedMinusRooks[BLACK] = (white | black) ^ (black & (rooks | queens));
-    
-    ei.passedPawns = 0ull;
-    
-    ei.attackCounts[WHITE] = ei.attackCounts[BLACK] = 0;
-    ei.attackerCounts[WHITE] = ei.attackerCounts[BLACK] = 0;
-    
-    ei.midgame[WHITE] = ei.midgame[BLACK] = 0;
-    ei.endgame[WHITE] = ei.endgame[BLACK] = 0;
-    
-    ei.pawnMidgame[WHITE] = ei.pawnMidgame[BLACK] = 0;
-    ei.pawnEndgame[WHITE] = ei.pawnEndgame[BLACK] = 0;
-    
-    evaluatePawns(&ei, board, WHITE, pentry);
-    evaluatePawns(&ei, board, BLACK, pentry);
-    
-    evaluateKnights(&ei, board, WHITE);
-    evaluateKnights(&ei, board, BLACK);
-    
-    evaluateBishops(&ei, board, WHITE);
-    evaluateBishops(&ei, board, BLACK);
-    
-    evaluateRooks(&ei, board, WHITE);
-    evaluateRooks(&ei, board, BLACK);
-    
-    evaluateQueens(&ei, board, WHITE);
-    evaluateQueens(&ei, board, BLACK);
-    
-    evaluateKings(&ei, board, WHITE);
-    evaluateKings(&ei, board, BLACK);
-    
-    // Store a pawn eval entry if we were unable to find one
-    if (pentry == NULL){
-        pmg = ei.pawnMidgame[WHITE] - ei.pawnMidgame[BLACK];
-        peg = ei.pawnEndgame[WHITE] - ei.pawnEndgame[BLACK];
-        storePawnEntry(&PTable, board->phash, ei.passedPawns, pmg, peg);
-        evaluatePassedPawns(&ei, board, WHITE);
-        evaluatePassedPawns(&ei, board, BLACK);
-    }
-    
-    // If we found a pawn entry, read the scores and passed pawns from it
-    else {
-        pmg = pentry->mg;
-        peg = pentry->eg;
-        ei.passedPawns = pentry->passed;
-        evaluatePassedPawns(&ei, board, WHITE);
-        evaluatePassedPawns(&ei, board, BLACK);
-    }
-    
-    // Combine the various parts of the eval to get scores for each game phase
-    mg = board->midgame + ei.midgame[WHITE] - ei.midgame[BLACK] + Tempo[board->turn][MG] + pmg;
-    eg = board->endgame + ei.endgame[WHITE] - ei.endgame[BLACK] + Tempo[board->turn][EG] + peg;
-    
-    // Interpolate between the two game phases based on the material on the board
-    phase = 24 - popcount(knights | bishops) - (popcount(rooks) << 1) - (popcount(queens) << 2);
-    phase = (phase * 256 + 12) / 24;
-    eval  = ((mg * (256 - phase)) + (eg * phase)) / 256;
-    
-    // Eval should be relative to the colour who called evaluateBoard
-    return board->turn == WHITE ? eval : -eval;
+    return 0;
 }
 
-void evaluatePawns(EvalInfo * ei, Board * board, int colour, PawnEntry * pentry){
+void evaluatePieces(EvalInfo * ei, Board * board){
+    
+    int pmg, peg;
+    
+    evaluatePawns(ei, board, WHITE);
+    evaluatePawns(ei, board, BLACK);
+    
+    evaluateKnights(ei, board, WHITE);
+    evaluateKnights(ei, board, BLACK);
+    
+    evaluateBishops(ei, board, WHITE);
+    evaluateBishops(ei, board, BLACK);
+    
+    evaluateRooks(ei, board, WHITE);
+    evaluateRooks(ei, board, BLACK);
+    
+    evaluateQueens(ei, board, WHITE);
+    evaluateQueens(ei, board, BLACK);
+    
+    evaluateKings(ei, board, WHITE);
+    evaluateKings(ei, board, BLACK);
+    
+    // Save a Pawn Eval Entry if we didin't find one
+    if (ei->pentry == NULL){
+        pmg = ei->pawnMidgame[WHITE] - ei->pawnMidgame[BLACK];
+        peg = ei->pawnEndgame[WHITE] - ei->pawnEndgame[BLACK];
+        storePawnEntry(&PTable, board->phash, ei->passedPawns, pmg, peg);
+        evaluatePassedPawns(ei, board, WHITE);
+        evaluatePassedPawns(ei, board, BLACK);
+    }
+    
+    // Otherwise, grab the evaluated pawn values from the Entry
+    else {
+        ei->pawnMidgame[WHITE] = ei->pentry->mg;
+        ei->pawnEndgame[WHITE] = ei->pentry->eg;
+        ei->passedPawns = ei->pentry->passed;
+        evaluatePassedPawns(ei, board, WHITE);
+        evaluatePassedPawns(ei, board, BLACK);
+    }
+}
+
+void evaluatePawns(EvalInfo * ei, Board * board, int colour){
     
     int sq;
     uint64_t pawns, myPawns, tempPawns, enemyPawns, attacks;
@@ -287,7 +262,7 @@ void evaluatePawns(EvalInfo * ei, Board * board, int colour, PawnEntry * pentry)
     }
     
     // The pawn table holds the rest of the eval information we will calculate
-    if (pentry != NULL) return;
+    if (ei->pentry != NULL) return;
     
     pawns = board->pieces[PAWN];
     myPawns = tempPawns = pawns & board->colours[colour];
@@ -583,4 +558,55 @@ void evaluatePassedPawns(EvalInfo * ei, Board * board, int colour){
         ei->midgame[colour] += PawnPassed[MG][canAdvance][safeAdvance][rank];
         ei->endgame[colour] += PawnPassed[EG][canAdvance][safeAdvance][rank];
     }
+}
+
+void initializeEvalInfo(EvalInfo * ei, Board * board){
+    
+    uint64_t white   = board->colours[WHITE];
+    uint64_t black   = board->colours[BLACK];
+    uint64_t pawns   = board->pieces[PAWN];
+    uint64_t bishops = board->pieces[BISHOP];
+    uint64_t rooks   = board->pieces[ROOK];
+    uint64_t queens  = board->pieces[QUEEN];
+    uint64_t kings   = board->pieces[KING];
+    
+    uint64_t whitePawns = white & pawns;
+    uint64_t blackPawns = black & pawns;
+    
+    int wKingSq = getLSB((white & kings));
+    int bKingSq = getLSB((black & kings));
+    
+    ei->pawnAttacks[WHITE] = ((whitePawns << 9) & ~FILE_A) | ((whitePawns << 7) & ~FILE_H);
+    ei->pawnAttacks[BLACK] = ((blackPawns >> 9) & ~FILE_H) | ((blackPawns >> 7) & ~FILE_A);
+    
+    ei->blockedPawns[WHITE] = ((whitePawns << 8) & black) >> 8;
+    ei->blockedPawns[BLACK] = ((blackPawns >> 8) & white) << 8,
+    
+    ei->kingAreas[WHITE] = KingMap[wKingSq] | (1ull << wKingSq) | (KingMap[wKingSq] << 8);
+    ei->kingAreas[BLACK] = KingMap[bKingSq] | (1ull << bKingSq) | (KingMap[bKingSq] >> 8);
+    
+    ei->mobilityAreas[WHITE] = ~(ei->pawnAttacks[BLACK] | (white & kings) | ei->blockedPawns[WHITE]);
+    ei->mobilityAreas[BLACK] = ~(ei->pawnAttacks[WHITE] | (black & kings) | ei->blockedPawns[BLACK]);
+    
+    ei->attacked[WHITE] = KingAttacks(wKingSq, ~0ull);
+    ei->attacked[BLACK] = KingAttacks(bKingSq, ~0ull);
+    
+    ei->occupiedMinusBishops[WHITE] = (white | black) ^ (white & (bishops | queens));
+    ei->occupiedMinusBishops[BLACK] = (white | black) ^ (black & (bishops | queens));
+    
+    ei->occupiedMinusRooks[WHITE] = (white | black) ^ (white & (rooks | queens));
+    ei->occupiedMinusRooks[BLACK] = (white | black) ^ (black & (rooks | queens));
+    
+    ei->passedPawns = 0ull;
+    
+    ei->attackCounts[WHITE] = ei->attackCounts[BLACK] = 0;
+    ei->attackerCounts[WHITE] = ei->attackerCounts[BLACK] = 0;
+    
+    ei->midgame[WHITE] = ei->midgame[BLACK] = 0;
+    ei->endgame[WHITE] = ei->endgame[BLACK] = 0;
+    
+    ei->pawnMidgame[WHITE] = ei->pawnMidgame[BLACK] = 0;
+    ei->pawnEndgame[WHITE] = ei->pawnEndgame[BLACK] = 0;
+    
+    ei->pentry = getPawnEntry(&PTable, board->phash);
 }
