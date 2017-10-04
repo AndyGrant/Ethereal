@@ -1,6 +1,6 @@
 # Ethereal
 
-Ethereal is a UCI-compliant chess engine. It uses the traditional alpha-beta framework in addition to a variety of pruning, reduction, extension, and other improvements. Some of those improvements include Static Null Move Pruning, Null Move Pruning, Depth Based Futility Pruning, Best-Case Delta Pruning, Current-Move Delta Pruning, Late Move Reductions, Check extensions, and the use of various Transposition Tables. Ethereal generates moves using the Fancy Magic BitBoard technique, but also uses a redundant 64-length array to store pieces for easier lookup. Ethereal is an original engine aside from the Piece Square Tables (currently using Toga II's tables). It is greatly influenced from Crafty, Stockfish, TSCP, MadChess, and Fruit.
+Ethereal is a UCI-compliant chess engine. It uses the traditional alpha-beta framework in addition to a variety of pruning, reduction, extension, and other improvements. Some of those improvements include Static Null Move Pruning, Null Move Pruning, Depth Based Futility Pruning, Best-Case Delta Pruning, Current-Move Delta Pruning, Late Move Reductions, Check extensions, and the use of various Transposition Tables. Ethereal generates moves using the Fancy Magic BitBoard technique, but also uses a redundant 64-length array to store pieces for easier lookup. Ethereal is an original engine, however, it is greatly influenced from Crafty, Stockfish, TSCP, MadChess, and Fruit.
 
 # Development
 
