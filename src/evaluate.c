@@ -84,19 +84,13 @@ const int PawnConnected[COLOUR_NB][SQUARE_NB] = {
 const int KnightOutpostValues[PHASE_NB][2] = {{20, 40}, {10, 20}};
 const int BishopOutpostValues[PHASE_NB][2] = {{15, 30}, { 3,  5}};
 
-const int PawnPassed[PHASE_NB][2][2][RANK_NB] = {
-   {{{0, 10, 10, 23, 39, 58, 70, 0},
-     {0, 10, 10, 23, 39, 58, 70, 0}},
-     
-    {{0, 10, 15, 34, 58, 88,105, 0},
-     {0, 18, 20, 40, 76,116,199, 0}}},
-     
-   {{{0, 12, 12, 26, 44, 66, 90, 0},
-     {0, 12, 12, 26, 44, 66, 90, 0}},
-     
-    {{0, 20, 21, 42, 70,105,140, 0},
-     {0, 25, 27, 52, 98,135,220, 0}}},
+const int PawnPassed[2][2][RANK_NB][PHASE_NB] = {
+  {{{   0,   0}, {   9,  11}, {   9,  12}, {  19,  24}, {  34,  41}, {  54,  60}, {  65,  83}, {   0,   0}},
+   {{   0,   0}, {   8,   9}, {   7,  11}, {  18,  25}, {  33,  40}, {  55,  59}, {  68,  82}, {   0,   0}}},
+  {{{   0,   0}, {   8,  18}, {  10,  16}, {  22,  32}, {  42,  49}, {  77,  79}, { 103, 136}, {   0,   0}},
+   {{   0,   0}, {  14,  12}, {  11,  15}, {  24,  38}, {  53,  78}, { 110, 150}, { 207, 271}, {   0,   0}}},
 };
+
 
 const int KnightMobility[PHASE_NB][9] = {
     {-30, -25, -10,   0,  10,  18,  26,  34,  42},
@@ -555,8 +549,8 @@ void evaluatePassedPawns(EvalInfo * ei, Board * board, int colour){
         // Destination is not attacked by the opponent
         safeAdvance = !(destination & ei->attacked[!colour]);
         
-        ei->midgame[colour] += PawnPassed[MG][canAdvance][safeAdvance][rank];
-        ei->endgame[colour] += PawnPassed[EG][canAdvance][safeAdvance][rank];
+        ei->midgame[colour] += PawnPassed[canAdvance][safeAdvance][rank][MG];
+        ei->endgame[colour] += PawnPassed[canAdvance][safeAdvance][rank][EG];
     }
 }
 
