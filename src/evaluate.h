@@ -21,7 +21,44 @@
 
 #include "types.h"
 
+typedef struct EvalTrace {
+    
+    int pawnCounts[COLOUR_NB];
+    int pawnPSQT[COLOUR_NB][SQUARE_NB];
+    int pawnIsolated[COLOUR_NB];
+    int pawnStacked[COLOUR_NB];
+    int pawnConnected[COLOUR_NB][SQUARE_NB];
+    
+    int knightCounts[COLOUR_NB];
+    int knightPSQT[COLOUR_NB][SQUARE_NB];
+    int knightOutpost[COLOUR_NB][2];
+    int knightMobility[COLOUR_NB][9];
+    
+    int bishopCounts[COLOUR_NB];
+    int bishopPSQT[COLOUR_NB][SQUARE_NB];
+    int bishopWings[COLOUR_NB];
+    int bishopPair[COLOUR_NB];
+    int bishopOutpost[COLOUR_NB][2];
+    int bishopMobility[COLOUR_NB][14];
+    
+    int rookCounts[COLOUR_NB];
+    int rookPSQT[COLOUR_NB][SQUARE_NB];
+    int rookFile[COLOUR_NB][2];
+    int rookOnSeventh[COLOUR_NB];
+    int rookMobility[COLOUR_NB][15];
+    
+    int queenCounts[COLOUR_NB];
+    int queenPSQT[COLOUR_NB][SQUARE_NB];
+    int queenMobility[COLOUR_NB][28];
+    
+    int kingPSQT[COLOUR_NB][SQUARE_NB];
+    
+    int passedPawn[COLOUR_NB][2][2][RANK_NB];
+    
+} EvalTrace;
+
 typedef struct EvalInfo {
+    
     uint64_t pawnAttacks[COLOUR_NB];
     uint64_t blockedPawns[COLOUR_NB];
     uint64_t kingAreas[COLOUR_NB];
@@ -37,6 +74,7 @@ typedef struct EvalInfo {
     int pawnMidgame[COLOUR_NB];
     int pawnEndgame[COLOUR_NB];
     PawnEntry * pentry;
+    
 } EvalInfo;
 
 int evaluateBoard(Board * board);
@@ -51,13 +89,6 @@ void evaluateKings(EvalInfo * ei, Board * board, int colour);
 void evaluatePassedPawns(EvalInfo * ei, Board * board, int colour);
 void initializeEvalInfo(EvalInfo * ei, Board * board);
 
-#define PawnValue   ( 100)
-#define KnightValue ( 325)
-#define BishopValue ( 325)
-#define RookValue   ( 505)
-#define QueenValue  (1000)
-#define KingValue   ( 100)
-
-extern const int PieceValues[8];
+extern const int* PieceValues[8];
 
 #endif

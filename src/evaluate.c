@@ -21,110 +21,138 @@
 #include <string.h>
 #include <assert.h>
 
-#include "castle.h"
-#include "movegen.h"
-#include "magics.h"
-#include "masks.h"
-#include "types.h"
 #include "bitboards.h"
 #include "bitutils.h"
-#include "transposition.h"
+#include "castle.h"
 #include "evaluate.h"
+#include "magics.h"
+#include "masks.h"
+#include "movegen.h"
 #include "piece.h"
+#include "square.h"
+#include "transposition.h"
+#include "types.h"
+
+#ifdef TUNE
+    const int TEXEL = 1;
+    const int TRACE = 1;
+    const EvalTrace EmptyTrace;
+    EvalTrace T;
+#else
+    const int TEXEL = 0;
+    const int TRACE = 0;
+    EvalTrace T;
+#endif
 
 extern PawnTable PTable;
 
-const int PieceValues[8] = {PawnValue, KnightValue, BishopValue, RookValue, QueenValue, KingValue, 0, 0};
+const int PawnValue[PHASE_NB] = {  87,  96};
+
+const int PawnIsolated[PHASE_NB] = {  -5, -10};
+
+const int PawnStacked[PHASE_NB] = { -12, -18};
+
+const int PawnConnected32[32][PHASE_NB] = {
+    {   0,   0}, {   0,   0}, {   0,   0}, {   0,   0},
+    {   1,  -2}, {   3,   0}, {   3,   1}, {   0,   6},
+    {   8,   2}, {   5,   2}, {   2,   3}, {   4,   1},
+    {   3,   2}, {   4,   5}, {   3,   3}, {   8,   5},
+    {   6,  11}, {  11,  14}, {  10,  14}, {  26,  21},
+    {  15,  24}, {  25,  29}, {  46,  30}, {  39,  31},
+    {  42,  27}, {  46,  28}, {  56,  39}, {  52,  38},
+    {   0,   0}, {   0,   0}, {   0,   0}, {   0,   0},
+};
+
+
+const int KnightValue[PHASE_NB] = { 319, 306};
+
+const int KnightOutpost[2][PHASE_NB] = { {  13,  -8}, {  29,  11} };
+
+const int KnightMobility[9][PHASE_NB] = {
+    { -73, -64}, { -28, -33}, {  -9,  -6},
+    {   6,   3}, {  11,   7}, {  13,  17},
+    {  22,  17}, {  29,  21}, {  31,   9},
+};
+
+
+const int BishopValue[PHASE_NB] = { 317, 307};
+
+const int BishopWings[PHASE_NB] = {  -2,  14};
+
+const int BishopPair[PHASE_NB] = {  41,  54};
+
+const int BishopOutpost[2][PHASE_NB] = { {  11,  -7}, {  27,  -3} };
+
+const int BishopMobility[14][PHASE_NB] = {
+    { -38, -46}, { -39, -30}, { -17, -19}, {   0,  -4},
+    {  11,   6}, {  20,  14}, {  25,  20}, {  28,  22},
+    {  30,  25}, {  28,  24}, {  28,  27}, {  32,  21},
+    {  37,  30}, {  22,  13},
+};
+
+
+const int RookValue[PHASE_NB] = { 466, 490};
+
+const int RookFile[2][PHASE_NB] = { {  10,  11}, {  27,   8} };
+
+const int RookOnSeventh[PHASE_NB] = {   4,  12};
+
+const int RookMobility[15][PHASE_NB] = {
+    {-112, -86}, { -57, -46}, {  -8, -24}, {  -6,  -8},
+    {  -3,   4}, {   1,  15}, {   0,  24}, {   2,  28},
+    {   8,  35}, {  14,  37}, {  18,  40}, {  21,  43},
+    {  21,  45}, {  22,  44}, {  17,  41},
+};
+
+
+const int QueenValue[PHASE_NB] = { 866, 894};
+
+const int QueenMobility[28][PHASE_NB] = {
+    {-121, -50}, { -68,-187}, { -84, -99}, { -48, -53},
+    { -18, -54}, { -12, -20}, {  -2, -18}, {   0, -15},
+    {   2, -14}, {   4,  -9}, {   7,   0}, {   9,   4},
+    {  11,  11}, {  13,  16}, {  14,  21}, {  15,  30},
+    {  15,  34}, {  15,  36}, {  17,  37}, {  19,  42},
+    {  21,  44}, {  30,  45}, {  31,  47}, {  35,  45},
+    {  38,  47}, {  31,  39}, {  48,  53}, {  30,  45},
+};
+
+
+const int PassedPawn[2][2][RANK_NB][PHASE_NB] = {
+  {{{   0,   0}, {  -7,  -5}, { -17,   3}, { -12,   8}, {  16,  28}, {  47,  37}, {  62,  49}, {   0,   0}},
+   {{   0,   0}, {  -4,   0}, { -13,   8}, {  -5,  21}, {  16,  37}, {  54,  52}, {  79,  77}, {   0,   0}}},
+  {{{   0,   0}, {   0,  10}, {  -7,   7}, {  -1,  22}, {  25,  34}, {  71,  63}, { 121, 137}, {   0,   0}},
+   {{   0,   0}, {   3,   5}, {  -5,   8}, {   0,  33}, {  23,  75}, {  89, 166}, { 223, 312}, {   0,   0}}}
+
+};
+
+const int SafetyTable[100] = { // Taken from CPW / Stockfish
+       0,   0,   1,   2,   3,   5,   7,   9,  12,  15,
+      18,  22,  26,  30,  35,  39,  44,  50,  56,  62,
+      68,  75,  82,  85,  89,  97, 105, 113, 122, 131,
+     140, 150, 169, 180, 191, 202, 213, 225, 237, 248,
+     260, 272, 283, 295, 307, 319, 330, 342, 354, 366,
+     377, 389, 401, 412, 424, 436, 448, 459, 471, 483,
+     494, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+     500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+     500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+     500, 500, 500, 500, 500, 500, 500, 500, 500, 500
+};
+
+const int KingValue[PHASE_NB] = { 100, 100};
+
+const int NoneValue[PHASE_NB] = {   0,   0};
 
 const int KingHasCastled = 25;
 
 const int KingCanCastle = 10;
 
-const int RookOpenFile[2][PHASE_NB] = {{12, 12}, {35, 20}};
-
-const int RookOnSeventh[PHASE_NB] = {10, 15};
-
-const int PawnStacked[PHASE_NB] = {10, 20};
-
-const int PawnIsolated[PHASE_NB] = {10, 20};
-
-const int SafetyTable[100] = { // Taken from CPW / Stockfish
-   0,   0,   1,   2,   3,   5,   7,   9,  12,  15,
-  18,  22,  26,  30,  35,  39,  44,  50,  56,  62,
-  68,  75,  82,  85,  89,  97, 105, 113, 122, 131,
- 140, 150, 169, 180, 191, 202, 213, 225, 237, 248,
- 260, 272, 283, 295, 307, 319, 330, 342, 354, 366,
- 377, 389, 401, 412, 424, 436, 448, 459, 471, 483,
- 494, 500, 500, 500, 500, 500, 500, 500, 500, 500,
- 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
- 500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
- 500, 500, 500, 500, 500, 500, 500, 500, 500, 500
-};
-
-const int PawnConnected[COLOUR_NB][SQUARE_NB] = {
-    { 0, 0, 0, 0, 0, 0, 0, 0,
-      2, 2, 2, 3, 3, 2, 2, 2,
-      4, 4, 5, 6, 6, 5, 4, 4,
-      7, 8,10,12,12,10, 8, 7,
-     11,14,17,21,21,17,14,11,
-     16,21,25,33,33,25,21,16,
-     32,42,50,55,55,50,42,32,
-      0, 0, 0, 0, 0, 0, 0, 0,},
-      
-    { 0, 0, 0, 0, 0, 0, 0, 0,
-     32,42,50,55,55,50,42,32,
-     16,21,25,33,33,25,21,16,
-     11,14,17,21,21,17,14,11,
-      7, 8,10,12,12,10, 8, 7,
-      4, 4, 5, 6, 6, 5, 4, 4,
-      2, 2, 2, 3, 3, 2, 2, 2,
-      0, 0, 0, 0, 0, 0, 0, 0,}
-};
-
-const int KnightOutpostValues[PHASE_NB][2] = {{20, 40}, {10, 20}};
-const int BishopOutpostValues[PHASE_NB][2] = {{15, 30}, { 3,  5}};
-
-const int PawnPassed[2][2][RANK_NB][PHASE_NB] = {
-  {{{   0,   0}, {   9,  11}, {   9,  12}, {  19,  24}, {  34,  41}, {  54,  60}, {  65,  83}, {   0,   0}},
-   {{   0,   0}, {   8,   9}, {   7,  11}, {  18,  25}, {  33,  40}, {  55,  59}, {  68,  82}, {   0,   0}}},
-  {{{   0,   0}, {   8,  18}, {  10,  16}, {  22,  32}, {  42,  49}, {  77,  79}, { 103, 136}, {   0,   0}},
-   {{   0,   0}, {  14,  12}, {  11,  15}, {  24,  38}, {  53,  78}, { 110, 150}, { 207, 271}, {   0,   0}}},
-};
-
-
-const int KnightMobility[PHASE_NB][9] = {
-    {-30, -25, -10,   0,  10,  18,  26,  34,  42},
-    {-30, -25,   0,   9,  15,  21,  28,  35,  36}
-};
-
-const int BishopMobility[PHASE_NB][14] = {
-    {-30, -20, -15,   0,  15,  21,  26,  31,  34,  36,  37,  38,  38,  38},
-    {-30, -20, -15,   0,  15,  21,  26,  31,  34,  36,  37,  38,  38,  38},
-};
-
-const int RookMobility[PHASE_NB][15] = {
-    {-30, -25, -10,  -5,  -3,  -1,   6,  11,  15,  19,  23,  25,  26,  27,  27},
-    {-35, -20, -10,   0,  10,  19,  27,  33,  39,  41,  43,  45,  47,  48,  48}
-};
-
-const int QueenMobility[PHASE_NB][28] = {
-    {-50, -40, -20,   0,   2,   4,   6,
-       8,  11,  15,  19,  20,  21,  22,
-      24,  24,  24,  24,  24,  24,  24,
-      24,  24,  24,  24,  24,  24,  24},
-    
-    {-50, -40, -20, -10,   0,   4,   8,
-      12,  15,  18,  21,  24,  27,  30,
-      35,  43,  43,  43,  43,  43,  43,
-      43,  43,  43,  43,  43,  43,  43}
-};
-
-const int BishopHasWings[PHASE_NB] = {13, 36};
-
-const int BishopPair[PHASE_NB] = {46, 64};
-
 const int Tempo[COLOUR_NB][PHASE_NB] = {{5, 7}, {-5, -7}};
 
+const int* PieceValues[8] = {
+    PawnValue, KnightValue, BishopValue, RookValue,
+    QueenValue, KingValue, NoneValue, NoneValue
+};
 
 int evaluateBoard(Board * board){
     
@@ -218,11 +246,16 @@ void evaluatePieces(EvalInfo * ei, Board * board){
     evaluateKings(ei, board, WHITE);
     evaluateKings(ei, board, BLACK);
     
-    // Save a Pawn Eval Entry if we didin't find one
+    // Save a Pawn Eval Entry if we did not find one. We do not make use
+    // of the Pawn Evaluation Table when we are doing texel tuning
     if (ei->pentry == NULL){
-        pmg = ei->pawnMidgame[WHITE] - ei->pawnMidgame[BLACK];
-        peg = ei->pawnEndgame[WHITE] - ei->pawnEndgame[BLACK];
-        storePawnEntry(&PTable, board->phash, ei->passedPawns, pmg, peg);
+        
+        if (!TEXEL){
+            pmg = ei->pawnMidgame[WHITE] - ei->pawnMidgame[BLACK];
+            peg = ei->pawnEndgame[WHITE] - ei->pawnEndgame[BLACK];
+            storePawnEntry(&PTable, board->phash, ei->passedPawns, pmg, peg);
+        }
+        
         evaluatePassedPawns(ei, board, WHITE);
         evaluatePassedPawns(ei, board, BLACK);
     }
@@ -269,26 +302,32 @@ void evaluatePawns(EvalInfo * ei, Board * board, int colour){
         sq = getLSB(tempPawns);
         tempPawns ^= 1ull << sq;
         
+        if (TRACE) T.pawnCounts[colour]++;
+        if (TRACE) T.pawnPSQT[colour][sq]++;
+        
         // Save the fact that this pawn is passed
         if (!(PassedPawnMasks[colour][sq] & enemyPawns))
             ei->passedPawns |= (1ull << sq);
         
         // Apply a penalty if the pawn is isolated
         if (!(IsolatedPawnMasks[sq] & tempPawns)){
-            ei->pawnMidgame[colour] -= PawnIsolated[MG];
-            ei->pawnEndgame[colour] -= PawnIsolated[EG];
+            ei->pawnMidgame[colour] += PawnIsolated[MG];
+            ei->pawnEndgame[colour] += PawnIsolated[EG];
+            if (TRACE) T.pawnIsolated[colour]++;
         }
         
         // Apply a penalty if the pawn is stacked
         if (Files[File(sq)] & tempPawns){
-            ei->pawnMidgame[colour] -= PawnStacked[MG];
-            ei->pawnEndgame[colour] -= PawnStacked[EG];
+            ei->pawnMidgame[colour] += PawnStacked[MG];
+            ei->pawnEndgame[colour] += PawnStacked[EG];
+            if (TRACE) T.pawnStacked[colour]++;
         }
         
         // Apply a bonus if the pawn is connected
         if (PawnConnectedMasks[colour][sq] & myPawns){
-            ei->pawnMidgame[colour] += PawnConnected[colour][sq];
-            ei->pawnEndgame[colour] += PawnConnected[colour][sq];
+            ei->pawnMidgame[colour] += PawnConnected32[RelativeSquare32(sq, colour)][MG];
+            ei->pawnEndgame[colour] += PawnConnected32[RelativeSquare32(sq, colour)][EG];
+            if (TRACE) T.pawnConnected[colour][sq]++;
         }
     }
 }
@@ -308,6 +347,9 @@ void evaluateKnights(EvalInfo * ei, Board * board, int colour){
         sq = getLSB(tempKnights);
         tempKnights ^= (1ull << sq);
         
+        if (TRACE) T.knightCounts[colour]++;
+        if (TRACE) T.knightPSQT[colour][sq]++;
+        
         // Update the attacks array with the knight attacks. We will use this to
         // determine whether or not passed pawns may advance safely later on.
         attacks = KnightAttacks(sq, ~0ull);
@@ -320,14 +362,16 @@ void evaluateKnights(EvalInfo * ei, Board * board, int colour){
                 
             defended = !!(ei->pawnAttacks[colour] & (1ull << sq));
             
-            ei->midgame[colour] += KnightOutpostValues[MG][defended];
-            ei->endgame[colour] += KnightOutpostValues[EG][defended];
+            ei->midgame[colour] += KnightOutpost[defended][MG];
+            ei->endgame[colour] += KnightOutpost[defended][EG];
+            if (TRACE) T.knightOutpost[colour][defended]++;
         }
         
         // Apply a bonus (or penalty) based on the mobility of the knight
         mobilityCount = popcount((ei->mobilityAreas[colour] & attacks));
-        ei->midgame[colour] += KnightMobility[MG][mobilityCount];
-        ei->endgame[colour] += KnightMobility[EG][mobilityCount];
+        ei->midgame[colour] += KnightMobility[mobilityCount][MG];
+        ei->endgame[colour] += KnightMobility[mobilityCount][EG];
+        if (TRACE) T.knightMobility[colour][mobilityCount]++;
         
         // Update the attack and attacker counts for the
         // knight for use in the king safety calculation.
@@ -350,14 +394,16 @@ void evaluateBishops(EvalInfo * ei, Board * board, int colour){
     
     // Apply a bonus for having pawn wings and a bishop
     if (tempBishops && (myPawns & LEFT_WING) && (myPawns & RIGHT_WING)){
-        ei->midgame[colour] += BishopHasWings[MG];
-        ei->endgame[colour] += BishopHasWings[EG];
+        ei->midgame[colour] += BishopWings[MG];
+        ei->endgame[colour] += BishopWings[EG];
+        if (TRACE) T.bishopWings[colour]++;
     }
     
     // Apply a bonus for having a pair of bishops
     if ((tempBishops & WHITE_SQUARES) && (tempBishops & BLACK_SQUARES)){
         ei->midgame[colour] += BishopPair[MG];
         ei->endgame[colour] += BishopPair[EG];
+        if (TRACE) T.bishopPair[colour]++;
     }
     
     // Evaluate each bishop
@@ -366,6 +412,9 @@ void evaluateBishops(EvalInfo * ei, Board * board, int colour){
         // Pop off the next Bishop
         sq = getLSB(tempBishops);
         tempBishops ^= (1ull << sq);
+        
+        if (TRACE) T.bishopCounts[colour]++;
+        if (TRACE) T.bishopPSQT[colour][sq]++;
         
         // Update the attacks array with the bishop attacks. We will use this to
         // determine whether or not passed pawns may advance safely later on.
@@ -379,14 +428,16 @@ void evaluateBishops(EvalInfo * ei, Board * board, int colour){
                 
             defended = !!(ei->pawnAttacks[colour] & (1ull << sq));
             
-            ei->midgame[colour] += BishopOutpostValues[MG][defended];
-            ei->endgame[colour] += BishopOutpostValues[EG][defended];
+            ei->midgame[colour] += BishopOutpost[defended][MG];
+            ei->endgame[colour] += BishopOutpost[defended][EG];
+            if (TRACE) T.bishopOutpost[colour][defended]++;
         }
         
         // Apply a bonus (or penalty) based on the mobility of the bishop
         mobilityCount = popcount((ei->mobilityAreas[colour] & attacks));
-        ei->midgame[colour] += BishopMobility[MG][mobilityCount];
-        ei->endgame[colour] += BishopMobility[EG][mobilityCount];
+        ei->midgame[colour] += BishopMobility[mobilityCount][MG];
+        ei->endgame[colour] += BishopMobility[mobilityCount][EG];
+        if (TRACE) T.bishopMobility[colour][mobilityCount]++;
         
         // Update the attack and attacker counts for the
         // bishop for use in the king safety calculation.
@@ -414,6 +465,9 @@ void evaluateRooks(EvalInfo * ei, Board * board, int colour){
         sq = getLSB(tempRooks);
         tempRooks ^= (1ull << sq);
         
+        if (TRACE) T.rookCounts[colour]++;
+        if (TRACE) T.rookPSQT[colour][sq]++;
+        
         // Update the attacks array with the rooks attacks. We will use this to
         // determine whether or not passed pawns may advance safely later on.
         attacks = RookAttacks(sq, ei->occupiedMinusRooks[colour], ~0ull);
@@ -424,8 +478,10 @@ void evaluateRooks(EvalInfo * ei, Board * board, int colour){
         // there are no pawns at all, it is an open file
         if (!(myPawns & Files[File(sq)])){
             open = !(enemyPawns & Files[File(sq)]);
-            ei->midgame[colour] += RookOpenFile[open][MG];
-            ei->endgame[colour] += RookOpenFile[open][EG];
+            ei->midgame[colour] += RookFile[open][MG];
+            ei->endgame[colour] += RookFile[open][EG];
+            if (TRACE) T.rookFile[colour][open]++;
+            
         }
         
         // Rook gains a bonus for being located
@@ -433,12 +489,14 @@ void evaluateRooks(EvalInfo * ei, Board * board, int colour){
         if (Rank(sq) == (colour == BLACK ? 1 : 6)){
             ei->midgame[colour] += RookOnSeventh[MG];
             ei->endgame[colour] += RookOnSeventh[EG];
+            if (TRACE) T.rookOnSeventh[colour]++;
         }
         
         // Apply a bonus (or penalty) based on the mobility of the rook
         mobilityCount = popcount((ei->mobilityAreas[colour] & attacks));
-        ei->midgame[colour] += RookMobility[MG][mobilityCount];
-        ei->endgame[colour] += RookMobility[EG][mobilityCount];
+        ei->midgame[colour] += RookMobility[mobilityCount][MG];
+        ei->endgame[colour] += RookMobility[mobilityCount][EG];
+        if (TRACE) T.rookMobility[colour][mobilityCount]++;
         
         // Update the attack and attacker counts for the
         // rook for use in the king safety calculation.
@@ -464,6 +522,9 @@ void evaluateQueens(EvalInfo * ei, Board * board, int colour){
         sq = getLSB(tempQueens);
         tempQueens ^= (1ull << sq);
         
+        if (TRACE) T.queenCounts[colour]++;
+        if (TRACE) T.queenPSQT[colour][sq]++;
+        
         // Update the attacks array with the rooks attacks. We will use this to
         // determine whether or not passed pawns may advance safely later on.
         attacks = RookAttacks(sq, ei->occupiedMinusRooks[colour], ~0ull)
@@ -472,8 +533,9 @@ void evaluateQueens(EvalInfo * ei, Board * board, int colour){
             
         // Apply a bonus (or penalty) based on the mobility of the queen
         mobilityCount = popcount((ei->mobilityAreas[colour] & attacks));
-        ei->midgame[colour] += QueenMobility[MG][mobilityCount];
-        ei->endgame[colour] += QueenMobility[EG][mobilityCount];
+        ei->midgame[colour] += QueenMobility[mobilityCount][MG];
+        ei->endgame[colour] += QueenMobility[mobilityCount][EG];
+        if (TRACE) T.queenMobility[colour][mobilityCount]++;
         
         // Update the attack and attacker counts for the
         // queen for use in the king safety calculation.
@@ -488,6 +550,8 @@ void evaluateQueens(EvalInfo * ei, Board * board, int colour){
 void evaluateKings(EvalInfo * ei, Board * board, int colour){
     
     int attackCounts;
+    
+    if (TRACE) T.kingPSQT[colour][getLSB(board->colours[colour] & board->pieces[KING])]++;
     
     // Apply a bonus if the king has castled since the root
     if (board->hasCastled[colour]){
@@ -549,8 +613,9 @@ void evaluatePassedPawns(EvalInfo * ei, Board * board, int colour){
         // Destination is not attacked by the opponent
         safeAdvance = !(destination & ei->attacked[!colour]);
         
-        ei->midgame[colour] += PawnPassed[canAdvance][safeAdvance][rank][MG];
-        ei->endgame[colour] += PawnPassed[canAdvance][safeAdvance][rank][EG];
+        ei->midgame[colour] += PassedPawn[canAdvance][safeAdvance][rank][MG];
+        ei->endgame[colour] += PassedPawn[canAdvance][safeAdvance][rank][EG];
+        if (TRACE) T.passedPawn[colour][canAdvance][safeAdvance][rank]++;
     }
 }
 
@@ -602,5 +667,6 @@ void initializeEvalInfo(EvalInfo * ei, Board * board){
     ei->pawnMidgame[WHITE] = ei->pawnMidgame[BLACK] = 0;
     ei->pawnEndgame[WHITE] = ei->pawnEndgame[BLACK] = 0;
     
-    ei->pentry = getPawnEntry(&PTable, board->phash);
+    if (TEXEL) ei->pentry = NULL;
+    else       ei->pentry = getPawnEntry(&PTable, board->phash);
 }

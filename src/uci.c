@@ -32,6 +32,7 @@
 #include "psqt.h"
 #include "search.h"
 #include "tests.h"
+#include "texel.h"
 #include "time.h"
 #include "transposition.h"
 #include "types.h"
@@ -60,6 +61,11 @@ int main(){
     initalizeTranspositionTable(&Table, 16);
     clearHistory(History);
     
+    #ifdef TUNE
+        runTexelTuning();
+        exit(0);
+    #endif
+    
     while (1){
         
         getInput(str);
@@ -84,7 +90,7 @@ int main(){
            http://wbec-ridderkerk.nl/html/UCIProtocol.html */
             
         if (stringEquals(str, "uci")){
-            printf("id name Ethereal 8.30\n");
+            printf("id name Ethereal 8.31\n");
             printf("id author Andrew Grant\n");
             printf("option name Hash type spin default 16 min 1 max 2048\n");
             printf("uciok\n");
