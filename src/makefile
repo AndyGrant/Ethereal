@@ -22,7 +22,9 @@ CFLAGS = -DNDEBUG -O3 $(WFLAGS) -std=c99
 
 PFLAGS = -DNDEBUG -O0 $(WFLAGS) -std=c99 -p -pg
 
-DFLAGS = -O0 $(FLAGS) -std=c99
+DFLAGS = -O0 $(WFLAGS) -std=c99
+
+TFLAGS = $(CFLAGS) -fopenmp -lm -DTUNE
 
 SRC = *.c
 
@@ -34,3 +36,6 @@ profile:
     
 debug:
 	$(CC) $(DFLAGS) $(SRC) -o Ethereal.exe
+    
+tune:
+	$(CC) $(TFLAGS) $(SRC) -o Ethereal.exe

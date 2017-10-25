@@ -253,7 +253,7 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
     inCheck = inCheck || !isNotInCheck(board, board->turn);
     if (!PvNode && !inCheck){
         eval = evaluateBoard(board);
-        futilityMargin = eval + depth * 1.25 * PawnValue;
+        futilityMargin = eval + depth * 1.25 * PieceValues[PAWN][EG];
     }
     
     // Step 8. Razoring. If a Quiescence Search for the current position
@@ -282,7 +282,7 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
         && !inCheck
         && depth <= BetaPruningDepth){
             
-        value = eval - depth * (PawnValue + 15);
+        value = eval - depth * (PieceValues[PAWN][EG] + 15);
         
         if (value > beta)
             return value;
@@ -483,11 +483,11 @@ int qsearch(Board * board, int alpha, int beta, int height){
     
     // Take a guess at the best case gain for a non promotion capture
     if (board->colours[!board->turn] & board->pieces[QUEEN])
-        maxValueGain = QueenValue + 55;
+        maxValueGain = PieceValues[QUEEN ][EG] + 55;
     else if (board->colours[!board->turn] & board->pieces[ROOK])
-        maxValueGain = RookValue + 35;
+        maxValueGain = PieceValues[ROOK  ][EG] + 35;
     else
-        maxValueGain = BishopValue + 15;
+        maxValueGain = PieceValues[BISHOP][EG] + 15;
     
     // Delta pruning when no promotions and not extreme late game
     if (    value + maxValueGain < alpha
@@ -502,9 +502,11 @@ int qsearch(Board * board, int alpha, int beta, int height){
     while ((currentMove = selectNextMove(&movePicker, board)) != NONE_MOVE){
         
         // Take a guess at the best case value of this current move
-        value = eval + 55 + PieceValues[PieceType(board->squares[MoveTo(currentMove)])];
-        if (MoveType(currentMove) == PROMOTION_MOVE)
-            value += PieceValues[1 + (MovePromoType(currentMove) >> 14)];
+        value = eval + 55 + PieceValues[PieceType(board->squares[MoveTo(currentMove)])][EG];
+        if (MoveType(currentMove) == PROMOTION_MOVE){
+            value += PieceValues[1 + (MovePromoType(currentMove) >> 14)][EG];
+            value -= PieceValues[PAWN][EG];
+        }
         
         // If the best case is not good enough, continue
         if (value < alpha)
