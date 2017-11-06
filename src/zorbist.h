@@ -24,7 +24,7 @@
 #include "types.h"
 
 void initalizeZorbist();
-uint64_t genRandomBitstring();
+uint64_t rand64();
 
 #define CASTLE (2)
 #define ENPASS (3)
