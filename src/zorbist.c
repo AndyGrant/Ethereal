@@ -34,25 +34,23 @@ void initalizeZorbist(){
     
     int p, s;
     
-    srand(0);
-    
     // Fill ZorbistKeys for each piece type and square
     for (p = 0; p <= 5; p++){
         for(s = 0; s < SQUARE_NB; s++){
-            ZorbistKeys[(p*4) + 0][s] = genRandomBitstring();
-            ZorbistKeys[(p*4) + 1][s] = genRandomBitstring();
+            ZorbistKeys[(p*4) + 0][s] = rand64();
+            ZorbistKeys[(p*4) + 1][s] = rand64();
         }
     }
     
     // Fill ZorbistKeys for the file of the enpass square
     for (p = 0; p < 8; p++)
-        ZorbistKeys[ENPASS][p] = genRandomBitstring();
+        ZorbistKeys[ENPASS][p] = rand64();
     
     // Fill ZorbistKeys for the state of the castle rights
-    ZorbistKeys[CASTLE][WHITE_KING_RIGHTS] = genRandomBitstring();
-    ZorbistKeys[CASTLE][WHITE_QUEEN_RIGHTS] = genRandomBitstring();
-    ZorbistKeys[CASTLE][BLACK_KING_RIGHTS] = genRandomBitstring();
-    ZorbistKeys[CASTLE][BLACK_QUEEN_RIGHTS] = genRandomBitstring();
+    ZorbistKeys[CASTLE][WHITE_KING_RIGHTS ] = rand64();
+    ZorbistKeys[CASTLE][WHITE_QUEEN_RIGHTS] = rand64();
+    ZorbistKeys[CASTLE][BLACK_KING_RIGHTS ] = rand64();
+    ZorbistKeys[CASTLE][BLACK_QUEEN_RIGHTS] = rand64();
     
     // Set each location as a combination of the four we just defined
     for (p = 0; p < 16; p++){
@@ -71,7 +69,7 @@ void initalizeZorbist(){
     }
     
     // Fill in the key for side to move
-    ZorbistKeys[TURN][0] = genRandomBitstring();
+    ZorbistKeys[TURN][0] = rand64();
     
     // Fill PawnKeys for each pawn colour and square
     for (s = 0; s < SQUARE_NB; s++){
@@ -80,13 +78,15 @@ void initalizeZorbist(){
     }
 }
 
-uint64_t genRandomBitstring(){
+uint64_t rand64(){
     
-    int i;
-    uint64_t str;
+    // http://vigna.di.unimi.it/ftp/papers/xorshift.pdf
     
-    for(i = 0, str = 0ull; i < 64; i++)
-        str ^= ((uint64_t)(rand())) << i;
+    static uint64_t seed = 1070372ull;
     
-    return str;
+    seed ^= seed >> 12;
+    seed ^= seed << 25;
+    seed ^= seed >> 27;
+    
+    return seed * 2685821657736338717ull;
 }

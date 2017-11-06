@@ -306,6 +306,7 @@ void runBenchmark(int depth){
     
     // Search each benchmark position
     for (i = 0; i < NUM_BENCHMARKS; i++){
+        printf("\nPosition [%2d|%2d]\n", i, NUM_BENCHMARKS);
         info.startTime = getRealTime();
         initalizeBoard((&info.board), Benchmarks[i]);
         clearTranspositionTable(&Table);
@@ -316,7 +317,7 @@ void runBenchmark(int depth){
     end = getRealTime();
     
     printf("\n------------------------\n");
-    printf("Benchtime      = %dms\n", (int)(end - start));
-    printf("Nodes Searched = %"PRIu64"\n", benchNodes);
-    printf("Nodes / Second = %d\n", (int)(benchNodes / ((end - start + 1) / 1000.0)));
+    printf("Time  : %dms\n", (int)(end - start));
+    printf("Nodes : %"PRIu64"\n", benchNodes);
+    printf("NPS   : %d\n", (int)(benchNodes / ((end - start ) / 1000.0)));
 }
