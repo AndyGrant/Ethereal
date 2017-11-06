@@ -211,7 +211,7 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
     // the search horizon and are not currently in check
     if (depth <= 0){
         inCheck = !isNotInCheck(board, board->turn);
-        if (!inCheck) return qsearch(board, alpha, beta, height);
+        if (!inCheck) return qsearch(pv, board, alpha, beta, height);
     }
     
     // INCREMENT TOTAL NODE COUNTER
@@ -269,10 +269,10 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
         &&  hasNonPawnMaterial(board, board->turn)){
             
         if (depth <= 1)
-            return qsearch(board, alpha, beta, height);
+            return qsearch(pv, board, alpha, beta, height);
         
         rAlpha = alpha - RazorMargins[depth];
-        value = qsearch(board, rAlpha, rAlpha + 1, height);
+        value = qsearch(pv, board, rAlpha, rAlpha + 1, height);
         if (value <= rAlpha) return value;
     }
     
@@ -459,12 +459,16 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
     return best;
 }
 
-int qsearch(Board * board, int alpha, int beta, int height){
+int qsearch(PVariation * pv, Board * board, int alpha, int beta, int height){
     
     int eval, value, best, maxValueGain;
     uint16_t currentMove;
     Undo undo[1];
     MovePicker movePicker;
+    
+    PVariation lpv;
+    lpv.length = 0;
+    pv->length = 0;
     
     // Max height reached, stop here
     if (height >= MAX_HEIGHT)
@@ -520,7 +524,7 @@ int qsearch(Board * board, int alpha, int beta, int height){
         }
         
         // Search next depth
-        value = -qsearch(board, -beta, -alpha, height+1);
+        value = -qsearch(&lpv, board, -beta, -alpha, height+1);
         
         // Revert move from board
         revertMove(board, currentMove, undo);
@@ -529,9 +533,15 @@ int qsearch(Board * board, int alpha, int beta, int height){
         if (value > best){
             best = value;
             
-            // Improved current lower value
-            if (value > alpha)
+            // Improved current lower bound
+            if (value > alpha){
                 alpha = value;
+                
+                // Update the Principle Variation
+                pv->length = 1 + lpv.length;
+                pv->line[0] = currentMove;
+                memcpy(pv->line + 1, lpv.line, sizeof(uint16_t) * lpv.length);
+            }
         }
         
         // Search has failed high
