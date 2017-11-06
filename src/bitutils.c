@@ -32,7 +32,7 @@ const int LsbTable[64] = {
   13, 18,  8, 12,  7,  6,  5, 63
 };
 
-int BitCounts[0x10000];
+uint8_t BitCounts[0x10000];
 
 int countSetBits(uint64_t bb){
     
