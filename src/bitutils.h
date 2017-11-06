@@ -26,8 +26,12 @@ void getSetBits(uint64_t bb, int * arr);
 int popcount(uint64_t bb);
 
 extern const int LsbTable[64];
-extern int BitCounts[0x10000];
+extern uint8_t BitCounts[0x10000];
 
-#define getLSB(bb) (LsbTable[(((bb) ^ ((bb)-1)) * 0x03f79d71b4cb0a89ull) >> 58])
+#if defined (__GNUC__)
+    #define getLSB(bb) (__builtin_ctzll((bb)))
+#else
+    #define getLSB(bb) (LsbTable[(((bb) ^ ((bb)-1)) * 0x03f79d71b4cb0a89ull) >> 58])
+#endif
 
 #endif
