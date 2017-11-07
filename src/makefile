@@ -16,6 +16,8 @@
 
 CC = gcc
 
+EXE = Ethereal
+
 WFLAGS = -Wall -Wextra -Wshadow
 
 CFLAGS = -DNDEBUG -O3 $(WFLAGS) -std=c99
@@ -29,13 +31,13 @@ TFLAGS = $(CFLAGS) -fopenmp -lm -DTUNE
 SRC = *.c
 
 all:
-	$(CC) $(CFLAGS) $(SRC) -o Ethereal.exe
+	$(CC) $(CFLAGS) $(SRC) -o $(EXE)
     
 profile:
-	$(CC) $(PFLAGS) $(SRC) -o Ethereal.exe
+	$(CC) $(PFLAGS) $(SRC) -o $(EXE)
     
 debug:
-	$(CC) $(DFLAGS) $(SRC) -o Ethereal.exe
+	$(CC) $(DFLAGS) $(SRC) -o $(EXE)
     
 tune:
-	$(CC) $(TFLAGS) $(SRC) -o Ethereal.exe
+	$(CC) $(TFLAGS) $(SRC) -o $(EXE)
