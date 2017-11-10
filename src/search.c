@@ -253,7 +253,7 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
     inCheck = inCheck || !isNotInCheck(board, board->turn);
     if (!PvNode && !inCheck){
         eval = evaluateBoard(board);
-        futilityMargin = eval + depth * 1.25 * PieceValues[PAWN][EG];
+        futilityMargin = eval + depth * 0.95 * PieceValues[PAWN][EG];
     }
     
     // Step 8. Razoring. If a Quiescence Search for the current position
@@ -282,7 +282,7 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
         && !inCheck
         && depth <= BetaPruningDepth){
             
-        value = eval - depth * (PieceValues[PAWN][EG] + 15);
+        value = eval - depth * 0.95 * PieceValues[PAWN][EG];
         
         if (value > beta)
             return value;
