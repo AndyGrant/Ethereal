@@ -170,7 +170,9 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
     pv->length = 0;
     
     // Step 1. Check to see if search time has expired
-    if (Info->searchIsTimeLimited && getRealTime() >= Info->endTime2){
+    if (    Info->searchIsTimeLimited 
+        && (TotalNodes & 8191) == 8191
+        &&  getRealTime() >= Info->endTime2){
         Info->terminateSearch = 1;
         return board->turn == EvaluatingPlayer ? -MATE : MATE;
     }
@@ -452,7 +454,7 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
     }
     
     // Store results in transposition table
-    if (!Info->searchIsTimeLimited || getRealTime() < Info->endTime2)
+    if (!Info->terminateSearch)
         storeTranspositionEntry(&Table, depth, (best > oldAlpha && best < beta)
                                 ? PVNODE : best >= beta ? CUTNODE : ALLNODE,
                                 valueToTT(best, height), bestMove, board->hash);
@@ -469,6 +471,14 @@ int qsearch(PVariation * pv, Board * board, int alpha, int beta, int height){
     PVariation lpv;
     lpv.length = 0;
     pv->length = 0;
+    
+    // Check to see if search time has expired
+    if (    Info->searchIsTimeLimited 
+        && (TotalNodes & 8191) == 8191
+        &&  getRealTime() >= Info->endTime2){
+        Info->terminateSearch = 1;
+        return board->turn == EvaluatingPlayer ? -MATE : MATE;
+    }
     
     // Max height reached, stop here
     if (height >= MAX_HEIGHT)
