@@ -51,7 +51,8 @@ uint16_t KillerMoves[MAX_HEIGHT][2];
 
 uint16_t getBestMove(SearchInfo * info){
     
-    int i, depth, elapsed, hashfull, value = 0;
+    uint64_t lastBestMove = NONE_MOVE;
+    int i, depth, elapsed, hashfull, lastValue = 0, value = 0;
     
     // Create the main Principle Variation
     PVariation pv;
@@ -72,6 +73,15 @@ uint16_t getBestMove(SearchInfo * info){
         
         // Perform full search on Root
         value = aspirationWindow(&pv, &info->board, depth, value);
+        
+        if (depth >= 4 && lastValue > value + 16)
+            info->idealTimeUsage = MIN(info->maxTimeUsage, info->idealTimeUsage * 1.05);
+        
+        if (depth >= 4 && pv.line[0] != lastBestMove)
+            info->idealTimeUsage = MIN(info->maxTimeUsage, info->idealTimeUsage * 1.10);
+        
+        lastValue = value;
+        lastBestMove = pv.line[0];
         
         // Don't print a partial search
         if (info->terminateSearch) break;
@@ -102,8 +112,8 @@ uint16_t getBestMove(SearchInfo * info){
             
         // Check for time based termination 
         if (info->searchIsTimeLimited){
-            if (getRealTime() > info->endTime2) break;
-            if (getRealTime() > info->endTime1) break;
+            if (getRealTime() > info->startTime + info->idealTimeUsage) break;
+            if (getRealTime() > info->startTime + info->maxTimeUsage) break;
         }
     }
     
@@ -172,7 +182,7 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
     // Step 1. Check to see if search time has expired
     if (    Info->searchIsTimeLimited 
         && (TotalNodes & 8191) == 8191
-        &&  getRealTime() >= Info->endTime2){
+        &&  getRealTime() >= Info->startTime + Info->maxTimeUsage){
         Info->terminateSearch = 1;
         return board->turn == EvaluatingPlayer ? -MATE : MATE;
     }
@@ -475,7 +485,7 @@ int qsearch(PVariation * pv, Board * board, int alpha, int beta, int height){
     // Check to see if search time has expired
     if (    Info->searchIsTimeLimited 
         && (TotalNodes & 8191) == 8191
-        &&  getRealTime() >= Info->endTime2){
+        &&  getRealTime() >= Info->startTime + Info->maxTimeUsage){
         Info->terminateSearch = 1;
         return board->turn == EvaluatingPlayer ? -MATE : MATE;
     }

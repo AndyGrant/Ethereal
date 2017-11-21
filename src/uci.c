@@ -90,7 +90,7 @@ int main(){
            http://wbec-ridderkerk.nl/html/UCIProtocol.html */
             
         if (stringEquals(str, "uci")){
-            printf("id name Ethereal 8.40\n");
+            printf("id name Ethereal 8.41\n");
             printf("id author Andrew Grant\n");
             printf("option name Hash type spin default 16 min 1 max 2048\n");
             printf("uciok\n");
@@ -264,8 +264,8 @@ int main(){
             
             else if (movetime != -1){
                 info.searchIsTimeLimited = 1;
-                info.endTime1 = info.startTime + 20*movetime;
-                info.endTime2 = info.startTime + movetime;
+                info.idealTimeUsage = 20 * movetime;
+                info.maxTimeUsage = movetime;
             }
             
             else {
@@ -274,14 +274,14 @@ int main(){
                 
                 // NOT USING REPEATING TIME CONTROL
                 if (mtg == -1){
-                    info.endTime1 = info.startTime + .5 * (time / 30);
-                    info.endTime2 = info.startTime + (time / 30) + inc;
+                    info.idealTimeUsage = .5 * (time / 30);
+                    info.maxTimeUsage = (time / 30) + inc;
                 }
                 
                 // USING REPEATING TIME CONTROL
                 else {
-                    info.endTime1 = info.startTime + .5 * (time / (mtg+2));
-                    info.endTime2 = info.startTime + (time / (mtg+2));
+                    info.idealTimeUsage = .5 * (time / (mtg+2));
+                    info.maxTimeUsage = (time / (mtg+2));
                 }
             }
             
