@@ -223,12 +223,6 @@ void initalizeBoard(Board * board, char * fen){
     
     // Number of moves since this position
     board->numMoves = 0;
-    
-    // We cannot actually determine whether or not a castle took
-    // place, but we do not care, as we only put value on castles
-    // that have occured after the root of a search.
-    board->hasCastled[0] = 0;
-    board->hasCastled[1] = 0;
 }
 
 void printBoard(Board * board){

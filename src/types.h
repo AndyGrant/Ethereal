@@ -50,7 +50,6 @@ typedef struct Board {
     int midgame;
     int endgame;
     int numMoves;
-    int hasCastled[2];
     uint64_t history[256];
     
 } Board;

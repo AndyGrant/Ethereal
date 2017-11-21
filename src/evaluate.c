@@ -143,10 +143,6 @@ const int KingValue[PHASE_NB] = { 100, 100};
 
 const int NoneValue[PHASE_NB] = {   0,   0};
 
-const int KingHasCastled = 25;
-
-const int KingCanCastle = 10;
-
 const int Tempo[COLOUR_NB][PHASE_NB] = {{5, 7}, {-5, -7}};
 
 const int* PieceValues[8] = {
@@ -552,18 +548,6 @@ void evaluateKings(EvalInfo * ei, Board * board, int colour){
     int attackCounts;
     
     if (TRACE) T.kingPSQT[colour][getLSB(board->colours[colour] & board->pieces[KING])]++;
-    
-    // Apply a bonus if the king has castled since the root
-    if (board->hasCastled[colour]){
-        ei->midgame[colour] += KingHasCastled;
-        ei->endgame[colour] += KingHasCastled;
-    }
-    
-    // Apply a bonus if the king still has castling rights
-    else if (board->castleRights & (3 << (2 * colour))){
-        ei->midgame[colour] += KingCanCastle;
-        ei->endgame[colour] += KingCanCastle;
-    }
     
     // If we have two or more threats to our king area, we will apply a penalty
     // based on the number of squares attacked, and the strength of the attackers
