@@ -90,7 +90,7 @@ int main(){
            http://wbec-ridderkerk.nl/html/UCIProtocol.html */
             
         if (stringEquals(str, "uci")){
-            printf("id name Ethereal 8.39\n");
+            printf("id name Ethereal 8.40\n");
             printf("id author Andrew Grant\n");
             printf("option name Hash type spin default 16 min 1 max 2048\n");
             printf("uciok\n");
@@ -173,12 +173,6 @@ int main(){
                 if (info.board.fiftyMoveRule == 0)
                     info.board.numMoves = 0;
             }
-            
-            // Reset has castled so that we only evaluate having
-            // castled if it was done since the root. I Believe I
-            // saw this same idea in Robert Hyatt's Crafty.
-            info.board.hasCastled[0] = 0;
-            info.board.hasCastled[1] = 0;
         }
         
         else if (stringStartsWith(str, "go")){
