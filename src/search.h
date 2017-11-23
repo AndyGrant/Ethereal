@@ -44,6 +44,6 @@ static const int NullMovePruningDepth = 2;
 static const int FutilityPruningDepth = 8;
 
 static const int LateMovePruningDepth = 8;
-static const int LateMovePruningCounts[] = {0, 6, 9, 14, 21, 30, 41, 54, 69};
+static const int LateMovePruningCounts[] = {0, 5, 8, 12, 18, 26, 36, 47, 61};
 
 #endif
