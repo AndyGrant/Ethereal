@@ -143,7 +143,7 @@ const int KingValue[PHASE_NB] = { 100, 100};
 
 const int NoneValue[PHASE_NB] = {   0,   0};
 
-const int Tempo[COLOUR_NB][PHASE_NB] = {{5, 7}, {-5, -7}};
+const int Tempo[COLOUR_NB][PHASE_NB] = { {  20,  10}, { -20, -10} };
 
 const int* PieceValues[8] = {
     PawnValue, KnightValue, BishopValue, RookValue,
