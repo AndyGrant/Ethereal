@@ -24,7 +24,7 @@
 #include "types.h"
 
 uint16_t getBestMove(SearchInfo * info);
-int aspirationWindow(PVariation * pv, Board * board, int depth, int lastScore);
+int aspirationWindow(PVariation * pv, Board * board, int depth, int values[MAX_DEPTH]);
 int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int height);
 int qsearch(PVariation * pv, Board * board, int alpha, int beta, int height);
 int moveIsTactical(Board * board, uint16_t move);

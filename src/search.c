@@ -53,6 +53,7 @@ uint16_t getBestMove(SearchInfo * info){
     
     uint64_t lastBestMove = NONE_MOVE;
     int i, depth, elapsed, hashfull, lastValue = 0, value = 0;
+    int values[MAX_DEPTH];
     
     // Create the main Principle Variation
     PVariation pv;
@@ -72,7 +73,7 @@ uint16_t getBestMove(SearchInfo * info){
     for (depth = 1; depth < MAX_DEPTH; depth++){
         
         // Perform full search on Root
-        value = aspirationWindow(&pv, &info->board, depth, value);
+        values[depth] = value = aspirationWindow(&pv, &info->board, depth, values);
         
         if (depth >= 4 && lastValue > value + 8)
             info->idealTimeUsage = MIN(info->maxTimeUsage, info->idealTimeUsage * 1.10);
@@ -123,21 +124,26 @@ uint16_t getBestMove(SearchInfo * info){
     return pv.line[0];
 }
 
-int aspirationWindow(PVariation * pv, Board * board, int depth, int lastScore){
+int aspirationWindow(PVariation * pv, Board * board, int depth, int values[MAX_DEPTH]){
     
     int alpha, beta, value, margin;
     
     // Only use an aspiration window on searches that are greater
     // than 4 depth, and did not recently return a MATE score
-    if (depth > 4 && abs(lastScore) < MATE / 2){
+    if (depth > 4 && abs(values[depth - 1]) < MATE / 2){
+        
+        margin =             (abs(values[depth - 1] - values[depth - 2]));
+        margin = MAX(margin, (abs(values[depth - 2] - values[depth - 3])));
+        margin = MAX(margin, (abs(values[depth - 3] - values[depth - 4])));
+        margin = MAX(16, margin * 2);
         
         // Use the windows [30, 60, 120, 240]
-        for (margin = 30; margin < 250; margin *= 2){
+        for (; margin <= 640; margin *= 2){
             
             // Adjust the bounds. There is some debate about
             // how this should be done after we know value.
-            alpha = lastScore - margin;
-            beta  = lastScore + margin;
+            alpha = values[depth - 1] - margin;
+            beta  = values[depth - 1] + margin;
             
             // Perform the search on the modified window
             value = search(pv, board, alpha, beta, depth, 0);
