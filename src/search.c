@@ -132,10 +132,10 @@ int aspirationWindow(PVariation * pv, Board * board, int depth, int values[MAX_D
     // than 4 depth, and did not recently return a MATE score
     if (depth > 4 && abs(values[depth - 1]) < MATE / 2){
         
-        margin =             (abs(values[depth - 1] - values[depth - 2]));
-        margin = MAX(margin, (abs(values[depth - 2] - values[depth - 3])));
-        margin = MAX(margin, (abs(values[depth - 3] - values[depth - 4])));
-        margin = MAX(16, margin * 2);
+        margin =             1.6 * (abs(values[depth - 1] - values[depth - 2]));
+        margin = MAX(margin, 2.0 * (abs(values[depth - 2] - values[depth - 3])));
+        margin = MAX(margin, 0.8 * (abs(values[depth - 3] - values[depth - 4])));
+        margin = MAX(margin, 16);
         
         // Use the windows [30, 60, 120, 240]
         for (; margin <= 640; margin *= 2){
