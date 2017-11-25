@@ -35,7 +35,7 @@ int valueToTT(int value, int height);
 static const int RazorDepth = 4;
 static const int RazorMargins[] = {0, 450, 480, 520, 580};
 
-static const int BetaPruningDepth = 3;
+static const int BetaPruningDepth = 8;
 
 static const int InternalIterativeDeepeningDepth = 3;
 
@@ -44,6 +44,6 @@ static const int NullMovePruningDepth = 2;
 static const int FutilityPruningDepth = 8;
 
 static const int LateMovePruningDepth = 8;
-static const int LateMovePruningCounts[] = {0, 5, 8, 12, 18, 26, 36, 47, 61};
+static const int LateMovePruningCounts[] = {0, 5, 7, 11, 16, 24, 33, 43, 56};
 
 #endif

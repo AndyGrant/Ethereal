@@ -281,10 +281,8 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
     // move would close the massive gap between the evaluation and alpha
     if (   !PvNode
         && !inCheck
-        && !ttTactical
         &&  depth <= RazorDepth
-        &&  eval + RazorMargins[depth] < alpha
-        &&  hasNonPawnMaterial(board, board->turn)){
+        &&  eval + RazorMargins[depth] < alpha){
             
         if (depth <= 1)
             return qsearch(pv, board, alpha, beta, height);
@@ -298,7 +296,8 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
     // Move Pruning. If the eval is few pawns above beta then exit early
     if (   !PvNode
         && !inCheck
-        && depth <= BetaPruningDepth){
+        &&  depth <= BetaPruningDepth
+        &&  hasNonPawnMaterial(board, board->turn)){
             
         value = eval - depth * 0.95 * PieceValues[PAWN][EG];
         
