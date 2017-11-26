@@ -316,9 +316,11 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
         &&  hasNonPawnMaterial(board, board->turn)
         &&  board->history[board->numMoves-1] != NULL_MOVE){
             
+        R = MIN(7, 4 + depth / 6 + (eval - beta + 200) / 400); 
+            
         applyNullMove(board, undo);
         
-        value = -search(&lpv, board, -beta, -beta+1, depth-4, height+1);
+        value = -search(&lpv, board, -beta, -beta + 1, depth - R, height + 1);
         
         revertNullMove(board, undo);
         
