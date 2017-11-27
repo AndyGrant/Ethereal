@@ -269,7 +269,7 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
     // are not looking at a PV Node, as those are not subject to futility.
     // Determine check status if not done already
     inCheck = inCheck || !isNotInCheck(board, board->turn);
-    if (!PvNode && !inCheck){
+    if (!PvNode){
         eval = evaluateBoard(board);
         futilityMargin = eval + depth * 0.95 * PieceValues[PAWN][EG];
     }
@@ -363,7 +363,6 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
         // Step 13. Futility Pruning. If our score is far below alpha,
         // and we don't expect anything from this move, skip it.
         if (   !PvNode
-            && !inCheck
             &&  isQuiet
             &&  played >= 1
             &&  futilityMargin <= alpha
@@ -381,7 +380,6 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
         // tried many quiets in this position already, and we don't expect
         // anything from this move, we can undo it and move on.
         if (   !PvNode
-            && !inCheck
             &&  isQuiet
             &&  played >= 1
             &&  depth <= LateMovePruningDepth
@@ -400,18 +398,15 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
         // move on. If they look good, we will search with a full depth.
         if (    played >= 4
             &&  depth >= 3
-            &&  isQuiet
-            &&  isNotInCheck(board, board->turn)){
+            &&  isQuiet){
             
-            R = 2;
-            R -= RootNode;
-            R -= 2 * inCheck;
+            R  = 2;
             R += (played - 4) / 8;
             R += (depth  - 4) / 6;
             R += 2 * !PvNode;
             R += ttTactical && bestMove == ttMove;
             R -= hist / 24;
-            R = R >= 1 ? R : 1;
+            R  = R >= 1 ? R : 1;
         }
         
         else {
@@ -604,3 +599,4 @@ int valueToTT(int value, int height){
          : value <= -MATE + MAX_HEIGHT ? value - height
          : value;
 }
+

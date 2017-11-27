@@ -52,6 +52,8 @@ const int PawnIsolated[PHASE_NB] = {  -5, -10};
 
 const int PawnStacked[PHASE_NB] = { -12, -18};
 
+const int PawnBackwards[2][PHASE_NB] = { {  -4,  -7}, {  -6,  -9} };
+
 const int PawnConnected32[32][PHASE_NB] = {
     {   0,   0}, {   0,   0}, {   0,   0}, {   0,   0},
     {   1,  -2}, {   3,   0}, {   3,   1}, {   0,   6},
@@ -268,7 +270,9 @@ void evaluatePieces(EvalInfo * ei, Board * board){
 
 void evaluatePawns(EvalInfo * ei, Board * board, int colour){
     
-    int sq;
+    const int forward = (colour == WHITE) ? 8 : -8;
+    
+    int sq, semi;
     uint64_t pawns, myPawns, tempPawns, enemyPawns, attacks;
     
     // Update the attacks array with the pawn attacks. We will use this to
@@ -317,6 +321,16 @@ void evaluatePawns(EvalInfo * ei, Board * board, int colour){
             ei->pawnMidgame[colour] += PawnStacked[MG];
             ei->pawnEndgame[colour] += PawnStacked[EG];
             if (TRACE) T.pawnStacked[colour]++;
+        }
+        
+        // Apply a penalty if the pawn is backward
+        if (   !(PassedPawnMasks[!colour][sq] & myPawns)
+            &&  (ei->pawnAttacks[!colour] & (1ull << (sq + forward)))){
+                
+            semi = !(Files[File(sq)] & enemyPawns);
+            
+            ei->pawnMidgame[colour] += PawnBackwards[semi][MG];
+            ei->pawnEndgame[colour] += PawnBackwards[semi][EG];
         }
         
         // Apply a bonus if the pawn is connected
@@ -654,3 +668,4 @@ void initializeEvalInfo(EvalInfo * ei, Board * board){
     if (TEXEL) ei->pentry = NULL;
     else       ei->pentry = getPawnEntry(&PTable, board->phash);
 }
+
