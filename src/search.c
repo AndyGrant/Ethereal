@@ -230,6 +230,10 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
     if (depth <= 0){
         inCheck = !isNotInCheck(board, board->turn);
         if (!inCheck) return qsearch(pv, board, alpha, beta, height);
+        
+        // We do not cap reductions, so here we will make
+        // sure that depth is within the acceptable bounds
+        depth = 0; 
     }
     
     // INCREMENT TOTAL NODE COUNTER
