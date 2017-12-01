@@ -16,17 +16,21 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <stdint.h>
+
 #include "board.h"
 #include "history.h"
 #include "move.h"
 #include "types.h"
 
+enum { HISTORY_GOOD, HISTORY_TOTAL };
+
+const uint64_t HistoryMax = 0x7FFFFFFF;
+
 void reduceHistory(HistoryTable history){
     
     int c, f, t, i;
     
-    // Divide each history entry by 4. 
-    // Add one to avoid division by zero
     for (c = 0; c < COLOUR_NB; c++)
         for (f = 0; f < SQUARE_NB; f++)
             for (t = 0; t < SQUARE_NB; t++)
@@ -38,8 +42,6 @@ void clearHistory(HistoryTable history){
     
     int c, f, t, i;
     
-    // Fill all History entries with ones. By using
-    // ones instead of zeros we avoid division by zero
     for (c = 0; c < COLOUR_NB; c++)
         for (f = 0; f < SQUARE_NB; f++)
             for (t = 0; t < SQUARE_NB; t++)
@@ -56,7 +58,7 @@ void updateHistory(HistoryTable history, uint16_t move, int colour, int isGood, 
     history[colour][from][to][HISTORY_TOTAL] += delta;
     
     // Divide the counters by two if we have exceeded the max value for history
-    if (history[colour][from][to][HISTORY_TOTAL] >= HISTORY_MAX){
+    if (history[colour][from][to][HISTORY_TOTAL] >= HistoryMax){
         history[colour][from][to][HISTORY_GOOD] >>= 1;
         history[colour][from][to][HISTORY_TOTAL] >>= 1;
     }
@@ -64,9 +66,11 @@ void updateHistory(HistoryTable history, uint16_t move, int colour, int isGood, 
 
 int getHistoryScore(HistoryTable history, uint16_t move, int colour, int factor){
     
-    // History is scored on a scale from 0 to factor, where factor is 100%.
-    int from = MoveFrom(move), to = MoveTo(move);
-    int good = history[colour][from][to][HISTORY_GOOD];
+    // History is scored on a scale from 0 to factor, where factor is 100%
+    // We should try to choose factor to be a power of two, as to avoid division
+    int from  = MoveFrom(move);
+    int to    = MoveTo(move);
+    int good  = history[colour][from][to][HISTORY_GOOD ];
     int total = history[colour][from][to][HISTORY_TOTAL];
     return (factor * good) / total;
 }

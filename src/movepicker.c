@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include "board.h"
 #include "bitboards.h"
 #include "castle.h"
 #include "evaluate.h"
@@ -32,16 +33,14 @@
 
 extern HistoryTable History;
 
-void initalizeMovePicker(MovePicker * mp, int pickQuiets, uint16_t tableMove, uint16_t killer1, uint16_t killer2){
-    mp->pickQuiets = pickQuiets;
+void initalizeMovePicker(MovePicker * mp, int skipQuiets, uint16_t ttMove, uint16_t killer1, uint16_t killer2){
+    mp->skipQuiets = skipQuiets;
     mp->stage      = STAGE_TABLE;
-    mp->split      = 0;
     mp->noisySize  = 0;
-    mp->badSize    = 0;
     mp->quietSize  = 0;
-    mp->tableMove  = tableMove;
-    mp->killer1    = (killer1 != tableMove) ? killer1 : NONE_MOVE;
-    mp->killer2    = (killer2 != tableMove) ? killer2 : NONE_MOVE;
+    mp->tableMove  = ttMove;
+    mp->killer1    = killer1 != ttMove ? killer1 : NONE_MOVE;
+    mp->killer2    = killer2 != ttMove ? killer2 : NONE_MOVE;
 }
 
 uint16_t selectNextMove(MovePicker * mp, Board * board){
@@ -105,7 +104,7 @@ uint16_t selectNextMove(MovePicker * mp, Board * board){
             // If we are using this move picker for the quiescence
             // search, we have exhausted all moves already. Otherwise,
             // we should move onto the quiet moves (+ killers)
-            if (mp->pickQuiets)
+            if (mp->skipQuiets)
                 return mp->stage = STAGE_DONE, NONE_MOVE;
             else
                 mp->stage = STAGE_KILLER_1;
@@ -322,7 +321,7 @@ int moveIsPsuedoLegal(Board * board, uint16_t move){
             if (moveType != NORMAL_MOVE) return 0;
             
             // Generate Knight attacks and compare to destination
-            options = KnightAttacks(from, ~friendly);
+            options = knightAttacks(from, ~friendly);
             return (options & (1ull << to)) >> to;
         
         
@@ -332,7 +331,7 @@ int moveIsPsuedoLegal(Board * board, uint16_t move){
             if (moveType != NORMAL_MOVE) return 0;
         
             // Generate Bishop attacks and compare to destination
-            options = BishopAttacks(from, ~empty, ~friendly);
+            options = bishopAttacks(from, ~empty, ~friendly);
             return (options & (1ull << to)) >> to;
         
         
@@ -342,7 +341,7 @@ int moveIsPsuedoLegal(Board * board, uint16_t move){
             if (moveType != NORMAL_MOVE) return 0;
             
             // Generate Rook attacks and compare to destination
-            options = RookAttacks(from, ~empty, ~friendly);
+            options = rookAttacks(from, ~empty, ~friendly);
             return (options & (1ull << to)) >> to;
         
         
@@ -352,8 +351,8 @@ int moveIsPsuedoLegal(Board * board, uint16_t move){
             if (moveType != NORMAL_MOVE) return 0;
             
             // Generate Queen attacks and compare to destination
-            options = BishopAttacks(from, ~empty, ~friendly)
-                    | RookAttacks(from, ~empty, ~friendly);
+            options = bishopAttacks(from, ~empty, ~friendly)
+                    | rookAttacks(from, ~empty, ~friendly);
             return (options & (1ull << to)) >> to;
         
         
@@ -361,7 +360,7 @@ int moveIsPsuedoLegal(Board * board, uint16_t move){
         
             // If normal move, generate King attacks and compare to destination
             if (moveType == NORMAL_MOVE){
-                options = KingAttacks(from, ~friendly);
+                options = kingAttacks(from, ~friendly);
                 return (options & (1ull << to)) >> to;
             }
             

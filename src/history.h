@@ -24,9 +24,4 @@ void clearHistory(HistoryTable history);
 void updateHistory(HistoryTable history, uint16_t move, int colour, int isGood, int delta);
 int getHistoryScore(HistoryTable history, uint16_t move, int colour, int factor);
 
-#define HISTORY_GOOD  (0)
-#define HISTORY_TOTAL (1)
-
-#define HISTORY_MAX (0xFFFFF)
-
 #endif

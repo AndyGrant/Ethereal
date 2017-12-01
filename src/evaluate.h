@@ -27,6 +27,7 @@ typedef struct EvalTrace {
     int pawnPSQT[COLOUR_NB][SQUARE_NB];
     int pawnIsolated[COLOUR_NB];
     int pawnStacked[COLOUR_NB];
+    int pawnBackwards[COLOUR_NB][2];
     int pawnConnected[COLOUR_NB][SQUARE_NB];
     
     int knightCounts[COLOUR_NB];
@@ -73,7 +74,7 @@ typedef struct EvalInfo {
     int endgame[COLOUR_NB];
     int pawnMidgame[COLOUR_NB];
     int pawnEndgame[COLOUR_NB];
-    PawnEntry * pentry;
+    struct PawnEntry * pentry;
     
 } EvalInfo;
 

@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include <assert.h>
 
+#include "board.h"
 #include "bitboards.h"
 #include "bitutils.h"
 #include "castle.h"
@@ -27,6 +28,91 @@
 #include "movegen.h"
 #include "piece.h"
 #include "types.h"
+
+/* For Generating Attack BitBoards */
+
+uint64_t knightAttacks(int sq, uint64_t targets){
+    return KnightMap[sq] & targets;
+}
+
+uint64_t bishopAttacks(int sq, uint64_t occupied, uint64_t targets){
+    uint64_t mask = occupied & OccupancyMaskBishop[sq];
+    int index     = (mask * MagicNumberBishop[sq]) >> MagicShiftsBishop[sq];
+    return MoveDatabaseBishop[MagicBishopIndexes[sq] + index] & targets;
+}
+
+uint64_t rookAttacks(int sq, uint64_t occupied, uint64_t targets){
+    uint64_t mask = occupied & OccupancyMaskRook[sq];
+    int index     = (mask * MagicNumberRook[sq]) >> MagicShiftsRook[sq];
+    return MoveDatabaseRook[MagicRookIndexes[sq] + index] & targets;
+}
+
+uint64_t queenAttacks(int sq, uint64_t occupiedDiagonol, uint64_t occupiedStraight, uint64_t targets){
+    return  bishopAttacks(sq, occupiedDiagonol, targets)
+            | rookAttacks(sq, occupiedStraight, targets);
+}
+
+uint64_t kingAttacks(int sq, uint64_t targets){
+    return KingMap[sq] & targets;
+}
+
+
+/* For Building Actual Move Lists For Each Piece Type */
+
+void buildPawnMoves(uint16_t * moves, int * size, uint64_t attacks, int delta){
+    while (attacks){
+        int sq = poplsb(&attacks);
+        moves[(*size)++] = MoveMake(sq + delta, sq, NORMAL_MOVE);
+    }
+}
+
+void buildPawnPromotions(uint16_t * moves, int * size, uint64_t attacks, int delta){
+    while (attacks){
+        int sq = poplsb(&attacks);
+        moves[(*size)++] = MoveMake(sq + delta, sq,  QUEEN_PROMO_MOVE);
+        moves[(*size)++] = MoveMake(sq + delta, sq,   ROOK_PROMO_MOVE);
+        moves[(*size)++] = MoveMake(sq + delta, sq, BISHOP_PROMO_MOVE);
+        moves[(*size)++] = MoveMake(sq + delta, sq, KNIGHT_PROMO_MOVE);
+    }
+}
+
+void buildNonPawnMoves(uint16_t * moves, int * size, uint64_t attacks, int sq){
+    while (attacks){
+        int tg = poplsb(&attacks);
+        moves[(*size)++] = MoveMake(sq, tg, NORMAL_MOVE);
+    }
+}
+
+void buildKnightMoves(uint16_t * moves, int * size, uint64_t pieces, uint64_t targets){
+    while (pieces){
+        int sq = poplsb(&pieces);
+        buildNonPawnMoves(moves, size, knightAttacks(sq, targets), sq);
+    }
+}
+
+void buildBishopAndQueenMoves(uint16_t * moves, int * size, uint64_t pieces, uint64_t occupied, uint64_t targets){
+    while (pieces){
+        int sq = poplsb(&pieces);
+        buildNonPawnMoves(moves, size, bishopAttacks(sq, occupied, targets), sq);
+    }
+}
+
+void buildRookAndQueenMoves(uint16_t * moves, int * size, uint64_t pieces, uint64_t occupied, uint64_t targets){
+    while (pieces){
+        int sq = poplsb(&pieces);
+        buildNonPawnMoves(moves, size, rookAttacks(sq, occupied, targets), sq);
+    }
+}
+
+void buildKingMoves(uint16_t * moves, int * size, uint64_t pieces, uint64_t targets){
+    while (pieces){
+        int sq = poplsb(&pieces);
+        buildNonPawnMoves(moves, size, kingAttacks(sq, targets), sq);
+    }
+}
+
+
+/* For Building Full Move Lists */
 
 void genAllLegalMoves(Board * board, uint16_t * moves, int * size){
     
@@ -50,7 +136,7 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
     uint64_t pawnForwardOne, pawnForwardTwo, pawnLeft, pawnRight;
     uint64_t pawnPromoForward, pawnPromoLeft, pawnPromoRight;
     
-    int bit, lsb, forwardShift, leftShift, rightShift;
+    int forwardShift, leftShift, rightShift;
     int epSquare = board->epSquare, castleKing, castleQueen;
     
     uint64_t friendly = board->colours[board->turn];
@@ -59,7 +145,6 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
     uint64_t empty = ~(friendly | enemy);
     uint64_t notEmpty = ~empty;
     uint64_t notFriendly = ~friendly;
-    uint64_t attackable;
     
     uint64_t myPawns   = friendly &  board->pieces[PAWN];
     uint64_t myKnights = friendly &  board->pieces[KNIGHT];
@@ -178,7 +263,6 @@ void genAllNoisyMoves(Board * board, uint16_t * moves, int * size){
     uint64_t pawnPromoLeft;
     uint64_t pawnPromoRight;
     
-    int bit, lsb;
     int forwardShift, leftShift, rightShift;
     int epSquare = board->epSquare;
     
@@ -187,7 +271,6 @@ void genAllNoisyMoves(Board * board, uint16_t * moves, int * size){
     
     uint64_t empty = ~(friendly | enemy);
     uint64_t notEmpty = ~empty;
-    uint64_t attackable;
     
     uint64_t myPawns   = friendly &  board->pieces[PAWN];
     uint64_t myKnights = friendly &  board->pieces[KNIGHT];
@@ -262,7 +345,7 @@ void genAllNoisyMoves(Board * board, uint16_t * moves, int * size){
 
 void genAllQuietMoves(Board * board, uint16_t * moves, int * size){
      
-    int bit, lsb, castleKing, castleQueen;
+    int castleKing, castleQueen;
     
     uint64_t pawnForwardOne;
     uint64_t pawnForwardTwo;
@@ -272,7 +355,6 @@ void genAllQuietMoves(Board * board, uint16_t * moves, int * size){
     
     uint64_t empty = ~(friendly | enemy);
     uint64_t notEmpty = ~empty;
-    uint64_t attackable;
     
     uint64_t myPawns   = friendly &  board->pieces[PAWN];
     uint64_t myKnights = friendly &  board->pieces[KNIGHT];
@@ -332,7 +414,7 @@ void genAllQuietMoves(Board * board, uint16_t * moves, int * size){
 }
 
 int isNotInCheck(Board * board, int turn){
-    int kingsq = getLSB(board->colours[turn] & board->pieces[KING]);
+    int kingsq = getlsb(board->colours[turn] & board->pieces[KING]);
     assert(board->squares[kingsq] == WHITE_KING + turn);
     return !squareIsAttacked(board, turn, kingsq);
 }
@@ -366,16 +448,16 @@ int squareIsAttacked(Board * board, int turn, int sq){
     }
     
     // Knights
-    if (enemyKnights && KnightAttacks(sq, enemyKnights)) return 1;
+    if (enemyKnights && knightAttacks(sq, enemyKnights)) return 1;
     
     // Bishops and Queens
-    if (enemyBishops && BishopAttacks(sq, notEmpty, enemyBishops)) return 1;
+    if (enemyBishops && bishopAttacks(sq, notEmpty, enemyBishops)) return 1;
     
     // Rooks and Queens
-    if (enemyRooks && RookAttacks(sq, notEmpty, enemyRooks)) return 1;
+    if (enemyRooks && rookAttacks(sq, notEmpty, enemyRooks)) return 1;
     
     // King
-    if (KingAttacks(sq, enemyKings)) return 1;
+    if (kingAttacks(sq, enemyKings)) return 1;
     
     return 0;
 }

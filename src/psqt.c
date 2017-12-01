@@ -96,8 +96,8 @@ void initalizePSQT(){
     
     for (sq = 0; sq < SQUARE_NB; sq++){
 
-        w32 = RelativeSquare32(sq, WHITE);
-        b32 = RelativeSquare32(sq, BLACK);
+        w32 = relativeSquare32(sq, WHITE);
+        b32 = relativeSquare32(sq, BLACK);
 
         PSQTMidgame[WHITE_PAWN  ][sq] = + PieceValues[PAWN  ][MG] +   PawnPSQT32[w32][MG];
         PSQTEndgame[WHITE_PAWN  ][sq] = + PieceValues[PAWN  ][EG] +   PawnPSQT32[w32][EG];

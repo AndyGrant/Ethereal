@@ -51,7 +51,7 @@ uint16_t KillerMoves[MAX_HEIGHT][2];
 
 uint16_t getBestMove(SearchInfo * info){
     
-    uint64_t lastBestMove = NONE_MOVE;
+    uint16_t lastBestMove = NONE_MOVE;
     int i, depth, elapsed, hashfull, lastValue = 0, value = 0;
     int values[MAX_DEPTH];
     
@@ -75,11 +75,13 @@ uint16_t getBestMove(SearchInfo * info){
         // Perform full search on Root
         values[depth] = value = aspirationWindow(&pv, &info->board, depth, values);
         
-        if (depth >= 4 && lastValue > value + 8)
-            info->idealTimeUsage = MIN(info->maxTimeUsage, info->idealTimeUsage * 1.10);
-        
-        if (depth >= 4 && pv.line[0] != lastBestMove)
-            info->idealTimeUsage = MIN(info->maxTimeUsage, info->idealTimeUsage * 1.35);
+        if (info->searchIsTimeLimited){
+            if (depth >= 4 && lastValue > value + 8)
+                info->idealTimeUsage = MIN(info->maxTimeUsage, info->idealTimeUsage * 1.10);
+            
+            if (depth >= 4 && pv.line[0] != lastBestMove)
+                info->idealTimeUsage = MIN(info->maxTimeUsage, info->idealTimeUsage * 1.35);
+        }
         
         lastValue = value;
         lastBestMove = pv.line[0];
@@ -244,18 +246,18 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
         
         // Entry move may be good in this position. If it is tactical,
         // we may use it to increase reductions later on in LMR.
-        ttMove = EntryMove(*ttEntry);
+        ttMove = ttEntry->bestMove;
         ttTactical = moveIsTactical(board, ttMove);
         
         // Step 6A. Check to see if this entry allows us to exit this
         // node early. We choose not to do this in the PV line, not because
         // we can't, but because don't want truncated PV lines
-        if (!PvNode && EntryDepth(*ttEntry) >= depth){
+        if (!PvNode && ttEntry->depth >= depth){
+
+            rAlpha = alpha; rBeta = beta;
                 
-            ttValue = valueFromTT(EntryValue(*ttEntry), height);
-            ttType = EntryType(*ttEntry);
-            rAlpha = alpha;
-            rBeta = beta;
+            ttValue = valueFromTT(ttEntry->value, height);
+            ttType = ttEntry->type;
             
             switch (ttType){
                 case  PVNODE: return ttValue;
@@ -346,7 +348,7 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
         
         // Probe for the newly found move, and update ttMove / ttTactical
         if ((ttEntry = getTranspositionEntry(&Table, board->hash)) != NULL){
-            ttMove = EntryMove(*ttEntry);
+            ttMove = ttEntry->bestMove;
             ttTactical = moveIsTactical(board, ttMove);
         }
     }
@@ -603,4 +605,3 @@ int valueToTT(int value, int height){
          : value <= -MATE + MAX_HEIGHT ? value - height
          : value;
 }
-

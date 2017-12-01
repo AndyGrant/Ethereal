@@ -18,6 +18,7 @@
 
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "bitboards.h"
 #include "tests.h"

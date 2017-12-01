@@ -39,6 +39,7 @@ extern const int PawnValue[PHASE_NB];
 extern const int PawnPSQT32[32][PHASE_NB];
 extern const int PawnIsolated[PHASE_NB];
 extern const int PawnStacked[PHASE_NB];
+extern const int PawnBackwards[2][PHASE_NB];
 extern const int PawnConnected32[32][PHASE_NB];
 
 // To determine the starting values for the Knight terms
@@ -189,17 +190,20 @@ void initializeCoefficients(TexelEntry * te){
     te->coeffs[i++] = T.pawnCounts[WHITE] - T.pawnCounts[BLACK];
     
     for (a = 0; a < 64; a++){
-        te->coeffs[i + RelativeSquare32(a, WHITE)] += T.pawnPSQT[WHITE][a];
-        te->coeffs[i + RelativeSquare32(a, BLACK)] -= T.pawnPSQT[BLACK][a];
+        te->coeffs[i + relativeSquare32(a, WHITE)] += T.pawnPSQT[WHITE][a];
+        te->coeffs[i + relativeSquare32(a, BLACK)] -= T.pawnPSQT[BLACK][a];
     } i += 32;
     
     te->coeffs[i++] = T.pawnIsolated[WHITE] - T.pawnIsolated[BLACK];
     
     te->coeffs[i++] = T.pawnStacked[WHITE] - T.pawnStacked[BLACK];
     
+    for (a = 0; a < 2; a++)
+        te->coeffs[i++] = T.pawnBackwards[WHITE][a] - T.pawnBackwards[BLACK][a];
+    
     for (a = 0; a < 64; a++){
-        te->coeffs[i + RelativeSquare32(a, WHITE)] += T.pawnConnected[WHITE][a];
-        te->coeffs[i + RelativeSquare32(a, BLACK)] -= T.pawnConnected[BLACK][a];
+        te->coeffs[i + relativeSquare32(a, WHITE)] += T.pawnConnected[WHITE][a];
+        te->coeffs[i + relativeSquare32(a, BLACK)] -= T.pawnConnected[BLACK][a];
     } i += 32;
     
     
@@ -208,8 +212,8 @@ void initializeCoefficients(TexelEntry * te){
     te->coeffs[i++] = T.knightCounts[WHITE] - T.knightCounts[BLACK];
     
     for (a = 0; a < 64; a++){
-        te->coeffs[i + RelativeSquare32(a, WHITE)] += T.knightPSQT[WHITE][a];
-        te->coeffs[i + RelativeSquare32(a, BLACK)] -= T.knightPSQT[BLACK][a];
+        te->coeffs[i + relativeSquare32(a, WHITE)] += T.knightPSQT[WHITE][a];
+        te->coeffs[i + relativeSquare32(a, BLACK)] -= T.knightPSQT[BLACK][a];
     } i += 32;
     
     for (a = 0; a < 2; a++)
@@ -224,8 +228,8 @@ void initializeCoefficients(TexelEntry * te){
     te->coeffs[i++] = T.bishopCounts[WHITE] - T.bishopCounts[BLACK];
     
     for (a = 0; a < 64; a++){
-        te->coeffs[i + RelativeSquare32(a, WHITE)] += T.bishopPSQT[WHITE][a];
-        te->coeffs[i + RelativeSquare32(a, BLACK)] -= T.bishopPSQT[BLACK][a];
+        te->coeffs[i + relativeSquare32(a, WHITE)] += T.bishopPSQT[WHITE][a];
+        te->coeffs[i + relativeSquare32(a, BLACK)] -= T.bishopPSQT[BLACK][a];
     } i += 32;
     
     te->coeffs[i++] = T.bishopWings[WHITE] - T.bishopWings[BLACK];
@@ -244,8 +248,8 @@ void initializeCoefficients(TexelEntry * te){
     te->coeffs[i++] = T.rookCounts[WHITE] - T.rookCounts[BLACK];
     
     for (a = 0; a < 64; a++){
-        te->coeffs[i + RelativeSquare32(a, WHITE)] += T.rookPSQT[WHITE][a];
-        te->coeffs[i + RelativeSquare32(a, BLACK)] -= T.rookPSQT[BLACK][a];
+        te->coeffs[i + relativeSquare32(a, WHITE)] += T.rookPSQT[WHITE][a];
+        te->coeffs[i + relativeSquare32(a, BLACK)] -= T.rookPSQT[BLACK][a];
     } i += 32;
     
     for (a = 0; a < 2; a++)
@@ -262,8 +266,8 @@ void initializeCoefficients(TexelEntry * te){
     te->coeffs[i++] = T.queenCounts[WHITE] - T.queenCounts[BLACK];
     
     for (a = 0; a < 64; a++){
-        te->coeffs[i + RelativeSquare32(a, WHITE)] += T.queenPSQT[WHITE][a];
-        te->coeffs[i + RelativeSquare32(a, BLACK)] -= T.queenPSQT[BLACK][a];
+        te->coeffs[i + relativeSquare32(a, WHITE)] += T.queenPSQT[WHITE][a];
+        te->coeffs[i + relativeSquare32(a, BLACK)] -= T.queenPSQT[BLACK][a];
     } i += 32;
     
     for (a = 0; a < 28; a++)
@@ -273,8 +277,8 @@ void initializeCoefficients(TexelEntry * te){
     // Intitialize coefficients for the kings
     
     for (a = 0; a < 64; a++){
-        te->coeffs[i + RelativeSquare32(a, WHITE)] += T.kingPSQT[WHITE][a];
-        te->coeffs[i + RelativeSquare32(a, BLACK)] -= T.kingPSQT[BLACK][a];
+        te->coeffs[i + relativeSquare32(a, WHITE)] += T.kingPSQT[WHITE][a];
+        te->coeffs[i + relativeSquare32(a, BLACK)] -= T.kingPSQT[BLACK][a];
     } i += 32;
     
     
@@ -305,6 +309,11 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
     
     cparams[i  ][MG] = PawnStacked[MG];
     cparams[i++][EG] = PawnStacked[EG];
+    
+    for (a = 0; a < 2; a++, i++){
+        cparams[i][MG] = PawnBackwards[a][MG];
+        cparams[i][EG] = PawnBackwards[a][EG];
+    }
     
     for (a = 0; a < 32; a++, i++){
         cparams[i][MG] = PawnConnected32[a][MG];
@@ -470,6 +479,10 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
     printf("\nconst int PawnIsolated[PHASE_NB] = {%4d,%4d};\n", (int)tparams[i][MG], (int)tparams[i][EG]); i++;
     
     printf("\nconst int PawnStacked[PHASE_NB] = {%4d,%4d};\n", (int)tparams[i][MG], (int)tparams[i][EG]); i++;
+    
+    printf("\nconst int PawnBackwards[2][PHASE_NB] = { {%4d,%4d}, {%4d,%4d} };\n",
+            (int)tparams[i  ][MG], (int)tparams[i  ][EG],
+            (int)tparams[i+1][MG], (int)tparams[i+1][EG]); i += 2;
     
     printf("\nconst int PawnConnected32[32][PHASE_NB] = {");
     for (x = 0; x < 8; x++){

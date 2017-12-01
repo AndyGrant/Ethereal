@@ -16,6 +16,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <assert.h>
+
 #include "castle.h"
 
 const int CastleMask[64] = {
@@ -29,5 +31,12 @@ const int CastleMask[64] = {
     7, 15, 15, 15,  3, 15, 15, 11 
 };
 
-const int RookFromLookupTable[2] = {-4, 3};
-const int RookToLookupTable[2] = {-1, 1};
+int castleGetRookFrom(int from, int to){
+    static const int table[2] = {-4, 3};
+    return from + table[(to >> 2) & 1];
+}
+
+int castleGetRookTo(int from, int to){
+    static const int table[2] = {-1, 1};
+    return from + table[(to >> 2) & 1];
+}
