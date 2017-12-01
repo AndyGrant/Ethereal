@@ -17,8 +17,7 @@
 */
 
 #include "types.h"
-
-const int SQTable[FILE_NB] = {0, 1, 2, 3, 3, 2, 1, 0};
+#include "square.h"
 
 const int SQInv[SQUARE_NB] = {
     56,  57,  58,  59,  60,  61,  62,  63,
@@ -30,3 +29,16 @@ const int SQInv[SQUARE_NB] = {
      8,   9,  10,  11,  12,  13,  14,  15,
      0,   1,   2,   3,   4,   5,   6,   7,
 };
+
+int relativeSquare(int sq, int colour){
+    return colour == WHITE ? sq : SQInv[sq];
+}
+
+int relativeSquare32(int sq, int colour){
+    return colour == WHITE ? square32(sq) : square32(SQInv[sq]);
+}
+
+int square32(int sq){
+    static const int table[FILE_NB] = {0, 1, 2, 3, 3, 2, 1, 0};
+    return ((sq >> 3) << 2) + table[sq & 0x7];
+}

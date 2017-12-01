@@ -23,22 +23,19 @@
 
 #include "types.h"
 
-#define WHITE_CASTLE_KING_SIDE_MAP  ((1ull <<  5) + (1ull <<  6))
-#define BLACK_CASTLE_KING_SIDE_MAP  ((1ull << 61) + (1ull << 62))
-#define WHITE_CASTLE_QUEEN_SIDE_MAP ((1ull <<  1) + (1ull <<  2) + (1ull <<  3))
-#define BLACK_CASTLE_QUEEN_SIDE_MAP ((1ull << 57) + (1ull << 58) + (1ull << 59))
+#define WHITE_CASTLE_KING_SIDE_MAP  ((1ull <<  5) | (1ull <<  6))
+#define BLACK_CASTLE_KING_SIDE_MAP  ((1ull << 61) | (1ull << 62))
+#define WHITE_CASTLE_QUEEN_SIDE_MAP ((1ull <<  1) | (1ull <<  2) | (1ull <<  3))
+#define BLACK_CASTLE_QUEEN_SIDE_MAP ((1ull << 57) | (1ull << 58) | (1ull << 59))
 
 #define WHITE_KING_RIGHTS     (1)
 #define WHITE_QUEEN_RIGHTS    (2)
 #define BLACK_KING_RIGHTS     (4)
 #define BLACK_QUEEN_RIGHTS    (8)
 
+int castleGetRookFrom(int from, int to);
+int castleGetRookTo(int from, int to);
+
 extern const int CastleMask[SQUARE_NB];
-
-extern const int RookFromLookupTable[2];
-extern const int RookToLookupTable[2];
-
-#define CastleGetRookFrom(from,to) (from + RookFromLookupTable[(to) > (from)])
-#define CastleGetRookTo(from,to)   (from + RookToLookupTable[(to) > (from)])
 
 #endif

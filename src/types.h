@@ -37,102 +37,45 @@
 #define FILE_NB   ( 8)
 #define PHASE_NB  ( 2)
 
+#define PVNODE  (1)
+#define CUTNODE (2)
+#define ALLNODE (3)
+
+#define BUCKET_SIZE (4)
+
 #define MG (0)
 #define EG (1)
 
-typedef struct Board {
-    uint8_t squares[SQUARE_NB];
-    uint64_t pieces[8]; 
-    uint64_t colours[3];
-    uint64_t hash;
-    uint64_t phash;
-    int turn;
-    int castleRights;
-    int epSquare;
-    int fiftyMoveRule;
-    int midgame;
-    int endgame;
-    int numMoves;
-    uint64_t history[256];
-    
-} Board;
+struct Board;
+typedef struct Board Board;
 
-typedef struct Undo {
-    uint64_t hash;
-    uint64_t phash;
-    int turn;
-    int castleRights;
-    int epSquare;
-    int fiftyMoveRule;
-    int midgame;
-    int endgame;
-    int captureSquare;
-    int capturePiece;
-} Undo;
+struct Undo;
+typedef struct Undo Undo;
 
-typedef struct TransEntry {
-    uint8_t depth;
-    uint8_t data;
-    int16_t value;
-    uint16_t bestMove;
-    uint16_t hash16;
-    
-} TransEntry;
+struct SearchInfo;
+typedef struct SearchInfo SearchInfo;
 
-typedef struct TransBucket {
-    TransEntry entries[4];
-    
-} TransBucket;
+struct TransEntry;
+typedef struct TransEntry TransEntry;
 
-typedef struct TransTable {
-    TransBucket * buckets;
-    uint64_t numBuckets;
-    uint64_t used;
-    uint64_t keySize;
-    uint8_t generation;
-    
-} TransTable;
+struct TransBucket;
+typedef struct TransBucket TransBucket;
 
-typedef struct SearchInfo {
-    Board board;
-    int searchIsInfinite;
-    int searchIsDepthLimited;
-    int searchIsTimeLimited;
-    int depthLimit;
-    int terminateSearch;
-    double startTime;
-    double idealTimeUsage;
-    double maxTimeUsage;;
-    
-} SearchInfo;
+struct TransTable;
+typedef struct TransTable TransTable;
 
-typedef struct PawnEntry {
-    uint64_t phash;
-    uint64_t passed;
-    int mg, eg;
-    
-} PawnEntry;
+struct PawnEntry;
+typedef struct PawnEntry PawnEntry;
 
-typedef struct PawnTable {
-    PawnEntry * entries;
-    
-} PawnTable;
+struct PawnTable;
+typedef struct PawnTable PawnTable;
 
-typedef struct PVariation {
-    uint16_t line[MAX_HEIGHT];
-    int length;
-    
-} PVariation;
+struct MovePicker;
+typedef struct MovePicker MovePicker;
 
-typedef int HistoryTable[COLOUR_NB][SQUARE_NB][SQUARE_NB][2]; 
+struct PVariation;
+typedef struct PVariation PVariation;
 
-typedef struct MovePicker {
-    int pickQuiets, stage, split;
-    int noisySize, badSize, quietSize;
-    uint16_t tableMove, killer1, killer2;
-    uint16_t moves[MAX_MOVES];
-    int values[MAX_MOVES];
-    
-} MovePicker;
+typedef uint32_t HistoryTable[COLOUR_NB][SQUARE_NB][SQUARE_NB][2]; 
 
 #endif

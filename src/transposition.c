@@ -30,27 +30,53 @@ PawnTable PTable;
 
 void initalizeTranspositionTable(TransTable * table, uint64_t megabytes){
     
-    // Default table size uses a 16bit key, which
-    // results in a table using 16MB of memory.
+    // Minimum table size is 1MB. This maps to a key of size 15.
+    // We start at 16, because the loop to adjust the memory
+    // size to a power of two ends with a decrement of keySize
     uint64_t keySize = 16ull;
     
-    // Determine the keysize for the first power of
-    // two less than than or equal to megaBytes. We
-    // assume here that every bucket is 256 bits
+    // Every bucket must be 256 bits for the following scaling
     assert(sizeof(TransBucket) == 32);
+
+    // Scale down the table to the closest power of 2, at or below megabytes
     for (;1ull << (keySize + 5) <= megabytes << 20 ; keySize++);
     keySize -= 1;
     
     // Setup Table's data members
-    table->buckets = calloc(1 << keySize, sizeof(TransBucket));
-    table->numBuckets = 1 << keySize;
-    table->keySize = keySize;
-    table->generation = 0;
-    table->used = 0;
+    table->buckets      = calloc(1ull << keySize, sizeof(TransBucket));
+    table->numBuckets   = 1ull << keySize;
+    table->keySize      = keySize;
+    table->generation   = 0u;
+    table->used         = 0u;
 }
 
 void destroyTranspositionTable(TransTable * table){
     free(table->buckets);
+}
+
+void updateTranspositionTable(TransTable * table){
+    table->generation = (table->generation + 1) % 64;
+}
+
+void clearTranspositionTable(TransTable * table){
+    
+    unsigned int i; int j;
+    TransEntry * entry;
+    
+    table->generation = 0u;
+    table->used = 0u;
+    
+    for (i = 0u; i < table->numBuckets; i++){
+        for (j = 0; j < BUCKET_SIZE; j++){
+            entry = &(table->buckets[i].entries[j]);
+            entry->value = 0;
+            entry->depth = 0u;
+            entry->age = 0u;
+            entry->type = 0u;
+            entry->bestMove = 0u;
+            entry->hash16 = 0u;
+        }
+    }
 }
 
 TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash){
@@ -60,8 +86,8 @@ TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash){
     
     // Search for a matching entry. Update the generation if found.
     for (i = 0; i < BUCKET_SIZE; i++){
-        if (EntryHash16(bucket->entries[i]) == hash16){
-            EntrySetAge(&(bucket->entries[i]), table->generation);
+        if (bucket->entries[i].hash16 == hash16){
+            bucket->entries[i].age = table->generation;
             return &(bucket->entries[i]);
         }
     }
@@ -88,26 +114,26 @@ void storeTranspositionEntry(TransTable * table, int depth, int type, int value,
     for (i = 0; i < BUCKET_SIZE; i++){
         
         // Found an unused entry
-        if (EntryType(entries[i]) == 0){
+        if (entries[i].type == 0){
             table->used += 1;
             toReplace = &(entries[i]);
             goto Replace;
         }
         
         // Found an entry with the same hash key
-        if (EntryHash16(entries[i]) == hash16){
+        if (entries[i].hash16 == hash16){
             toReplace = &(entries[i]);
             goto Replace;
         }
         
         // Search for the lowest draft of an old entry
-        if (EntryAge(entries[i]) != table->generation)
-            if (oldOption == NULL || EntryDepth(*oldOption) >= EntryDepth(entries[i]))
+        if (entries[i].age != table->generation)
+            if (oldOption == NULL || oldOption->depth >= entries[i].depth)
                 oldOption = &(entries[i]);
         
         // Search for the lowest draft if no old entry has been found yet
         if (oldOption == NULL)
-            if (lowDraftOption == NULL || EntryDepth(*lowDraftOption) >= EntryDepth(entries[i]))
+            if (lowDraftOption == NULL || lowDraftOption->depth >= entries[i].depth)
                 lowDraftOption = &(entries[i]);
     }
     
@@ -115,35 +141,12 @@ void storeTranspositionEntry(TransTable * table, int depth, int type, int value,
     toReplace = oldOption != NULL ? oldOption : lowDraftOption;
     
     Replace:
-        toReplace->depth = depth;
-        toReplace->data = (table->generation << 2) | (type);
-        toReplace->value = value;
+        toReplace->value    = value;
+        toReplace->depth    = depth;
+        toReplace->age      = table->generation;
+        toReplace->type     = type;
         toReplace->bestMove = bestMove;
-        toReplace->hash16 = hash16;
-}
-
-void updateTranspositionTable(TransTable * table){
-    table->generation = (table->generation + 1) % 64;
-}
-
-void clearTranspositionTable(TransTable * table){
-    
-    unsigned int i; int j;
-    TransEntry * entry;
-    
-    table->generation = 0;
-    table->used = 0;
-    
-    for (i = 0u; i < table->numBuckets; i++){
-        for (j = 0; j < BUCKET_SIZE; j++){
-            entry = &(table->buckets[i].entries[j]);
-            entry->depth = 0u;
-            entry->data = 0u;
-            entry->value = 0;
-            entry->bestMove = 0u;
-            entry->hash16 = 0u;
-        }
-    }
+        toReplace->hash16   = hash16;
 }
 
 void initalizePawnTable(PawnTable * ptable){

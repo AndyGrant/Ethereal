@@ -21,6 +21,7 @@
 #include <string.h>
 #include <assert.h>
 
+#include "board.h"
 #include "bitboards.h"
 #include "bitutils.h"
 #include "castle.h"
@@ -299,8 +300,7 @@ void evaluatePawns(EvalInfo * ei, Board * board, int colour){
     while (tempPawns != 0ull){
         
         // Pop off the next pawn
-        sq = getLSB(tempPawns);
-        tempPawns ^= 1ull << sq;
+        sq = poplsb(&tempPawns);
         
         if (TRACE) T.pawnCounts[colour]++;
         if (TRACE) T.pawnPSQT[colour][sq]++;
@@ -331,12 +331,13 @@ void evaluatePawns(EvalInfo * ei, Board * board, int colour){
             
             ei->pawnMidgame[colour] += PawnBackwards[semi][MG];
             ei->pawnEndgame[colour] += PawnBackwards[semi][EG];
+            if (TRACE) T.pawnBackwards[colour][semi]++;
         }
         
         // Apply a bonus if the pawn is connected
         if (PawnConnectedMasks[colour][sq] & myPawns){
-            ei->pawnMidgame[colour] += PawnConnected32[RelativeSquare32(sq, colour)][MG];
-            ei->pawnEndgame[colour] += PawnConnected32[RelativeSquare32(sq, colour)][EG];
+            ei->pawnMidgame[colour] += PawnConnected32[relativeSquare32(sq, colour)][MG];
+            ei->pawnEndgame[colour] += PawnConnected32[relativeSquare32(sq, colour)][EG];
             if (TRACE) T.pawnConnected[colour][sq]++;
         }
     }
@@ -354,15 +355,14 @@ void evaluateKnights(EvalInfo * ei, Board * board, int colour){
     while (tempKnights){
         
         // Pop off the next knight
-        sq = getLSB(tempKnights);
-        tempKnights ^= (1ull << sq);
+        sq = poplsb(&tempKnights);
         
         if (TRACE) T.knightCounts[colour]++;
         if (TRACE) T.knightPSQT[colour][sq]++;
         
         // Update the attacks array with the knight attacks. We will use this to
         // determine whether or not passed pawns may advance safely later on.
-        attacks = KnightAttacks(sq, ~0ull);
+        attacks = knightAttacks(sq, ~0ull);
         ei->attacked[colour] |= attacks;
         
         // Apply a bonus if the knight is on an outpost square, and cannot be attacked
@@ -420,15 +420,14 @@ void evaluateBishops(EvalInfo * ei, Board * board, int colour){
     while (tempBishops){
         
         // Pop off the next Bishop
-        sq = getLSB(tempBishops);
-        tempBishops ^= (1ull << sq);
+        sq = poplsb(&tempBishops);
         
         if (TRACE) T.bishopCounts[colour]++;
         if (TRACE) T.bishopPSQT[colour][sq]++;
         
         // Update the attacks array with the bishop attacks. We will use this to
         // determine whether or not passed pawns may advance safely later on.
-        attacks = BishopAttacks(sq, ei->occupiedMinusBishops[colour], ~0ull);
+        attacks = bishopAttacks(sq, ei->occupiedMinusBishops[colour], ~0ull);
         ei->attacked[colour] |= attacks;
         
         // Apply a bonus if the bishop is on an outpost square, and cannot be attacked
@@ -472,15 +471,14 @@ void evaluateRooks(EvalInfo * ei, Board * board, int colour){
     while (tempRooks){
         
         // Pop off the next rook
-        sq = getLSB(tempRooks);
-        tempRooks ^= (1ull << sq);
+        sq = poplsb(&tempRooks);
         
         if (TRACE) T.rookCounts[colour]++;
         if (TRACE) T.rookPSQT[colour][sq]++;
         
         // Update the attacks array with the rooks attacks. We will use this to
         // determine whether or not passed pawns may advance safely later on.
-        attacks = RookAttacks(sq, ei->occupiedMinusRooks[colour], ~0ull);
+        attacks = rookAttacks(sq, ei->occupiedMinusRooks[colour], ~0ull);
         ei->attacked[colour] |= attacks;
         
         // Rook is on a semi-open file if there are no
@@ -529,16 +527,15 @@ void evaluateQueens(EvalInfo * ei, Board * board, int colour){
     while (tempQueens){
         
         // Pop off the next queen
-        sq = getLSB(tempQueens);
-        tempQueens ^= (1ull << sq);
+        sq = poplsb(&tempQueens);
         
         if (TRACE) T.queenCounts[colour]++;
         if (TRACE) T.queenPSQT[colour][sq]++;
         
         // Update the attacks array with the rooks attacks. We will use this to
         // determine whether or not passed pawns may advance safely later on.
-        attacks = RookAttacks(sq, ei->occupiedMinusRooks[colour], ~0ull)
-                | BishopAttacks(sq, ei->occupiedMinusBishops[colour], ~0ull);
+        attacks = rookAttacks(sq, ei->occupiedMinusRooks[colour], ~0ull)
+                | bishopAttacks(sq, ei->occupiedMinusBishops[colour], ~0ull);
         ei->attacked[colour] |= attacks;
             
         // Apply a bonus (or penalty) based on the mobility of the queen
@@ -561,7 +558,7 @@ void evaluateKings(EvalInfo * ei, Board * board, int colour){
     
     int attackCounts;
     
-    if (TRACE) T.kingPSQT[colour][getLSB(board->colours[colour] & board->pieces[KING])]++;
+    if (TRACE) T.kingPSQT[colour][getlsb(board->colours[colour] & board->pieces[KING])]++;
     
     // If we have two or more threats to our king area, we will apply a penalty
     // based on the number of squares attacked, and the strength of the attackers
@@ -596,8 +593,7 @@ void evaluatePassedPawns(EvalInfo * ei, Board * board, int colour){
     while (tempPawns != 0ull){
         
         // Pop off the next passed Pawn
-        sq = getLSB(tempPawns);
-        tempPawns ^= (1ull << sq);
+        sq = poplsb(&tempPawns);
         
         // Determine the releative rank
         rank = (colour == BLACK) ? (7 - Rank(sq)) : Rank(sq);
@@ -630,8 +626,8 @@ void initializeEvalInfo(EvalInfo * ei, Board * board){
     uint64_t whitePawns = white & pawns;
     uint64_t blackPawns = black & pawns;
     
-    int wKingSq = getLSB((white & kings));
-    int bKingSq = getLSB((black & kings));
+    int wKingSq = getlsb((white & kings));
+    int bKingSq = getlsb((black & kings));
     
     ei->pawnAttacks[WHITE] = ((whitePawns << 9) & ~FILE_A) | ((whitePawns << 7) & ~FILE_H);
     ei->pawnAttacks[BLACK] = ((blackPawns >> 9) & ~FILE_H) | ((blackPawns >> 7) & ~FILE_A);
@@ -645,8 +641,8 @@ void initializeEvalInfo(EvalInfo * ei, Board * board){
     ei->mobilityAreas[WHITE] = ~(ei->pawnAttacks[BLACK] | (white & kings) | ei->blockedPawns[WHITE]);
     ei->mobilityAreas[BLACK] = ~(ei->pawnAttacks[WHITE] | (black & kings) | ei->blockedPawns[BLACK]);
     
-    ei->attacked[WHITE] = KingAttacks(wKingSq, ~0ull);
-    ei->attacked[BLACK] = KingAttacks(bKingSq, ~0ull);
+    ei->attacked[WHITE] = kingAttacks(wKingSq, ~0ull);
+    ei->attacked[BLACK] = kingAttacks(bKingSq, ~0ull);
     
     ei->occupiedMinusBishops[WHITE] = (white | black) ^ (white & (bishops | queens));
     ei->occupiedMinusBishops[BLACK] = (white | black) ^ (black & (bishops | queens));
@@ -668,4 +664,3 @@ void initializeEvalInfo(EvalInfo * ei, Board * board){
     if (TEXEL) ei->pentry = NULL;
     else       ei->pentry = getPawnEntry(&PTable, board->phash);
 }
-

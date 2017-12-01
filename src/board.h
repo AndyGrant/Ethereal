@@ -21,6 +21,35 @@
 
 #include "types.h"
 
+typedef struct Board {
+    uint8_t squares[SQUARE_NB];
+    uint64_t pieces[8]; 
+    uint64_t colours[3];
+    uint64_t hash;
+    uint64_t phash;
+    int turn;
+    int castleRights;
+    int epSquare;
+    int fiftyMoveRule;
+    int midgame;
+    int endgame;
+    int numMoves;
+    uint64_t history[256];
+} Board;
+
+typedef struct Undo {
+    uint64_t hash;
+    uint64_t phash;
+    int turn;
+    int castleRights;
+    int epSquare;
+    int fiftyMoveRule;
+    int midgame;
+    int endgame;
+    int captureSquare;
+    int capturePiece;
+} Undo;
+
 void initalizeBoard(Board * board, char * fen);
 void printBoard(Board * board);
 uint64_t perft(Board * board, int depth);

@@ -23,29 +23,47 @@
 
 #include "types.h"
 
+typedef struct TransEntry {
+    int16_t value;
+    uint8_t depth;
+    uint8_t age: 6, type: 2;
+    uint16_t bestMove, hash16;
+} TransEntry;
+
+typedef struct TransBucket {
+    TransEntry entries[BUCKET_SIZE];
+} TransBucket;
+
+typedef struct TransTable {
+    TransBucket * buckets;
+    uint64_t numBuckets;
+    uint64_t used;
+    uint64_t keySize;
+    uint8_t generation;
+} TransTable;
+
+typedef struct PawnEntry {
+    uint64_t phash;
+    uint64_t passed;
+    int mg, eg;
+} PawnEntry;
+
+typedef struct PawnTable {
+    PawnEntry * entries;
+} PawnTable;
+
 void initalizeTranspositionTable(TransTable * table, uint64_t megabytes);
 void destroyTranspositionTable(TransTable * table);
-TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash);
-void storeTranspositionEntry(TransTable * table, int depth, int type, int value, int bestMove, uint64_t hash);
 void updateTranspositionTable(TransTable * table);
 void clearTranspositionTable(TransTable * table);
+
+TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash);
+void storeTranspositionEntry(TransTable * table, int depth, int type, int value, int bestMove, uint64_t hash);
+
 void initalizePawnTable(PawnTable * ptable);
 void destoryPawnTable(PawnTable * ptable);
+
 PawnEntry * getPawnEntry(PawnTable * ptable, uint64_t phash);
 void storePawnEntry(PawnTable * ptable, uint64_t phash, uint64_t passed, int mg, int eg);
-
-#define PVNODE  (1)
-#define CUTNODE (2)
-#define ALLNODE (3)
-
-#define BUCKET_SIZE (4)
-
-#define EntrySetAge(e,a) ((e)->data = ((a) << 2) | ((e)->data & 3))
-#define EntryDepth(e)    ((e).depth)
-#define EntryHash16(e)   ((e).hash16)
-#define EntryAge(e)      ((e).data >> 2)
-#define EntryType(e)     ((e).data & 3)
-#define EntryMove(e)     ((e).bestMove)
-#define EntryValue(e)    ((e).value)
 
 #endif 

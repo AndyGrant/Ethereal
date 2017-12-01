@@ -23,6 +23,23 @@
 
 #include "types.h"
 
+typedef struct SearchInfo {
+    Board board;
+    int searchIsInfinite;
+    int searchIsDepthLimited;
+    int searchIsTimeLimited;
+    int depthLimit;
+    int terminateSearch;
+    double startTime;
+    double idealTimeUsage;
+    double maxTimeUsage;
+} SearchInfo;
+
+typedef struct PVariation {
+    uint16_t line[MAX_HEIGHT];
+    int length;
+} PVariation;
+
 uint16_t getBestMove(SearchInfo * info);
 int aspirationWindow(PVariation * pv, Board * board, int depth, int values[MAX_DEPTH]);
 int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int height);
@@ -33,6 +50,7 @@ int valueFromTT(int value, int height);
 int valueToTT(int value, int height);
 
 static const int RazorDepth = 4;
+
 static const int RazorMargins[] = {0, 450, 480, 520, 580};
 
 static const int BetaPruningDepth = 8;
@@ -44,6 +62,7 @@ static const int NullMovePruningDepth = 2;
 static const int FutilityPruningDepth = 8;
 
 static const int LateMovePruningDepth = 8;
+
 static const int LateMovePruningCounts[] = {0, 5, 7, 11, 16, 24, 33, 43, 56};
 
 #endif

@@ -21,14 +21,8 @@
 
 #include "types.h"
 
-extern const int SQTable[FILE_NB];
-
-extern const int SQInv[SQUARE_NB];
-
-#define RelativeSquare(sq, c) ((c) == WHITE ? (sq) : SQInv[(sq)])
-
-#define RelativeSquare32(sq, c) ((c) == WHITE ? Square32(sq) : Square32(SQInv[(sq)]))
-
-#define Square32(sq) ((((sq) >> 3) << 2) + SQTable[(sq) & 0x7])
+int relativeSquare(int sq, int colour);
+int relativeSquare32(int sq, int colour);
+int square32(int sq);
 
 #endif
