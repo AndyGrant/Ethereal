@@ -412,7 +412,7 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
             R += 2 * !PvNode;
             R += ttTactical && bestMove == ttMove;
             R -= hist / 24;
-            R  = R >= 1 ? R : 1;
+            R  = MIN(depth - 1, MAX(R, 1));
         }
         
         else {
@@ -523,8 +523,7 @@ int qsearch(PVariation * pv, Board * board, int alpha, int beta, int height){
         maxValueGain = PieceValues[BISHOP][EG] + 15;
     
     // Delta pruning when no promotions and not extreme late game
-    if (    value + maxValueGain < alpha
-        &&  popcount(board->colours[WHITE] | board->colours[BLACK]) >= 6
+    if (     value + maxValueGain < alpha
         && !(board->colours[WHITE] & board->pieces[PAWN] & RANK_7)
         && !(board->colours[BLACK] & board->pieces[PAWN] & RANK_2))
         return value;
