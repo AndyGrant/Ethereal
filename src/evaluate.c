@@ -337,8 +337,8 @@ void evaluatePawns(EvalInfo * ei, Board * board, int colour){
             if (TRACE) T.pawnBackwards[colour][semi]++;
         }
         
-        // Apply a bonus if the pawn is connected
-        if (PawnConnectedMasks[colour][sq] & myPawns){
+        // Apply a bonus if the pawn is connected and not backward
+        else if (PawnConnectedMasks[colour][sq] & myPawns){
             ei->pawnMidgame[colour] += PawnConnected32[relativeSquare32(sq, colour)][MG];
             ei->pawnEndgame[colour] += PawnConnected32[relativeSquare32(sq, colour)][EG];
             if (TRACE) T.pawnConnected[colour][sq]++;
