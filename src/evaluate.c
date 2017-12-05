@@ -641,8 +641,8 @@ void initializeEvalInfo(EvalInfo * ei, Board * board){
     ei->pawnAttacks[WHITE] = ((whitePawns << 9) & ~FILE_A) | ((whitePawns << 7) & ~FILE_H);
     ei->pawnAttacks[BLACK] = ((blackPawns >> 9) & ~FILE_H) | ((blackPawns >> 7) & ~FILE_A);
     
-    ei->blockedPawns[WHITE] = ((whitePawns << 8) & black) >> 8;
-    ei->blockedPawns[BLACK] = ((blackPawns >> 8) & white) << 8,
+    ei->blockedPawns[WHITE] = ((whitePawns << 8) & (white | black)) >> 8;
+    ei->blockedPawns[BLACK] = ((blackPawns >> 8) & (white | black)) << 8,
     
     ei->kingAreas[WHITE] = KingMap[wKingSq] | (1ull << wKingSq) | (KingMap[wKingSq] << 8);
     ei->kingAreas[BLACK] = KingMap[bKingSq] | (1ull << bKingSq) | (KingMap[bKingSq] >> 8);
