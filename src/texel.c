@@ -65,6 +65,7 @@ extern const int RookMobility[15][PHASE_NB];
 
 // To determine the starting values for the Queen terms
 extern const int QueenValue[PHASE_NB];
+extern const int QueenChecked[PHASE_NB];
 extern const int QueenPSQT32[32][PHASE_NB];
 extern const int QueenMobility[28][PHASE_NB];
 
@@ -265,6 +266,8 @@ void initializeCoefficients(TexelEntry * te){
     
     te->coeffs[i++] = T.queenCounts[WHITE] - T.queenCounts[BLACK];
     
+    te->coeffs[i++] = T.queenChecked[WHITE] - T.queenChecked[BLACK];
+    
     for (a = 0; a < 64; a++){
         te->coeffs[i + relativeSquare32(a, WHITE)] += T.queenPSQT[WHITE][a];
         te->coeffs[i + relativeSquare32(a, BLACK)] -= T.queenPSQT[BLACK][a];
@@ -397,6 +400,9 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
     
     cparams[i  ][MG] = QueenValue[MG];
     cparams[i++][EG] = QueenValue[EG];
+    
+    cparams[i  ][MG] = QueenChecked[MG];
+    cparams[i++][EG] = QueenChecked[EG];
     
     for (a = 0; a < 32; a++, i++){
         cparams[i][MG] = QueenPSQT32[a][MG];
@@ -570,6 +576,8 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
     // Print Queen Parameters
     
     printf("\nconst int QueenValue[PHASE_NB] = {%4d,%4d};\n", (int)tparams[i][MG], (int)tparams[i][EG]); i++;
+    
+    printf("\nconst int QueenChecked[PHASE_NB] = {%4d,%4d};\n", (int)tparams[i][MG], (int)tparams[i][EG]); i++;
     
     printf("\nconst int QueenPSQT32[32][PHASE_NB] = {");
     for (x = 0; x < 8; x++){

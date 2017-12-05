@@ -110,6 +110,8 @@ const int RookMobility[15][PHASE_NB] = {
 
 const int QueenValue[PHASE_NB] = { 866, 894};
 
+const int QueenChecked[PHASE_NB] = { -50, -50};
+
 const int QueenMobility[28][PHASE_NB] = {
     {-121, -50}, { -68,-187}, { -84, -99}, { -48, -53},
     { -18, -54}, { -12, -20}, {  -2, -18}, {   0, -15},
@@ -280,6 +282,7 @@ void evaluatePawns(EvalInfo * ei, Board * board, int colour){
     // determine whether or not passed pawns may advance safely later on.
     attacks = ei->pawnAttacks[colour] & ei->kingAreas[!colour];
     ei->attacked[colour] |= ei->pawnAttacks[colour];
+    ei->attackedNoQueen[colour] |= attacks;
     
     // Update the attack counts and attacker counts for pawns for use in
     // the king safety calculation. We just do this for the pawns as a whole,
@@ -364,6 +367,7 @@ void evaluateKnights(EvalInfo * ei, Board * board, int colour){
         // determine whether or not passed pawns may advance safely later on.
         attacks = knightAttacks(sq, ~0ull);
         ei->attacked[colour] |= attacks;
+        ei->attackedNoQueen[colour] |= attacks;
         
         // Apply a bonus if the knight is on an outpost square, and cannot be attacked
         // by an enemy pawn. Increase the bonus if one of our pawns supports the knight.
@@ -429,6 +433,7 @@ void evaluateBishops(EvalInfo * ei, Board * board, int colour){
         // determine whether or not passed pawns may advance safely later on.
         attacks = bishopAttacks(sq, ei->occupiedMinusBishops[colour], ~0ull);
         ei->attacked[colour] |= attacks;
+        ei->attackedNoQueen[colour] |= attacks;
         
         // Apply a bonus if the bishop is on an outpost square, and cannot be attacked
         // by an enemy pawn. Increase the bonus if one of our pawns supports the bishop.
@@ -480,6 +485,7 @@ void evaluateRooks(EvalInfo * ei, Board * board, int colour){
         // determine whether or not passed pawns may advance safely later on.
         attacks = rookAttacks(sq, ei->occupiedMinusRooks[colour], ~0ull);
         ei->attacked[colour] |= attacks;
+        ei->attackedNoQueen[colour] |= attacks;
         
         // Rook is on a semi-open file if there are no
         // pawns of the Rook's colour on the file. If
@@ -537,6 +543,13 @@ void evaluateQueens(EvalInfo * ei, Board * board, int colour){
         attacks = rookAttacks(sq, ei->occupiedMinusRooks[colour], ~0ull)
                 | bishopAttacks(sq, ei->occupiedMinusBishops[colour], ~0ull);
         ei->attacked[colour] |= attacks;
+            
+        // Apply a bonus if the queen is under an attack threat
+        if ((1ull << sq) & ei->attackedNoQueen[!colour]){
+            ei->midgame[colour] += QueenChecked[MG];
+            ei->endgame[colour] += QueenChecked[EG];
+            if (TRACE) T.queenChecked[colour]++;
+        }
             
         // Apply a bonus (or penalty) based on the mobility of the queen
         mobilityCount = popcount((ei->mobilityAreas[colour] & attacks));
@@ -637,8 +650,8 @@ void initializeEvalInfo(EvalInfo * ei, Board * board){
     ei->mobilityAreas[WHITE] = ~(ei->pawnAttacks[BLACK] | (white & kings) | ei->blockedPawns[WHITE]);
     ei->mobilityAreas[BLACK] = ~(ei->pawnAttacks[WHITE] | (black & kings) | ei->blockedPawns[BLACK]);
     
-    ei->attacked[WHITE] = kingAttacks(wKingSq, ~0ull);
-    ei->attacked[BLACK] = kingAttacks(bKingSq, ~0ull);
+    ei->attacked[WHITE] = ei->attackedNoQueen[WHITE] = kingAttacks(wKingSq, ~0ull);
+    ei->attacked[BLACK] = ei->attackedNoQueen[BLACK] = kingAttacks(bKingSq, ~0ull);
     
     ei->occupiedMinusBishops[WHITE] = (white | black) ^ (white & (bishops | queens));
     ei->occupiedMinusBishops[BLACK] = (white | black) ^ (black & (bishops | queens));
