@@ -49,6 +49,7 @@ typedef struct EvalTrace {
     int rookMobility[COLOUR_NB][15];
     
     int queenCounts[COLOUR_NB];
+    int queenChecked[COLOUR_NB];
     int queenPSQT[COLOUR_NB][SQUARE_NB];
     int queenMobility[COLOUR_NB][28];
     
@@ -65,6 +66,7 @@ typedef struct EvalInfo {
     uint64_t kingAreas[COLOUR_NB];
     uint64_t mobilityAreas[COLOUR_NB];
     uint64_t attacked[COLOUR_NB];
+    uint64_t attackedNoQueen[COLOUR_NB];
     uint64_t occupiedMinusBishops[COLOUR_NB];
     uint64_t occupiedMinusRooks[COLOUR_NB];
     uint64_t passedPawns;
