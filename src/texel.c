@@ -26,9 +26,22 @@
 #include "bitutils.h"
 #include "board.h"
 #include "evaluate.h"
+#include "history.h"
+#include "move.h"
+#include "search.h"
 #include "square.h"
 #include "texel.h"
+#include "transposition.h"
 #include "types.h"
+
+// Hack to tell search() to ignore the clock
+extern SearchInfo * Info;
+
+// Hack so we can lower the table size for speed
+extern TransTable Table;
+
+// Hack so we can clear the History for search()
+extern HistoryTable History;
 
 // Need these in order to get the coefficients
 // for each of the evaluation terms
@@ -80,25 +93,30 @@ void runTexelTuning(){
     
     TexelEntry * tes;
     int i, j, iteration = -1;
-    double K, thisError, baseRate = 5.0;
+    double K, thisError, baseRate = 1.0;
     double rates[NT][PHASE_NB] = {{0}, {0}};
     double params[NT][PHASE_NB] = {{0}, {0}};
     double cparams[NT][PHASE_NB];
     
-    printf("\nAllocating Memory for Texel Tuner [%dMB]...\n",
+    setvbuf(stdout, NULL, _IONBF, 0);
+    
+    printf("\nSetting Transposition Table to 1MB...");
+    initalizeTranspositionTable(&Table, 1);
+    
+    printf("\n\nAllocating Memory for Texel Tuner [%dMB]...",
            (int)(NP * sizeof(TexelEntry) / (1024 * 1024)));
     tes = calloc(NP, sizeof(TexelEntry));
     
-    printf("\nReading and Initializing Texel Entries from FENS...\n");
+    printf("\n\nReading and Initializing Texel Entries from FENS...");
     initializeTexelEntries(tes);
     
-    printf("\nFetching Current Evaluation Terms as a Starting Point...\n");
+    printf("\n\nFetching Current Evaluation Terms as a Starting Point...");
     initializeCurrentParameters(cparams);
     
-    printf("\nScaling Params For Phases and Occurance Rates...\n");
+    printf("\n\nScaling Params For Phases and Occurance Rates...");
     calculateLearningRates(tes, rates);
     
-    printf("\nComputing Optimal K Value...\n");
+    printf("\n\nComputing Optimal K Value...");
     K = computeOptimalK(tes);
     
     while (1){
@@ -139,12 +157,23 @@ void runTexelTuning(){
 
 void initializeTexelEntries(TexelEntry * tes){
     
-    int i;
+    int i, j;
+    Undo undo;
     Board board;
+    PVariation pv;
     char line[128];
+    
+    // Hack to tell search() to ignore the clock
+    SearchInfo info;
+    info.searchIsTimeLimited = 0;
+    Info = &info;
+    
     FILE * fin = fopen("FENS", "r");
     
     for (i = 0; i < NP; i++){
+        
+        if ((i + 1) % 1000 == 0 || i == NP - 1)
+            printf("\rReading and Initializing Texel Entries from FENS...  [%7d of %7d]", i + 1, NP);
         
         fgets(line, 128, fin);
         
@@ -154,10 +183,18 @@ void initializeTexelEntries(TexelEntry * tes){
         else if (strstr(line, "0-1")) tes[i].result = 0.0;
         else    {printf("Unable to Parse Result\n"); exit(0);}
         
-        // Zero out the global eval trace T before evaluation.
-        // The evaluation should always be from white's POV
-        T = EmptyTrace;
+        // Clear the history before each search. In transposition.c, we
+        // only return NULL values from the table, so that need not be reset
+        clearHistory(History);
+        
+        // Search, then and apply all moves in the principle variation
         initalizeBoard(&board, line);
+        search(&pv, &board, -MATE, MATE, 1, 0);
+        for (j = 0; j < pv.length; j++)
+            applyMove(&board, pv.line[j], &undo);
+            
+        // Get the eval trace for the final position in the pv
+        T = EmptyTrace;
         tes[i].eval = evaluateBoard(&board);
         if (board.turn == BLACK) tes[i].eval *= -1;
         

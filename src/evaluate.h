@@ -76,7 +76,7 @@ typedef struct EvalInfo {
     int endgame[COLOUR_NB];
     int pawnMidgame[COLOUR_NB];
     int pawnEndgame[COLOUR_NB];
-    struct PawnEntry * pentry;
+    PawnEntry * pentry;
     
 } EvalInfo;
 
