@@ -23,7 +23,7 @@
 
 #include "types.h"
 
-void initalizeMasks();
+void initializeMasks();
 
 extern uint64_t IsolatedPawnMasks[SQUARE_NB];
 extern uint64_t PassedPawnMasks[COLOUR_NB][SQUARE_NB];

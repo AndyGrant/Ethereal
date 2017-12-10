@@ -20,15 +20,15 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <assert.h>
+#include <string.h>
 
 #include "move.h"
 #include "types.h"
 #include "transposition.h"
 
 TransTable Table;
-PawnTable PTable;
 
-void initalizeTranspositionTable(TransTable * table, uint64_t megabytes){
+void initializeTranspositionTable(TransTable* table, uint64_t megabytes){
     
     // Minimum table size is 1MB. This maps to a key of size 15.
     // We start at 16, because the loop to adjust the memory
@@ -50,18 +50,18 @@ void initalizeTranspositionTable(TransTable * table, uint64_t megabytes){
     table->used         = 0u;
 }
 
-void destroyTranspositionTable(TransTable * table){
+void destroyTranspositionTable(TransTable* table){
     free(table->buckets);
 }
 
-void updateTranspositionTable(TransTable * table){
+void updateTranspositionTable(TransTable* table){
     table->generation = (table->generation + 1) % 64;
 }
 
-void clearTranspositionTable(TransTable * table){
+void clearTranspositionTable(TransTable* table){
     
     unsigned int i; int j;
-    TransEntry * entry;
+    TransEntry* entry;
     
     table->generation = 0u;
     table->used = 0u;
@@ -79,9 +79,9 @@ void clearTranspositionTable(TransTable * table){
     }
 }
 
-TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash){
+int getTranspositionEntry(TransTable* table, uint64_t hash, TransEntry* ttEntry){
     
-    TransBucket * bucket = &(table->buckets[hash & (table->numBuckets - 1)]);
+    TransBucket* bucket = &(table->buckets[hash & (table->numBuckets - 1)]);
     int i; uint16_t hash16 = hash >> 48;
     
     #ifdef TEXEL
@@ -92,26 +92,26 @@ TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash){
     for (i = 0; i < BUCKET_SIZE; i++){
         if (bucket->entries[i].hash16 == hash16){
             bucket->entries[i].age = table->generation;
-            return &(bucket->entries[i]);
+            memcpy(ttEntry, &bucket->entries[i], sizeof(TransEntry));
+            return 1;
         }
     }
     
-    // No entry found
-    return NULL;
+    return 0;
 }
 
-void storeTranspositionEntry(TransTable * table, int depth, int type, int value, int bestMove, uint64_t hash){
+void storeTranspositionEntry(TransTable* table, int depth, int type, int value, int bestMove, uint64_t hash){
     
     // Validate Parameters
     assert(depth < MAX_DEPTH && depth >= 0);
     assert(type == PVNODE || type == CUTNODE || type == ALLNODE);
     assert(value <= MATE && value >= -MATE);
     
-    TransBucket * bucket = &(table->buckets[hash & (table->numBuckets - 1)]);
-    TransEntry * entries = bucket->entries;
-    TransEntry * oldOption = NULL;
-    TransEntry * lowDraftOption = NULL;
-    TransEntry * toReplace = NULL;
+    TransBucket* bucket = &(table->buckets[hash & (table->numBuckets - 1)]);
+    TransEntry* entries = bucket->entries;
+    TransEntry* oldOption = NULL;
+    TransEntry* lowDraftOption = NULL;
+    TransEntry* toReplace = NULL;
     
     int i; uint16_t hash16 = hash >> 48;
     
@@ -153,21 +153,13 @@ void storeTranspositionEntry(TransTable * table, int depth, int type, int value,
         toReplace->hash16   = hash16;
 }
 
-void initalizePawnTable(PawnTable * ptable){
-    ptable->entries = calloc(0x10000, sizeof(PawnEntry));
-}
-
-void destoryPawnTable(PawnTable * ptable){
-    free(ptable->entries);
-}
-
-PawnEntry * getPawnEntry(PawnTable * ptable, uint64_t phash){
-    PawnEntry * pentry = &(ptable->entries[phash >> 48]);
+PawnEntry * getPawnEntry(PawnTable* ptable, uint64_t phash){
+    PawnEntry* pentry = &(ptable->entries[phash >> 48]);
     return pentry->phash == phash ? pentry : NULL;
 }
 
-void storePawnEntry(PawnTable * ptable, uint64_t phash, uint64_t passed, int mg, int eg){
-    PawnEntry * pentry = &(ptable->entries[phash >> 48]);
+void storePawnEntry(PawnTable* ptable, uint64_t phash, uint64_t passed, int mg, int eg){
+    PawnEntry* pentry = &(ptable->entries[phash >> 48]);
     pentry->phash = phash;
     pentry->passed = passed;
     pentry->mg = mg;

@@ -23,7 +23,7 @@
 
 #include "types.h"
 
-void initalizeMagics();
+void initializeMagics();
 void generateKnightMap();
 void generateKingMap();
 void generateRookIndexes();
@@ -41,8 +41,8 @@ extern uint64_t KingMap[SQUARE_NB];
 extern uint64_t OccupancyMaskRook[SQUARE_NB];
 extern uint64_t OccupancyMaskBishop[SQUARE_NB];
 
-extern uint64_t * MoveDatabaseRook;
-extern uint64_t * MoveDatabaseBishop;
+extern uint64_t* MoveDatabaseRook;
+extern uint64_t* MoveDatabaseBishop;
 
 extern int MagicRookIndexes[SQUARE_NB];
 extern int MagicBishopIndexes[SQUARE_NB];

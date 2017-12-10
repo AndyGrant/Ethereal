@@ -31,13 +31,13 @@
 #include "psqt.h"
 #include "search.h"
 #include "time.h"
+#include "thread.h"
+#include "uci.h"
 #include "transposition.h"
 #include "types.h"
 #include "move.h"
 #include "movegen.h"
 #include "zorbist.h"
-
-extern uint64_t TotalNodes;
 
 extern TransTable Table;
 
@@ -85,7 +85,7 @@ char Benchmarks[NUM_BENCHMARKS][256] = {
     "r2r1n2/pp2bk2/2p1p2p/3q4/3PN1QP/2P3R1/P4PP1/5RK1 w - - 0 1",
 };
 
-void initalizeBoard(Board * board, char * fen){
+void initializeBoard(Board* board, char* fen){
     
     int i, j, sq;
     char rank, file;
@@ -224,7 +224,7 @@ void initalizeBoard(Board * board, char * fen){
     board->numMoves = 0;
 }
 
-void printBoard(Board * board){
+void printBoard(Board* board){
     
     int i, j, f, c, t;
     
@@ -259,7 +259,7 @@ void printBoard(Board * board){
     printf("\n        A    B    C    D    E    F    G    H\n");
 }
 
-uint64_t perft(Board * board, int depth){
+uint64_t perft(Board* board, int depth){
     
     Undo undo[1];
     int size = 0;
@@ -281,37 +281,41 @@ uint64_t perft(Board * board, int depth){
     return found;
 }
 
-void runBenchmark(int depth){
+void runBenchmark(Thread* threads, int depth){
     
     int i;
     double start, end;
-    SearchInfo info;
+    Board board;
+    Limits limits;
     
-    uint64_t benchNodes = 0ull;
+    uint64_t nodes = 0ull;
     
-    info.searchIsInfinite = 0;
-    info.searchIsDepthLimited = 1;
-    info.searchIsTimeLimited = 0;
-    info.depthLimit = depth == 0 ? 13 : depth;
-    info.terminateSearch = 0;
+    // Initialize limits for the search
+    limits.limitedByNone  = 0;
+    limits.limitedByTime  = 0;
+    limits.limitedByDepth = 1;
+    limits.limitedBySelf  = 0;
+    limits.timeLimit      = 0;
+    limits.depthLimit     = depth == 0 ? 13 : depth;
     
     start = getRealTime();
     
     // Search each benchmark position
     for (i = 0; i < NUM_BENCHMARKS; i++){
         printf("\nPosition [%2d|%2d]\n", i + 1, NUM_BENCHMARKS);
-        info.startTime = getRealTime();
-        initalizeBoard((&info.board), Benchmarks[i]);
+        initializeBoard(&board, Benchmarks[i]);
+
+        getBestMove(threads, &board, &limits, 0, 0, 0);
+        nodes += nodesSearchedThreadPool(threads);
+        
         clearTranspositionTable(&Table);
-        getBestMove(&info);
-        benchNodes += TotalNodes;
     }
     
     end = getRealTime();
     
     printf("\n------------------------\n");
     printf("Time  : %dms\n", (int)(end - start));
-    printf("Nodes : %"PRIu64"\n", benchNodes);
-    printf("NPS   : %d\n", (int)(benchNodes / ((end - start ) / 1000.0)));
+    printf("Nodes : %"PRIu64"\n", nodes);
+    printf("NPS   : %d\n", (int)(nodes / ((end - start ) / 1000.0)));
     fflush(stdout);
 }

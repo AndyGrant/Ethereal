@@ -16,6 +16,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <pthread.h>
+#include <setjmp.h>
 #include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -32,145 +34,208 @@
 #include "piece.h"
 #include "psqt.h"
 #include "search.h"
+#include "thread.h"
 #include "transposition.h"
 #include "types.h"
 #include "time.h"
 #include "move.h"
 #include "movegen.h"
 #include "movepicker.h"
-
-uint64_t TotalNodes;
-int EvaluatingPlayer;
-SearchInfo * Info;
-HistoryTable History;
+#include "uci.h"
 
 extern TransTable Table;
-extern PawnTable PTable;
 
-uint16_t KillerMoves[MAX_HEIGHT][2];
+uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double time, double inc, double mtg){
+    
+    int i, nthreads = threads[0].nthreads;
+    
+    double idealusage = 0, maxusage = 0, starttime = getRealTime();
+    
+    SearchInfo info; memset(&info, 0, sizeof(SearchInfo));
+    
+    pthread_t* pthreads = malloc(sizeof(pthread_t) * nthreads);
+    
+    // Ethereal is responsible for choosing how much time to spend searching
+    if (limits->limitedBySelf){
+        idealusage = mtg >= 0 ? 0.5 * (time / (mtg / 1 + 2)) : 0.5 * (time / 30);
+        maxusage   = mtg >= 0 ? 1.0 * (time / (mtg / 1 + 2)) : inc + (time / 15);
+    }
+    
+    // UCI command told us to look for exactly X seconds
+    if (limits->limitedByTime){
+        idealusage = limits->timeLimit;
+        maxusage   = limits->timeLimit;
+    }
+    
+    // Setup the thread pool for a new search with these parameters
+    newSearchThreadPool(threads, board, limits, &info, starttime, &idealusage, maxusage);
+    
+    // Launch all of the threads
+    for (i = 1; i < nthreads; i++)
+        pthread_create(&pthreads[i], NULL, &iterativeDeepening, &threads[i]);
+    
+    // Wait for all threads to finish
+    iterativeDeepening((void*) &threads[0]);
+    for (i = 1; i < nthreads; i++)
+        pthread_join(pthreads[i], NULL);
+    
+    // Cleanup pthreads
+    free(pthreads);
+    
+    // Return highest depth best move
+    return info.bestmoves[info.depth];
+}
 
-uint16_t getBestMove(SearchInfo * info){
+void* iterativeDeepening(void* vthread){
     
-    uint16_t lastBestMove = NONE_MOVE;
-    int i, depth, elapsed, hashfull, lastValue = 0, value = 0;
-    int values[MAX_DEPTH];
+    Thread* const thread = (Thread*) vthread;
     
-    // Create the main Principle Variation
-    PVariation pv;
-    pv.length = 0;
+    int i, count, value = 0, depth, abort;
     
-    // Initialize search globals
-    TotalNodes = 0ull;
-    EvaluatingPlayer = info->board.turn;
-    Info = info;
-    
-    // Prepare the transposition tables
-    updateTranspositionTable(&Table);
-    initalizePawnTable(&PTable);
-    reduceHistory(History);
-    
-    // Perform interative deepening
     for (depth = 1; depth < MAX_DEPTH; depth++){
         
-        // Perform full search on Root
-        values[depth] = value = aspirationWindow(&pv, &info->board, depth, values);
+        // Determine if this thread should be running on at a higher depth
         
-        if (info->searchIsTimeLimited){
-            if (depth >= 4 && lastValue > value + 8)
-                info->idealTimeUsage = MIN(info->maxTimeUsage, info->idealTimeUsage * 1.10);
+        pthread_mutex_lock(thread->lock);
+        
+        thread->depth = depth;
+        
+         for (count = 0, i = 0; i < thread->nthreads; i++)
+             count += thread != &thread->threads[i] && thread->threads[i].depth >= depth;
+         
+         if (depth > 1 && thread->nthreads > 1 && count >= thread->nthreads / 2){
+             thread->depth = depth + 1;
+             pthread_mutex_unlock(thread->lock);
+             continue;
+         }
+         
+         pthread_mutex_unlock(thread->lock);
+        
+        
+        abort = setjmp(thread->jbuffer);
+        
+        if (abort == ABORT_NONE){
             
-            if (depth >= 4 && pv.line[0] != lastBestMove)
-                info->idealTimeUsage = MIN(info->maxTimeUsage, info->idealTimeUsage * 1.35);
+            value = aspirationWindow(thread, depth);
+            
+            pthread_mutex_lock(thread->lock);
+            
+            // It is possible we finish the search but another thread has already
+            // finished the same depth we just have. In this case, we do not want
+            // to print the same depth twice, so we simply continue iterations
+            
+            if (thread->abort == ABORT_DEPTH){
+                thread->abort = ABORT_NONE;
+                pthread_mutex_unlock(thread->lock);
+                continue;
+            }
+            
+            else if (thread->abort == ABORT_ALL){
+                pthread_mutex_unlock(thread->lock);
+                return NULL;
+            }
+            
+            // Dynamically decide how much time we should be using
+            if (thread->limits->limitedBySelf){
+                
+                // Increase our time if the score suddently dropped by eight centipawns
+                if (depth >= 4 && thread->info->values[thread->info->depth] > value + 8)
+                    *thread->idealusage = MIN(thread->maxusage, *thread->idealusage * 1.10);
+                
+                // Increase our time if the pv has changed across the last two iterations
+                if (depth >= 4 && thread->info->bestmoves[thread->info->depth] != thread->pv.line[0])
+                    *thread->idealusage = MIN(thread->maxusage, *thread->idealusage * 1.35);
+            }
+            
+            // Update the Search Info structure for the main thread
+            thread->info->depth = depth;
+            thread->info->values[depth] = value;
+            thread->info->bestmoves[depth] = thread->pv.line[0];
+            
+            // Send information about this search to the interface
+            uciReport(thread->threads, thread->starttime, depth, value, &thread->pv);
+            
+            // Abort any threads still searching this depth, or lower
+            for (i = 0; i < thread->nthreads; i++)
+                if (   thread->depth >= thread->threads[i].depth
+                    && thread != &thread->threads[i])
+                    thread->threads[i].abort = ABORT_DEPTH;
+            
+            // Check for termination by any of the possible limits
+            if (   (thread->limits->limitedByDepth && depth >= thread->limits->depthLimit)
+                || (thread->limits->limitedByTime  && getRealTime() - thread->starttime > thread->limits->timeLimit)
+                || (thread->limits->limitedBySelf  && getRealTime() - thread->starttime > thread->maxusage)
+                || (thread->limits->limitedBySelf  && getRealTime() - thread->starttime > *thread->idealusage)){
+                
+                for (i = 0; i < thread->nthreads; i++)
+                    thread->threads[i].abort = ABORT_ALL;
+                
+                pthread_mutex_unlock(thread->lock);
+                
+                break;
+            }
+            
+            pthread_mutex_unlock(thread->lock);
         }
         
-        lastValue = value;
-        lastBestMove = pv.line[0];
-        
-        // Don't print a partial search
-        if (info->terminateSearch) break;
-        
-        elapsed = (int)(getRealTime() - info->startTime);
-        hashfull = (1000 * Table.used) / (Table.numBuckets * BUCKET_SIZE);
-        
-        printf("info depth %d ", depth);
-        printf("score cp %d ", value);
-        printf("time %d ", elapsed);
-        printf("nodes %"PRIu64" ", TotalNodes);
-        printf("nps %d ", (int)(1000 * (TotalNodes / (1 + elapsed))));
-        printf("hashfull %d ", hashfull);
-        printf("pv ");
-        
-        // Print the Principle Variation
-        for (i = 0; i < pv.length; i++){
-            printMove(pv.line[i]);
-            printf(" ");
+        else if (abort == ABORT_DEPTH){
+            pthread_mutex_lock(thread->lock);
+            thread->abort = ABORT_NONE;
+            memcpy(&thread->board, thread->initialboard, sizeof(Board));
+            pthread_mutex_unlock(thread->lock);
         }
         
-        printf("\n");
-        fflush(stdout);
-        
-        // Check for depth based termination
-        if (info->searchIsDepthLimited && info->depthLimit == depth)
-            break;
-            
-        // Check for time based termination 
-        if (info->searchIsTimeLimited){
-            if (getRealTime() > info->startTime + info->idealTimeUsage) break;
-            if (getRealTime() > info->startTime + info->maxTimeUsage) break;
+        else if (abort == ABORT_ALL){
+            return NULL;
         }
     }
     
-    // Free the Pawn Table
-    destoryPawnTable(&PTable);
-    
-    return pv.line[0];
+    return NULL;
 }
 
-int aspirationWindow(PVariation * pv, Board * board, int depth, int values[MAX_DEPTH]){
+int aspirationWindow(Thread* thread, int depth){
     
     int alpha, beta, value, margin;
     
-    // Only use an aspiration window on searches that are greater
-    // than 4 depth, and did not recently return a MATE score
-    if (depth > 4 && abs(values[depth - 1]) < MATE / 2){
+    if (depth > 4 && abs(thread->info->values[depth - 1]) < MATE / 2){
         
-        margin =             1.6 * (abs(values[depth - 1] - values[depth - 2]));
-        margin = MAX(margin, 2.0 * (abs(values[depth - 2] - values[depth - 3])));
-        margin = MAX(margin, 0.8 * (abs(values[depth - 3] - values[depth - 4])));
+        margin =             1.6 * (abs(thread->info->values[depth - 1] - thread->info->values[depth - 2]));
+        margin = MAX(margin, 2.0 * (abs(thread->info->values[depth - 2] - thread->info->values[depth - 3])));
+        margin = MAX(margin, 0.8 * (abs(thread->info->values[depth - 3] - thread->info->values[depth - 4])));
         margin = MAX(margin, 16);
         
-        // Use the windows [30, 60, 120, 240]
         for (; margin <= 640; margin *= 2){
             
-            // Adjust the bounds. There is some debate about
-            // how this should be done after we know value.
-            alpha = values[depth - 1] - margin;
-            beta  = values[depth - 1] + margin;
+            // Create the aspiration window
+            thread->lower = alpha = thread->info->values[depth - 1] - margin;
+            thread->upper = beta  = thread->info->values[depth - 1] + margin;
             
             // Perform the search on the modified window
-            value = search(pv, board, alpha, beta, depth, 0);
+            thread->value = value = search(thread, &thread->pv, alpha, beta, depth, 0);
             
             // Result was within our window
             if (value > alpha && value < beta)
                 return value;
             
-            // Result was a mate score, force a full search
-            if (abs(value) > MATE/2)
+            // Result was a near mate score, force a full search
+            if (abs(value) > MATE / 2)
                 break;
         }
     }
     
-    // No searches scored within our aspiration windows, search full window
-    return search(pv, board, -MATE, MATE, depth, 0);
+    // Full window search ( near mate or when depth equals one )
+    return search(thread, &thread->pv, -MATE, MATE, depth, 0);
 }
 
-int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int height){
+int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int height){
     
     const int PvNode   = (alpha != beta - 1);
     const int RootNode = (height == 0);
     
+    Board* const board = &thread->board;
+    
     int i, value, inCheck = 0, isQuiet, R, repetitions;
-    int rAlpha, rBeta, ttValue, ttType, oldAlpha = alpha;
+    int rAlpha, rBeta, ttValue, oldAlpha = alpha;
     int quiets = 0, played = 0, ttTactical = 0; 
     int best = -MATE, eval = -MATE, futilityMargin = -MATE;
     int hist = 0; // Fix bogus GCC warning
@@ -178,22 +243,22 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
     uint16_t currentMove, quietsTried[MAX_MOVES];
     uint16_t ttMove = NONE_MOVE, bestMove = NONE_MOVE;
     
-    MovePicker movePicker;
-    
-    TransEntry * ttEntry;
     Undo undo[1];
-    
     PVariation lpv;
+    TransEntry ttEntry;
+    MovePicker movePicker;        
+    
     lpv.length = 0;
     pv->length = 0;
     
-    // Step 1. Check to see if search time has expired
-    if (    Info->searchIsTimeLimited 
-        && (TotalNodes & 8191) == 8191
-        &&  getRealTime() >= Info->startTime + Info->maxTimeUsage){
-        Info->terminateSearch = 1;
-        return board->turn == EvaluatingPlayer ? -MATE : MATE;
-    }
+    // Step 1A. Check to see if search time has expired
+    if (   (thread->limits->limitedBySelf || thread->limits->limitedByTime)
+        && (thread->nodes & 8191) == 8191
+        &&  getRealTime() >= thread->starttime + thread->maxusage)
+        longjmp(thread->jbuffer, ABORT_ALL);
+        
+    // Step 1B. Check to see if the master thread finished
+    if (thread->abort) longjmp(thread->jbuffer, thread->abort);
     
     // Step 2. Distance Mate Pruning. Check to see if this line is so
     // good, or so bad, that being mated in the ply, or  mating in 
@@ -231,35 +296,33 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
     // the search horizon and are not currently in check
     if (depth <= 0){
         inCheck = !isNotInCheck(board, board->turn);
-        if (!inCheck) return qsearch(pv, board, alpha, beta, height);
+        if (!inCheck) return qsearch(thread, pv, alpha, beta, height);
         
         // We do not cap reductions, so here we will make
         // sure that depth is within the acceptable bounds
         depth = 0; 
     }
     
-    // INCREMENT TOTAL NODE COUNTER
-    TotalNodes++;
+    // If we did not exit already, we will call this a node
+    thread->nodes += 1;
     
     // Step 6. Probe the Transposition Table for an entry
-    if ((ttEntry = getTranspositionEntry(&Table, board->hash)) != NULL){
+    if (getTranspositionEntry(&Table, board->hash, &ttEntry)){
         
         // Entry move may be good in this position. If it is tactical,
         // we may use it to increase reductions later on in LMR.
-        ttMove = ttEntry->bestMove;
+        ttMove = ttEntry.bestMove;
         ttTactical = moveIsTactical(board, ttMove);
         
         // Step 6A. Check to see if this entry allows us to exit this
         // node early. We choose not to do this in the PV line, not because
         // we can't, but because don't want truncated PV lines
-        if (!PvNode && ttEntry->depth >= depth){
+        if (!PvNode && ttEntry.depth >= depth){
 
             rAlpha = alpha; rBeta = beta;
-                
-            ttValue = valueFromTT(ttEntry->value, height);
-            ttType = ttEntry->type;
+            ttValue = valueFromTT(ttEntry.value, height);
             
-            switch (ttType){
+            switch (ttEntry.type){
                 case  PVNODE: return ttValue;
                 case CUTNODE: rAlpha = ttValue > alpha ? ttValue : alpha; break;
                 case ALLNODE:  rBeta = ttValue <  beta ? ttValue :  beta; break;
@@ -276,7 +339,7 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
     // Determine check status if not done already
     inCheck = inCheck || !isNotInCheck(board, board->turn);
     if (!PvNode){
-        eval = evaluateBoard(board);
+        eval = evaluateBoard(board, &thread->ptable);
         futilityMargin = eval + depth * 0.95 * PieceValues[PAWN][EG];
     }
     
@@ -291,10 +354,10 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
         &&  eval + RazorMargins[depth] < alpha){
             
         if (depth <= 1)
-            return qsearch(pv, board, alpha, beta, height);
+            return qsearch(thread, pv, alpha, beta, height);
         
         rAlpha = alpha - RazorMargins[depth];
-        value = qsearch(pv, board, rAlpha, rAlpha + 1, height);
+        value = qsearch(thread, pv, rAlpha, rAlpha + 1, height);
         if (value <= rAlpha) return value;
     }
     
@@ -326,7 +389,7 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
             
         applyNullMove(board, undo);
         
-        value = -search(&lpv, board, -beta, -beta + 1, depth - R, height + 1);
+        value = -search(thread, &lpv, -beta, -beta + 1, depth - R, height + 1);
         
         revertNullMove(board, undo);
         
@@ -344,11 +407,11 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
         &&  depth >= InternalIterativeDeepeningDepth){
         
         // Search with a reduced depth
-        value = search(&lpv, board, alpha, beta, depth-2, height);
+        value = search(thread, &lpv, alpha, beta, depth-2, height);
         
         // Probe for the newly found move, and update ttMove / ttTactical
-        if ((ttEntry = getTranspositionEntry(&Table, board->hash)) != NULL){
-            ttMove = ttEntry->bestMove;
+        if (getTranspositionEntry(&Table, board->hash, &ttEntry)){
+            ttMove = ttEntry.bestMove;
             ttTactical = moveIsTactical(board, ttMove);
         }
     }
@@ -356,14 +419,15 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
     // Step 12. Check Extension
     depth += inCheck && !RootNode && (PvNode || depth <= 6);
     
-    initalizeMovePicker(&movePicker, 0, ttMove, KillerMoves[height][0], KillerMoves[height][1]);
+    initializeMovePicker(&movePicker, thread, ttMove, height, 0);
+    
     while ((currentMove = selectNextMove(&movePicker, board)) != NONE_MOVE){
         
         // If this move is quiet we will save it to a list of attemped
         // quiets, and we will need a history score for pruning decisions
         if ((isQuiet = !moveIsTactical(board, currentMove))){
             quietsTried[quiets++] = currentMove;
-            hist = getHistoryScore(History, currentMove, board->turn, 128);
+            hist = getHistoryScore(thread->history, currentMove, board->turn, 128);
         }
         
         // Step 13. Futility Pruning. If our score is far below alpha,
@@ -421,13 +485,13 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
         
         // Search the move with a possibly reduced depth, on a full or null window
         value =  (played == 1 || !PvNode)
-               ? -search(&lpv, board, -beta, -alpha, depth-R, height+1)
-               : -search(&lpv, board, -alpha-1, -alpha, depth-R, height+1);
+               ? -search(thread, &lpv, -beta, -alpha, depth-R, height+1)
+               : -search(thread, &lpv, -alpha-1, -alpha, depth-R, height+1);
                
         // If the search beat alpha, we may need to research, in the event that
         // the previous search was not the full window, or was a reduced depth
         value =  (value > alpha && (R != 1 || (played != 1 && PvNode)))
-               ? -search(&lpv, board, -beta, -alpha, depth-1, height+1)
+               ? -search(thread, &lpv, -beta, -alpha, depth-1, height+1)
                :  value;
         
         // REVERT MOVE FROM BOARD
@@ -453,34 +517,32 @@ int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int h
         if (alpha >= beta){
             
             // Update killer moves
-            if (isQuiet && KillerMoves[height][0] != currentMove){
-                KillerMoves[height][1] = KillerMoves[height][0];
-                KillerMoves[height][0] = currentMove;
+            if (isQuiet && thread->killers[height][0] != currentMove){
+                thread->killers[height][1] = thread->killers[height][0];
+                thread->killers[height][0] = currentMove;
             }
             
             break;
         }
     }
     
-    // Board is Checkmate or Stalemate
     if (played == 0) return inCheck ? -MATE + height : 0;
     
-    // Update History Scores
     else if (best >= beta && !moveIsTactical(board, bestMove)){
-        updateHistory(History, bestMove, board->turn, 1, depth*depth);
+        updateHistory(thread->history, bestMove, board->turn, 1, depth*depth);
         for (i = 0; i < quiets - 1; i++)
-            updateHistory(History, quietsTried[i], board->turn, 0, depth*depth);
+            updateHistory(thread->history, quietsTried[i], board->turn, 0, depth*depth);
     }
     
-    // Store results in transposition table
-    if (!Info->terminateSearch)
-        storeTranspositionEntry(&Table, depth, (best > oldAlpha && best < beta)
-                                ? PVNODE : best >= beta ? CUTNODE : ALLNODE,
-                                valueToTT(best, height), bestMove, board->hash);
+    storeTranspositionEntry(&Table, depth, (best > oldAlpha && best < beta)
+                            ? PVNODE : best >= beta ? CUTNODE : ALLNODE,
+                            valueToTT(best, height), bestMove, board->hash);
     return best;
 }
 
-int qsearch(PVariation * pv, Board * board, int alpha, int beta, int height){
+int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
+    
+    Board* const board = &thread->board;
     
     int eval, value, best, maxValueGain;
     uint16_t currentMove;
@@ -491,22 +553,24 @@ int qsearch(PVariation * pv, Board * board, int alpha, int beta, int height){
     lpv.length = 0;
     pv->length = 0;
     
-    // Check to see if search time has expired
-    if (    Info->searchIsTimeLimited 
-        && (TotalNodes & 8191) == 8191
-        &&  getRealTime() >= Info->startTime + Info->maxTimeUsage){
-        Info->terminateSearch = 1;
-        return board->turn == EvaluatingPlayer ? -MATE : MATE;
-    }
+    // Step 1A. Check to see if search time has expired
+    if (   (thread->limits->limitedBySelf || thread->limits->limitedByTime)
+        && (thread->nodes & 8191) == 8191
+        &&  getRealTime() >= thread->starttime + thread->maxusage)
+        longjmp(thread->jbuffer, ABORT_ALL);
+        
+    // Step 1B. Check to see if the master thread finished
+    if (thread->abort) longjmp(thread->jbuffer, thread->abort);
+    
+    // Call this a node
+    thread->nodes += 1;
     
     // Max height reached, stop here
     if (height >= MAX_HEIGHT)
-        return evaluateBoard(board);
-    
-    TotalNodes++;
+        return evaluateBoard(board, &thread->ptable);
     
     // Get a standing eval of the current board
-    best = value = eval = evaluateBoard(board);
+    best = value = eval = evaluateBoard(board, &thread->ptable);
     
     // Update lower bound
     if (value > alpha) alpha = value;
@@ -529,7 +593,7 @@ int qsearch(PVariation * pv, Board * board, int alpha, int beta, int height){
         return value;
     
     
-    initalizeMovePicker(&movePicker, 1, NONE_MOVE, NONE_MOVE, NONE_MOVE);
+    initializeMovePicker(&movePicker, thread, NONE_MOVE, height, 1);
     
     while ((currentMove = selectNextMove(&movePicker, board)) != NONE_MOVE){
         
@@ -552,7 +616,7 @@ int qsearch(PVariation * pv, Board * board, int alpha, int beta, int height){
         }
         
         // Search next depth
-        value = -qsearch(&lpv, board, -beta, -alpha, height+1);
+        value = -qsearch(thread, &lpv, -beta, -alpha, height+1);
         
         // Revert move from board
         revertMove(board, currentMove, undo);
@@ -580,13 +644,13 @@ int qsearch(PVariation * pv, Board * board, int alpha, int beta, int height){
     return best;
 }
 
-int moveIsTactical(Board * board, uint16_t move){
+int moveIsTactical(Board* board, uint16_t move){
     return board->squares[MoveTo(move)] != EMPTY
         || MoveType(move) == PROMOTION_MOVE
         || MoveType(move) == ENPASS_MOVE;
 }
 
-int hasNonPawnMaterial(Board * board, int turn){
+int hasNonPawnMaterial(Board* board, int turn){
     uint64_t friendly = board->colours[turn];
     uint64_t kings = board->pieces[KING];
     uint64_t pawns = board->pieces[PAWN];

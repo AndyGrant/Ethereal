@@ -24,14 +24,6 @@
 
 #include <stdlib.h>
 
-/**
- * Return the number of millseconds elapsed since
- * any arbitrary point in time. This method should
- * work for any Windows machine and any POSIX 
- * complient or semi-complient machine.
- *
- * @return  Time elapsed in milliseconds
- */
 double getRealTime(){
 #if defined(_WIN32) || defined(_WIN64)
     return (double)(GetTickCount());

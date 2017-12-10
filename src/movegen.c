@@ -59,14 +59,14 @@ uint64_t kingAttacks(int sq, uint64_t targets){
 
 /* For Building Actual Move Lists For Each Piece Type */
 
-void buildPawnMoves(uint16_t * moves, int * size, uint64_t attacks, int delta){
+void buildPawnMoves(uint16_t* moves, int* size, uint64_t attacks, int delta){
     while (attacks){
         int sq = poplsb(&attacks);
         moves[(*size)++] = MoveMake(sq + delta, sq, NORMAL_MOVE);
     }
 }
 
-void buildPawnPromotions(uint16_t * moves, int * size, uint64_t attacks, int delta){
+void buildPawnPromotions(uint16_t* moves, int* size, uint64_t attacks, int delta){
     while (attacks){
         int sq = poplsb(&attacks);
         moves[(*size)++] = MoveMake(sq + delta, sq,  QUEEN_PROMO_MOVE);
@@ -76,35 +76,35 @@ void buildPawnPromotions(uint16_t * moves, int * size, uint64_t attacks, int del
     }
 }
 
-void buildNonPawnMoves(uint16_t * moves, int * size, uint64_t attacks, int sq){
+void buildNonPawnMoves(uint16_t* moves, int* size, uint64_t attacks, int sq){
     while (attacks){
         int tg = poplsb(&attacks);
         moves[(*size)++] = MoveMake(sq, tg, NORMAL_MOVE);
     }
 }
 
-void buildKnightMoves(uint16_t * moves, int * size, uint64_t pieces, uint64_t targets){
+void buildKnightMoves(uint16_t* moves, int* size, uint64_t pieces, uint64_t targets){
     while (pieces){
         int sq = poplsb(&pieces);
         buildNonPawnMoves(moves, size, knightAttacks(sq, targets), sq);
     }
 }
 
-void buildBishopAndQueenMoves(uint16_t * moves, int * size, uint64_t pieces, uint64_t occupied, uint64_t targets){
+void buildBishopAndQueenMoves(uint16_t* moves, int* size, uint64_t pieces, uint64_t occupied, uint64_t targets){
     while (pieces){
         int sq = poplsb(&pieces);
         buildNonPawnMoves(moves, size, bishopAttacks(sq, occupied, targets), sq);
     }
 }
 
-void buildRookAndQueenMoves(uint16_t * moves, int * size, uint64_t pieces, uint64_t occupied, uint64_t targets){
+void buildRookAndQueenMoves(uint16_t* moves, int* size, uint64_t pieces, uint64_t occupied, uint64_t targets){
     while (pieces){
         int sq = poplsb(&pieces);
         buildNonPawnMoves(moves, size, rookAttacks(sq, occupied, targets), sq);
     }
 }
 
-void buildKingMoves(uint16_t * moves, int * size, uint64_t pieces, uint64_t targets){
+void buildKingMoves(uint16_t* moves, int* size, uint64_t pieces, uint64_t targets){
     while (pieces){
         int sq = poplsb(&pieces);
         buildNonPawnMoves(moves, size, kingAttacks(sq, targets), sq);
@@ -114,7 +114,7 @@ void buildKingMoves(uint16_t * moves, int * size, uint64_t pieces, uint64_t targ
 
 /* For Building Full Move Lists */
 
-void genAllLegalMoves(Board * board, uint16_t * moves, int * size){
+void genAllLegalMoves(Board* board, uint16_t* moves, int* size){
     
     Undo undo[1];
     int i, psuedoSize = 0;
@@ -131,7 +131,7 @@ void genAllLegalMoves(Board * board, uint16_t * moves, int * size){
     }
 }
 
-void genAllMoves(Board * board, uint16_t * moves, int * size){
+void genAllMoves(Board* board, uint16_t* moves, int* size){
      
     uint64_t pawnForwardOne, pawnForwardTwo, pawnLeft, pawnRight;
     uint64_t pawnPromoForward, pawnPromoLeft, pawnPromoRight;
@@ -254,7 +254,7 @@ void genAllMoves(Board * board, uint16_t * moves, int * size){
     }
 }
 
-void genAllNoisyMoves(Board * board, uint16_t * moves, int * size){
+void genAllNoisyMoves(Board* board, uint16_t* moves, int* size){
     
     uint64_t pawnLeft;
     uint64_t pawnRight;
@@ -343,7 +343,7 @@ void genAllNoisyMoves(Board * board, uint16_t * moves, int * size){
     buildKingMoves(moves, size, myKings, enemy);
 }
 
-void genAllQuietMoves(Board * board, uint16_t * moves, int * size){
+void genAllQuietMoves(Board* board, uint16_t* moves, int* size){
      
     int castleKing, castleQueen;
     
@@ -413,13 +413,13 @@ void genAllQuietMoves(Board * board, uint16_t * moves, int * size){
     }
 }
 
-int isNotInCheck(Board * board, int turn){
+int isNotInCheck(Board* board, int turn){
     int kingsq = getlsb(board->colours[turn] & board->pieces[KING]);
     assert(board->squares[kingsq] == WHITE_KING + turn);
     return !squareIsAttacked(board, turn, kingsq);
 }
 
-int squareIsAttacked(Board * board, int turn, int sq){
+int squareIsAttacked(Board* board, int turn, int sq){
     
     uint64_t square;
     

@@ -30,7 +30,7 @@
 uint64_t ZorbistKeys[32][SQUARE_NB];
 uint64_t PawnKeys[32][SQUARE_NB];
 
-void initalizeZorbist(){
+void initializeZorbist(){
     
     int p, s;
     

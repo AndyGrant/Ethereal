@@ -50,9 +50,9 @@ typedef struct Undo {
     int capturePiece;
 } Undo;
 
-void initalizeBoard(Board * board, char * fen);
-void printBoard(Board * board);
-uint64_t perft(Board * board, int depth);
-void runBenchmark(int depth);
+void initializeBoard(Board* board, char* fen);
+void printBoard(Board* board);
+uint64_t perft(Board* board, int depth);
+void runBenchmark(Thread* threads, int depth);
 
 #endif

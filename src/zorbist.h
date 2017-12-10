@@ -27,7 +27,7 @@
 #define ENPASS (3)
 #define TURN   (6)
 
-void initalizeZorbist();
+void initializeZorbist();
 uint64_t rand64();
 
 extern uint64_t ZorbistKeys[32][SQUARE_NB];

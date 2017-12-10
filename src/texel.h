@@ -34,21 +34,21 @@ typedef struct TexelEntry {
 
 void runTexelTuning();
 
-void initializeTexelEntries(TexelEntry * tes);
+void initializeTexelEntries(TexelEntry* tes);
 
-void initializeCoefficients(TexelEntry * te);
+void initializeCoefficients(TexelEntry* te);
 
 void initializeCurrentParameters(double cparams[NT][PHASE_NB]);
 
-void calculateLearningRates(TexelEntry * tes, double rates[NT][PHASE_NB]);
+void calculateLearningRates(TexelEntry* tes, double rates[NT][PHASE_NB]);
 
 void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]);
 
-double computeOptimalK(TexelEntry * tes);
+double computeOptimalK(TexelEntry* tes);
 
-double completeEvaluationError(TexelEntry * tes, double K);
+double completeEvaluationError(TexelEntry* tes, double K);
 
-double completeLinearError(TexelEntry * tes, double params[NT][PHASE_NB], double K);
+double completeLinearError(TexelEntry* tes, double params[NT][PHASE_NB], double K);
 
 double singleLinearError(TexelEntry te, double params[NT][PHASE_NB], double K);
 

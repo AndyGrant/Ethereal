@@ -30,7 +30,7 @@ uint64_t PawnConnectedMasks[COLOUR_NB][SQUARE_NB];
 uint64_t OutpostSquareMasks[COLOUR_NB][SQUARE_NB];
 uint64_t OutpostRanks[COLOUR_NB];
 
-void initalizeMasks(){
+void initializeMasks(){
     
     int i, j;
     uint64_t files;

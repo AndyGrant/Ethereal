@@ -29,11 +29,12 @@ uint64_t rookAttacks(int sq, uint64_t occupied, uint64_t targets);
 uint64_t queenAttacks(int sq, uint64_t occupiedDiagonol, uint64_t occupiedStraight, uint64_t targets);
 uint64_t kingAttacks(int sq, uint64_t tagets);
 
-void genAllLegalMoves(Board * board, uint16_t * moves, int * size);
-void genAllMoves(Board * board, uint16_t * moves, int * size);
-void genAllNoisyMoves(Board * board, uint16_t * moves, int * size);
-void genAllQuietMoves(Board * board, uint16_t * moves, int * size);
-int isNotInCheck(Board * board, int turn);
-int squareIsAttacked(Board * board, int turn, int sq);
+void genAllLegalMoves(Board* board, uint16_t* moves, int* size);
+void genAllMoves(Board* board, uint16_t* moves, int* size);
+void genAllNoisyMoves(Board* board, uint16_t* moves, int* size);
+void genAllQuietMoves(Board* board, uint16_t* moves, int* size);
+
+int isNotInCheck(Board* board, int turn);
+int squareIsAttacked(Board* board, int turn, int sq);
 
 #endif

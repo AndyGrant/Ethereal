@@ -19,10 +19,25 @@
 #ifndef _UCI_H
 #define _UCI_H
 
-int stringEquals(char * s1, char * s2);
-int stringStartsWith(char * str, char * key);
-int stringContains(char * str, char * key);
-void getInput(char * str);
-void moveToString(char * str, uint16_t move);
+#include "types.h"
+
+typedef struct Limits {
+    int limitedByNone;
+    int limitedByTime;
+    int limitedByDepth;
+    int limitedBySelf;
+    double timeLimit;
+    int depthLimit;
+} Limits;
+
+void getInput(char* str);
+int stringEquals(char* s1, char* s2);
+int stringStartsWith(char* str, char* key);
+int stringContains(char* str, char* key);
+void moveToString(char* str, uint16_t move);
+
+void uciGo(char* str, Thread* threads, Board* board);
+void uciPosition(char* str, Board* board);
+void uciReport(Thread* threads, double startTime, int depth, int value, PVariation* pv);
 
 #endif
