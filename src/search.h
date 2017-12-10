@@ -24,15 +24,9 @@
 #include "types.h"
 
 typedef struct SearchInfo {
-    Board board;
-    int searchIsInfinite;
-    int searchIsDepthLimited;
-    int searchIsTimeLimited;
-    int depthLimit;
-    int terminateSearch;
-    double startTime;
-    double idealTimeUsage;
-    double maxTimeUsage;
+    int depth;
+    int values[MAX_DEPTH];
+    int bestmoves[MAX_DEPTH];
 } SearchInfo;
 
 typedef struct PVariation {
@@ -40,14 +34,25 @@ typedef struct PVariation {
     int length;
 } PVariation;
 
-uint16_t getBestMove(SearchInfo * info);
-int aspirationWindow(PVariation * pv, Board * board, int depth, int values[MAX_DEPTH]);
-int search(PVariation * pv, Board * board, int alpha, int beta, int depth, int height);
-int qsearch(PVariation * pv, Board * board, int alpha, int beta, int height);
-int moveIsTactical(Board * board, uint16_t move);
-int hasNonPawnMaterial(Board * board, int turn);
+
+uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double time, double inc, double mtg);
+
+void* iterativeDeepening(void* vthread);
+
+int aspirationWindow(Thread* thread, int depth);
+
+int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int height);
+
+int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height);
+
+int moveIsTactical(Board* board, uint16_t move);
+
+int hasNonPawnMaterial(Board* board, int turn);
+
 int valueFromTT(int value, int height);
+
 int valueToTT(int value, int height);
+
 
 static const int RazorDepth = 4;
 

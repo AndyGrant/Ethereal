@@ -31,9 +31,9 @@
 #include "psqt.h"
 #include "zorbist.h"
 
-void applyMove(Board * board, uint16_t move, Undo * undo){
+void applyMove(Board* board, uint16_t move, Undo* undo){
     
-    static void (*table[4])(Board *, uint16_t, Undo *) = {
+    static void (*table[4])(Board*, uint16_t, Undo*) = {
         applyNormalMove, applyCastleMove,
         applyEnpassMove, applyPromotionMove
     };
@@ -63,7 +63,7 @@ void applyMove(Board * board, uint16_t move, Undo * undo){
     table[MoveType(move) >> 12](board, move, undo);
 }
 
-void applyNormalMove(Board * board, uint16_t move, Undo * undo){
+void applyNormalMove(Board* board, uint16_t move, Undo* undo){
     
     int to, from, fromType, toType, fromPiece, toPiece;
     uint64_t shiftFrom, shiftTo, enemyPawns;
@@ -152,7 +152,7 @@ void applyNormalMove(Board * board, uint16_t move, Undo * undo){
     }
 }
 
-void applyCastleMove(Board * board, uint16_t move, Undo * undo){
+void applyCastleMove(Board* board, uint16_t move, Undo* undo){
     
     int to, from, rTo, rFrom, fromPiece, rFromPiece;
     uint64_t shiftFrom, shiftTo, rShiftFrom, rShiftTo;
@@ -221,7 +221,7 @@ void applyCastleMove(Board * board, uint16_t move, Undo * undo){
     undo->capturePiece = EMPTY;
 }
 
-void applyEnpassMove(Board * board, uint16_t move, Undo * undo){
+void applyEnpassMove(Board* board, uint16_t move, Undo* undo){
     
     int to, from, ep, fromPiece, enpassPiece;
     uint64_t shiftFrom, shiftTo, shiftEnpass;
@@ -281,7 +281,7 @@ void applyEnpassMove(Board * board, uint16_t move, Undo * undo){
     board->epSquare = -1;
 }
 
-void applyPromotionMove(Board * board, uint16_t move, Undo * undo){
+void applyPromotionMove(Board* board, uint16_t move, Undo* undo){
     
     int to, from, toType, promotype, fromPiece, toPiece, promoPiece;
     uint64_t shiftFrom, shiftTo;
@@ -350,7 +350,7 @@ void applyPromotionMove(Board * board, uint16_t move, Undo * undo){
     }
 }
 
-void applyNullMove(Board * board, Undo * undo){
+void applyNullMove(Board* board, Undo* undo){
     
     // Store turn, hash and epSquare
     undo->hash = board->hash;
@@ -371,7 +371,7 @@ void applyNullMove(Board * board, Undo * undo){
     }
 }
 
-void revertMove(Board * board, uint16_t move, Undo * undo){
+void revertMove(Board* board, uint16_t move, Undo* undo){
     
     int to, from, rTo, rFrom, fromType, toType, promotype, ep;
     uint64_t shiftFrom, shiftTo, rShiftFrom, rShiftTo, shiftEnpass;
@@ -462,7 +462,7 @@ void revertMove(Board * board, uint16_t move, Undo * undo){
     }
 }
 
-void revertNullMove(Board * board, Undo * undo){
+void revertNullMove(Board* board, Undo* undo){
     board->hash = undo->hash;
     board->turn = !board->turn;
     board->epSquare = undo->epSquare;

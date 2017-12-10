@@ -19,7 +19,7 @@
 #ifndef _PSQT_H
 #define _PSQT_H
 
-void initalizePSQT();
+void initializePSQT();
 
 extern int PSQTMidgame[32][SQUARE_NB];
 extern int PSQTEndgame[32][SQUARE_NB];

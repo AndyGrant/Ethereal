@@ -30,20 +30,20 @@
 #include "piece.h"
 #include "psqt.h"
 #include "types.h"
+#include "thread.h"
 
-extern HistoryTable History;
-
-void initalizeMovePicker(MovePicker * mp, int skipQuiets, uint16_t ttMove, uint16_t killer1, uint16_t killer2){
+void initializeMovePicker(MovePicker* mp, Thread* thread, uint16_t ttMove, int height, int skipQuiets){
     mp->skipQuiets = skipQuiets;
     mp->stage      = STAGE_TABLE;
     mp->noisySize  = 0;
     mp->quietSize  = 0;
     mp->tableMove  = ttMove;
-    mp->killer1    = killer1 != ttMove ? killer1 : NONE_MOVE;
-    mp->killer2    = killer2 != ttMove ? killer2 : NONE_MOVE;
+    mp->killer1    = thread->killers[height][0] != ttMove ? thread->killers[height][0] : NONE_MOVE;
+    mp->killer2    = thread->killers[height][1] != ttMove ? thread->killers[height][1] : NONE_MOVE;
+    mp->history    = &thread->history;
 }
 
-uint16_t selectNextMove(MovePicker * mp, Board * board){
+uint16_t selectNextMove(MovePicker* mp, Board* board){
     
     int i, best;
     uint16_t bestMove;
@@ -182,19 +182,17 @@ uint16_t selectNextMove(MovePicker * mp, Board * board){
     }
 }
    
-void evaluateNoisyMoves(MovePicker * mp, Board * board){
+void evaluateNoisyMoves(MovePicker* mp, Board* board){
     
     uint16_t move;
-    int i, value, from, to;
+    int i, value;
     int fromType, toType;
     
     for (i = 0; i < mp->noisySize; i++){
         
-        move = mp->moves[i];
-        from = MoveFrom(move);
-        to = MoveTo(move);
-        fromType = PieceType(board->squares[from]);
-        toType = PieceType(board->squares[to]);
+        move     = mp->moves[i];
+        fromType = PieceType(board->squares[ MoveFrom(move)]);
+        toType   = PieceType(board->squares[MoveTo(move)]);
         
         // Use the standard MVV-LVA
         value = PieceValues[toType][EG] - fromType;
@@ -211,26 +209,25 @@ void evaluateNoisyMoves(MovePicker * mp, Board * board){
     }
 }
 
-void evaluateQuietMoves(MovePicker * mp, Board * board){
+void evaluateQuietMoves(MovePicker* mp, Board* board){
     
     uint16_t move;
-    int i, value, from, to;
+    int i, value;
     
     for (i = mp->split; i < mp->split + mp->quietSize; i++){
         
         move = mp->moves[i];
-        from = MoveFrom(move);
-        to = MoveTo(move);
         
         // Use the history score and PSQT to evaluate the move
-        value =  getHistoryScore(History, move, board->turn, 512);
-        value += abs(PSQTMidgame[board->squares[from]][to]);
-        value -= abs(PSQTMidgame[board->squares[from]][from]);
+        value =  getHistoryScore(*mp->history, move, board->turn, 512);
+        value += abs(PSQTMidgame[board->squares[MoveFrom(move)]][MoveTo(move)  ]);
+        value -= abs(PSQTMidgame[board->squares[MoveFrom(move)]][MoveFrom(move)]);
+        
         mp->values[i] = value;
     }
 }
 
-int moveIsPsuedoLegal(Board * board, uint16_t move){
+int moveIsPsuedoLegal(Board* board, uint16_t move){
     
     int from, to, moveType, promoType, fromType; 
     int castleStart, castleEnd, rights, crossover;

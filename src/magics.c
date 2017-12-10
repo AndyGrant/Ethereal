@@ -39,11 +39,11 @@ uint64_t KingMap[SQUARE_NB];
 uint64_t OccupancyMaskRook[SQUARE_NB];
 uint64_t OccupancyMaskBishop[SQUARE_NB];
 
-uint64_t ** OccupancyVariationsRook;
-uint64_t ** OccupancyVariationsBishop;
+uint64_t** OccupancyVariationsRook;
+uint64_t** OccupancyVariationsBishop;
 
-uint64_t * MoveDatabaseRook;
-uint64_t * MoveDatabaseBishop;
+uint64_t* MoveDatabaseRook;
+uint64_t* MoveDatabaseBishop;
 
 int MagicRookIndexes[SQUARE_NB];
 int MagicBishopIndexes[SQUARE_NB];
@@ -108,7 +108,7 @@ const uint64_t MagicNumberBishop[SQUARE_NB] = {
     0x0400000260142410ull, 0x0800633408100500ull, 0xfc087e8e4bb2f736ull, 0x43ff9e4ef4ca2c89ull
 };
 
-void initalizeMagics(){
+void initializeMagics(){
     
     int i;
     uint64_t j;

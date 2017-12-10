@@ -90,7 +90,7 @@ const int KingPSQT32[32][PHASE_NB] = {
     {  -2, -34}, {  10, -10}, { -31, -30}, { -43, -13},
 };
 
-void initalizePSQT(){
+void initializePSQT(){
     
     int sq, w32, b32;
     

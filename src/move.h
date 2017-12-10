@@ -41,15 +41,15 @@
 #define ROOK_PROMO_MOVE   (PROMOTION_MOVE | PROMOTE_TO_ROOK  )
 #define QUEEN_PROMO_MOVE  (PROMOTION_MOVE | PROMOTE_TO_QUEEN )
 
-void applyMove(Board * board, uint16_t move, Undo * undo);
-void applyNormalMove(Board * board, uint16_t move, Undo * undo);
-void applyCastleMove(Board * board, uint16_t move, Undo * undo);
-void applyEnpassMove(Board * board, uint16_t move, Undo * undo);
-void applyPromotionMove(Board * board, uint16_t move, Undo * undo);
-void applyNullMove(Board * board, Undo * undo);
+void applyMove(Board* board, uint16_t move, Undo* undo);
+void applyNormalMove(Board* board, uint16_t move, Undo* undo);
+void applyCastleMove(Board* board, uint16_t move, Undo* undo);
+void applyEnpassMove(Board* board, uint16_t move, Undo* undo);
+void applyPromotionMove(Board* board, uint16_t move, Undo* undo);
+void applyNullMove(Board* board, Undo* undo);
 
-void revertMove(Board * board, uint16_t move, Undo * undo);
-void revertNullMove(Board * board, Undo * undo);
+void revertMove(Board* board, uint16_t move, Undo* undo);
+void revertNullMove(Board* board, Undo* undo);
 
 void printMove(uint16_t move);
 

@@ -41,7 +41,7 @@ int popcount(uint64_t bb){
           + BitCounts[(bb >> 48) & 0xFFFF];
 }
 
-void getSetBits(uint64_t bb, int * arr){
+void getSetBits(uint64_t bb, int* arr){
     
     int lsb, count = 0;
     
@@ -71,7 +71,7 @@ int getlsb(uint64_t bb){
     #endif
 }
 
-int poplsb(uint64_t * bb){
+int poplsb(uint64_t* bb){
     int lsb = getlsb(*bb);
     *bb ^= 1ull << lsb;
     return lsb;

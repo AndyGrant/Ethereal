@@ -31,13 +31,13 @@ TFLAGS = $(CFLAGS) -fopenmp -lm -DTUNE
 SRC = *.c
 
 all:
-	$(CC) $(CFLAGS) $(SRC) -o $(EXE)
+	$(CC) $(CFLAGS) $(SRC) -lpthread -o $(EXE)
     
 profile:
-	$(CC) $(PFLAGS) $(SRC) -o $(EXE)
+	$(CC) $(PFLAGS) $(SRC) -lpthread -o $(EXE)
     
 debug:
-	$(CC) $(DFLAGS) $(SRC) -o $(EXE)
+	$(CC) $(DFLAGS) $(SRC) -lpthread -o $(EXE)
     
 tune:
-	$(CC) $(TFLAGS) $(SRC) -o $(EXE)
+	$(CC) $(TFLAGS) $(SRC) -lpthread -o $(EXE)

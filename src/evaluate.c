@@ -156,7 +156,7 @@ const int* PieceValues[8] = {
     QueenValue, KingValue, NoneValue, NoneValue
 };
 
-int evaluateBoard(Board * board){
+int evaluateBoard(Board* board, PawnTable* ptable){
     
     EvalInfo ei;
     int mg, eg, phase, eval;
@@ -165,8 +165,8 @@ int evaluateBoard(Board * board){
     if (evaluateDraws(board)) return 0;
     
     // Setup and perform the evaluation of all pieces
-    initializeEvalInfo(&ei, board);
-    evaluatePieces(&ei, board);
+    initializeEvalInfo(&ei, board, ptable);
+    evaluatePieces(&ei, board, ptable);
         
     // Combine evaluation terms for the mid game
     mg = board->midgame + ei.midgame[WHITE] - ei.midgame[BLACK]
@@ -189,7 +189,7 @@ int evaluateBoard(Board * board){
     return board->turn == WHITE ? eval : -eval;
 }
 
-int evaluateDraws(Board * board){
+int evaluateDraws(Board* board){
     
     uint64_t white   = board->colours[WHITE];
     uint64_t black   = board->colours[BLACK];
@@ -226,7 +226,7 @@ int evaluateDraws(Board * board){
     return 0;
 }
 
-void evaluatePieces(EvalInfo * ei, Board * board){
+void evaluatePieces(EvalInfo* ei, Board* board, PawnTable* ptable){
     
     int pmg, peg;
     
@@ -255,7 +255,7 @@ void evaluatePieces(EvalInfo * ei, Board * board){
         if (!TEXEL){
             pmg = ei->pawnMidgame[WHITE] - ei->pawnMidgame[BLACK];
             peg = ei->pawnEndgame[WHITE] - ei->pawnEndgame[BLACK];
-            storePawnEntry(&PTable, board->phash, ei->passedPawns, pmg, peg);
+            storePawnEntry(ptable, board->phash, ei->passedPawns, pmg, peg);
         }
         
         evaluatePassedPawns(ei, board, WHITE);
@@ -272,7 +272,7 @@ void evaluatePieces(EvalInfo * ei, Board * board){
     }
 }
 
-void evaluatePawns(EvalInfo * ei, Board * board, int colour){
+void evaluatePawns(EvalInfo* ei, Board* board, int colour){
     
     const int forward = (colour == WHITE) ? 8 : -8;
     
@@ -347,7 +347,7 @@ void evaluatePawns(EvalInfo * ei, Board * board, int colour){
     }
 }
 
-void evaluateKnights(EvalInfo * ei, Board * board, int colour){
+void evaluateKnights(EvalInfo* ei, Board* board, int colour){
     
     int sq, defended, mobilityCount;
     uint64_t tempKnights, enemyPawns, attacks; 
@@ -398,7 +398,7 @@ void evaluateKnights(EvalInfo * ei, Board * board, int colour){
     }
 }
 
-void evaluateBishops(EvalInfo * ei, Board * board, int colour){
+void evaluateBishops(EvalInfo* ei, Board* board, int colour){
     
     int sq, defended, mobilityCount;
     uint64_t tempBishops, myPawns, enemyPawns, attacks;
@@ -464,7 +464,7 @@ void evaluateBishops(EvalInfo * ei, Board * board, int colour){
     }
 }
 
-void evaluateRooks(EvalInfo * ei, Board * board, int colour){
+void evaluateRooks(EvalInfo* ei, Board* board, int colour){
     
     int sq, open, mobilityCount;
     uint64_t tempRooks, myPawns, enemyPawns, attacks;
@@ -523,7 +523,7 @@ void evaluateRooks(EvalInfo * ei, Board * board, int colour){
     }
 }
 
-void evaluateQueens(EvalInfo * ei, Board * board, int colour){
+void evaluateQueens(EvalInfo* ei, Board* board, int colour){
     
     int sq, mobilityCount;
     uint64_t tempQueens, attacks;
@@ -568,7 +568,7 @@ void evaluateQueens(EvalInfo * ei, Board * board, int colour){
     }
 }
 
-void evaluateKings(EvalInfo * ei, Board * board, int colour){
+void evaluateKings(EvalInfo* ei, Board* board, int colour){
     
     int attackCounts;
     
@@ -591,7 +591,7 @@ void evaluateKings(EvalInfo * ei, Board * board, int colour){
     }
 }
 
-void evaluatePassedPawns(EvalInfo * ei, Board * board, int colour){
+void evaluatePassedPawns(EvalInfo* ei, Board* board, int colour){
     
     int sq, rank, canAdvance, safeAdvance;
     uint64_t tempPawns, destination, notEmpty;
@@ -623,7 +623,7 @@ void evaluatePassedPawns(EvalInfo * ei, Board * board, int colour){
     }
 }
 
-void initializeEvalInfo(EvalInfo * ei, Board * board){
+void initializeEvalInfo(EvalInfo* ei, Board* board, PawnTable* ptable){
     
     uint64_t white   = board->colours[WHITE];
     uint64_t black   = board->colours[BLACK];
@@ -672,5 +672,5 @@ void initializeEvalInfo(EvalInfo * ei, Board * board){
     ei->pawnEndgame[WHITE] = ei->pawnEndgame[BLACK] = 0;
     
     if (TEXEL) ei->pentry = NULL;
-    else       ei->pentry = getPawnEntry(&PTable, board->phash);
+    else       ei->pentry = getPawnEntry(ptable, board->phash);
 }

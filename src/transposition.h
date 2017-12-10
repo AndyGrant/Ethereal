@@ -49,21 +49,18 @@ typedef struct PawnEntry {
 } PawnEntry;
 
 typedef struct PawnTable {
-    PawnEntry * entries;
+    PawnEntry entries[0x10000];
 } PawnTable;
 
-void initalizeTranspositionTable(TransTable * table, uint64_t megabytes);
-void destroyTranspositionTable(TransTable * table);
-void updateTranspositionTable(TransTable * table);
-void clearTranspositionTable(TransTable * table);
+void initializeTranspositionTable(TransTable* table, uint64_t megabytes);
+void destroyTranspositionTable(TransTable* table);
+void updateTranspositionTable(TransTable* table);
+void clearTranspositionTable(TransTable* table);
 
-TransEntry * getTranspositionEntry(TransTable * table, uint64_t hash);
-void storeTranspositionEntry(TransTable * table, int depth, int type, int value, int bestMove, uint64_t hash);
+int getTranspositionEntry(TransTable* table, uint64_t hash, TransEntry* ttEntry);
+void storeTranspositionEntry(TransTable* table, int depth, int type, int value, int bestMove, uint64_t hash);
 
-void initalizePawnTable(PawnTable * ptable);
-void destoryPawnTable(PawnTable * ptable);
-
-PawnEntry * getPawnEntry(PawnTable * ptable, uint64_t phash);
-void storePawnEntry(PawnTable * ptable, uint64_t phash, uint64_t passed, int mg, int eg);
+PawnEntry * getPawnEntry(PawnTable* ptable, uint64_t phash);
+void storePawnEntry(PawnTable* ptable, uint64_t phash, uint64_t passed, int mg, int eg);
 
 #endif 

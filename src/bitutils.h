@@ -22,10 +22,10 @@
 #include <stdint.h>
 
 int countSetBits(uint64_t bb);
-void getSetBits(uint64_t bb, int * arr);
+void getSetBits(uint64_t bb, int* arr);
 int popcount(uint64_t bb);
 int getlsb(uint64_t bb);
-int poplsb(uint64_t * bb);
+int poplsb(uint64_t* bb);
 
 extern uint8_t BitCounts[0x10000];
 

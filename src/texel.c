@@ -30,18 +30,14 @@
 #include "move.h"
 #include "search.h"
 #include "square.h"
+#include "thread.h"
 #include "texel.h"
 #include "transposition.h"
 #include "types.h"
-
-// Hack to tell search() to ignore the clock
-extern SearchInfo * Info;
+#include "uci.h"
 
 // Hack so we can lower the table size for speed
 extern TransTable Table;
-
-// Hack so we can clear the History for search()
-extern HistoryTable History;
 
 // Need these in order to get the coefficients
 // for each of the evaluation terms
@@ -91,7 +87,7 @@ extern const int PassedPawn[2][2][RANK_NB][PHASE_NB];
 
 void runTexelTuning(){
     
-    TexelEntry * tes;
+    TexelEntry* tes;
     int i, j, iteration = -1;
     double K, thisError, baseRate = 1.0;
     double rates[NT][PHASE_NB] = {{0}, {0}};
@@ -101,7 +97,7 @@ void runTexelTuning(){
     setvbuf(stdout, NULL, _IONBF, 0);
     
     printf("\nSetting Transposition Table to 1MB...");
-    initalizeTranspositionTable(&Table, 1);
+    initializeTranspositionTable(&Table, 1);
     
     printf("\n\nAllocating Memory for Texel Tuner [%dMB]...",
            (int)(NP * sizeof(TexelEntry) / (1024 * 1024)));
@@ -155,18 +151,29 @@ void runTexelTuning(){
     }
 }
 
-void initializeTexelEntries(TexelEntry * tes){
+void initializeTexelEntries(TexelEntry* tes){
     
     int i, j;
     Undo undo;
     Board board;
+    Limits limits;
+    Thread thread;
     PVariation pv;
     char line[128];
     
-    // Hack to tell search() to ignore the clock
-    SearchInfo info;
-    info.searchIsTimeLimited = 0;
-    Info = &info;
+    // Initialize limits for the search
+    limits.limitedByNone  = 0;
+    limits.limitedByTime  = 0;
+    limits.limitedByDepth = 1;
+    limits.limitedBySelf  = 0;
+    limits.timeLimit      = 0;
+    limits.depthLimit     = 1;
+    
+    // Initialize the thread for the search
+    thread.limits = &limits;
+    thread.depth  = 1;
+    thread.abort  = 0;
+    
     
     FILE * fin = fopen("FENS", "r");
     
@@ -183,19 +190,15 @@ void initializeTexelEntries(TexelEntry * tes){
         else if (strstr(line, "0-1")) tes[i].result = 0.0;
         else    {printf("Unable to Parse Result\n"); exit(0);}
         
-        // Clear the history before each search. In transposition.c, we
-        // only return NULL values from the table, so that need not be reset
-        clearHistory(History);
-        
         // Search, then and apply all moves in the principle variation
-        initalizeBoard(&board, line);
-        search(&pv, &board, -MATE, MATE, 1, 0);
+        initializeBoard(&thread.board, line);
+        search(&thread, &pv, -MATE, MATE, 1, 0);
         for (j = 0; j < pv.length; j++)
             applyMove(&board, pv.line[j], &undo);
             
         // Get the eval trace for the final position in the pv
         T = EmptyTrace;
-        tes[i].eval = evaluateBoard(&board);
+        tes[i].eval = evaluateBoard(&board, NULL);
         if (board.turn == BLACK) tes[i].eval *= -1;
         
         // Determine the game phase based on remaining material
@@ -219,7 +222,7 @@ void initializeTexelEntries(TexelEntry * tes){
     fclose(fin);
 }
 
-void initializeCoefficients(TexelEntry * te){
+void initializeCoefficients(TexelEntry* te){
     
     int i = 0, a, b, c;
     
@@ -471,7 +474,7 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
     }
 }
 
-void calculateLearningRates(TexelEntry * tes, double rates[NT][PHASE_NB]){
+void calculateLearningRates(TexelEntry* tes, double rates[NT][PHASE_NB]){
     
     int i, j;
     double avgByPhase[PHASE_NB] = {0};
@@ -655,7 +658,7 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
     } printf("\n};\n");
 }
 
-double computeOptimalK(TexelEntry * tes){
+double computeOptimalK(TexelEntry* tes){
     
     int i;
     double start = -10.0, end = 10.0, delta = 1.0;
@@ -683,7 +686,7 @@ double computeOptimalK(TexelEntry * tes){
     return start;
 }
 
-double completeEvaluationError(TexelEntry * tes, double K){
+double completeEvaluationError(TexelEntry* tes, double K){
     
     int i;
     double total = 0.0;
@@ -700,7 +703,7 @@ double completeEvaluationError(TexelEntry * tes, double K){
     return total / (double)NP;
 }
 
-double completeLinearError(TexelEntry * tes, double params[NT][PHASE_NB], double K){
+double completeLinearError(TexelEntry* tes, double params[NT][PHASE_NB], double K){
     
     int i;
     double total = 0.0;
