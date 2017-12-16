@@ -22,6 +22,8 @@ WFLAGS = -Wall -Wextra -Wshadow
 
 CFLAGS = -DNDEBUG -O3 $(WFLAGS) -std=c99 -march=native -mtune=native -flto
 
+RFLAGS = -DNDEBUG -O3 $(WFLAGS) -std=c99 -flto -static
+
 PFLAGS = -DNDEBUG -O0 $(WFLAGS) -std=c99 -p -pg
 
 DFLAGS = -O0 $(WFLAGS) -std=c99
@@ -41,3 +43,6 @@ debug:
     
 tune:
 	$(CC) $(TFLAGS) $(SRC) -lpthread -o $(EXE)
+    
+release:
+	$(CC) $(RFLAGS) $(SRC) -lpthread -o $(EXE)
