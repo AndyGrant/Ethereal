@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 CC = gcc
+CCDROID = arm-linux-gnueabi-gcc
 
 EXE = Ethereal
 
@@ -46,3 +47,6 @@ tune:
     
 release:
 	$(CC) $(RFLAGS) $(SRC) -lpthread -o $(EXE)
+    
+android:
+	$(CCDROID) $(RFLAGS) $(SRC) -march=armv5t -lpthread -o $(EXE)-Android
