@@ -75,6 +75,7 @@ extern const int RookMobility[15][PHASE_NB];
 // To determine the starting values for the Queen terms
 extern const int QueenValue[PHASE_NB];
 extern const int QueenChecked[PHASE_NB];
+extern const int QueenCheckedByPawn[PHASE_NB];
 extern const int QueenPSQT32[32][PHASE_NB];
 extern const int QueenMobility[28][PHASE_NB];
 
@@ -85,7 +86,7 @@ extern const int KingPSQT32[32][PHASE_NB];
 extern const int PassedPawn[2][2][RANK_NB][PHASE_NB];
 
 
-void runTexelTuning(){
+void runTexelTuning(Thread* thread){
     
     TexelEntry* tes;
     int i, j, iteration = -1;
@@ -104,7 +105,7 @@ void runTexelTuning(){
     tes = calloc(NP, sizeof(TexelEntry));
     
     printf("\n\nReading and Initializing Texel Entries from FENS...");
-    initializeTexelEntries(tes);
+    initializeTexelEntries(tes, thread);
     
     printf("\n\nFetching Current Evaluation Terms as a Starting Point...");
     initializeCurrentParameters(cparams);
@@ -151,14 +152,11 @@ void runTexelTuning(){
     }
 }
 
-void initializeTexelEntries(TexelEntry* tes){
+void initializeTexelEntries(TexelEntry* tes, Thread* thread){
     
     int i, j;
     Undo undo;
-    Board board;
     Limits limits;
-    Thread thread;
-    PVariation pv;
     char line[128];
     
     // Initialize limits for the search
@@ -170,9 +168,12 @@ void initializeTexelEntries(TexelEntry* tes){
     limits.depthLimit     = 1;
     
     // Initialize the thread for the search
-    thread.limits = &limits;
-    thread.depth  = 1;
-    thread.abort  = 0;
+    thread->limits = &limits;
+    thread->depth  = 1;
+    thread->abort  = 0;
+    
+    // History is reduced to avoid division by zero
+    reduceHistory(thread->history);
     
     
     FILE * fin = fopen("FENS", "r");
@@ -191,21 +192,21 @@ void initializeTexelEntries(TexelEntry* tes){
         else    {printf("Unable to Parse Result\n"); exit(0);}
         
         // Search, then and apply all moves in the principle variation
-        initializeBoard(&thread.board, line);
-        search(&thread, &pv, -MATE, MATE, 1, 0);
-        for (j = 0; j < pv.length; j++)
-            applyMove(&board, pv.line[j], &undo);
+        initializeBoard(&thread->board, line);
+        search(thread, &thread->pv, -MATE, MATE, 1, 0);
+        for (j = 0; j < thread->pv.length; j++)
+            applyMove(&thread->board, thread->pv.line[j], &undo);
             
         // Get the eval trace for the final position in the pv
         T = EmptyTrace;
-        tes[i].eval = evaluateBoard(&board, NULL);
-        if (board.turn == BLACK) tes[i].eval *= -1;
+        tes[i].eval = evaluateBoard(&thread->board, NULL);
+        if (thread->board.turn == BLACK) tes[i].eval *= -1;
         
         // Determine the game phase based on remaining material
-        tes[i].phase = 24 - 4 * popcount(board.pieces[QUEEN ])
-                          - 2 * popcount(board.pieces[ROOK  ])
-                          - 1 * popcount(board.pieces[KNIGHT])
-                          - 1 * popcount(board.pieces[BISHOP]);
+        tes[i].phase = 24 - 4 * popcount(thread->board.pieces[QUEEN ])
+                          - 2 * popcount(thread->board.pieces[ROOK  ])
+                          - 1 * popcount(thread->board.pieces[KNIGHT])
+                          - 1 * popcount(thread->board.pieces[BISHOP]);
                           
         // When updating gradients, we use the coefficients for each
         // term, as well as the phase of the position it came from
@@ -307,6 +308,8 @@ void initializeCoefficients(TexelEntry* te){
     te->coeffs[i++] = T.queenCounts[WHITE] - T.queenCounts[BLACK];
     
     te->coeffs[i++] = T.queenChecked[WHITE] - T.queenChecked[BLACK];
+    
+    te->coeffs[i++] = T.queenCheckedByPawn[WHITE] - T.queenCheckedByPawn[BLACK];
     
     for (a = 0; a < 64; a++){
         te->coeffs[i + relativeSquare32(a, WHITE)] += T.queenPSQT[WHITE][a];
@@ -444,6 +447,9 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
     cparams[i  ][MG] = QueenChecked[MG];
     cparams[i++][EG] = QueenChecked[EG];
     
+    cparams[i  ][MG] = QueenCheckedByPawn[MG];
+    cparams[i++][EG] = QueenCheckedByPawn[EG];
+    
     for (a = 0; a < 32; a++, i++){
         cparams[i][MG] = QueenPSQT32[a][MG];
         cparams[i][EG] = QueenPSQT32[a][EG];
@@ -502,7 +508,7 @@ void calculateLearningRates(TexelEntry* tes, double rates[NT][PHASE_NB]){
 
 void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
     
-    int i = 0, x, y, z;
+    int i = 0, x, y;
     
     double tparams[NT][PHASE_NB];
     
@@ -619,6 +625,8 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
     
     printf("\nconst int QueenChecked[PHASE_NB] = {%4d,%4d};\n", (int)tparams[i][MG], (int)tparams[i][EG]); i++;
     
+    printf("\nconst int QueenCheckedByPawn[PHASE_NB] = {%4d,%4d};\n", (int)tparams[i][MG], (int)tparams[i][EG]); i++;
+    
     printf("\nconst int QueenPSQT32[32][PHASE_NB] = {");
     for (x = 0; x < 8; x++){
         printf("\n   ");
@@ -647,13 +655,11 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
     // Print Passed Pawn Parameters
     
     printf("\nconst int PassedPawn[2][2][RANK_NB][PHASE_NB] = {");
-    for (x = 0; x < 2; x++){
-        for (y = 0; y < 2; y++){
-            printf("\n  {");
-            for (z = 0; z < RANK_NB; z++, i++){
-                printf(" {%4d,%4d},", (int)tparams[i][MG], (int)tparams[i][EG]);
-            }
-            printf("}\n");
+    for (x = 0; x < 4; x++){
+        printf("\n  %s", x % 2 ? " {" : "{{");
+        for (y = 0; y < RANK_NB; y++, i++){
+            printf("{%4d,%4d}", (int)tparams[i][MG], (int)tparams[i][EG]);
+            printf("%s", y < RANK_NB - 1 ? ", " : x % 2 ? "}}," : "},");
         }
     } printf("\n};\n");
 }

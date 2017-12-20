@@ -46,6 +46,7 @@ int main(){
     
     Board board;
     char str[8192];
+    
     pthread_mutex_t lock;
     pthread_mutex_init(&lock, NULL);
     
@@ -61,10 +62,9 @@ int main(){
     initializeBoard(&board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     initializeTranspositionTable(&Table, megabytes);
     
-    
     #ifdef TUNE
-    runTexelTuning();
-    exit(0);
+        runTexelTuning(threads);
+        exit(0);
     #endif
     
     while (1){
@@ -72,7 +72,7 @@ int main(){
         getInput(str);
         
         if (stringEquals(str, "uci")){
-            printf("id name Ethereal 8.64\n");
+            printf("id name Ethereal 8.65\n");
             printf("id author Andrew Grant\n");
             printf("option name Hash type spin default 16 min 1 max 65536\n");
             printf("option name Threads type spin default 1 min 1 max 2048\n");

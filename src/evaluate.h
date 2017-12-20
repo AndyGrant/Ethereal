@@ -50,6 +50,7 @@ typedef struct EvalTrace {
     
     int queenCounts[COLOUR_NB];
     int queenChecked[COLOUR_NB];
+    int queenCheckedByPawn[COLOUR_NB];
     int queenPSQT[COLOUR_NB][SQUARE_NB];
     int queenMobility[COLOUR_NB][28];
     
