@@ -23,7 +23,7 @@
 
 #define NP (2000000)
 
-#define NT (341)
+#define NT (342)
 
 typedef struct TexelEntry {
     double result;
@@ -32,9 +32,9 @@ typedef struct TexelEntry {
     double factors[PHASE_NB];
 } TexelEntry;
 
-void runTexelTuning();
+void runTexelTuning(Thread* thread);
 
-void initializeTexelEntries(TexelEntry* tes);
+void initializeTexelEntries(TexelEntry* tes, Thread* thread);
 
 void initializeCoefficients(TexelEntry* te);
 

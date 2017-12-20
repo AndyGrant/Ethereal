@@ -112,6 +112,8 @@ const int QueenValue[PHASE_NB] = { 846, 880};
 
 const int QueenChecked[PHASE_NB] = { -48, -45};
 
+const int QueenCheckedByPawn[PHASE_NB] = { -48, -45};
+
 const int QueenMobility[28][PHASE_NB] = {
     {-138, -50}, { -91,-239}, { -86,-106}, { -50, -63},
     { -19, -61}, { -16, -28}, {  -8, -26}, {  -3, -24},
@@ -545,11 +547,18 @@ void evaluateQueens(EvalInfo* ei, Board* board, int colour){
                 | bishopAttacks(sq, ei->occupiedMinusBishops[colour], ~0ull);
         ei->attacked[colour] |= attacks;
             
-        // Apply a bonus if the queen is under an attack threat
+        // Apply a penalty if the queen is under an attack threat
         if ((1ull << sq) & ei->attackedNoQueen[!colour]){
             ei->midgame[colour] += QueenChecked[MG];
             ei->endgame[colour] += QueenChecked[EG];
             if (TRACE) T.queenChecked[colour]++;
+        }
+        
+        // Apply a penalty if the queen is under attack by a pawn
+        if ((1ull << sq) & ei->pawnAttacks[!colour]){
+            ei->midgame[colour] += QueenCheckedByPawn[MG];
+            ei->endgame[colour] += QueenCheckedByPawn[EG];
+            if (TRACE) T.queenCheckedByPawn[colour]++;
         }
             
         // Apply a bonus (or penalty) based on the mobility of the queen
