@@ -156,6 +156,7 @@ void initializeTexelEntries(TexelEntry* tes, Thread* thread){
     
     int i, j;
     Undo undo;
+    EvalInfo ei;
     Limits limits;
     char line[128];
     
@@ -199,7 +200,7 @@ void initializeTexelEntries(TexelEntry* tes, Thread* thread){
             
         // Get the eval trace for the final position in the pv
         T = EmptyTrace;
-        tes[i].eval = evaluateBoard(&thread->board, NULL);
+        tes[i].eval = evaluateBoard(&thread->board, &ei, NULL);
         if (thread->board.turn == BLACK) tes[i].eval *= -1;
         
         // Determine the game phase based on remaining material

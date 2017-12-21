@@ -158,25 +158,24 @@ const int* PieceValues[8] = {
     QueenValue, KingValue, NoneValue, NoneValue
 };
 
-int evaluateBoard(Board* board, PawnTable* ptable){
+int evaluateBoard(Board* board, EvalInfo* ei, PawnTable* ptable){
     
-    EvalInfo ei;
     int mg, eg, phase, eval;
     
     // evaluateDraws handles obvious drawn positions
     if (evaluateDraws(board)) return 0;
     
     // Setup and perform the evaluation of all pieces
-    initializeEvalInfo(&ei, board, ptable);
-    evaluatePieces(&ei, board, ptable);
+    initializeEvalInfo(ei, board, ptable);
+    evaluatePieces(ei, board, ptable);
         
     // Combine evaluation terms for the mid game
-    mg = board->midgame + ei.midgame[WHITE] - ei.midgame[BLACK]
-       + ei.pawnMidgame[WHITE] - ei.pawnMidgame[BLACK] + Tempo[board->turn][MG];
+    mg = board->midgame + ei->midgame[WHITE] - ei->midgame[BLACK]
+       + ei->pawnMidgame[WHITE] - ei->pawnMidgame[BLACK] + Tempo[board->turn][MG];
        
     // Combine evaluation terms for the end game
-    eg = board->endgame + ei.endgame[WHITE] - ei.endgame[BLACK]
-       + ei.pawnEndgame[WHITE] - ei.pawnEndgame[BLACK] + Tempo[board->turn][EG];
+    eg = board->endgame + ei->endgame[WHITE] - ei->endgame[BLACK]
+       + ei->pawnEndgame[WHITE] - ei->pawnEndgame[BLACK] + Tempo[board->turn][EG];
        
     // Calcuate the game phase based on remaining material (Fruit Method)
     phase = 24 - popcount(board->pieces[QUEEN]) * 4
@@ -284,6 +283,7 @@ void evaluatePawns(EvalInfo* ei, Board* board, int colour){
     // Update the attacks array with the pawn attacks. We will use this to
     // determine whether or not passed pawns may advance safely later on.
     attacks = ei->pawnAttacks[colour] & ei->kingAreas[!colour];
+    ei->attackedBy2[colour] = ei->attacked[colour] & ei->pawnAttacks[colour];
     ei->attacked[colour] |= ei->pawnAttacks[colour];
     ei->attackedNoQueen[colour] |= attacks;
     
@@ -369,6 +369,7 @@ void evaluateKnights(EvalInfo* ei, Board* board, int colour){
         // Update the attacks array with the knight attacks. We will use this to
         // determine whether or not passed pawns may advance safely later on.
         attacks = knightAttacks(sq, ~0ull);
+        ei->attackedBy2[colour] |= ei->attacked[colour] & attacks;
         ei->attacked[colour] |= attacks;
         ei->attackedNoQueen[colour] |= attacks;
         
@@ -435,6 +436,7 @@ void evaluateBishops(EvalInfo* ei, Board* board, int colour){
         // Update the attacks array with the bishop attacks. We will use this to
         // determine whether or not passed pawns may advance safely later on.
         attacks = bishopAttacks(sq, ei->occupiedMinusBishops[colour], ~0ull);
+        ei->attackedBy2[colour] |= ei->attacked[colour] & attacks;
         ei->attacked[colour] |= attacks;
         ei->attackedNoQueen[colour] |= attacks;
         
@@ -487,6 +489,7 @@ void evaluateRooks(EvalInfo* ei, Board* board, int colour){
         // Update the attacks array with the rooks attacks. We will use this to
         // determine whether or not passed pawns may advance safely later on.
         attacks = rookAttacks(sq, ei->occupiedMinusRooks[colour], ~0ull);
+        ei->attackedBy2[colour] |= ei->attacked[colour] & attacks;
         ei->attacked[colour] |= attacks;
         ei->attackedNoQueen[colour] |= attacks;
         
@@ -545,6 +548,7 @@ void evaluateQueens(EvalInfo* ei, Board* board, int colour){
         // determine whether or not passed pawns may advance safely later on.
         attacks = rookAttacks(sq, ei->occupiedMinusRooks[colour], ~0ull)
                 | bishopAttacks(sq, ei->occupiedMinusBishops[colour], ~0ull);
+        ei->attackedBy2[colour] |= ei->attacked[colour] & attacks;
         ei->attacked[colour] |= attacks;
             
         // Apply a penalty if the queen is under an attack threat
