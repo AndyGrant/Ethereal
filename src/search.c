@@ -615,8 +615,10 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
             continue;
         
         // Prune this capture if it is capturing a weaker piece which is protected,
-        // so long as we do not have any additional support for the attacker
-        if (    (ei.attacked[!board->turn]   & (1ull << MoveTo(currentMove)))
+        // so long as we do not have any additional support for the attacker. If
+        // the capture is also a promotion we will not perform any pruning here
+        if (     MoveType(currentMove) != PROMOTION_MOVE
+            &&  (ei.attacked[!board->turn]   & (1ull << MoveTo(currentMove)))
             && !(ei.attackedBy2[board->turn] & (1ull << MoveTo(currentMove)))
             &&  PieceValues[PieceType(board->squares[MoveTo  (currentMove)])][MG]
              <  PieceValues[PieceType(board->squares[MoveFrom(currentMove)])][MG])
