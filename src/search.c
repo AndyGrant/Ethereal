@@ -45,7 +45,7 @@
 
 extern TransTable Table;
 
-uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double time, double inc, double mtg){
+uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double time, double mtg){
     
     int i, nthreads = threads[0].nthreads;
     
@@ -57,8 +57,8 @@ uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double time,
     
     // Ethereal is responsible for choosing how much time to spend searching
     if (limits->limitedBySelf){
-        idealusage = mtg >= 0 ? 0.5 * (time / (mtg + 3)) : 0.5 * (time / 30);
-        maxusage   = mtg >= 0 ? 2.4 * (time / (mtg + 1)) : inc + (time / 15);
+        idealusage = mtg >= 0 ? 0.5 * (time / (mtg + 3)) : 0.5 * (time / 25);
+        maxusage   = mtg >= 0 ? 2.8 * (time / (mtg + 1)) : 2.8 * (time / 25);
         idealusage = MIN(idealusage, time - 20);
         maxusage   = MIN(maxusage,   time - 20);
     }
@@ -102,16 +102,16 @@ void* iterativeDeepening(void* vthread){
         
         thread->depth = depth;
         
-         for (count = 0, i = 0; i < thread->nthreads; i++)
-             count += thread != &thread->threads[i] && thread->threads[i].depth >= depth;
-         
-         if (depth > 1 && thread->nthreads > 1 && count >= thread->nthreads / 2){
-             thread->depth = depth + 1;
-             pthread_mutex_unlock(thread->lock);
-             continue;
-         }
-         
-         pthread_mutex_unlock(thread->lock);
+        for (count = 0, i = 0; i < thread->nthreads; i++)
+            count += thread != &thread->threads[i] && thread->threads[i].depth >= depth;
+
+        if (depth > 1 && thread->nthreads > 1 && count >= thread->nthreads / 2){
+            thread->depth = depth + 1;
+            pthread_mutex_unlock(thread->lock);
+            continue;
+        }
+
+        pthread_mutex_unlock(thread->lock);
         
         
         abort = setjmp(thread->jbuffer);
