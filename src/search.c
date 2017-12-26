@@ -405,7 +405,50 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         }
     }
     
-    // Step 11. Internal Iterative Deepening. Searching PV nodes without
+    // Step 11. ProbCut. If we have a good capture that causes a beta cutoff
+    // with a slightly reduced depth search it is likely that this capture is
+    // likely going to be good at a full depth. To save some work we will prune
+    // captures that won't exceed rbeta or captures that fail at a low depth
+    if (   !PvNode
+        && !inCheck
+        &&  depth >= 5
+        &&  board->history[board->numMoves-1] != NULL_MOVE
+        &&  abs(beta) < MATE - MAX_HEIGHT){
+            
+        int rbeta = MIN(beta + 150, MATE - MAX_HEIGHT - 1);
+            
+        initializeMovePicker(&movePicker, thread, NONE_MOVE, height, 1);
+        
+        while ((currentMove = selectNextMove(&movePicker, board)) != NONE_MOVE){
+            
+            // Skip this capture if the raw value gained from a capture will
+            // not exceed rbeta, making it unlikely to cause the desired cutoff
+            if (eval + PieceValues[PieceType(board->squares[MoveTo(currentMove)])][MG] <= rbeta)
+                continue;
+            
+            // Apply and validate move before searching
+            applyMove(board, currentMove, undo);
+            if (!isNotInCheck(board, !board->turn)){
+                revertMove(board, currentMove, undo);
+                continue;
+            }
+            
+            // Verify the move is good with a depth zero search (qsearch, unless in check)
+            // and then with a slightly reduced search. If both searches still exceed rbeta,
+            // we will prune this node's subtree with resonable assurance that we made no error
+            if (   -search(thread, &lpv, -rbeta, -rbeta+1,       0, height+1) >= rbeta
+                && -search(thread, &lpv, -rbeta, -rbeta+1, depth-4, height+1) >= rbeta){
+                    
+                revertMove(board, currentMove, undo);
+                return beta;
+            }
+             
+            // Revert the board state
+            revertMove(board, currentMove, undo);
+        }
+    }
+    
+    // Step 12. Internal Iterative Deepening. Searching PV nodes without
     // a known good move can be expensive, so a reduced search first
     if (    PvNode
         &&  ttMove == NONE_MOVE
@@ -421,8 +464,9 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         }
     }
     
-    // Step 12. Check Extension
+    // Step 13. Check Extension at non Root nodes that are PV or low depth
     depth += inCheck && !RootNode && (PvNode || depth <= 6);
+    
     
     initializeMovePicker(&movePicker, thread, ttMove, height, 0);
     
@@ -435,7 +479,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             hist = getHistoryScore(thread->history, currentMove, board->turn, 128);
         }
         
-        // Step 13. Futility Pruning. If our score is far below alpha,
+        // Step 14. Futility Pruning. If our score is far below alpha,
         // and we don't expect anything from this move, skip it.
         if (   !PvNode
             &&  isQuiet
@@ -451,7 +495,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             continue;
         }
         
-        // Step 14. Late Move Pruning / Move Count Pruning. If we have
+        // Step 15. Late Move Pruning / Move Count Pruning. If we have
         // tried many quiets in this position already, and we don't expect
         // anything from this move, we can undo it and move on.
         if (   !PvNode
@@ -468,7 +512,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         // Update counter of moves actually played
         played += 1;
     
-        // Step 15. Late Move Reductions. We will search some moves at a
+        // Step 16. Late Move Reductions. We will search some moves at a
         // lower depth. If they look poor at a lower depth, then we will
         // move on. If they look good, we will search with a full depth.
         if (    played >= 4
@@ -487,6 +531,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         else {
             R = 1;
         }
+        
         
         // Search the move with a possibly reduced depth, on a full or null window
         value =  (played == 1 || !PvNode)
@@ -618,6 +663,7 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
         // so long as we do not have any additional support for the attacker. If
         // the capture is also a promotion we will not perform any pruning here
         if (     MoveType(currentMove) != PROMOTION_MOVE
+            &&  !ei.positionIsDrawn
             &&  (ei.attacked[!board->turn]   & (1ull << MoveTo(currentMove)))
             && !(ei.attackedBy2[board->turn] & (1ull << MoveTo(currentMove)))
             &&  PieceValues[PieceType(board->squares[MoveTo  (currentMove)])][MG]

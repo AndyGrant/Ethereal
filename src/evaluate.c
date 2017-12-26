@@ -163,7 +163,8 @@ int evaluateBoard(Board* board, EvalInfo* ei, PawnTable* ptable){
     int mg, eg, phase, eval;
     
     // evaluateDraws handles obvious drawn positions
-    if (evaluateDraws(board)) return 0;
+    ei->positionIsDrawn = evaluateDraws(board);
+    if (ei->positionIsDrawn) return 0;
     
     // Setup and perform the evaluation of all pieces
     initializeEvalInfo(ei, board, ptable);
