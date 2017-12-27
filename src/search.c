@@ -487,6 +487,21 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             &&  futilityMargin <= alpha
             &&  depth <= FutilityPruningDepth)
             continue;
+            
+        // Step 15. Weak Capture Pruning. Prune this capture if it is capturing
+        // a weaker piece which is protected, so long as we do not have any 
+        // additional support for the attacker. Don't include capture-promotions
+        if (    !PvNode
+            &&  !isQuiet
+            &&   played >= 1
+            &&   depth <= 3
+            &&   MoveType(currentMove) != PROMOTION_MOVE
+            &&  !ei.positionIsDrawn
+            &&  (ei.attacked[!board->turn]   & (1ull << MoveTo(currentMove)))
+            && !(ei.attackedBy2[board->turn] & (1ull << MoveTo(currentMove)))
+            &&  PieceValues[PieceType(board->squares[MoveTo  (currentMove)])][MG]
+             <  PieceValues[PieceType(board->squares[MoveFrom(currentMove)])][MG])
+            continue;
         
         // Apply and validate move before searching
         applyMove(board, currentMove, undo);
@@ -495,7 +510,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             continue;
         }
         
-        // Step 15. Late Move Pruning / Move Count Pruning. If we have
+        // Step 16. Late Move Pruning / Move Count Pruning. If we have
         // tried many quiets in this position already, and we don't expect
         // anything from this move, we can undo it and move on.
         if (   !PvNode
@@ -512,7 +527,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         // Update counter of moves actually played
         played += 1;
     
-        // Step 16. Late Move Reductions. We will search some moves at a
+        // Step 17. Late Move Reductions. We will search some moves at a
         // lower depth. If they look poor at a lower depth, then we will
         // move on. If they look good, we will search with a full depth.
         if (    played >= 4
