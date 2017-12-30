@@ -46,7 +46,7 @@ tune:
 	$(CC) $(TFLAGS) $(SRC) -lpthread -o $(EXE)
     
 release:
-	$(CC) $(RFLAGS) $(SRC) -lpthread -o $(EXE)
+	$(CC) $(RFLAGS) $(SRC) -lpthread -o $(EXE)$(VER)-Win64
     
 android:
-	$(CCDROID) $(RFLAGS) $(SRC) -march=armv5t -lpthread -o $(EXE)-Android
+	$(CCDROID) $(RFLAGS) $(SRC) -march=armv5t -lpthread -o $(EXE)$(VER)-Android
