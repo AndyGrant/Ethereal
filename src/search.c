@@ -197,22 +197,30 @@ void* iterativeDeepening(void* vthread){
 
 int aspirationWindow(Thread* thread, int depth){
     
-    int alpha, beta, value, margin;
+    int alpha, beta, value, upper, lower;
     
     int* const values = thread->info->values;
     
-    if (depth > 4 && abs(values[depth - 1]) < MATE / 2){
+    // Aspiration window only after we have completed the first four
+    // depths, and so long as the last score is not near a mate score
+    if (depth > 4 && abs(values[depth-1]) < MATE / 2){
         
-        margin =             1.6 * (abs(values[depth - 1] - values[depth - 2]));
-        margin = MAX(margin, 2.0 * (abs(values[depth - 2] - values[depth - 3])));
-        margin = MAX(margin, 0.8 * (abs(values[depth - 3] - values[depth - 4])));
-        margin = MAX(margin, 1);
+        // Dynamically compute the upper margin based on previous scores
+        upper = MAX(    4,  1.6 * (values[depth-1] - values[depth-2]));
+        upper = MAX(upper,  2.0 * (values[depth-2] - values[depth-3]));
+        upper = MAX(upper,  0.8 * (values[depth-3] - values[depth-4]));
         
-        for (; margin <= 640; margin *= 2){
-            
-            // Create the aspiration window
-            thread->lower = alpha = values[depth - 1] - margin;
-            thread->upper = beta  = values[depth - 1] + margin;
+        // Dynamically compute the lower margin based on previous scores
+        lower = MAX(    4, -1.6 * (values[depth-1] - values[depth-2]));
+        lower = MAX(lower, -2.0 * (values[depth-2] - values[depth-3]));
+        lower = MAX(lower, -0.8 * (values[depth-3] - values[depth-4])); 
+        
+        // Create the aspiration window
+        alpha = values[depth-1] - lower;
+        beta  = values[depth-1] + upper;
+        
+        // Try windows until lower or upper bound exceeds a limit
+        for (; lower <= 640 && upper <= 640; lower *= 2, upper *= 2){
             
             // Perform the search on the modified window
             thread->value = value = search(thread, &thread->pv, alpha, beta, depth, 0);
@@ -221,13 +229,25 @@ int aspirationWindow(Thread* thread, int depth){
             if (value > alpha && value < beta)
                 return value;
             
+            // Search failed low
+            if (value <= alpha){
+                beta  = (alpha + beta) / 2;
+                alpha = alpha - 2 * lower;
+            }
+            
+            // Search failed high
+            if (value >= beta){
+                alpha = (alpha + beta) / 2;
+                beta  = beta + 2 * upper;
+            }
+            
             // Result was a near mate score, force a full search
             if (abs(value) > MATE / 2)
                 break;
         }
     }
     
-    // Full window search ( near mate or when depth equals one )
+    // Full window search when near mate or when depth is below or equal to 4
     return search(thread, &thread->pv, -MATE, MATE, depth, 0);
 }
 
