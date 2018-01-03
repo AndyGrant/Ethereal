@@ -81,6 +81,7 @@ extern const int QueenMobility[28][PHASE_NB];
 
 // To determine the starting values for the King terms
 extern const int KingPSQT32[32][PHASE_NB];
+extern const int KingDefenders[12][PHASE_NB];
 
 // To determine the starting values for the Passed Pawn terms
 extern const int PassedPawn[2][2][RANK_NB][PHASE_NB];
@@ -93,7 +94,7 @@ void runTexelTuning(Thread* thread){
     double K, thisError, baseRate = 1.0;
     double rates[NT][PHASE_NB] = {{0}, {0}};
     double params[NT][PHASE_NB] = {{0}, {0}};
-    double cparams[NT][PHASE_NB];
+    double cparams[NT][PHASE_NB] = {{0}, {0}};
     
     setvbuf(stdout, NULL, _IONBF, 0);
     
@@ -328,6 +329,8 @@ void initializeCoefficients(TexelEntry* te){
         te->coeffs[i + relativeSquare32(a, BLACK)] -= T.kingPSQT[BLACK][a];
     } i += 32;
     
+    for (a = 0; a < 12; a++)
+        te->coeffs[i++] = T.kingDefenders[WHITE][a] - T.kingDefenders[BLACK][a];
     
     // Initialize coefficients for the passed pawns
     
@@ -467,6 +470,11 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
     for (a = 0; a < 32; a++, i++){
         cparams[i][MG] = KingPSQT32[a][MG];
         cparams[i][EG] = KingPSQT32[a][EG];
+    }
+    
+    for (a = 0; a < 12; a++, i++){
+        cparams[i][MG] = KingDefenders[a][MG];
+        cparams[i][EG] = KingDefenders[a][EG];
     }
     
     // Initialize parameters for the passed pawns
@@ -647,6 +655,13 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
     
     printf("\nconst int KingPSQT32[32][PHASE_NB] = {");
     for (x = 0; x < 8; x++){
+        printf("\n   ");
+        for (y = 0; y < 4; y++, i++)
+            printf(" {%4d,%4d},", (int)tparams[i][MG], (int)tparams[i][EG]);
+    } printf("\n};\n");
+    
+    printf("\nconst int KingDefenders[12][PHASE_NB] = {");
+    for (x = 0; x < 3; x++){
         printf("\n   ");
         for (y = 0; y < 4; y++, i++)
             printf(" {%4d,%4d},", (int)tparams[i][MG], (int)tparams[i][EG]);

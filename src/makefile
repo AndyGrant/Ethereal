@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 CC = gcc
+
 CCDROID = arm-linux-gnueabi-gcc
 
 EXE = Ethereal
@@ -29,7 +30,7 @@ PFLAGS = -DNDEBUG -O0 $(WFLAGS) -std=c99 -p -pg
 
 DFLAGS = -O0 $(WFLAGS) -std=c99
 
-TFLAGS = $(CFLAGS) -fopenmp -lm -DTUNE
+TFLAGS = $(CFLAGS) -fopenmp -DTUNE
 
 SRC = *.c
 
@@ -43,7 +44,7 @@ debug:
 	$(CC) $(DFLAGS) $(SRC) -lpthread -o $(EXE)
     
 tune:
-	$(CC) $(TFLAGS) $(SRC) -lpthread -o $(EXE)
+	$(CC) $(TFLAGS) $(SRC) -lpthread -lm -o $(EXE)
     
 release:
 	$(CC) $(RFLAGS) $(SRC) -lpthread -o $(EXE)$(VER)-Win64.exe
