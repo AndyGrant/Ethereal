@@ -72,7 +72,7 @@ int main(){
         getInput(str);
         
         if (stringEquals(str, "uci")){
-            printf("id name Ethereal 8.74\n");
+            printf("id name Ethereal 8.75\n");
             printf("id author Andrew Grant\n");
             printf("option name Hash type spin default 16 min 1 max 65536\n");
             printf("option name Threads type spin default 1 min 1 max 2048\n");
