@@ -27,6 +27,7 @@ typedef struct SearchInfo {
     int depth;
     int values[MAX_DEPTH];
     int bestmoves[MAX_DEPTH];
+    int timeUsage[MAX_DEPTH];
 } SearchInfo;
 
 typedef struct PVariation {
