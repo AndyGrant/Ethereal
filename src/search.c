@@ -92,6 +92,8 @@ void* iterativeDeepening(void* vthread){
     
     Thread* const thread = (Thread*) vthread;
     
+    SearchInfo* const info = thread->info;
+    
     const int mainThread = thread == &thread->threads[0];
     
     int i, count, value = 0, depth, abort;
@@ -130,37 +132,23 @@ void* iterativeDeepening(void* vthread){
             
             pthread_mutex_lock(thread->lock);
             
-            // It is possible we finish the search but another thread has already
-            // finished the same depth we just have. In this case, we do not want
-            // to print the same depth twice, so we simply continue iterations
-            
-            if (thread->abort == ABORT_DEPTH){
-                thread->abort = ABORT_NONE;
-                pthread_mutex_unlock(thread->lock);
-                continue;
-            }
-            
-            else if (thread->abort == ABORT_ALL){
-                pthread_mutex_unlock(thread->lock);
-                return NULL;
-            }
-            
             // Dynamically decide how much time we should be using
             if (thread->limits->limitedBySelf){
                 
                 // Increase our time if the score suddently dropped by eight centipawns
-                if (depth >= 4 && thread->info->values[thread->info->depth] > value + 8)
+                if (depth >= 4 && info->values[info->depth] > value + 8)
                     *thread->idealusage = MIN(thread->maxusage, *thread->idealusage * 1.10);
                 
                 // Increase our time if the pv has changed across the last two iterations
-                if (depth >= 4 && thread->info->bestmoves[thread->info->depth] != thread->pv.line[0])
+                if (depth >= 4 && info->bestmoves[info->depth] != thread->pv.line[0])
                     *thread->idealusage = MIN(thread->maxusage, *thread->idealusage * 1.35);
             }
             
             // Update the Search Info structure for the main thread
-            thread->info->depth = depth;
-            thread->info->values[depth] = value;
-            thread->info->bestmoves[depth] = thread->pv.line[0];
+            info->depth = depth;
+            info->values[depth] = value;
+            info->bestmoves[depth] = thread->pv.line[0];
+            info->timeUsage[depth] = getRealTime() - thread->starttime - info->timeUsage[depth-1];
             
             // Send information about this search to the interface
             uciReport(thread->threads, thread->starttime, depth, value, &thread->pv);
@@ -184,6 +172,23 @@ void* iterativeDeepening(void* vthread){
                 
                 break;
             }
+            
+            // Check to see if we expect to be able to complete the next depth
+            if (thread->limits->limitedBySelf){
+                double timeFactor = MIN(2, info->timeUsage[depth] / MAX(1, info->timeUsage[depth-1]));
+                double estimatedUsage = info->timeUsage[depth] * (timeFactor + .25);
+                double estiamtedEndtime = getRealTime() + estimatedUsage - thread->starttime;
+                
+                if (estiamtedEndtime > thread->maxusage){
+                    for (i = 0; i < thread->nthreads; i++)
+                        thread->threads[i].abort = ABORT_ALL;
+                    
+                    pthread_mutex_unlock(thread->lock);
+                    
+                    break;
+                }
+            }
+            
             
             pthread_mutex_unlock(thread->lock);
         }
