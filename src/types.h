@@ -27,8 +27,8 @@
 #define MAX(A, B) ((A) > (B) ? (A) : (B))
 
 #define MATE       (16000)
-#define MAX_DEPTH  (64)
-#define MAX_HEIGHT (128)
+#define MAX_DEPTH  (128)
+#define MAX_HEIGHT (256)
 #define MAX_MOVES  (256)
 
 #define SQUARE_NB (64)

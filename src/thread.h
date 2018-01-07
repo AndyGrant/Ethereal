@@ -20,30 +20,19 @@
 #define _THREAD_H
 
 #include <setjmp.h>
-#include <pthread.h>
 
 #include "types.h"
 #include "transposition.h"
 #include "search.h"
 
-enum { ABORT_NONE, ABORT_DEPTH, ABORT_ALL };
-
 typedef struct Thread {
     
-    Board board;
-    Board* initialboard;
-    
-    PVariation pv;
     Limits* limits;
     SearchInfo* info;
-    double* idealusage;
-    double starttime;
-    double maxusage;
     
+    Board board;
+    PVariation pv;
     int depth;
-    int value;
-    int lower;
-    int upper;
     uint64_t nodes;
     
     int abort;
@@ -51,7 +40,6 @@ typedef struct Thread {
     
     int nthreads;
     Thread* threads;
-    pthread_mutex_t* lock;
     
     PawnTable ptable;
     KillerTable killers;
@@ -60,12 +48,11 @@ typedef struct Thread {
 } Thread;
 
 
-Thread* createThreadPool(int nthreads, pthread_mutex_t* lock);
+Thread* createThreadPool(int nthreads);
 
 void resetThreadPool(Thread* threads);
 
-void newSearchThreadPool(Thread* threads, Board* board, Limits* limits, SearchInfo* info,
-                                  double starttime, double* idealusage, double maxusage);
+void newSearchThreadPool(Thread* threads, Board* board, Limits* limits, SearchInfo* info);
                                
 uint64_t nodesSearchedThreadPool(Thread* threads);
 
