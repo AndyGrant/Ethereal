@@ -16,10 +16,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <pthread.h>
-#include <setjmp.h>
 #include <assert.h>
 #include <inttypes.h>
+#include <pthread.h>
+#include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,41 +43,45 @@
 #include "movepicker.h"
 #include "uci.h"
 
+pthread_mutex_t LOCK = PTHREAD_MUTEX_INITIALIZER;
+
 extern TransTable Table;
 
 uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double time, double mtg){
     
     int i, nthreads = threads[0].nthreads;
     
-    double idealusage = 0, maxusage = 0, starttime = getRealTime();
-    
     SearchInfo info; memset(&info, 0, sizeof(SearchInfo));
     
     pthread_t* pthreads = malloc(sizeof(pthread_t) * nthreads);
     
+    
+    // Save start point of search for reporting and time managment
+    info.starttime = getRealTime();
+    
     // Ethereal is responsible for choosing how much time to spend searching
     if (limits->limitedBySelf){
-        idealusage = mtg >= 0 ? 0.5 * (time / (mtg + 3)) : 0.3 * (time / 25);
-        maxusage   = mtg >= 0 ? 2.8 * (time / (mtg + 1)) : 4.5 * (time / 25);
-        idealusage = MIN(idealusage, time - 20);
-        maxusage   = MIN(maxusage,   time - 20);
+        info.idealusage = mtg >= 0 ? 0.5 * (time / (mtg + 3)) : 0.3 * (time / 25);
+        info.maxusage   = mtg >= 0 ? 2.8 * (time / (mtg + 1)) : 4.5 * (time / 25);
+        info.idealusage = MIN(info.idealusage, time - 20);
+        info.maxusage   = MIN(info.maxusage,   time - 20);
     }
     
     // UCI command told us to look for exactly X seconds
     if (limits->limitedByTime){
-        idealusage = limits->timeLimit;
-        maxusage   = limits->timeLimit;
+        info.idealusage = limits->timeLimit;
+        info.maxusage   = limits->timeLimit;
     }
     
     // Setup the thread pool for a new search with these parameters
-    newSearchThreadPool(threads, board, limits, &info, starttime, &idealusage, maxusage);
+    newSearchThreadPool(threads, board, limits, &info);
     
     // Launch all of the threads
     for (i = 1; i < nthreads; i++)
         pthread_create(&pthreads[i], NULL, &iterativeDeepening, &threads[i]);
-    
-    // Wait for all threads to finish
     iterativeDeepening((void*) &threads[0]);
+    
+    // Wait for all (helper) threads to finish
     for (i = 1; i < nthreads; i++)
         pthread_join(pthreads[i], NULL);
     
@@ -90,118 +94,103 @@ uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double time,
 
 void* iterativeDeepening(void* vthread){
     
-    Thread* const thread = (Thread*) vthread;
+    Thread* const thread   = (Thread*) vthread;
     
     SearchInfo* const info = thread->info;
     
-    const int mainThread = thread == &thread->threads[0];
+    Limits* const limits   = thread->limits;
+   
+    const int mainThread   = thread == &thread->threads[0];
     
-    int i, count, value = 0, depth, abort;
-    
+    int i, count, value, depth, abort;
     
     
     for (depth = 1; depth < MAX_DEPTH; depth++){
         
-        // Determine if this thread should be running on at a higher depth
+        
+        // Always acquire the lock before setting thread->depth. thread->depth
+        // is needed by others to determine when to skip certain search iterations
+        pthread_mutex_lock(&LOCK);
+        
+        thread->depth = depth;
+        
+        // Helper threads are subject to skipping depths in order to better help
+        // the main thread, based on the number of threads already some depths
         if (!mainThread){
         
-            pthread_mutex_lock(thread->lock);
-        
-            thread->depth = depth;
-        
-            for (count = 0, i = 0; i < thread->nthreads; i++)
+            for (count = 0, i = 1; i < thread->nthreads; i++)
                 count += thread != &thread->threads[i] && thread->threads[i].depth >= depth;
 
             if (depth > 1 && thread->nthreads > 1 && count >= thread->nthreads / 2){
                 thread->depth = depth + 1;
-                pthread_mutex_unlock(thread->lock);
+                pthread_mutex_unlock(&LOCK);
                 continue;
             }
-
-            pthread_mutex_unlock(thread->lock);
         }
         
+        // Drop the lock as we have finished depth scheduling
+        pthread_mutex_unlock(&LOCK);
         
+        // Set the abort location. If we exit the search unnaturally (very likely)
+        // we will know by abort being set, and can therefore indicate an exit
         abort = setjmp(thread->jbuffer);
+        if (abort) return NULL;
         
-        if (abort == ABORT_NONE){
             
-            value = aspirationWindow(thread, depth);
+        // Perform the actual search for the current depth
+        value = aspirationWindow(thread, depth);
+        
+        // Helper threads need not worry about time and search info updates
+        if (!mainThread) continue;
+        
+        // Update the Search Info structure for the main thread
+        info->depth = depth;
+        info->values[depth] = value;
+        info->bestmoves[depth] = thread->pv.line[0];
+        info->timeUsage[depth] = getRealTime() - info->starttime - info->timeUsage[depth-1];
+        
+        // Send information about this search to the interface
+        uciReport(thread->threads, info->starttime, depth, value, &thread->pv);
+        
+        // If Ethereal is managing the clock, determine if we should be spending
+        // more time on this search, based on the score difference between iterations
+        // and any changes in the principle variation since the last iteration
+        if (limits->limitedBySelf){
             
-            if (!mainThread) continue;
+            // Increase our time if the score suddently dropped by eight centipawns
+            if (depth >= 4 && info->values[depth - 1] > value + 8)
+                info->idealusage = MIN(info->maxusage, info->idealusage * 1.10);
             
-            pthread_mutex_lock(thread->lock);
+            // Increase our time if the pv has changed across the last two iterations
+            if (depth >= 4 && info->bestmoves[depth - 1] != thread->pv.line[0])
+                info->idealusage = MIN(info->maxusage, info->idealusage * 1.35);
+        }
+        
+        // Check for termination by any of the possible limits
+        if (   (limits->limitedByDepth && depth >= limits->depthLimit)
+            || (limits->limitedByTime  && getRealTime() - info->starttime > limits->timeLimit)
+            || (limits->limitedBySelf  && getRealTime() - info->starttime > info->maxusage)
+            || (limits->limitedBySelf  && getRealTime() - info->starttime > info->idealusage)){
             
-            // Dynamically decide how much time we should be using
-            if (thread->limits->limitedBySelf){
-                
-                // Increase our time if the score suddently dropped by eight centipawns
-                if (depth >= 4 && info->values[info->depth] > value + 8)
-                    *thread->idealusage = MIN(thread->maxusage, *thread->idealusage * 1.10);
-                
-                // Increase our time if the pv has changed across the last two iterations
-                if (depth >= 4 && info->bestmoves[info->depth] != thread->pv.line[0])
-                    *thread->idealusage = MIN(thread->maxusage, *thread->idealusage * 1.35);
-            }
-            
-            // Update the Search Info structure for the main thread
-            info->depth = depth;
-            info->values[depth] = value;
-            info->bestmoves[depth] = thread->pv.line[0];
-            info->timeUsage[depth] = getRealTime() - thread->starttime - info->timeUsage[depth-1];
-            
-            // Send information about this search to the interface
-            uciReport(thread->threads, thread->starttime, depth, value, &thread->pv);
-            
-            // Abort any threads still searching this depth, or lower
+            // Terminate all helper threads
             for (i = 0; i < thread->nthreads; i++)
-                if (   thread->depth >= thread->threads[i].depth
-                    && thread != &thread->threads[i])
-                    thread->threads[i].abort = ABORT_DEPTH;
-            
-            // Check for termination by any of the possible limits
-            if (   (thread->limits->limitedByDepth && depth >= thread->limits->depthLimit)
-                || (thread->limits->limitedByTime  && getRealTime() - thread->starttime > thread->limits->timeLimit)
-                || (thread->limits->limitedBySelf  && getRealTime() - thread->starttime > thread->maxusage)
-                || (thread->limits->limitedBySelf  && getRealTime() - thread->starttime > *thread->idealusage)){
-                
-                for (i = 0; i < thread->nthreads; i++)
-                    thread->threads[i].abort = ABORT_ALL;
-                
-                pthread_mutex_unlock(thread->lock);
-                
-                break;
-            }
-            
-            // Check to see if we expect to be able to complete the next depth
-            if (thread->limits->limitedBySelf){
-                double timeFactor = MIN(2, info->timeUsage[depth] / MAX(1, info->timeUsage[depth-1]));
-                double estimatedUsage = info->timeUsage[depth] * (timeFactor + .25);
-                double estiamtedEndtime = getRealTime() + estimatedUsage - thread->starttime;
-                
-                if (estiamtedEndtime > thread->maxusage){
-                    for (i = 0; i < thread->nthreads; i++)
-                        thread->threads[i].abort = ABORT_ALL;
-                    
-                    pthread_mutex_unlock(thread->lock);
-                    
-                    break;
-                }
-            }
-            
-            
-            pthread_mutex_unlock(thread->lock);
-        }
-        
-        else if (abort == ABORT_DEPTH){
-            pthread_mutex_lock(thread->lock);
-            thread->abort = ABORT_NONE;
-            memcpy(&thread->board, thread->initialboard, sizeof(Board));
-            pthread_mutex_unlock(thread->lock);
-        }
-        
-        else if (abort == ABORT_ALL){
+                thread->threads[i].abort = 1;
             return NULL;
+        }
+        
+        // Check to see if we expect to be able to complete the next depth
+        if (thread->limits->limitedBySelf){
+            double timeFactor = MIN(2, info->timeUsage[depth] / MAX(1, info->timeUsage[depth-1]));
+            double estimatedUsage = info->timeUsage[depth] * (timeFactor + .25);
+            double estiamtedEndtime = getRealTime() + estimatedUsage - info->starttime;
+            
+            if (estiamtedEndtime > info->maxusage){
+                
+                // Terminate all helper threads
+                for (i = 0; i < thread->nthreads; i++)
+                    thread->threads[i].abort = 1;
+                return NULL;
+            }
         }
     }
     
@@ -236,7 +225,7 @@ int aspirationWindow(Thread* thread, int depth){
         for (; lower <= 640 && upper <= 640; lower *= 2, upper *= 2){
             
             // Perform the search on the modified window
-            thread->value = value = search(thread, &thread->pv, alpha, beta, depth, 0);
+            value = search(thread, &thread->pv, alpha, beta, depth, 0);
             
             // Result was within our window
             if (value > alpha && value < beta)
@@ -292,11 +281,11 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     // Step 1A. Check to see if search time has expired
     if (   (thread->limits->limitedBySelf || thread->limits->limitedByTime)
         && (thread->nodes & 8191) == 8191
-        &&  getRealTime() >= thread->starttime + thread->maxusage)
-        longjmp(thread->jbuffer, ABORT_ALL);
+        &&  getRealTime() >= thread->info->starttime + thread->info->maxusage)
+        longjmp(thread->jbuffer, 1);
         
     // Step 1B. Check to see if the master thread finished
-    if (thread->abort) longjmp(thread->jbuffer, thread->abort);
+    if (thread->abort) longjmp(thread->jbuffer, 1);
     
     // Step 2. Distance Mate Pruning. Check to see if this line is so
     // good, or so bad, that being mated in the ply, or  mating in 
@@ -663,11 +652,11 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     // Step 1A. Check to see if search time has expired
     if (   (thread->limits->limitedBySelf || thread->limits->limitedByTime)
         && (thread->nodes & 8191) == 8191
-        &&  getRealTime() >= thread->starttime + thread->maxusage)
-        longjmp(thread->jbuffer, ABORT_ALL);
+        &&  getRealTime() >= thread->info->starttime + thread->info->maxusage)
+        longjmp(thread->jbuffer, 1);
         
     // Step 1B. Check to see if the master thread finished
-    if (thread->abort) longjmp(thread->jbuffer, thread->abort);
+    if (thread->abort) longjmp(thread->jbuffer, 1);
     
     // Call this a node
     thread->nodes += 1;

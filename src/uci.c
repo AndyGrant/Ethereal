@@ -16,8 +16,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <pthread.h>
 #include <inttypes.h>
+#include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,13 +47,10 @@ int main(){
     Board board;
     char str[8192];
     
-    pthread_mutex_t lock;
-    pthread_mutex_init(&lock, NULL);
-    
     int megabytes = 16;
     
-    int nthreads  =  1;
-    Thread* threads = createThreadPool(nthreads, &lock);
+    int nthreads =  1;
+    Thread* threads = createThreadPool(nthreads);
     
     initializeMagics();
     initializeZorbist();
@@ -72,7 +69,7 @@ int main(){
         getInput(str);
         
         if (stringEquals(str, "uci")){
-            printf("id name Ethereal 8.77\n");
+            printf("id name Ethereal 8.79\n");
             printf("id author Andrew Grant\n");
             printf("option name Hash type spin default 16 min 1 max 65536\n");
             printf("option name Threads type spin default 1 min 1 max 2048\n");
@@ -96,7 +93,7 @@ int main(){
             if (stringStartsWith(str, "setoption name Threads value")){
                 free(threads);
                 nthreads = atoi(str + strlen("setoption name Threads value"));
-                threads = createThreadPool(nthreads, &lock);
+                threads = createThreadPool(nthreads);
             }
         }
         
@@ -133,7 +130,6 @@ void uciGo(char* str, Thread* threads, Board* board){
     char move[6];
     int depth = -1, infinite = -1; 
     double time = 0, wtime = -1, btime = -1, mtg = -1, movetime = -1;
-    
     
     char* ptr = strtok(str, " ");
     
