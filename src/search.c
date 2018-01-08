@@ -107,7 +107,6 @@ void* iterativeDeepening(void* vthread){
     
     for (depth = 1; depth < MAX_DEPTH; depth++){
         
-        
         // Always acquire the lock before setting thread->depth. thread->depth
         // is needed by others to determine when to skip certain search iterations
         pthread_mutex_lock(&LOCK);
@@ -203,23 +202,25 @@ int aspirationWindow(Thread* thread, int depth){
     
     int* const values = thread->info->values;
     
+    int mainDepth = MAX(5, 1 + thread->info->depth);
+    
     // Aspiration window only after we have completed the first four
     // depths, and so long as the last score is not near a mate score
-    if (depth > 4 && abs(values[depth-1]) < MATE / 2){
+    if (depth > 4 && abs(values[mainDepth-1]) < MATE / 2){
         
         // Dynamically compute the upper margin based on previous scores
-        upper = MAX(    4,  1.6 * (values[depth-1] - values[depth-2]));
-        upper = MAX(upper,  2.0 * (values[depth-2] - values[depth-3]));
-        upper = MAX(upper,  0.8 * (values[depth-3] - values[depth-4]));
+        upper = MAX(    4,  1.6 * (values[mainDepth-1] - values[mainDepth-2]));
+        upper = MAX(upper,  2.0 * (values[mainDepth-2] - values[mainDepth-3]));
+        upper = MAX(upper,  0.8 * (values[mainDepth-3] - values[mainDepth-4]));
         
         // Dynamically compute the lower margin based on previous scores
-        lower = MAX(    4, -1.6 * (values[depth-1] - values[depth-2]));
-        lower = MAX(lower, -2.0 * (values[depth-2] - values[depth-3]));
-        lower = MAX(lower, -0.8 * (values[depth-3] - values[depth-4])); 
+        lower = MAX(    4, -1.6 * (values[mainDepth-1] - values[mainDepth-2]));
+        lower = MAX(lower, -2.0 * (values[mainDepth-2] - values[mainDepth-3]));
+        lower = MAX(lower, -0.8 * (values[mainDepth-3] - values[mainDepth-4])); 
         
         // Create the aspiration window
-        alpha = values[depth-1] - lower;
-        beta  = values[depth-1] + upper;
+        alpha = values[mainDepth-1] - lower;
+        beta  = values[mainDepth-1] + upper;
         
         // Try windows until lower or upper bound exceeds a limit
         for (; lower <= 640 && upper <= 640; lower *= 2, upper *= 2){
