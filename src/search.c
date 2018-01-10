@@ -514,8 +514,9 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         // additional support for the attacker. Don't include capture-promotions
         if (    !PvNode
             &&  !isQuiet
+            &&  !inCheck
             &&   played >= 1
-            &&   depth <= 4
+            &&   depth <= 5
             &&   MoveType(currentMove) != ENPASS_MOVE
             &&   MoveType(currentMove) != PROMOTION_MOVE
             &&  !ei.positionIsDrawn
@@ -524,7 +525,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
              <   PieceValues[PieceType(board->squares[MoveFrom(currentMove)])][MG]){
                  
           
-            // If the target piece has two or more defenders, we will prune up to depth 4
+            // If the target piece has two or more defenders, we will prune up to depth 5
             if (ei.attackedBy2[!board->turn] & (1ull << MoveTo(currentMove)))
                 continue;
             
