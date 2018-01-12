@@ -16,10 +16,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
 #include "board.h"
 #include "bitboards.h"
@@ -47,91 +48,99 @@
 
 extern PawnTable PTable;
 
-const int PawnValue[PHASE_NB] = {  85,  93};
+const int PawnValue[PHASE_NB] = {  77,  87};
 
-const int PawnIsolated[PHASE_NB] = {  -4, -10};
+const int PawnIsolated[PHASE_NB] = {  -1,  -6};
 
-const int PawnStacked[PHASE_NB] = { -13, -19};
+const int PawnStacked[PHASE_NB] = { -12, -20};
 
-const int PawnBackwards[2][PHASE_NB] = { {  -1,  -5}, {  -8, -10} };
+const int PawnBackwards[2][PHASE_NB] = { {   0,  -3}, { -10, -10} };
 
 const int PawnConnected32[32][PHASE_NB] = {
     {   0,   0}, {   0,   0}, {   0,   0}, {   0,   0},
-    {   0,  -3}, {   3,   0}, {   3,   0}, {   1,   8},
-    {   9,   2}, {   6,   2}, {   2,   3}, {   5,   1},
-    {   3,   2}, {   4,   5}, {   3,   2}, {   9,   5},
-    {   4,  10}, {  10,  13}, {   8,  13}, {  25,  20},
-    {  14,  23}, {  23,  27}, {  49,  29}, {  41,  29},
-    {  45,  20}, {  42,  18}, {  56,  32}, {  50,  32},
+    {  -1,  -6}, {   2,   0}, {   2,  -1}, {   2,  12},
+    {   9,   1}, {   6,   1}, {   2,   3}, {   7,   3},
+    {   5,   2}, {   7,   3}, {   4,   2}, {  11,   5},
+    {   3,   9}, {  11,  12}, {   8,  11}, {  25,  17},
+    {  12,  19}, {  24,  27}, {  52,  27}, {  41,  29},
+    {  54,  11}, {  51,   6}, {  53,  20}, {  42,  20},
     {   0,   0}, {   0,   0}, {   0,   0}, {   0,   0},
 };
 
+const int KnightValue[PHASE_NB] = { 303, 286};
 
-const int KnightValue[PHASE_NB] = { 315, 300};
-
-const int KnightOutpost[2][PHASE_NB] = { {  12, -11}, {  29,  10} };
+const int KnightOutpost[2][PHASE_NB] = { {  12, -14}, {  26,   5} };
 
 const int KnightMobility[9][PHASE_NB] = {
-    { -69, -67}, { -28, -35}, {  -9,  -8},
-    {   4,   0}, {   9,   3}, {  11,  15},
-    {  20,  14}, {  28,  18}, {  30,   3},
+    { -68, -79}, { -31, -42}, { -13, -16},
+    {   0,  -6}, {   4,  -3}, {   7,   8},
+    {  16,   6}, {  23,   8}, {  28,  -5},
 };
 
+const int BishopValue[PHASE_NB] = { 305, 288};
 
-const int BishopValue[PHASE_NB] = { 314, 302};
+const int BishopWings[PHASE_NB] = {  -8,   0};
 
-const int BishopWings[PHASE_NB] = {  -4,   9};
+const int BishopPair[PHASE_NB] = {  28,  39};
 
-const int BishopPair[PHASE_NB] = {  38,  50};
-
-const int BishopOutpost[2][PHASE_NB] = { {  11,  -8}, {  28,  -4} };
+const int BishopOutpost[2][PHASE_NB] = { {  12, -10}, {  28,  -7} };
 
 const int BishopMobility[14][PHASE_NB] = {
-    { -44, -52}, { -43, -35}, { -16, -21}, {   0,  -6},
-    {   9,   3}, {  18,  12}, {  23,  18}, {  27,  20},
-    {  29,  23}, {  27,  21}, {  27,  24}, {  31,  17},
-    {  36,  29}, {  18,   7},
+    { -53, -63}, { -44, -37}, { -18, -25}, {  -2, -10},
+    {   7,  -1}, {  15,   7}, {  20,  12}, {  22,  12},
+    {  25,  16}, {  24,  13}, {  24,  16}, {  29,   7},
+    {  30,  19}, {  16,  -1},
 };
 
+const int RookValue[PHASE_NB] = { 417, 462};
 
-const int RookValue[PHASE_NB] = { 453, 483};
+const int RookFile[2][PHASE_NB] = { {   6,   4}, {  23,  -2} };
 
-const int RookFile[2][PHASE_NB] = { {   8,   9}, {  25,   5} };
-
-const int RookOnSeventh[PHASE_NB] = {   3,  10};
+const int RookOnSeventh[PHASE_NB] = {   0,   6};
 
 const int RookMobility[15][PHASE_NB] = {
-    {-114, -93}, { -55, -50}, {  -9, -29}, {  -6, -10},
-    {  -3,   0}, {   0,  12}, {  -1,  22}, {   0,  26},
-    {   5,  32}, {  12,  34}, {  16,  38}, {  19,  42},
-    {  19,  44}, {  20,  43}, {  15,  38},
+    { -96, -87}, { -44, -52}, { -10, -39}, {  -7, -16},
+    {  -6,  -5}, {  -4,   6}, {  -4,  17}, {  -3,  22},
+    {   1,  26}, {   7,  27}, {  10,  32}, {  14,  37},
+    {  14,  39}, {  13,  38}, {  11,  33},
 };
 
+const int QueenValue[PHASE_NB] = { 783, 839};
 
-const int QueenValue[PHASE_NB] = { 846, 880};
+const int QueenChecked[PHASE_NB] = { -43, -30};
 
-const int QueenChecked[PHASE_NB] = { -48, -45};
-
-const int QueenCheckedByPawn[PHASE_NB] = { -48, -45};
+const int QueenCheckedByPawn[PHASE_NB] = { -55, -36};
 
 const int QueenMobility[28][PHASE_NB] = {
-    {-138, -50}, { -91,-239}, { -86,-106}, { -50, -63},
-    { -19, -61}, { -16, -28}, {  -8, -26}, {  -3, -24},
-    {  -1, -21}, {   1, -16}, {   4,  -6}, {   5,  -2},
-    {   7,   4}, {   9,  10}, {  11,  15}, {  11,  24},
-    {  11,  29}, {  11,  30}, {  12,  31}, {  15,  37},
-    {  16,  38}, {  24,  39}, {  28,  43}, {  34,  42},
-    {  38,  44}, {  33,  37}, {  45,  50}, {  30,  41},
-
+    {-196, -50}, { -76,-341}, { -78,-137}, { -42, -91},
+    { -29, -92}, { -26, -46}, { -19, -49}, { -14, -50},
+    { -11, -46}, {  -8, -39}, {  -5, -27}, {  -3, -20},
+    {  -1, -13}, {  -1,  -5}, {   1,  -1}, {   0,   7},
+    {   0,  14}, {   1,  17}, {   0,  17}, {   4,  26},
+    {   5,  27}, {  14,  28}, {  20,  32}, {  27,  32},
+    {  31,  33}, {  29,  22}, {  35,  43}, {  13,  30},
 };
-
 
 const int KingValue[PHASE_NB] = { 100, 100};
 
 const int KingDefenders[12][PHASE_NB] = {
-    {  -8,  -2}, {  -4,   0}, {   0,   2}, {   4,   4},
+    { -16,   0}, { -11,   2}, {  -1,   0}, {   6,   0},
+    {  16,   2}, {  22,   9}, {  36,   6}, {  38,  60},
     {   8,   4}, {   8,   4}, {   8,   4}, {   8,   4},
-    {   8,   4}, {   8,   4}, {   8,   4}, {   8,   4},
+};
+
+const int KingShelter[2][2][RANK_NB][PHASE_NB] = {
+  {{{  -7,   0}, {   5,   0}, {  -2,   0}, {  -2,  -1}, {  -2,  -4}, {   1,  -1}, { -20,  -9}, {   0,   0}},
+   {{  -3,  -1}, {   8,   3}, {   0,   2}, {   9,   0}, {   0,  -7}, { -23,  -3}, {  -6,   4}, {   0,   0}}},
+  {{{ -15,   0}, {   8,   0}, {   1,   0}, {  -5,  -1}, {  -8,  -1}, { -12,  -3}, { -33, -10}, {   0,   0}},
+   {{  -6,  -2}, {   3,  10}, {  11,   3}, {   3,  -3}, {   0,  -4}, { -13,  11}, { -25,   2}, {   0,   0}}},
+};
+
+const int PassedPawn[2][2][RANK_NB][PHASE_NB] = {
+  {{{   0,   0}, { -11,  -8}, { -17,   5}, { -17,   3}, {  10,  17}, {  38,  17}, {  71,  35}, {   0,   0}},
+   {{   0,   0}, {  -4,  -5}, { -18,   9}, { -13,  18}, {   6,  31}, {  49,  40}, {  92,  75}, {   0,   0}}},
+  {{{   0,   0}, {  -1,   5}, { -11,   5}, {  -8,  17}, {  18,  24}, {  62,  46}, { 120, 120}, {   0,   0}},
+   {{   0,   0}, {  -2,   0}, { -12,   5}, { -15,  29}, {  -1,  68}, {  50, 157}, { 139, 254}, {   0,   0}}},
 };
 
 const int KingSafety[100] = { // Taken from CPW / Stockfish
@@ -146,15 +155,6 @@ const int KingSafety[100] = { // Taken from CPW / Stockfish
      500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
      500, 500, 500, 500, 500, 500, 500, 500, 500, 500
 };
-
-
-const int PassedPawn[2][2][RANK_NB][PHASE_NB] = {
-  {{{   0,   0}, {  -8,  -5}, { -17,   3}, { -15,   3}, {  14,  23}, {  45,  29}, {  60,  40}, {   0,   0}},
-   {{   0,   0}, {  -3,  -1}, { -14,   9}, {  -6,  21}, {  13,  35}, {  51,  46}, {  78,  71}, {   0,   0}}},
-  {{{   0,   0}, {   0,   9}, {  -7,   6}, {  -3,  21}, {  22,  30}, {  68,  58}, { 117, 127}, {   0,   0}},
-   {{   0,   0}, {   1,   4}, {  -6,   7}, {  -3,  32}, {  16,  73}, {  76, 158}, { 199, 294}, {   0,   0}}}
-};
-
 
 const int NoneValue[PHASE_NB] = {   0,   0};
 
@@ -593,11 +593,23 @@ void evaluateKings(EvalInfo* ei, Board* board, int colour){
     
     int defenderCounts, attackCounts;
     
+    int file, kingFile, kingRank, kingSq, distance;
+    
+    uint64_t filePawns;
+    
+    uint64_t myPawns = board->pieces[PAWN] & board->colours[colour];
+    uint64_t myKings = board->pieces[KING] & board->colours[colour];
+    
     uint64_t myDefenders  = (board->pieces[PAWN  ] & board->colours[colour])
                           | (board->pieces[KNIGHT] & board->colours[colour])
                           | (board->pieces[BISHOP] & board->colours[colour]);
+                          
+    kingSq = getlsb(myKings);
+    kingFile = File(kingSq);
+    kingRank = Rank(kingSq);
     
-    if (TRACE) T.kingPSQT[colour][getlsb(board->colours[colour] & board->pieces[KING])]++;
+    // For Tuning Piece Square Table for Kings
+    if (TRACE) T.kingPSQT[colour][kingSq]++;
     
     // Bonus for our pawns and minors sitting within our king area
     defenderCounts = popcount(myDefenders & ei->kingAreas[colour]);
@@ -620,6 +632,24 @@ void evaluateKings(EvalInfo* ei, Board* board, int colour){
         ei->midgame[colour] -= KingSafety[attackCounts];
         ei->endgame[colour] -= KingSafety[attackCounts];
     }
+    
+    // Evaluate Pawn Shelter. We will evaluate the pawn setup on the king's file,
+    // as well as the files next to the king (if there are any). We based the evaluation
+    // on the absolute difference between the location of the king and the backward most
+    // pawn. No pawn is indicated with a distance of zero. Any pawn presence recieves a 
+    // distance of at least one. The bonus changes by file and location of the king.
+    for (file = MAX(0, kingFile - 1); file <= MIN(7, kingFile + 1); file++){
+        
+        filePawns = myPawns & Files[file];
+        
+        distance = filePawns ? colour == WHITE ? MAX(1, abs(kingRank - Rank(getlsb(filePawns))))
+                                               : MAX(1, abs(kingRank - Rank(getmsb(filePawns))))
+                                               : 0;
+
+        ei->midgame[colour] += KingShelter[file == kingFile][!!(myKings & (FILE_D | FILE_E))][distance][MG];
+        ei->endgame[colour] += KingShelter[file == kingFile][!!(myKings & (FILE_D | FILE_E))][distance][EG];
+        if (TRACE) T.kingShelter[colour][file == kingFile][!!(myKings & (FILE_D | FILE_E))][distance]++;
+    }    
 }
 
 void evaluatePassedPawns(EvalInfo* ei, Board* board, int colour){
