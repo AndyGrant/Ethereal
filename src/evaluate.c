@@ -69,6 +69,8 @@ const int PawnConnected32[32][PHASE_NB] = {
 
 const int KnightValue[PHASE_NB] = { 303, 286};
 
+const int KnightAttackedByPawn[PHASE_NB] = { -24, -24};
+
 const int KnightOutpost[2][PHASE_NB] = { {  12, -14}, {  26,   5} };
 
 const int KnightMobility[9][PHASE_NB] = {
@@ -78,6 +80,8 @@ const int KnightMobility[9][PHASE_NB] = {
 };
 
 const int BishopValue[PHASE_NB] = { 305, 288};
+
+const int BishopAttackedByPawn[PHASE_NB] = { -24, -24};
 
 const int BishopWings[PHASE_NB] = {  -8,   0};
 
@@ -381,6 +385,13 @@ void evaluateKnights(EvalInfo* ei, Board* board, int colour){
         ei->attacked[colour] |= attacks;
         ei->attackedNoQueen[colour] |= attacks;
         
+        // Apply a penalty if the knight is being attacked by a pawn
+        if (ei->pawnAttacks[!colour] & (1ull << sq)){
+            ei->midgame[colour] += KnightAttackedByPawn[MG];
+            ei->endgame[colour] += KnightAttackedByPawn[EG];
+            if (TRACE) T.knightAttackedByPawn[colour]++;
+        }
+        
         // Apply a bonus if the knight is on an outpost square, and cannot be attacked
         // by an enemy pawn. Increase the bonus if one of our pawns supports the knight.
         if (    (OutpostRanks[colour] & (1ull << sq))
@@ -447,6 +458,13 @@ void evaluateBishops(EvalInfo* ei, Board* board, int colour){
         ei->attackedBy2[colour] |= ei->attacked[colour] & attacks;
         ei->attacked[colour] |= attacks;
         ei->attackedNoQueen[colour] |= attacks;
+        
+        // Apply a penalty if the bishop is being attacked by a pawn
+        if (ei->pawnAttacks[!colour] & (1ull << sq)){
+            ei->midgame[colour] += BishopAttackedByPawn[MG];
+            ei->endgame[colour] += BishopAttackedByPawn[EG];
+            if (TRACE) T.bishopAttackedByPawn[colour]++;
+        }
         
         // Apply a bonus if the bishop is on an outpost square, and cannot be attacked
         // by an enemy pawn. Increase the bonus if one of our pawns supports the bishop.
