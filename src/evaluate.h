@@ -32,11 +32,13 @@ typedef struct EvalTrace {
     
     int knightCounts[COLOUR_NB];
     int knightPSQT[COLOUR_NB][SQUARE_NB];
+    int knightAttackedByPawn[COLOUR_NB];
     int knightOutpost[COLOUR_NB][2];
     int knightMobility[COLOUR_NB][9];
     
     int bishopCounts[COLOUR_NB];
     int bishopPSQT[COLOUR_NB][SQUARE_NB];
+    int bishopAttackedByPawn[COLOUR_NB];
     int bishopWings[COLOUR_NB];
     int bishopPair[COLOUR_NB];
     int bishopOutpost[COLOUR_NB][2];

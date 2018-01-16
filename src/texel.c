@@ -54,6 +54,7 @@ extern const int PawnConnected32[32][PHASE_NB];
 // To determine the starting values for the Knight terms
 extern const int KnightValue[PHASE_NB];
 extern const int KnightPSQT32[32][PHASE_NB];
+extern const int KnightAttackedByPawn[PHASE_NB];
 extern const int KnightOutpost[2][PHASE_NB];
 extern const int KnightMobility[9][PHASE_NB];
 
@@ -62,6 +63,7 @@ extern const int BishopValue[PHASE_NB];
 extern const int BishopPSQT32[32][PHASE_NB];
 extern const int BishopWings[PHASE_NB];
 extern const int BishopPair[PHASE_NB];
+extern const int BishopAttackedByPawn[PHASE_NB];
 extern const int BishopOutpost[2][PHASE_NB];
 extern const int BishopMobility[14][PHASE_NB];
 
@@ -261,6 +263,8 @@ void initializeCoefficients(TexelEntry* te){
         te->coeffs[i + relativeSquare32(a, BLACK)] -= T.knightPSQT[BLACK][a];
     } i += 32;
     
+    te->coeffs[i++] = T.knightAttackedByPawn[WHITE] - T.knightAttackedByPawn[BLACK];
+    
     for (a = 0; a < 2; a++)
         te->coeffs[i++] = T.knightOutpost[WHITE][a] - T.knightOutpost[BLACK][a];
         
@@ -280,6 +284,8 @@ void initializeCoefficients(TexelEntry* te){
     te->coeffs[i++] = T.bishopWings[WHITE] - T.bishopWings[BLACK];
     
     te->coeffs[i++] = T.bishopPair[WHITE] - T.bishopPair[BLACK];
+    
+    te->coeffs[i++] = T.bishopAttackedByPawn[WHITE] - T.bishopAttackedByPawn[BLACK];
     
     for (a = 0; a < 2; a++)
         te->coeffs[i++] = T.bishopOutpost[WHITE][a] - T.bishopOutpost[BLACK][a];
@@ -387,6 +393,9 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
         cparams[i][EG] = KnightPSQT32[a][EG];
     }
     
+    cparams[i  ][MG] = KnightAttackedByPawn[MG];
+    cparams[i++][EG] = KnightAttackedByPawn[EG];
+    
     for (a = 0; a < 2; a++, i++){
         cparams[i][MG] = KnightOutpost[a][MG];
         cparams[i][EG] = KnightOutpost[a][EG];
@@ -413,6 +422,9 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
     
     cparams[i  ][MG] = BishopPair[MG];
     cparams[i++][EG] = BishopPair[EG];
+    
+    cparams[i  ][MG] = BishopAttackedByPawn[MG];
+    cparams[i++][EG] = BishopAttackedByPawn[EG];
     
     for (a = 0; a < 2; a++, i++){
         cparams[i][MG] = BishopOutpost[a][MG];
@@ -579,6 +591,8 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
             printf(" {%4d,%4d},", (int)tparams[i][MG], (int)tparams[i][EG]);
     } printf("\n};\n");
     
+    printf("\nconst int KnightAttackedByPawn[PHASE_NB] = {%4d,%4d};\n", (int)tparams[i][MG], (int)tparams[i][EG]); i++;
+    
     printf("\nconst int KnightOutpost[2][PHASE_NB] = { {%4d,%4d}, {%4d,%4d} };\n",
             (int)tparams[i  ][MG], (int)tparams[i  ][EG],
             (int)tparams[i+1][MG], (int)tparams[i+1][EG]); i += 2;
@@ -605,6 +619,8 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
     printf("\nconst int BishopWings[PHASE_NB] = {%4d,%4d};\n", (int)tparams[i][MG], (int)tparams[i][EG]); i++;
     
     printf("\nconst int BishopPair[PHASE_NB] = {%4d,%4d};\n", (int)tparams[i][MG], (int)tparams[i][EG]); i++;
+    
+    printf("\nconst int BishopAttackedByPawn[PHASE_NB] = {%4d,%4d};\n", (int)tparams[i][MG], (int)tparams[i][EG]); i++;
     
     printf("\nconst int BishopOutpost[2][PHASE_NB] = { {%4d,%4d}, {%4d,%4d} };\n",
             (int)tparams[i  ][MG], (int)tparams[i  ][EG],
