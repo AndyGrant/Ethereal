@@ -47,7 +47,7 @@ pthread_mutex_t LOCK = PTHREAD_MUTEX_INITIALIZER;
 
 extern TransTable Table;
 
-uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double time, double mtg){
+uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double time, double mtg, double inc){
     
     int i, nthreads = threads[0].nthreads;
     
@@ -61,10 +61,14 @@ uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double time,
     
     // Ethereal is responsible for choosing how much time to spend searching
     if (limits->limitedBySelf){
-        info.idealusage = mtg >= 0 ? 0.5 * (time / (mtg + 3)) : 0.3 * (time / 25);
-        info.maxusage   = mtg >= 0 ? 2.8 * (time / (mtg + 1)) : 4.5 * (time / 25);
-        info.idealusage = MIN(info.idealusage, time - 20);
-        info.maxusage   = MIN(info.maxusage,   time - 20);
+        
+        mtg = mtg >= 0 ? mtg + 1: 25;
+        
+        info.idealusage = 0.50 * (time + (mtg - 2) * inc) / MAX(5, mtg + 3);
+        info.maxusage   = 4.50 * (time + (mtg - 2) * inc) / MAX(5, mtg + 0);
+        
+        info.idealusage = MIN(info.idealusage, time - 25);
+        info.maxusage   = MIN(info.maxusage,   time - 25);
     }
     
     // UCI command told us to look for exactly X seconds
