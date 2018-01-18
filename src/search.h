@@ -42,7 +42,7 @@ typedef struct PVariation {
 } PVariation;
 
 
-uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double time, double mtg);
+uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double time, double mtg, double inc);
 
 void* iterativeDeepening(void* vthread);
 
