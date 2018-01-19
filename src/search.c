@@ -67,8 +67,8 @@ uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double time,
         info.idealusage = 0.50 * (time + (mtg - 2) * inc) / MAX(5, mtg + 3);
         info.maxusage   = 4.50 * (time + (mtg - 2) * inc) / MAX(5, mtg + 0);
         
-        info.idealusage = MIN(info.idealusage, time - 25);
-        info.maxusage   = MIN(info.maxusage,   time - 25);
+        info.idealusage = MIN(info.idealusage, time - 50);
+        info.maxusage   = MIN(info.maxusage,   time - 50);
     }
     
     // UCI command told us to look for exactly X seconds
@@ -283,47 +283,60 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     lpv.length = 0;
     pv->length = 0;
     
-    // Step 1A. Check to see if search time has expired
+    // Step 1A. Check to see if search time has expired. We will force the search
+    // to continue after the search time has been used in the event that we have
+    // not yet completed our depth one search, and therefore would have no best move
     if (   (thread->limits->limitedBySelf || thread->limits->limitedByTime)
-        && (thread->nodes & 8191) == 8191
-        &&  getRealTime() >= thread->info->starttime + thread->info->maxusage)
+        && (thread->nodes & 4095) == 4095
+        &&  getRealTime() >= thread->info->starttime + thread->info->maxusage
+        &&  thread->depth > 1)
         longjmp(thread->jbuffer, 1);
         
     // Step 1B. Check to see if the master thread finished
     if (thread->abort) longjmp(thread->jbuffer, 1);
-    
-    // Step 2. Distance Mate Pruning. Check to see if this line is so
-    // good, or so bad, that being mated in the ply, or  mating in 
-    // the next one, would still not create a more extreme line
-    rAlpha = alpha > -MATE + height     ? alpha : -MATE + height;
-    rBeta  =  beta <  MATE - height - 1 ?  beta :  MATE - height - 1;
-    if (rAlpha >= rBeta) return rAlpha;
-    
-    // Step 3. Check for the Fifty Move Rule
-    if (board->fiftyMoveRule > 100)
-        return 0;
-    
-    // Step 4. Check for three fold repetition. If the repetition occurs since
-    // the root move of this search, we will exit early as if it was a draw.
-    // Otherwise, we will look for an actual three fold repetition draw.
-    for (repetitions = 0, i = board->numMoves - 2; i >= 0; i -= 2){
         
-        // We can't have repeated positions before the most recent
-        // move which triggered a reset of the fifty move rule counter
-        if (i < board->numMoves - board->fiftyMoveRule) break;
+    // If we allow early exits in the root node (even if they should not happen)
+    // we run the risk of returning an empty principle variation, which could then
+    // be used as the "bestmove" for the current iteration, and pheraps the whole
+    // search. Therefore, we will avoid this by not allowing this type of early
+    // exit in root nodes. We make the exception that if the return value in the
+    // the event of a draw would fall outside the alpha-beta window, we will allow
+    // the mate distance pruning and draw detection pruning to occur here
+    if (!RootNode || 0 >= beta || 0 <= alpha){
         
-        if (board->history[i] == board->hash){
+        // Step 2. Distance Mate Pruning. Check to see if this line is so
+        // good, or so bad, that being mated in the ply, or  mating in 
+        // the next one, would still not create a more extreme line
+        rAlpha = alpha > -MATE + height     ? alpha : -MATE + height;
+        rBeta  =  beta <  MATE - height - 1 ?  beta :  MATE - height - 1;
+        if (rAlpha >= rBeta) return rAlpha;
+        
+        // Step 3. Check for the Fifty Move Rule
+        if (board->fiftyMoveRule > 100)
+            return 0;
+        
+        // Step 4. Check for three fold repetition. If the repetition occurs since
+        // the root move of this search, we will exit early as if it was a draw.
+        // Otherwise, we will look for an actual three fold repetition draw.
+        for (repetitions = 0, i = board->numMoves - 2; i >= 0; i -= 2){
             
-            // Repetition occured after the root
-            if (i > board->numMoves - height)
-                return 0;
+            // We can't have repeated positions before the most recent
+            // move which triggered a reset of the fifty move rule counter
+            if (i < board->numMoves - board->fiftyMoveRule) break;
             
-            // An actual three fold repetition
-            if (++repetitions == 2)
-                return 0;
+            if (board->history[i] == board->hash){
+                
+                // Repetition occured after the root
+                if (i > board->numMoves - height)
+                    return 0;
+                
+                // An actual three fold repetition
+                if (++repetitions == 2)
+                    return 0;
+            }
         }
     }
-    
+        
     // Step 5. Go into the Quiescence Search if we have reached
     // the search horizon and are not currently in check
     if (depth <= 0){
@@ -655,10 +668,13 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     lpv.length = 0;
     pv->length = 0;
     
-    // Step 1A. Check to see if search time has expired
+    // Step 1A. Check to see if search time has expired. We will force the search
+    // to continue after the search time has been used in the event that we have
+    // not yet completed our depth one search, and therefore would have no best move
     if (   (thread->limits->limitedBySelf || thread->limits->limitedByTime)
-        && (thread->nodes & 8191) == 8191
-        &&  getRealTime() >= thread->info->starttime + thread->info->maxusage)
+        && (thread->nodes & 4095) == 4095
+        &&  getRealTime() >= thread->info->starttime + thread->info->maxusage
+        &&  thread->depth > 1)
         longjmp(thread->jbuffer, 1);
         
     // Step 1B. Check to see if the master thread finished
