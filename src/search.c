@@ -410,8 +410,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     // Move Pruning. If the eval is few pawns above beta then exit early
     if (   !PvNode
         && !inCheck
-        &&  depth <= BetaPruningDepth
-        &&  hasNonPawnMaterial(board, board->turn)){
+        &&  depth <= BetaPruningDepth){
             
         value = eval - depth * 0.95 * PieceValues[PAWN][EG];
         
@@ -599,7 +598,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         
         // Search the move with a possibly reduced depth, on a full or null window
         value =  (played == 1 || !PvNode)
-               ? -search(thread, &lpv, -beta, -alpha, depth-R, height+1)
+               ? -search(thread, &lpv,    -beta, -alpha, depth-R, height+1)
                : -search(thread, &lpv, -alpha-1, -alpha, depth-R, height+1);
                
         // If the search beat alpha, we may need to research, in the event that

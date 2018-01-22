@@ -527,7 +527,6 @@ void evaluateRooks(EvalInfo* ei, Board* board, int colour){
             ei->midgame[colour] += RookFile[open][MG];
             ei->endgame[colour] += RookFile[open][EG];
             if (TRACE) T.rookFile[colour][open]++;
-            
         }
         
         // Rook gains a bonus for being located
