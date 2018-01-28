@@ -211,33 +211,11 @@ void evaluateNoisyMoves(MovePicker* mp, Board* board){
 
 void evaluateQuietMoves(MovePicker* mp, Board* board){
     
-    uint16_t move;
-    int i, value;
+    int i;
     
-    for (i = mp->split; i < mp->split + mp->quietSize; i++){
-        
-        move = mp->moves[i];
-        
-        static const int SortingTypes[KING+1] = {10, 8, 8, 4, 3, 1};
-        
-        static const int SortingTable[SQUARE_NB] = {
-            0, 0, 0, 0, 0, 0, 0, 0,
-            1, 2, 2, 2, 2, 2, 2, 1,
-            1, 2, 4, 4, 4, 4, 2, 1,
-            1, 2, 4, 6, 6, 4, 2, 1,
-            1, 2, 4, 6, 6, 4, 2, 1,
-            1, 2, 4, 4, 4, 4, 2, 1,
-            1, 2, 2, 2, 2, 2, 2, 1,
-            0, 0, 0, 0, 0, 0, 0, 0,
-        };
-        
-        // Use the history score and PSQT to evaluate the move
-        value =  getHistoryScore(*mp->history, move, board->turn, 256);
-        value += SortingTypes[PieceType(board->squares[MoveFrom(move)])] * SortingTable[MoveTo(move)  ];
-        value -= SortingTypes[PieceType(board->squares[MoveFrom(move)])] * SortingTable[MoveFrom(move)];
-        
-        mp->values[i] = value;
-    }
+    // Use the History score from the Butterfly Bitboards for sorting
+    for (i = mp->split; i < mp->split + mp->quietSize; i++)
+        mp->values[i] = getHistoryScore(*mp->history, mp->moves[i], board->turn);
 }
 
 int moveIsPsuedoLegal(Board* board, uint16_t move){

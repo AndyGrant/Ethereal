@@ -17,49 +17,29 @@
 */
 
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "board.h"
 #include "history.h"
 #include "move.h"
 #include "types.h"
 
-enum { HISTORY_GOOD, HISTORY_TOTAL };
+void updateHistory(HistoryTable history, uint16_t move, int colour, int delta){
 
-const uint64_t HistoryMax = 0x7FFFFFFF;
-
-void reduceHistory(HistoryTable history){
-    
-    int c, f, t, i;
-    
-    for (c = 0; c < COLOUR_NB; c++)
-        for (f = 0; f < SQUARE_NB; f++)
-            for (t = 0; t < SQUARE_NB; t++)
-                for (i = 0; i < 2; i++)
-                    history[c][f][t][i] = 1 + history[c][f][t][i] / 4;
-}
-
-void updateHistory(HistoryTable history, uint16_t move, int colour, int isGood, int delta){
-    
-    int from = MoveFrom(move), to = MoveTo(move);
-    
-    // Update both counters by delta
-    if (isGood) history[colour][from][to][HISTORY_GOOD] += delta;
-    history[colour][from][to][HISTORY_TOTAL] += delta;
-    
-    // Divide the counters by two if we have exceeded the max value for history
-    if (history[colour][from][to][HISTORY_TOTAL] >= HistoryMax){
-        history[colour][from][to][HISTORY_GOOD] >>= 1;
-        history[colour][from][to][HISTORY_TOTAL] >>= 1;
-    }
-}
-
-int getHistoryScore(HistoryTable history, uint16_t move, int colour, int factor){
-    
-    // History is scored on a scale from 0 to factor, where factor is 100%
-    // We should try to choose factor to be a power of two, as to avoid division
     int from  = MoveFrom(move);
     int to    = MoveTo(move);
-    int good  = history[colour][from][to][HISTORY_GOOD ];
-    int total = history[colour][from][to][HISTORY_TOTAL];
-    return (factor * good) / total;
+    int entry = history[colour][from][to];
+    
+    // Ensure the update value is within [-400, 400]
+    delta = MAX(-400, MIN(400, delta));
+    
+    // Ensure the new value is within [-16384, 16384]
+    entry += 32 * delta - entry * abs(delta) / 512;
+    
+    // Save back the adjusted history score
+    history[colour][from][to] = entry;
+}
+
+int getHistoryScore(HistoryTable history, uint16_t move, int colour){
+    return history[colour][MoveFrom(move)][MoveTo(move)];
 }

@@ -19,8 +19,7 @@
 #ifndef _HISTORY_H
 #define _HISTORY_H
 
-void reduceHistory(HistoryTable history);
-void updateHistory(HistoryTable history, uint16_t move, int colour, int isGood, int delta);
-int getHistoryScore(HistoryTable history, uint16_t move, int colour, int factor);
+void updateHistory(HistoryTable history, uint16_t move, int colour, int delta);
+int getHistoryScore(HistoryTable history, uint16_t move, int colour);
 
 #endif
