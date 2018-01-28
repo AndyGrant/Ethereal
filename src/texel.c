@@ -177,10 +177,6 @@ void initializeTexelEntries(TexelEntry* tes, Thread* thread){
     thread->depth  = 1;
     thread->abort  = 0;
     
-    // History is reduced to avoid division by zero
-    reduceHistory(thread->history);
-    
-    
     FILE * fin = fopen("FENS", "r");
     
     for (i = 0; i < NP; i++){

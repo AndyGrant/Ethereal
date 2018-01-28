@@ -369,8 +369,8 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             
             switch (ttEntry.type){
                 case  PVNODE: return ttValue;
-                case CUTNODE: rAlpha = ttValue > alpha ? ttValue : alpha; break;
-                case ALLNODE:  rBeta = ttValue <  beta ? ttValue :  beta; break;
+                case CUTNODE: rAlpha = MAX(ttValue, alpha); break;
+                case ALLNODE:  rBeta = MIN(ttValue,  beta); break;
             }
             
             // Entry allows early exit
@@ -378,10 +378,11 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         }
     }
     
-    // Step 7. Determine check status, and calculate the futility margin.
-    // We only need the futility margin if we are not in check, and we
-    // are not looking at a PV Node, as those are not subject to futility.
-    // Determine check status if not done already
+    // Step 7. Some initialization. Determine the check status if we have
+    // not already done so (happens when depth was <= 0, and we are in check,
+    // thus avoiding the quiescence search). Also, in non PvNodes, we will
+    // perform pruning based on the board eval, so we will need that, as well
+    // as a futilityMargin calculated based on the eval and current depth
     inCheck = inCheck || !isNotInCheck(board, board->turn);
     if (!PvNode){
         eval = evaluateBoard(board, &ei, &thread->ptable);
@@ -505,7 +506,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         // quiets, and we will need a history score for pruning decisions
         if ((isQuiet = !moveIsTactical(board, currentMove))){
             quietsTried[quiets++] = currentMove;
-            hist = getHistoryScore(thread->history, currentMove, board->turn, 128);
+            hist = getHistoryScore(thread->history, currentMove, board->turn);
         }
         
         // Step 14. Futility Pruning. If our score is far below alpha,
@@ -574,54 +575,63 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             &&  depth >= 3
             &&  isQuiet){
             
-            R  = 2;
-            R += (played - 4) / 8;
-            R += (depth  - 4) / 6;
+            // Baseline R based on number of moves played and current depth
+            R = 1 + (played - 4) / 8 + (depth  - 4) / 6;
+            
+            // Increase R by an additional two ply for non PvNodes
             R += 2 * !PvNode;
+            
+            // Increase R by an additional ply if the table move is tactical and best
             R += ttTactical && bestMove == ttMove;
-            R -= hist / 24;
+            
+            // Adjust R based on history score. We will not allow history to increase
+            // R by more than 1. History scores are within [-16384, 16384], so we can
+            // expect an adjustment on the bounds of [+1, -6], with 6 being very rare
+            R -= MAX(-1, ((hist + 8192) / 4096) - (hist <= -8192));
+            
+            // Do not allow the reduction to take us directly into a quiescence search
+            // and also ensure that R is at least one, therefore avoiding extensions
             R  = MIN(depth - 1, MAX(R, 1));
-        }
-        
-        else {
-            R = 1;
-        }
+            
+        } else R = 1;
         
         
-        // Search the move with a possibly reduced depth, on a full or null window
+        // Step 18A. Search the move with a possibly reduced depth basedon LMR,
+        // and a null window unless this is the first move within a PvNode
         value =  (played == 1 || !PvNode)
                ? -search(thread, &lpv,    -beta, -alpha, depth-R, height+1)
                : -search(thread, &lpv, -alpha-1, -alpha, depth-R, height+1);
                
-        // If the search beat alpha, we may need to research, in the event that
-        // the previous search was not the full window, or was a reduced depth
+        // Step 18B. Research the move if it improved alpha, and was either a reduced
+        // search or a search on a null window. Otherwise, keep the current value
         value =  (value > alpha && (R != 1 || (played != 1 && PvNode)))
                ? -search(thread, &lpv, -beta, -alpha, depth-1, height+1)
                :  value;
         
-        // REVERT MOVE FROM BOARD
+        // Revert the board state
         revertMove(board, currentMove, undo);
         
-        // Improved current value
+        
+        // Step 19. Update search stats for the best move and its value. Update
+        // our lower bound (alpha) if exceeded, and also update the PV in that case
         if (value > best){
+            
             best = value;
             bestMove = currentMove;
             
-            // IMPROVED CURRENT LOWER VALUE
             if (value > alpha){
                 alpha = value;
                 
-                // Update the Principle Variation
+                // Copy our child's PV and prepend this move to it
                 pv->length = 1 + lpv.length;
                 pv->line[0] = currentMove;
                 memcpy(pv->line + 1, lpv.line, sizeof(uint16_t) * lpv.length);
             }
         }
         
-        // IMPROVED AND FAILED HIGH
+        // Step 20. Search has failed high. Update Killer Moves and exit search
         if (alpha >= beta){
             
-            // Update killer moves
             if (isQuiet && thread->killers[height][0] != currentMove){
                 thread->killers[height][1] = thread->killers[height][0];
                 thread->killers[height][0] = currentMove;
@@ -631,14 +641,23 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         }
     }
     
+    // Step 21. Stalemate and Checkmate detection. If no moves were found to
+    // be legal (search makes sure to play at least one legal move, if any),
+    // then we are either mated or stalemated, which we can tell by the inCheck
+    // flag. For mates, return a score based on the distance from root, so we
+    // can differentiate between close mates and far away mates from the root
     if (played == 0) return inCheck ? -MATE + height : 0;
     
-    else if (best >= beta && !moveIsTactical(board, bestMove)){
-        updateHistory(thread->history, bestMove, board->turn, 1, depth*depth);
+    // Step 22. Update History counters on a fail high for a quiet move
+    if (best >= beta && !moveIsTactical(board, bestMove)){
+        updateHistory(thread->history, bestMove, board->turn, depth*depth);
         for (i = 0; i < quiets - 1; i++)
-            updateHistory(thread->history, quietsTried[i], board->turn, 0, depth*depth);
+            updateHistory(thread->history, quietsTried[i], board->turn, -depth*depth);
     }
     
+    // Step 23. Store the results of the search in the transposition table.
+    // We must determine a bound for the result based on alpha and beta, and
+    // must also convert the search value to a tt value, which handles mates
     storeTranspositionEntry(&Table, depth, (best > oldAlpha && best < beta)
                             ? PVNODE : best >= beta ? CUTNODE : ALLNODE,
                             valueToTT(best, height), bestMove, board->hash);

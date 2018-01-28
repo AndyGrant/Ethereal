@@ -75,9 +75,6 @@ void newSearchThreadPool(Thread* threads, Board* board, Limits* limits, SearchIn
         // Make our own copy of the original position
         memcpy(&threads[i].board, board, sizeof(Board));
         
-        // Reduce the history, which also avoids division by zero
-        reduceHistory(threads[i].history);
-        
         // Zero our the depth, nodes for the new search
         threads[i].depth = 0;
         threads[i].nodes = 0ull;
