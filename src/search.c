@@ -62,13 +62,18 @@ uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double time,
     // Ethereal is responsible for choosing how much time to spend searching
     if (limits->limitedBySelf){
         
-        mtg = mtg >= 0 ? mtg + 1: 25;
+        if (mtg >= 0){
+            info.idealusage =  0.45 * time / (mtg +  5) + inc;
+            info.maxusage   = 10.00 * time / (mtg + 10) + inc;
+        }
         
-        info.idealusage = 0.50 * (time + (mtg - 2) * inc) / MAX(5, mtg + 3);
-        info.maxusage   = 4.50 * (time + (mtg - 2) * inc) / MAX(5, mtg + 0);
+        else {
+            info.idealusage =  0.45 * (time + 23 * inc) / 28;
+            info.maxusage   = 10.00 * (time + 23 * inc) / 25;
+        }
         
-        info.idealusage = MIN(info.idealusage, time - 50);
-        info.maxusage   = MIN(info.maxusage,   time - 50);
+        info.idealusage = MIN(info.idealusage, time - 100);
+        info.maxusage   = MIN(info.maxusage,   time -  50);
     }
     
     // UCI command told us to look for exactly X seconds
@@ -158,15 +163,15 @@ void* iterativeDeepening(void* vthread){
         // If Ethereal is managing the clock, determine if we should be spending
         // more time on this search, based on the score difference between iterations
         // and any changes in the principle variation since the last iteration
-        if (limits->limitedBySelf){
+        if (limits->limitedBySelf && depth >= 4){
             
             // Increase our time if the score suddently dropped by eight centipawns
-            if (depth >= 4 && info->values[depth - 1] > value + 8)
-                info->idealusage = MIN(info->maxusage, info->idealusage * 1.10);
+            if (info->values[depth-1] > value + 8)
+                info->idealusage = MIN(info->maxusage, info->idealusage * 1.07);
             
             // Increase our time if the pv has changed across the last two iterations
-            if (depth >= 4 && info->bestmoves[depth - 1] != thread->pv.line[0])
-                info->idealusage = MIN(info->maxusage, info->idealusage * 1.35);
+            if (info->bestmoves[depth-1] != thread->pv.line[0])
+                info->idealusage = MIN(info->maxusage, info->idealusage * 1.30);
         }
         
         // Check for termination by any of the possible limits
@@ -183,8 +188,8 @@ void* iterativeDeepening(void* vthread){
         
         // Check to see if we expect to be able to complete the next depth
         if (thread->limits->limitedBySelf){
-            double timeFactor = MIN(2, info->timeUsage[depth] / MAX(1, info->timeUsage[depth-1]));
-            double estimatedUsage = info->timeUsage[depth] * (timeFactor + .25);
+            double timeFactor = info->timeUsage[depth] / MAX(1, info->timeUsage[depth-1]);
+            double estimatedUsage = info->timeUsage[depth] * (timeFactor + .40);
             double estiamtedEndtime = getRealTime() + estimatedUsage - info->starttime;
             
             if (estiamtedEndtime > info->maxusage){
