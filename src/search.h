@@ -32,7 +32,11 @@ typedef struct SearchInfo {
     
     double starttime;
     double idealusage;
+    double maxalloc;
     double maxusage;
+    
+    double pvStability;
+    double scoreStability;
     
 } SearchInfo;
 

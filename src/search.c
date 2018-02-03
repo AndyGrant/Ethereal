@@ -56,29 +56,35 @@ uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double time,
     pthread_t* pthreads = malloc(sizeof(pthread_t) * nthreads);
     
     
-    // Save start point of search for reporting and time managment
+    // Some initialization for time management
     info.starttime = getRealTime();
+    info.pvStability = 1;
+    info.scoreStability = 1;
     
     // Ethereal is responsible for choosing how much time to spend searching
     if (limits->limitedBySelf){
         
         if (mtg >= 0){
-            info.idealusage =  0.45 * time / (mtg +  5) + inc;
+            info.idealusage =  0.65 * time / (mtg +  5) + inc;
+            info.maxalloc   =  4.00 * time / (mtg +  7) + inc;
             info.maxusage   = 10.00 * time / (mtg + 10) + inc;
         }
         
         else {
             info.idealusage =  0.45 * (time + 23 * inc) / 28;
+            info.maxalloc   =  4.00 * (time + 23 * inc) / 27;
             info.maxusage   = 10.00 * (time + 23 * inc) / 25;
         }
         
         info.idealusage = MIN(info.idealusage, time - 100);
+        info.maxalloc   = MIN(info.maxalloc,   time -  75);
         info.maxusage   = MIN(info.maxusage,   time -  50);
     }
     
     // UCI command told us to look for exactly X seconds
     if (limits->limitedByTime){
         info.idealusage = limits->timeLimit;
+        info.maxalloc   = limits->timeLimit;
         info.maxusage   = limits->timeLimit;
     }
     
@@ -123,7 +129,7 @@ void* iterativeDeepening(void* vthread){
         thread->depth = depth;
         
         // Helper threads are subject to skipping depths in order to better help
-        // the main thread, based on the number of threads already some depths
+        // the main thread, based on the number of threads already on some depths
         if (!mainThread){
         
             for (count = 0, i = 1; i < thread->nthreads; i++)
@@ -167,11 +173,35 @@ void* iterativeDeepening(void* vthread){
             
             // Increase our time if the score suddently dropped by eight centipawns
             if (info->values[depth-1] > value + 8)
-                info->idealusage = MIN(info->maxusage, info->idealusage * 1.07);
+                info->idealusage *= MAX(info->scoreStability, 1.05);
+            
+            // Decrease our time if the score suddently jumped by eight centipawns
+            if (info->values[depth-1] < value - 8)
+                info->idealusage *= MAX(0.99, MIN(info->pvStability, 1.00));
             
             // Increase our time if the pv has changed across the last two iterations
             if (info->bestmoves[depth-1] != thread->pv.line[0])
-                info->idealusage = MIN(info->maxusage, info->idealusage * 1.30);
+                info->idealusage *= MAX(info->pvStability, 1.30);
+            
+            // Decrease our time if the pv has stayed the same between iterations
+            if (info->bestmoves[depth-1] == thread->pv.line[0])
+                info->idealusage *= MAX(0.95, MIN(info->pvStability, 1.00));
+            
+            // Cap our ideal usage at the max allocation of time
+            info->idealusage = MIN(info->idealusage, info->maxalloc);
+            
+            // Update the Score Stability depending on changes between the score of the current
+            // iteration and the last one. Stability is a bit of a misnomer. Score Stability is
+            // meant to determine when we should be concered with score drops. If we just found
+            // the this iteration to be +50 from the last, we would not be surprised to find that
+            // gain fall to something smaller like +30
+            info->scoreStability *= 1.00 + (info->values[depth-1] - value) / 320.00;
+            
+            // Update the PV Stability depending on the best move changing. If the best move is
+            // holding stable, we increase the pv stability. This way, if the best move changes
+            // after holding for many iterations, more time will be allocated for the search, and
+            // less time if the best move is in a constant flucation.
+            info->pvStability *= (info->bestmoves[depth-1] != thread->pv.line[0]) ? 0.95 : 1.05;
         }
         
         // Check for termination by any of the possible limits
