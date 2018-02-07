@@ -37,7 +37,6 @@ typedef struct TransBucket {
 typedef struct TransTable {
     TransBucket * buckets;
     uint64_t numBuckets;
-    uint64_t used;
     uint64_t keySize;
     uint8_t generation;
 } TransTable;
@@ -56,6 +55,7 @@ void initializeTranspositionTable(TransTable* table, uint64_t megabytes);
 void destroyTranspositionTable(TransTable* table);
 void updateTranspositionTable(TransTable* table);
 void clearTranspositionTable(TransTable* table);
+int estimateHashfull(TransTable* table);
 
 int getTranspositionEntry(TransTable* table, uint64_t hash, TransEntry* ttEntry);
 void storeTranspositionEntry(TransTable* table, int depth, int type, int value, int bestMove, uint64_t hash);

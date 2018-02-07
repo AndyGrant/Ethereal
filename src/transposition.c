@@ -47,7 +47,6 @@ void initializeTranspositionTable(TransTable* table, uint64_t megabytes){
     table->numBuckets   = 1ull << keySize;
     table->keySize      = keySize;
     table->generation   = 0u;
-    table->used         = 0u;
 }
 
 void destroyTranspositionTable(TransTable* table){
@@ -64,7 +63,6 @@ void clearTranspositionTable(TransTable* table){
     TransEntry* entry;
     
     table->generation = 0u;
-    table->used = 0u;
     
     for (i = 0u; i < table->numBuckets; i++){
         for (j = 0; j < BUCKET_SIZE; j++){
@@ -77,6 +75,19 @@ void clearTranspositionTable(TransTable* table){
             entry->hash16 = 0u;
         }
     }
+}
+
+int estimateHashfull(TransTable* table){
+    
+    int i, used = 0;
+    
+    for (i = 0; i < 1250 && i < (int64_t)table->numBuckets; i++)
+        used += (table->buckets[i].entries[0].type != 0)
+             +  (table->buckets[i].entries[1].type != 0)
+             +  (table->buckets[i].entries[2].type != 0)
+             +  (table->buckets[i].entries[3].type != 0);
+             
+    return 1000 * used / (i * 4);
 }
 
 int getTranspositionEntry(TransTable* table, uint64_t hash, TransEntry* ttEntry){
@@ -119,7 +130,6 @@ void storeTranspositionEntry(TransTable* table, int depth, int type, int value, 
         
         // Found an unused entry
         if (entries[i].type == 0){
-            table->used += 1;
             toReplace = &(entries[i]);
             goto Replace;
         }
