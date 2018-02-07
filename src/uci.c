@@ -69,7 +69,7 @@ int main(){
         getInput(str);
         
         if (stringEquals(str, "uci")){
-            printf("id name Ethereal 8.93\n");
+            printf("id name Ethereal 8.94\n");
             printf("id author Andrew Grant\n");
             printf("option name Hash type spin default 16 min 1 max 65536\n");
             printf("option name Threads type spin default 1 min 1 max 2048\n");
@@ -235,12 +235,12 @@ void uciReport(Thread* threads, double startTime, int depth, int value, PVariati
     
     int i;
     int elapsed    = (int)(getRealTime() - startTime);
-    int hashfull   = (1000 * Table.used) / (Table.numBuckets * BUCKET_SIZE);
     uint64_t nodes =  nodesSearchedThreadPool(threads);
+    int hashfull   = estimateHashfull(&Table);
     int nps        = (int)(1000 * (nodes / (1 + elapsed)));
     
     printf("info depth %d score cp %d time %d nodes %"PRIu64" nps %d hashfull %d pv ",
-           depth, value, elapsed, nodes, nps, hashfull);
+            depth, value, elapsed, nodes, nps, hashfull);
            
     for (i = 0; i < pv->length; i++){
         printMove(pv->line[i]);
