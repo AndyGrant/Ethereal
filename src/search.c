@@ -476,17 +476,18 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     // captures that won't exceed rbeta or captures that fail at a low depth
     if (   !PvNode
         && !inCheck
-        &&  depth >= 5){
+        &&  depth >= ProbCutDepth
+        &&  eval + bestTacticalMoveValue(board) >= beta + ProbCutMargin){
             
-        int rbeta = MIN(beta + 150, MATE - MAX_HEIGHT - 1);
+        rBeta = MIN(beta + ProbCutMargin, MATE - MAX_HEIGHT - 1);
             
         initializeMovePicker(&movePicker, thread, NONE_MOVE, height, 1);
         
         while ((currentMove = selectNextMove(&movePicker, board)) != NONE_MOVE){
             
-            // Skip this capture if the raw value gained from a capture will
-            // not exceed rbeta, making it unlikely to cause the desired cutoff
-            if (eval + PieceValues[PieceType(board->squares[MoveTo(currentMove)])][MG] <= rbeta)
+            // Even if we keep the capture piece and or the promotion piece
+            // we will fail to exceed rBeta, then we will skip this move
+            if (eval + thisTacticalMoveValue(board, currentMove) < rBeta)
                 continue;
             
             // Apply and validate move before searching
@@ -497,10 +498,10 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             }
             
             // Verify the move is good with a depth zero search (qsearch, unless in check)
-            // and then with a slightly reduced search. If both searches still exceed rbeta,
+            // and then with a slightly reduced search. If both searches still exceed rBeta,
             // we will prune this node's subtree with resonable assurance that we made no error
-            if (   -search(thread, &lpv, -rbeta, -rbeta+1,       0, height+1) >= rbeta
-                && -search(thread, &lpv, -rbeta, -rbeta+1, depth-4, height+1) >= rbeta){
+            if (   -search(thread, &lpv, -rBeta, -rBeta+1,       0, height+1) >= rBeta
+                && -search(thread, &lpv, -rBeta, -rBeta+1, depth-4, height+1) >= rBeta){
                     
                 revertMove(board, currentMove, undo);
                 return beta;
@@ -612,9 +613,9 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             // Increase R by an additional two ply for non PvNodes
             R += 2 * !PvNode;
             
-            // Increase R by an additional ply if the table move is tactical and best
-            // R += ttTactical && bestMove == ttMove;
-            
+            // Decrease R by an additional ply if we have a quiet move as our best
+            // move, or we are looking at an early quiet move in a situation where
+            // we either have no table move, or the table move is not the best so far
             R -= bestWasQuiet || (ttMove != bestMove && quiets <= 2);
             
             // Adjust R based on history score. We will not allow history to increase
@@ -702,7 +703,7 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     
     Board* const board = &thread->board;
     
-    int eval, value, best, maxValueGain;
+    int eval, value, best;
     uint16_t currentMove;
     Undo undo[1];
     MovePicker movePicker;
@@ -711,6 +712,9 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     PVariation lpv;
     lpv.length = 0;
     pv->length = 0;
+    
+    // Increment the node counter even if we exit early
+    thread->nodes += 1;
     
     // Step 1A. Check to see if search time has expired. We will force the search
     // to continue after the search time has been used in the event that we have
@@ -724,55 +728,36 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     // Step 1B. Check to see if the master thread finished
     if (thread->abort) longjmp(thread->jbuffer, 1);
     
-    // Call this a node
-    thread->nodes += 1;
-    
-    // Max height reached, stop here
+    // Step 2. Max Height Cutoff. If we are at the maximum search height,
+    // then end the search here with a static eval of the current board
     if (height >= MAX_HEIGHT)
         return evaluateBoard(board, &ei, &thread->ptable);
     
-    // Get a standing eval of the current board
+    // Step 3. Eval Pruning. If a static evaluation of the board will
+    // exceed beta, then we can stop the search here. Also, if the static
+    // eval exceeds alpha, we can call our static eval the new alpha
     best = value = eval = evaluateBoard(board, &ei, &thread->ptable);
-    
-    // Update lower bound
-    if (value > alpha) alpha = value;
-    
-    // QSearch can be terminated
+    alpha = MAX(alpha, value);
     if (alpha >= beta) return value;
     
-    // Take a guess at the best case gain for a non promotion capture
-    if (board->colours[!board->turn] & board->pieces[QUEEN])
-        maxValueGain = PieceValues[QUEEN ][EG] + 55;
-    else if (board->colours[!board->turn] & board->pieces[ROOK])
-        maxValueGain = PieceValues[ROOK  ][EG] + 35;
-    else
-        maxValueGain = PieceValues[BISHOP][EG] + 15;
+    // Step 4. Delta Pruning. Even the best possible capture and or promotion
+    // combo with the additional of the futility margin would still fall below alpha
+    if (value + QFutilityMargin + bestTacticalMoveValue(board) < alpha)
+        return eval;
     
-    // Delta pruning when no promotions and not extreme late game
-    if (     value + maxValueGain < alpha
-        && !(board->colours[WHITE] & board->pieces[PAWN] & RANK_7)
-        && !(board->colours[BLACK] & board->pieces[PAWN] & RANK_2))
-        return value;
-    
-    
+    // Step 5. Move Generation and Looping. Generate all tactical moves for this
+    // position (includes Captures, Promotions, and Enpass) and try them
     initializeMovePicker(&movePicker, thread, NONE_MOVE, height, 1);
-    
     while ((currentMove = selectNextMove(&movePicker, board)) != NONE_MOVE){
         
-        // Take a guess at the best case value of this current move
-        value = eval + 55 + PieceValues[PieceType(board->squares[MoveTo(currentMove)])][EG];
-        if (MoveType(currentMove) == PROMOTION_MOVE){
-            value += PieceValues[1 + (MovePromoType(currentMove) >> 14)][EG];
-            value -= PieceValues[PAWN][EG];
-        }
-        
-        // If the best case is not good enough, continue
-        if (value < alpha)
+        // Step 6. Futility Pruning. Similar to Delta Pruning, if this capture in the
+        // best case would still fail to beat alpha minus some margin, we can skip it
+        if (eval + QFutilityMargin + thisTacticalMoveValue(board, currentMove) < alpha)
             continue;
         
-        // Prune this capture if it is capturing a weaker piece which is protected,
-        // so long as we do not have any additional support for the attacker. If
-        // the capture is also a promotion we will not perform any pruning here
+        // Step 7. Weak Capture Pruning. If we are trying to capture a piece which
+        // is protected, and we are the sole attacker, then we can be somewhat safe
+        // in skipping this move so long as we are capturing a weaker piece
         if (     MoveType(currentMove) != PROMOTION_MOVE
             &&  !ei.positionIsDrawn
             &&  (ei.attacked[!board->turn]   & (1ull << MoveTo(currentMove)))
@@ -841,3 +826,44 @@ int valueToTT(int value, int height){
          : value <= -MATE + MAX_HEIGHT ? value - height
          : value;
 }
+
+int thisTacticalMoveValue(Board* board, uint16_t move){
+    
+    int value = PieceValues[PieceType(board->squares[MoveTo(move)])][EG];
+    
+    if (MoveType(move) == PROMOTION_MOVE)
+        value += PieceValues[1 + (move >> 14)][EG] - PieceValues[PAWN][EG];
+    
+    if (MoveType(move) == ENPASS_MOVE)
+        value += PieceValues[PAWN][EG];
+    
+    return value;
+}
+
+int bestTacticalMoveValue(Board* board){
+    
+    int value = 0;
+    
+    uint64_t targets = board->colours[!board->turn];
+    
+    if (targets & board->pieces[QUEEN]) value += PieceValues[QUEEN][EG];
+    
+    else if (targets & board->pieces[ROOK]) value += PieceValues[ROOK][EG];
+    
+    else if (targets & (board->pieces[KNIGHT] | board->pieces[BISHOP]))
+        value += MAX(
+            !!(targets & board->pieces[KNIGHT]) * PieceValues[KNIGHT][EG],
+            !!(targets & board->pieces[BISHOP]) * PieceValues[BISHOP][EG]
+        );
+        
+    else 
+        value += PieceValues[PAWN][EG];
+        
+        
+    if (   board->pieces[PAWN] 
+        &  board->colours[board->turn]
+        & (board->turn == WHITE ? RANK_7 : RANK_2))
+        value += PieceValues[QUEEN][EG] - PieceValues[PAWN][EG];
+            
+    return value;
+} 
