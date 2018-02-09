@@ -64,12 +64,20 @@ int valueFromTT(int value, int height);
 
 int valueToTT(int value, int height);
 
+int thisTacticalMoveValue(Board* board, uint16_t move);
+    
+int bestTacticalMoveValue(Board* board);
+
 
 static const int RazorDepth = 4;
 
 static const int RazorMargins[] = {0, 450, 480, 520, 580};
 
 static const int BetaPruningDepth = 8;
+
+static const int ProbCutDepth = 5;
+
+static const int ProbCutMargin = 150;
 
 static const int InternalIterativeDeepeningDepth = 3;
 
@@ -80,5 +88,7 @@ static const int FutilityPruningDepth = 8;
 static const int LateMovePruningDepth = 8;
 
 static const int LateMovePruningCounts[] = {0, 5, 7, 11, 16, 24, 33, 43, 56};
+
+static const int QFutilityMargin = 55;
 
 #endif
