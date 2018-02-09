@@ -302,7 +302,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     
     int i, value, inCheck = 0, isQuiet, R, repetitions;
     int rAlpha, rBeta, ttValue, oldAlpha = alpha;
-    int quiets = 0, played = 0, ttTactical = 0; 
+    int quiets = 0, played = 0, bestWasQuiet = 0; 
     int best = -MATE, eval = -MATE, futilityMargin = -MATE;
     int hist = 0; // Fix bogus GCC warning
     
@@ -389,10 +389,8 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     // Step 6. Probe the Transposition Table for an entry
     if (getTranspositionEntry(&Table, board->hash, &ttEntry)){
         
-        // Entry move may be good in this position. If it is tactical,
-        // we may use it to increase reductions later on in LMR.
+        // Entry move may be good in this position
         ttMove = ttEntry.bestMove;
-        ttTactical = moveIsTactical(board, ttMove);
         
         // Step 6A. Check to see if this entry allows us to exit this
         // node early. We choose not to do this in the PV line, not because
@@ -522,11 +520,9 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         // Search with a reduced depth
         value = search(thread, &lpv, alpha, beta, depth-2, height);
         
-        // Probe for the newly found move, and update ttMove / ttTactical
-        if (getTranspositionEntry(&Table, board->hash, &ttEntry)){
+        // Probe for the newly found move, and update ttMove
+        if (getTranspositionEntry(&Table, board->hash, &ttEntry))
             ttMove = ttEntry.bestMove;
-            ttTactical = moveIsTactical(board, ttMove);
-        }
     }
     
     // Step 13. Check Extension at non Root nodes that are PV or low depth
@@ -611,13 +607,15 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             &&  isQuiet){
             
             // Baseline R based on number of moves played and current depth
-            R = 1 + (played - 4) / 8 + (depth - 4) / 6;
+            R = 2 + (played - 4) / 8 + (depth - 4) / 6;
             
             // Increase R by an additional two ply for non PvNodes
             R += 2 * !PvNode;
             
             // Increase R by an additional ply if the table move is tactical and best
-            R += ttTactical && bestMove == ttMove;
+            // R += ttTactical && bestMove == ttMove;
+            
+            R -= bestWasQuiet || (ttMove != bestMove && quiets <= 2);
             
             // Adjust R based on history score. We will not allow history to increase
             // R by more than 1. History scores are within [-16384, 16384], so we can
@@ -653,6 +651,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             
             best = value;
             bestMove = currentMove;
+            bestWasQuiet = isQuiet;
             
             if (value > alpha){
                 alpha = value;
