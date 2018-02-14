@@ -133,11 +133,23 @@ const int KingDefenders[12][PHASE_NB] = {
     {   8,   4}, {   8,   4}, {   8,   4}, {   8,   4},
 };
 
-const int KingShelter[2][2][RANK_NB][PHASE_NB] = {
-  {{{  -7,   0}, {   5,   0}, {  -2,   0}, {  -2,  -1}, {  -2,  -4}, {   1,  -1}, { -20,  -9}, {   0,   0}},
-   {{  -3,  -1}, {   8,   3}, {   0,   2}, {   9,   0}, {   0,  -7}, { -23,  -3}, {  -6,   4}, {   0,   0}}},
-  {{{ -15,   0}, {   8,   0}, {   1,   0}, {  -5,  -1}, {  -8,  -1}, { -12,  -3}, { -33, -10}, {   0,   0}},
-   {{  -6,  -2}, {   3,  10}, {  11,   3}, {   3,  -3}, {   0,  -4}, { -13,  11}, { -25,   2}, {   0,   0}}},
+const int KingShelter[2][FILE_NB][RANK_NB][PHASE_NB] = {
+  {{{  -6,  -6}, {   7,  -9}, {  14,  -2}, {   5, -10}, {  15, -14}, { -14, -23}, {  25, -14}, { -14,  15}},
+   {{  -1,   2}, {   7,  -4}, {  20,  -5}, {   0,  -6}, {   3, -19}, { -60,  15}, { -88, -40}, { -13,   2}},
+   {{   5,   0}, {   2,  -1}, {  -6,   1}, {   0,  -2}, {  10,  -3}, {  42, -25}, {  -9, -35}, {  -5,   0}},
+   {{  10,  11}, {   8,  -1}, {   0,  -3}, {  11,  -2}, {   3, -11}, { -15, -17}, {  -9,   7}, {   0,  -2}},
+   {{   0,  12}, {   1,   4}, {  -8,   1}, { -13, -11}, { -21, -23}, { -17, -33}, {  14, -28}, {  -8,  -2}},
+   {{   5,   0}, {   9,   3}, {   0,   0}, {  -4,  -8}, {  12, -15}, {   4,   0}, {  15,  10}, {  -9,   0}},
+   {{   2,  -1}, {   0,  -7}, {  -8,  -5}, {  -8,  -7}, { -19, -18}, { -34,  -6}, {  35,   6}, { -16,   6}},
+   {{  -9,  -8}, {   0,  -3}, {   3,   2}, {   1,   3}, { -15,  -5}, {  -8,  24}, {   1,  26}, { -12,  10}}},
+  {{{   0,   0}, { -12, -15}, {   0, -10}, { -23,   7}, {  -8,  44}, { -25, 100}, {  51, -35}, { -25,   8}},
+   {{   0,   0}, {  11,   4}, {  15,  -1}, {  -5,   5}, {   6,   4}, { -76,  -6}, {-225,  -4}, { -21,   5}},
+   {{   0,   0}, {  11,   0}, {   4,  -5}, {  18,  -9}, {  16,   1}, { -63, -24}, { -67,-100}, {  -6,   0}},
+   {{   0,   0}, {   7,   3}, {   1,  14}, { -16, -10}, { -15,  -7}, {   0,  -5}, { -36,   8}, { -11,  -5}},
+   {{   0,   0}, {   2,  10}, {  10,   2}, {   7,  -8}, {  -2, -14}, {  -9, -17}, { -35,  12}, {  -1,  -5}},
+   {{   0,   0}, {   0,   2}, {  -3,   0}, {  -8,  -8}, {   3,  -9}, { -32,  -5}, { -43,  65}, { -13,   0}},
+   {{   0,   0}, {   5,   0}, {   1,   2}, {  -1,  -3}, { -14,  -8}, {  -5,  16}, {  13, -65}, { -26,   5}},
+   {{   0,   0}, {   0, -10}, {   4,  -6}, { -26,  -2}, { -16,  19}, { -10,  -5}, { -62, -21}, { -24,   6}}}
 };
 
 const int PassedPawn[2][2][RANK_NB][PHASE_NB] = {
@@ -650,22 +662,25 @@ void evaluateKings(EvalInfo* ei, Board* board, int colour){
         ei->endgame[colour] -= KingSafety[attackCounts];
     }
     
-    // Evaluate Pawn Shelter. We will evaluate the pawn setup on the king's file,
-    // as well as the files next to the king (if there are any). We based the evaluation
-    // on the absolute difference between the location of the king and the backward most
-    // pawn. No pawn is indicated with a distance of zero. Any pawn presence recieves a 
-    // distance of at least one. The bonus changes by file and location of the king.
+    // Evaluate Pawn Shelter. We will look at the King's file and any adjacent files
+    // to the King's file. We evaluate the distance between the king and the most backward
+    // pawn. We will not look at pawns behind the king, and will consider that as having
+    // no pawn on the file. No pawn on a file is used with distance equals 7, as no pawn
+    // can ever be a distance of 7 from the king. Different bonus is in order when we are
+    // looking at the file on which the King sits.
+    
     for (file = MAX(0, kingFile - 1); file <= MIN(7, kingFile + 1); file++){
         
-        filePawns = myPawns & Files[file];
+        filePawns = myPawns & Files[file] & RanksAtOrAboveMasks[colour][kingRank];
         
-        distance = filePawns ? colour == WHITE ? MAX(1, abs(kingRank - Rank(getlsb(filePawns))))
-                                               : MAX(1, abs(kingRank - Rank(getmsb(filePawns))))
-                                               : 0;
+        distance = filePawns ? 
+                   colour == WHITE ? Rank(getlsb(filePawns)) - kingRank
+                                   : kingRank - Rank(getmsb(filePawns))
+                                   : 7;
 
-        ei->midgame[colour] += KingShelter[file == kingFile][!!(myKings & (FILE_D | FILE_E))][distance][MG];
-        ei->endgame[colour] += KingShelter[file == kingFile][!!(myKings & (FILE_D | FILE_E))][distance][EG];
-        if (TRACE) T.kingShelter[colour][file == kingFile][!!(myKings & (FILE_D | FILE_E))][distance]++;
+        ei->midgame[colour] += KingShelter[file == kingFile][file][distance][MG];
+        ei->endgame[colour] += KingShelter[file == kingFile][file][distance][EG];
+        if (TRACE) T.kingShelter[colour][file == kingFile][file][distance]++;
     }    
 }
 
