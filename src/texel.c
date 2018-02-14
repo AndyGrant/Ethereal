@@ -84,7 +84,7 @@ extern const int QueenMobility[28][PHASE_NB];
 // To determine the starting values for the King terms
 extern const int KingPSQT32[32][PHASE_NB];
 extern const int KingDefenders[12][PHASE_NB];
-extern const int KingShelter[2][2][RANK_NB][PHASE_NB];
+extern const int KingShelter[2][FILE_NB][RANK_NB][PHASE_NB];
 
 // To determine the starting values for the Passed Pawn terms
 extern const int PassedPawn[2][2][RANK_NB][PHASE_NB];
@@ -492,7 +492,7 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
     }
     
     for (a = 0; a < 2; a++){
-        for (b = 0; b < 2; b++){
+        for (b = 0; b < FILE_NB; b++){
             for (c = 0; c < RANK_NB; c++, i++){
                 cparams[i][MG] = KingShelter[a][b][c][MG];
                 cparams[i][EG] = KingShelter[a][b][c][EG];
@@ -694,12 +694,12 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
             printf(" {%4d,%4d},", (int)tparams[i][MG], (int)tparams[i][EG]);
     } printf("\n};\n");
     
-    printf("\nconst int KingShelter[2][2][RANK_NB][PHASE_NB] = {");
-    for (x = 0; x < 4; x++){
-        printf("\n  %s", x % 2 ? " {" : "{{");
+    printf("\nconst int KingShelter[2][FILE_NB][RANK_NB][PHASE_NB] = {");
+    for (x = 0; x < 16; x++){
+        printf("\n  %s", x % 8 ? " {" : "{{");
         for (y = 0; y < RANK_NB; y++, i++){
             printf("{%4d,%4d}", (int)tparams[i][MG], (int)tparams[i][EG]);
-            printf("%s", y < RANK_NB - 1 ? ", " : x % 2 ? "}}," : "},");
+            printf("%s", y < RANK_NB - 1 ? ", " : x % 8 == 7 ? "}}," : "},");
         }
     } printf("\n};\n");
     
