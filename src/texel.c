@@ -181,7 +181,7 @@ void initializeTexelEntries(TexelEntry* tes, Thread* thread){
     
     for (i = 0; i < NP; i++){
         
-        if ((i + 1) % 1000 == 0 || i == NP - 1)
+        if ((i + 1) % 100000 == 0 || i == NP - 1)
             printf("\rReading and Initializing Texel Entries from FENS...  [%7d of %7d]", i + 1, NP);
         
         fgets(line, 128, fin);
@@ -194,7 +194,7 @@ void initializeTexelEntries(TexelEntry* tes, Thread* thread){
         
         // Search, then and apply all moves in the principle variation
         initializeBoard(&thread->board, line);
-        search(thread, &thread->pv, -MATE, MATE, 1, 0);
+        search(thread, &thread->pv, -MATE, MATE, 2, 0);
         for (j = 0; j < thread->pv.length; j++)
             applyMove(&thread->board, thread->pv.line[j], &undo);
             
@@ -336,7 +336,7 @@ void initializeCoefficients(TexelEntry* te){
         te->coeffs[i++] = T.kingDefenders[WHITE][a] - T.kingDefenders[BLACK][a];
     
     for (a = 0; a < 2; a++)
-        for (b = 0; b < 2; b++)
+        for (b = 0; b < FILE_NB; b++)
             for (c = 0; c < RANK_NB; c++)
                 te->coeffs[i++] = T.kingShelter[WHITE][a][b][c] - T.kingShelter[BLACK][a][b][c];
     
