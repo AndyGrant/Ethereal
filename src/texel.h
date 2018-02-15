@@ -25,18 +25,26 @@
 
 #define NT (484)
 
+#define STACKSIZE ((int)((double) NP * NT / 64))
+
+typedef struct TexelTuple {
+    int index;
+    int coeff;
+} TexelTuple;
+
 typedef struct TexelEntry {
+    int ntuples;
     double result;
-    double coeffs[NT];
     double eval, phase;
     double factors[PHASE_NB];
+    TexelTuple* tuples;
 } TexelEntry;
 
 void runTexelTuning(Thread* thread);
 
 void initializeTexelEntries(TexelEntry* tes, Thread* thread);
 
-void initializeCoefficients(TexelEntry* te);
+void initializeCoefficients(int coeffs[NT]);
 
 void initializeCurrentParameters(double cparams[NT][PHASE_NB]);
 

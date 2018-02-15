@@ -36,6 +36,11 @@
 #include "types.h"
 #include "uci.h"
 
+// Our own memory managment system, so that that all of the texel
+// tuple structs are, for the most part, storied sequentially in memory
+TexelTuple* TupleStack;
+int TupleStackSize = STACKSIZE;
+
 // Hack so we can lower the table size for speed
 extern TransTable Table;
 
@@ -94,7 +99,7 @@ void runTexelTuning(Thread* thread){
     
     TexelEntry* tes;
     int i, j, iteration = -1;
-    double K, thisError, baseRate = 10.0;
+    double K, thisError, bestError = 1e6, baseRate = 10.0;
     double rates[NT][PHASE_NB] = {{0}, {0}};
     double params[NT][PHASE_NB] = {{0}, {0}};
     double cparams[NT][PHASE_NB] = {{0}, {0}};
@@ -104,9 +109,13 @@ void runTexelTuning(Thread* thread){
     printf("\nSetting Transposition Table to 1MB...");
     initializeTranspositionTable(&Table, 1);
     
-    printf("\n\nAllocating Memory for Texel Tuner [%dMB]...",
+    printf("\n\nAllocating Memory for Texel Entries [%dMB]...",
            (int)(NP * sizeof(TexelEntry) / (1024 * 1024)));
     tes = calloc(NP, sizeof(TexelEntry));
+    
+    printf("\n\nAllocating Memory for Texel Tuple Stack [%dMB]...",
+           (int)(STACKSIZE * sizeof(TexelTuple) / (1024 * 1024)));
+    TupleStack = calloc(STACKSIZE, sizeof(TexelTuple));
     
     printf("\n\nReading and Initializing Texel Entries from FENS...");
     initializeTexelEntries(tes, thread);
@@ -117,16 +126,24 @@ void runTexelTuning(Thread* thread){
     printf("\n\nScaling Params For Phases and Occurance Rates...");
     calculateLearningRates(tes, rates);
     
-    printf("\n\nComputing Optimal K Value...");
+    printf("\n\nComputing Optimal K Value...\n");
     K = computeOptimalK(tes);
     
     while (1){
         
         iteration++;
         
-        if (iteration % 100 == 0){
+        if (iteration % 25 == 0){
+            
+            // Check for a regression in the tuning process
+            thisError = completeLinearError(tes, params, K);
+            if (thisError >= bestError)
+                break;
+            
+            // Update our best and record the current parameters
+            bestError = thisError;
             printParameters(params, cparams);
-            printf("\nIteration [%d] Error = %g \n", iteration, completeLinearError(tes, params, K));
+            printf("\nIteration [%d] Error = %g \n", iteration, bestError);
         }
                 
         double gradients[NT][PHASE_NB] = {{0}, {0}};
@@ -135,20 +152,34 @@ void runTexelTuning(Thread* thread){
             double localgradients[NT][PHASE_NB] = {{0}, {0}};
             #pragma omp for schedule(static, NP / 48)
             for (i = 0; i < NP; i++){
+                
                 thisError = singleLinearError(tes[i], params, K);
                 
-                for (j = 0; j < NT; j++){
-                    localgradients[j][MG] += thisError * tes[i].coeffs[j] * tes[i].factors[MG];
-                    localgradients[j][EG] += thisError * tes[i].coeffs[j] * tes[i].factors[EG];
+                for (j = 0; j < tes[j].ntuples; j++){
+                    
+                    // Update gradients for the j-th tuple for the mid game
+                    localgradients[tes[i].tuples[j].index][MG] += thisError 
+                                                                * tes[i].factors[MG]
+                                                                * tes[i].tuples[j].coeff;
+                    
+                    // Update gradients for the j-th tuple for the end game
+                    localgradients[tes[i].tuples[j].index][EG] += thisError
+                                                                * tes[i].factors[EG]
+                                                                * tes[i].tuples[j].coeff;
                 }
             }
             
+            // Collapase all of the local gradients into the main gradient. This is done
+            // in order to speed up memory access times when doing the tuning with SMP
             for (i = 0; i < NT; i++){
                 gradients[i][MG] += localgradients[i][MG];
                 gradients[i][EG] += localgradients[i][EG];
             }
         }
         
+        // Finally, perform the update step of SGD. If we were to properly compute the gradients
+        // each term would be divided by -2 over NP. Instead we avoid those divisions until the
+        // final update step. Note that we have also simplified the minus off of the 2.
         for (i = 0; i < NT; i++){
             params[i][MG] += (2.0 / NP) * baseRate * rates[i][MG] * gradients[i][MG];
             params[i][EG] += (2.0 / NP) * baseRate * rates[i][EG] * gradients[i][EG];
@@ -158,10 +189,11 @@ void runTexelTuning(Thread* thread){
 
 void initializeTexelEntries(TexelEntry* tes, Thread* thread){
     
-    int i, j;
+    int i, j, k;
     Undo undo;
     EvalInfo ei;
     Limits limits;
+    int coeffs[NT];
     char line[128];
     
     // Initialize limits for the search
@@ -194,7 +226,7 @@ void initializeTexelEntries(TexelEntry* tes, Thread* thread){
         
         // Search, then and apply all moves in the principle variation
         initializeBoard(&thread->board, line);
-        search(thread, &thread->pv, -MATE, MATE, 2, 0);
+        search(thread, &thread->pv, -MATE, MATE, 0, 0);
         for (j = 0; j < thread->pv.length; j++)
             applyMove(&thread->board, thread->pv.line[j], &undo);
             
@@ -217,135 +249,166 @@ void initializeTexelEntries(TexelEntry* tes, Thread* thread){
         // Finish determining the phase
         tes[i].phase = (tes[i].phase * 256 + 12) / 24.0;
         
-        // Fill out tes[i].coeffs
-        initializeCoefficients(&tes[i]);
+        // Vectorize the evaluation coefficients into coeffs
+        initializeCoefficients(coeffs);
+        
+        // Determine how many TexelTuples will be needed
+        for (k = 0, j = 0; j < NT; j++)
+            k += coeffs[j] != 0;
+        
+        // Determine if we need to allocate more Texel Tuples
+        if (k > TupleStackSize){
+            TupleStackSize = STACKSIZE;
+            TupleStack = calloc(STACKSIZE, sizeof(TexelTuple));
+            
+            printf("\rAllocating Memory for Texel Tuple Stack [%dMB]...\n\n",
+                    (int)(STACKSIZE * sizeof(TexelTuple) / (1024 * 1024)));
+        }
+        
+        // Tell the Texel Entry where its Texel Tuples are
+        tes[i].tuples = TupleStack;
+        tes[i].ntuples = k;
+        TupleStack += k;
+        TupleStackSize -= k;
+        
+        // Finally, initialize the Texel Tuples
+        for (k = 0, j = 0; j < NT; j++){
+            if (coeffs[j] != 0){
+                tes[i].tuples[k].index = j;
+                tes[i].tuples[k++].coeff = coeffs[j];
+            }
+        }
     }
     
     fclose(fin);
 }
 
-void initializeCoefficients(TexelEntry* te){
+void initializeCoefficients(int coeffs[NT]){
     
     int i = 0, a, b, c;
     
+    // Zero out the coefficients since not all parts of the process
+    // for vectorization of the evaluation initializes the vector
+    memset(coeffs, 0, NT * sizeof(int));
+    
     // Initialize coefficients for the pawns
     
-    te->coeffs[i++] = T.pawnCounts[WHITE] - T.pawnCounts[BLACK];
+    coeffs[i++] = T.pawnCounts[WHITE] - T.pawnCounts[BLACK];
     
     for (a = 0; a < 64; a++){
-        te->coeffs[i + relativeSquare32(a, WHITE)] += T.pawnPSQT[WHITE][a];
-        te->coeffs[i + relativeSquare32(a, BLACK)] -= T.pawnPSQT[BLACK][a];
+        coeffs[i + relativeSquare32(a, WHITE)] += T.pawnPSQT[WHITE][a];
+        coeffs[i + relativeSquare32(a, BLACK)] -= T.pawnPSQT[BLACK][a];
     } i += 32;
     
-    te->coeffs[i++] = T.pawnIsolated[WHITE] - T.pawnIsolated[BLACK];
+    coeffs[i++] = T.pawnIsolated[WHITE] - T.pawnIsolated[BLACK];
     
-    te->coeffs[i++] = T.pawnStacked[WHITE] - T.pawnStacked[BLACK];
+    coeffs[i++] = T.pawnStacked[WHITE] - T.pawnStacked[BLACK];
     
     for (a = 0; a < 2; a++)
-        te->coeffs[i++] = T.pawnBackwards[WHITE][a] - T.pawnBackwards[BLACK][a];
+        coeffs[i++] = T.pawnBackwards[WHITE][a] - T.pawnBackwards[BLACK][a];
     
     for (a = 0; a < 64; a++){
-        te->coeffs[i + relativeSquare32(a, WHITE)] += T.pawnConnected[WHITE][a];
-        te->coeffs[i + relativeSquare32(a, BLACK)] -= T.pawnConnected[BLACK][a];
+        coeffs[i + relativeSquare32(a, WHITE)] += T.pawnConnected[WHITE][a];
+        coeffs[i + relativeSquare32(a, BLACK)] -= T.pawnConnected[BLACK][a];
     } i += 32;
     
     
     // Initialze coefficients for the knights
     
-    te->coeffs[i++] = T.knightCounts[WHITE] - T.knightCounts[BLACK];
+    coeffs[i++] = T.knightCounts[WHITE] - T.knightCounts[BLACK];
     
     for (a = 0; a < 64; a++){
-        te->coeffs[i + relativeSquare32(a, WHITE)] += T.knightPSQT[WHITE][a];
-        te->coeffs[i + relativeSquare32(a, BLACK)] -= T.knightPSQT[BLACK][a];
+        coeffs[i + relativeSquare32(a, WHITE)] += T.knightPSQT[WHITE][a];
+        coeffs[i + relativeSquare32(a, BLACK)] -= T.knightPSQT[BLACK][a];
     } i += 32;
     
-    te->coeffs[i++] = T.knightAttackedByPawn[WHITE] - T.knightAttackedByPawn[BLACK];
+    coeffs[i++] = T.knightAttackedByPawn[WHITE] - T.knightAttackedByPawn[BLACK];
     
     for (a = 0; a < 2; a++)
-        te->coeffs[i++] = T.knightOutpost[WHITE][a] - T.knightOutpost[BLACK][a];
+        coeffs[i++] = T.knightOutpost[WHITE][a] - T.knightOutpost[BLACK][a];
         
     for (a = 0; a < 9; a++)
-        te->coeffs[i++] = T.knightMobility[WHITE][a] - T.knightMobility[BLACK][a];
+        coeffs[i++] = T.knightMobility[WHITE][a] - T.knightMobility[BLACK][a];
     
     
     // Initialize coefficients for the bishops
     
-    te->coeffs[i++] = T.bishopCounts[WHITE] - T.bishopCounts[BLACK];
+    coeffs[i++] = T.bishopCounts[WHITE] - T.bishopCounts[BLACK];
     
     for (a = 0; a < 64; a++){
-        te->coeffs[i + relativeSquare32(a, WHITE)] += T.bishopPSQT[WHITE][a];
-        te->coeffs[i + relativeSquare32(a, BLACK)] -= T.bishopPSQT[BLACK][a];
+        coeffs[i + relativeSquare32(a, WHITE)] += T.bishopPSQT[WHITE][a];
+        coeffs[i + relativeSquare32(a, BLACK)] -= T.bishopPSQT[BLACK][a];
     } i += 32;
     
-    te->coeffs[i++] = T.bishopWings[WHITE] - T.bishopWings[BLACK];
+    coeffs[i++] = T.bishopWings[WHITE] - T.bishopWings[BLACK];
     
-    te->coeffs[i++] = T.bishopPair[WHITE] - T.bishopPair[BLACK];
+    coeffs[i++] = T.bishopPair[WHITE] - T.bishopPair[BLACK];
     
-    te->coeffs[i++] = T.bishopAttackedByPawn[WHITE] - T.bishopAttackedByPawn[BLACK];
+    coeffs[i++] = T.bishopAttackedByPawn[WHITE] - T.bishopAttackedByPawn[BLACK];
     
     for (a = 0; a < 2; a++)
-        te->coeffs[i++] = T.bishopOutpost[WHITE][a] - T.bishopOutpost[BLACK][a];
+        coeffs[i++] = T.bishopOutpost[WHITE][a] - T.bishopOutpost[BLACK][a];
         
     for (a = 0; a < 14; a++)
-        te->coeffs[i++] = T.bishopMobility[WHITE][a] - T.bishopMobility[BLACK][a];
+        coeffs[i++] = T.bishopMobility[WHITE][a] - T.bishopMobility[BLACK][a];
     
     
     // Initialize coefficients for the rooks
     
-    te->coeffs[i++] = T.rookCounts[WHITE] - T.rookCounts[BLACK];
+    coeffs[i++] = T.rookCounts[WHITE] - T.rookCounts[BLACK];
     
     for (a = 0; a < 64; a++){
-        te->coeffs[i + relativeSquare32(a, WHITE)] += T.rookPSQT[WHITE][a];
-        te->coeffs[i + relativeSquare32(a, BLACK)] -= T.rookPSQT[BLACK][a];
+        coeffs[i + relativeSquare32(a, WHITE)] += T.rookPSQT[WHITE][a];
+        coeffs[i + relativeSquare32(a, BLACK)] -= T.rookPSQT[BLACK][a];
     } i += 32;
     
     for (a = 0; a < 2; a++)
-        te->coeffs[i++] = T.rookFile[WHITE][a] - T.rookFile[BLACK][a];
+        coeffs[i++] = T.rookFile[WHITE][a] - T.rookFile[BLACK][a];
         
-    te->coeffs[i++] = T.rookOnSeventh[WHITE] - T.rookOnSeventh[BLACK];
+    coeffs[i++] = T.rookOnSeventh[WHITE] - T.rookOnSeventh[BLACK];
         
     for (a = 0; a < 15; a++)
-        te->coeffs[i++] = T.rookMobility[WHITE][a] - T.rookMobility[BLACK][a];
+        coeffs[i++] = T.rookMobility[WHITE][a] - T.rookMobility[BLACK][a];
     
     
     // Initialize coefficients for the queens
     
-    te->coeffs[i++] = T.queenCounts[WHITE] - T.queenCounts[BLACK];
+    coeffs[i++] = T.queenCounts[WHITE] - T.queenCounts[BLACK];
     
-    te->coeffs[i++] = T.queenChecked[WHITE] - T.queenChecked[BLACK];
+    coeffs[i++] = T.queenChecked[WHITE] - T.queenChecked[BLACK];
     
-    te->coeffs[i++] = T.queenCheckedByPawn[WHITE] - T.queenCheckedByPawn[BLACK];
+    coeffs[i++] = T.queenCheckedByPawn[WHITE] - T.queenCheckedByPawn[BLACK];
     
     for (a = 0; a < 64; a++){
-        te->coeffs[i + relativeSquare32(a, WHITE)] += T.queenPSQT[WHITE][a];
-        te->coeffs[i + relativeSquare32(a, BLACK)] -= T.queenPSQT[BLACK][a];
+        coeffs[i + relativeSquare32(a, WHITE)] += T.queenPSQT[WHITE][a];
+        coeffs[i + relativeSquare32(a, BLACK)] -= T.queenPSQT[BLACK][a];
     } i += 32;
     
     for (a = 0; a < 28; a++)
-        te->coeffs[i++] = T.queenMobility[WHITE][a] - T.queenMobility[BLACK][a];
+        coeffs[i++] = T.queenMobility[WHITE][a] - T.queenMobility[BLACK][a];
     
     
     // Intitialize coefficients for the kings
     
     for (a = 0; a < 64; a++){
-        te->coeffs[i + relativeSquare32(a, WHITE)] += T.kingPSQT[WHITE][a];
-        te->coeffs[i + relativeSquare32(a, BLACK)] -= T.kingPSQT[BLACK][a];
+        coeffs[i + relativeSquare32(a, WHITE)] += T.kingPSQT[WHITE][a];
+        coeffs[i + relativeSquare32(a, BLACK)] -= T.kingPSQT[BLACK][a];
     } i += 32;
     
     for (a = 0; a < 12; a++)
-        te->coeffs[i++] = T.kingDefenders[WHITE][a] - T.kingDefenders[BLACK][a];
+        coeffs[i++] = T.kingDefenders[WHITE][a] - T.kingDefenders[BLACK][a];
     
     for (a = 0; a < 2; a++)
         for (b = 0; b < FILE_NB; b++)
             for (c = 0; c < RANK_NB; c++)
-                te->coeffs[i++] = T.kingShelter[WHITE][a][b][c] - T.kingShelter[BLACK][a][b][c];
+                coeffs[i++] = T.kingShelter[WHITE][a][b][c] - T.kingShelter[BLACK][a][b][c];
     
     // Initialize coefficients for the passed pawns
     
     for (a = 0; a < 2; a++)
         for (b = 0; b < 2; b++)
             for (c = 0; c < RANK_NB; c++)
-                te->coeffs[i++] = T.passedPawn[WHITE][a][b][c] - T.passedPawn[BLACK][a][b][c];
+                coeffs[i++] = T.passedPawn[WHITE][a][b][c] - T.passedPawn[BLACK][a][b][c];
 }
 
 void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
@@ -514,16 +577,21 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
 
 void calculateLearningRates(TexelEntry* tes, double rates[NT][PHASE_NB]){
     
-    int i, j;
+    int i, j, index, coeff;
     double avgByPhase[PHASE_NB] = {0};
     double occurances[NT][PHASE_NB] = {{0}, {0}};
     
     for (i = 0; i < NP; i++){
-        for (j = 0; j < NT; j++){
-            occurances[j][MG] += abs(tes[i].coeffs[j]) * tes[i].factors[MG];
-            occurances[j][EG] += abs(tes[i].coeffs[j]) * tes[i].factors[EG];
-            avgByPhase[MG]    += abs(tes[i].coeffs[j]) * tes[i].factors[MG];
-            avgByPhase[EG]    += abs(tes[i].coeffs[j]) * tes[i].factors[EG];
+        for (j = 0; j < tes[i].ntuples; j++){
+            
+            index = tes[i].tuples[j].index;
+            coeff = tes[i].tuples[j].coeff;
+            
+            occurances[index][MG] += abs(coeff) * tes[i].factors[MG];
+            occurances[index][EG] += abs(coeff) * tes[i].factors[EG];
+            
+            avgByPhase[MG] += abs(coeff) * tes[i].factors[MG];
+            avgByPhase[EG] += abs(coeff) * tes[i].factors[EG];
         }
     }
     
@@ -724,6 +792,8 @@ double computeOptimalK(TexelEntry* tes){
     for (i = 0; i < 10; i++){
         printf("Computing K Iteration [%d] ", i);
         
+        // Find the best value if K within the range [start, end],
+        // with a step size based on the current iteration 
         curr = start - delta;
         while (curr < end){
             curr = curr + delta;
@@ -786,9 +856,9 @@ double linearEvaluation(TexelEntry te, double params[NT][PHASE_NB]){
     int i;
     double mg = 0, eg = 0;
     
-    for (i = 0; i < NT; i++){
-        mg += te.coeffs[i] * params[i][MG];
-        eg += te.coeffs[i] * params[i][EG];
+    for (i = 0; i < te.ntuples; i++){
+        mg += te.tuples[i].coeff * params[te.tuples[i].index][MG];
+        eg += te.tuples[i].coeff * params[te.tuples[i].index][EG];
     }
     
     return te.eval + ((mg * (256 - te.phase) + eg * te.phase) / 256.0);
