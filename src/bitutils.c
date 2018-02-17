@@ -20,7 +20,7 @@
 
 #include "bitutils.h"
 
-uint8_t BitCounts[0x10000];
+int BitCounts[0x10000];
 
 int countSetBits(uint64_t bb){
     
@@ -65,4 +65,8 @@ int poplsb(uint64_t* bb){
     int lsb = getlsb(*bb);
     *bb ^= 1ull << lsb;
     return lsb;
+}
+
+int moreThanOne(uint64_t bb){
+    return bb & (bb - 1);
 }

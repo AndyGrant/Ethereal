@@ -21,9 +21,11 @@
 
 #include "bitboards.h"
 #include "masks.h"
+#include "movegen.h"
 #include "piece.h"
 #include "types.h"
 
+uint64_t BitsBetweenMasks[SQUARE_NB][SQUARE_NB];
 uint64_t RanksAtOrAboveMasks[COLOUR_NB][RANK_NB];
 uint64_t IsolatedPawnMasks[SQUARE_NB];
 uint64_t PassedPawnMasks[COLOUR_NB][SQUARE_NB];
@@ -35,6 +37,19 @@ void initializeMasks(){
     
     int i, j;
     uint64_t files;
+    
+    for (i = 0; i < SQUARE_NB; i++){
+        for (j = 0; j < SQUARE_NB; j++){
+            
+            // Aligned on a diagonal
+            if (bishopAttacks(i, 0ull, 1ull << j))
+                BitsBetweenMasks[i][j] = bishopAttacks(i, 1ull << j, ~0ull) & bishopAttacks(j, 1ull << i, ~0ull);
+            
+            // Aligned on a straight
+            if (rookAttacks(i, 0ull, 1ull << j))
+                BitsBetweenMasks[i][j] = rookAttacks(i, 1ull << j, ~0ull) & rookAttacks(j, 1ull << i, ~0ull);
+        }
+    }
     
     // Initalize ranks above masks
     for (i = 0; i < RANK_NB; i++){

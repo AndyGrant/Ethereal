@@ -189,9 +189,9 @@ void initializeBoard(Board* board, char* fen){
     
     // Update the enpass square to reflect a possible enpass
     if (board->epSquare != -1){
-        enemyPawns  = board->colours[!board->turn] & board->pieces[PAWN];
+        enemyPawns  = board->colours[board->turn] & board->pieces[PAWN];
         enemyPawns &= IsolatedPawnMasks[board->epSquare];
-        enemyPawns &= (board->turn == BLACK) ? RANK_4 : RANK_5;
+        enemyPawns &= board->turn == BLACK ? RANK_4 : RANK_5;
         if (enemyPawns == 0ull) board->epSquare = -1;
     }
     
@@ -222,6 +222,8 @@ void initializeBoard(Board* board, char* fen){
     
     // Number of moves since this (root) position
     board->numMoves = 0;
+    
+    board->kingAttackers = attackersToKingSquare(board);
 }
 
 void printBoard(Board* board){

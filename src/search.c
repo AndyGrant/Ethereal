@@ -375,8 +375,10 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     // Step 5. Go into the Quiescence Search if we have reached
     // the search horizon and are not currently in check
     if (depth <= 0){
-        inCheck = !isNotInCheck(board, board->turn);
-        if (!inCheck) return qsearch(thread, pv, alpha, beta, height);
+        
+        // No king attackers indicates we are not checked
+        if (!board->kingAttackers) 
+            return qsearch(thread, pv, alpha, beta, height);
         
         // We do not cap reductions, so here we will make
         // sure that depth is within the acceptable bounds
@@ -416,7 +418,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     // thus avoiding the quiescence search). Also, in non PvNodes, we will
     // perform pruning based on the board eval, so we will need that, as well
     // as a futilityMargin calculated based on the eval and current depth
-    inCheck = inCheck || !isNotInCheck(board, board->turn);
+    inCheck = !!board->kingAttackers;
     if (!PvNode){
         eval = evaluateBoard(board, &ei, &thread->ptable);
         futilityMargin = eval + 70 * depth;
@@ -587,12 +589,12 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         // tried many quiets in this position already, and we don't expect
         // anything from this move, we can undo it and move on.
         if (   !PvNode
+            && !board->kingAttackers
             &&  isQuiet
             &&  played >= 1
             &&  depth <= LateMovePruningDepth
-            &&  quiets > LateMovePruningCounts[depth]
-            &&  isNotInCheck(board, board->turn)){
-        
+            &&  quiets > LateMovePruningCounts[depth]){
+            
             revertMove(board, currentMove, undo);
             continue;
         }
