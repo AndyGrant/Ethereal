@@ -27,6 +27,7 @@
 #include "types.h"
 #include "masks.h"
 #include "move.h"
+#include "movegen.h"
 #include "piece.h"
 #include "psqt.h"
 #include "zorbist.h"
@@ -42,6 +43,7 @@ void applyMove(Board* board, uint16_t move, Undo* undo){
     // or is not worth the time in order to do so
     undo->hash = board->hash;
     undo->phash = board->phash;
+    undo->kingAttackers = board->kingAttackers;
     undo->turn = board->turn;
     undo->castleRights = board->castleRights;
     undo->epSquare = board->epSquare;
@@ -61,6 +63,9 @@ void applyMove(Board* board, uint16_t move, Undo* undo){
     
     // Call the proper move application function
     table[MoveType(move) >> 12](board, move, undo);
+    
+    // Get attackers to the new side to move's King
+    board->kingAttackers = attackersToKingSquare(board);
 }
 
 void applyNormalMove(Board* board, uint16_t move, Undo* undo){
@@ -354,6 +359,7 @@ void applyNullMove(Board* board, Undo* undo){
     
     // Store turn, hash and epSquare
     undo->hash = board->hash;
+    undo->kingAttackers = board->kingAttackers;
     undo->turn = board->turn;
     undo->epSquare = board->epSquare;
     
@@ -379,6 +385,7 @@ void revertMove(Board* board, uint16_t move, Undo* undo){
     board->numMoves--;
     board->hash = undo->hash;
     board->phash = undo->phash;
+    board->kingAttackers = undo->kingAttackers;
     board->turn = undo->turn;
     board->castleRights = undo->castleRights;
     board->epSquare = undo->epSquare;
@@ -464,6 +471,7 @@ void revertMove(Board* board, uint16_t move, Undo* undo){
 
 void revertNullMove(Board* board, Undo* undo){
     board->hash = undo->hash;
+    board->kingAttackers = undo->kingAttackers;
     board->turn = !board->turn;
     board->epSquare = undo->epSquare;
     board->numMoves--;
