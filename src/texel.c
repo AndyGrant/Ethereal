@@ -162,7 +162,7 @@ void runTexelTuning(Thread* thread){
                 
                 thisError = singleLinearError(tes[i], params, K);
                 
-                for (j = 0; j < tes[j].ntuples; j++){
+                for (j = 0; j < tes[i].ntuples; j++){
                     
                     // Update gradients for the j-th tuple for the mid game
                     localgradients[tes[i].tuples[j].index][MG] += thisError 
