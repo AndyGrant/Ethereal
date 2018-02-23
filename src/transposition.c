@@ -163,15 +163,15 @@ void storeTranspositionEntry(TransTable* table, int depth, int type, int value, 
         toReplace->hash16   = hash16;
 }
 
-PawnEntry * getPawnEntry(PawnTable* ptable, uint64_t phash){
-    PawnEntry* pentry = &(ptable->entries[phash >> 48]);
-    return pentry->phash == phash ? pentry : NULL;
+PawnKingEntry * getPawnKingEntry(PawnKingTable* pktable, uint64_t pkhash){
+    PawnKingEntry* pkentry = &(pktable->entries[pkhash >> 48]);
+    return pkentry->pkhash == pkhash ? pkentry : NULL;
 }
 
-void storePawnEntry(PawnTable* ptable, uint64_t phash, uint64_t passed, int mg, int eg){
-    PawnEntry* pentry = &(ptable->entries[phash >> 48]);
-    pentry->phash = phash;
-    pentry->passed = passed;
-    pentry->mg = mg;
-    pentry->eg = eg;
+void storePawnKingEntry(PawnKingTable* pktable, uint64_t pkhash, uint64_t passed, int mg, int eg){
+    PawnKingEntry* pkentry = &(pktable->entries[pkhash >> 48]);
+    pkentry->pkhash = pkhash;
+    pkentry->passed = passed;
+    pkentry->mg     = mg;
+    pkentry->eg     = eg;
 }

@@ -41,15 +41,15 @@ typedef struct TransTable {
     uint8_t generation;
 } TransTable;
 
-typedef struct PawnEntry {
-    uint64_t phash;
+typedef struct PawnKingEntry {
+    uint64_t pkhash;
     uint64_t passed;
     int mg, eg;
-} PawnEntry;
+} PawnKingEntry;
 
-typedef struct PawnTable {
-    PawnEntry entries[0x10000];
-} PawnTable;
+typedef struct PawnKingTable {
+    PawnKingEntry entries[0x10000];
+} PawnKingTable;
 
 void initializeTranspositionTable(TransTable* table, uint64_t megabytes);
 void destroyTranspositionTable(TransTable* table);
@@ -60,7 +60,7 @@ int estimateHashfull(TransTable* table);
 int getTranspositionEntry(TransTable* table, uint64_t hash, TransEntry* ttEntry);
 void storeTranspositionEntry(TransTable* table, int depth, int type, int value, int bestMove, uint64_t hash);
 
-PawnEntry * getPawnEntry(PawnTable* ptable, uint64_t phash);
-void storePawnEntry(PawnTable* ptable, uint64_t phash, uint64_t passed, int mg, int eg);
+PawnKingEntry * getPawnKingEntry(PawnKingTable* pktable, uint64_t pkhash);
+void storePawnKingEntry(PawnKingTable* pktable, uint64_t pkhash, uint64_t passed, int mg, int eg);
 
 #endif 

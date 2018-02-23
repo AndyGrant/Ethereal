@@ -210,9 +210,9 @@ void initializeBoard(Board* board, char* fen){
     if (board->turn == BLACK)
         board->hash ^= ZorbistKeys[TURN][0];
     
-    // Inititalize Pawn Hash
-    for (i = 0, board->phash = 0; i < 64; i++)
-        board->phash ^= PawnKeys[board->squares[i]][i];
+    // Inititalize PawnKing Hash
+    for (i = 0, board->pkhash = 0; i < 64; i++)
+        board->pkhash ^= PawnKingKeys[board->squares[i]][i];
         
     // Initalize Piece Square and Material value counters
     for(i = 0, board->midgame = 0, board->endgame = 0; i < 64; i++){
