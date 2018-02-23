@@ -28,7 +28,7 @@
 #include "zorbist.h"
 
 uint64_t ZorbistKeys[32][SQUARE_NB];
-uint64_t PawnKeys[32][SQUARE_NB];
+uint64_t PawnKingKeys[32][SQUARE_NB];
 
 void initializeZorbist(){
     
@@ -71,10 +71,12 @@ void initializeZorbist(){
     // Fill in the key for side to move
     ZorbistKeys[TURN][0] = rand64();
     
-    // Fill PawnKeys for each pawn colour and square
+    // Fill PawnKingKeys for each Pawn And King colour and square
     for (s = 0; s < SQUARE_NB; s++){
-        PawnKeys[WHITE_PAWN][s] = ZorbistKeys[WHITE_PAWN][s];
-        PawnKeys[BLACK_PAWN][s] = ZorbistKeys[BLACK_PAWN][s];
+        PawnKingKeys[WHITE_PAWN][s] = ZorbistKeys[WHITE_PAWN][s];
+        PawnKingKeys[BLACK_PAWN][s] = ZorbistKeys[BLACK_PAWN][s];
+        PawnKingKeys[WHITE_KING][s] = ZorbistKeys[WHITE_KING][s];
+        PawnKingKeys[BLACK_KING][s] = ZorbistKeys[BLACK_KING][s];
     }
 }
 

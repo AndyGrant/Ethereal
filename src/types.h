@@ -36,6 +36,7 @@
 #define RANK_NB   ( 8)
 #define FILE_NB   ( 8)
 #define PHASE_NB  ( 2)
+#define PIECE_NB  ( 6)
 
 #define PVNODE  (1)
 #define CUTNODE (2)
@@ -64,11 +65,11 @@ typedef struct TransBucket TransBucket;
 struct TransTable;
 typedef struct TransTable TransTable;
 
-struct PawnEntry;
-typedef struct PawnEntry PawnEntry;
+struct PawnKingEntry;
+typedef struct PawnKingEntry PawnKingEntry;
 
-struct PawnTable;
-typedef struct PawnTable PawnTable;
+struct PawnKingTable;
+typedef struct PawnKingTable PawnKingTable;
 
 struct MovePicker;
 typedef struct MovePicker MovePicker;

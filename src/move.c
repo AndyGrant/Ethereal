@@ -42,7 +42,7 @@ void applyMove(Board* board, uint16_t move, Undo* undo){
     // Save information that is either hard to reverse,
     // or is not worth the time in order to do so
     undo->hash = board->hash;
-    undo->phash = board->phash;
+    undo->pkhash = board->pkhash;
     undo->kingAttackers = board->kingAttackers;
     undo->turn = board->turn;
     undo->castleRights = board->castleRights;
@@ -124,14 +124,14 @@ void applyNormalMove(Board* board, uint16_t move, Undo* undo){
                     - PSQTEndgame[toPiece][to];
                     
     // Update the main zorbist hash
-    board->hash ^= ZorbistKeys[fromPiece][from]
-                ^  ZorbistKeys[fromPiece][to]
-                ^  ZorbistKeys[toPiece][to];
+    board->hash   ^= ZorbistKeys[fromPiece][from]
+                  ^  ZorbistKeys[fromPiece][to]
+                  ^  ZorbistKeys[toPiece][to];
                 
     // Update the pawn zorbist hash
-    board->phash^= PawnKeys[fromPiece][from]
-                ^  PawnKeys[fromPiece][to]
-                ^  PawnKeys[toPiece][to];
+    board->pkhash ^= PawnKingKeys[fromPiece][from]
+                  ^  PawnKingKeys[fromPiece][to]
+                  ^  PawnKingKeys[toPiece][to];
                 
     // If there was a possible enpass move, we must
     // xor the main zorbist key for it before moving on
@@ -210,10 +210,14 @@ void applyCastleMove(Board* board, uint16_t move, Undo* undo){
                     - PSQTEndgame[rFromPiece][rFrom];
     
     // Update the main zorbist hash
-    board->hash ^= ZorbistKeys[fromPiece][from]
-                ^  ZorbistKeys[fromPiece][to]
-                ^  ZorbistKeys[rFromPiece][rFrom]
-                ^  ZorbistKeys[rFromPiece][rTo];
+    board->hash   ^= ZorbistKeys[fromPiece][from]
+                  ^  ZorbistKeys[fromPiece][to]
+                  ^  ZorbistKeys[rFromPiece][rFrom]
+                  ^  ZorbistKeys[rFromPiece][rTo];
+                
+    // Update PawnKing hash for the King movement
+    board->pkhash ^= PawnKingKeys[fromPiece][from]
+                  ^  PawnKingKeys[fromPiece][to];
     
     // If there was a possible enpass move, we must
     // xor the main zorbist key for it before moving on
@@ -272,15 +276,15 @@ void applyEnpassMove(Board* board, uint16_t move, Undo* undo){
                     - PSQTEndgame[enpassPiece][ep];
     
     // Update the main zorbist key
-    board->hash ^= ZorbistKeys[fromPiece][from]
-                ^  ZorbistKeys[fromPiece][to]
-                ^  ZorbistKeys[enpassPiece][ep]
-                ^  ZorbistKeys[ENPASS][File(ep)];
+    board->hash   ^= ZorbistKeys[fromPiece][from]
+                  ^  ZorbistKeys[fromPiece][to]
+                  ^  ZorbistKeys[enpassPiece][ep]
+                  ^  ZorbistKeys[ENPASS][File(ep)];
                 
-    // Update the pawn zorbist key
-    board->phash^= PawnKeys[fromPiece][from]
-                ^  PawnKeys[fromPiece][to]
-                ^  PawnKeys[enpassPiece][ep];
+    // Update the PawnKing zorbist key
+    board->pkhash ^= PawnKingKeys[fromPiece][from]
+                  ^  PawnKingKeys[fromPiece][to]
+                  ^  PawnKingKeys[enpassPiece][ep];
     
     // Reset the enpass square
     board->epSquare = -1;
@@ -340,12 +344,12 @@ void applyPromotionMove(Board* board, uint16_t move, Undo* undo){
                     - PSQTEndgame[toPiece][to];
     
     // Update the main zorbist hash
-    board->hash ^= ZorbistKeys[fromPiece][from]
-                ^  ZorbistKeys[promoPiece][to]
-                ^  ZorbistKeys[toPiece][to];
+    board->hash   ^= ZorbistKeys[fromPiece][from]
+                  ^  ZorbistKeys[promoPiece][to]
+                  ^  ZorbistKeys[toPiece][to];
                 
-    // Update the pawn zorbist hash
-    board->phash^= PawnKeys[fromPiece][from];
+    // Update the PawnKing zorbist hash
+    board->pkhash ^= PawnKingKeys[fromPiece][from];
     
     // If there was a possible enpass move, we must
     // xor the main zorbist key for it before moving on
@@ -384,7 +388,7 @@ void revertMove(Board* board, uint16_t move, Undo* undo){
     
     board->numMoves--;
     board->hash = undo->hash;
-    board->phash = undo->phash;
+    board->pkhash = undo->pkhash;
     board->kingAttackers = undo->kingAttackers;
     board->turn = undo->turn;
     board->castleRights = undo->castleRights;

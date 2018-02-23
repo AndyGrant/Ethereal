@@ -46,8 +46,6 @@
     EvalTrace T;
 #endif
 
-extern PawnTable PTable;
-
 const int PawnValue[PHASE_NB] = {  69,  78};
 
 const int PawnIsolated[PHASE_NB] = {   4,  -2};
@@ -181,7 +179,7 @@ const int* PieceValues[8] = {
     QueenValue, KingValue, NoneValue, NoneValue
 };
 
-int evaluateBoard(Board* board, EvalInfo* ei, PawnTable* ptable){
+int evaluateBoard(Board* board, EvalInfo* ei, PawnKingTable* pktable){
     
     int mg, eg, phase, eval;
     
@@ -190,16 +188,29 @@ int evaluateBoard(Board* board, EvalInfo* ei, PawnTable* ptable){
     if (ei->positionIsDrawn) return 0;
     
     // Setup and perform the evaluation of all pieces
-    initializeEvalInfo(ei, board, ptable);
-    evaluatePieces(ei, board, ptable);
+    initializeEvalInfo(ei, board, pktable);
+    evaluatePieces(ei, board);
+    
+    // Store a new PawnKing entry if we did not have one (and are not doing Texel)
+    if (ei->pkentry == NULL && !TEXEL){
+        mg = ei->pawnKingMidgame[WHITE] - ei->pawnKingMidgame[BLACK];
+        eg = ei->pawnKingEndgame[WHITE] - ei->pawnKingEndgame[BLACK];
+        storePawnKingEntry(pktable, board->pkhash, ei->passedPawns, mg, eg);
+    }
+    
+    // Otherwise, fetch the PawnKing evaluation (if we are not doing Texel)
+    else if (!TEXEL){
+        ei->pawnKingMidgame[WHITE] = ei->pkentry->mg;
+        ei->pawnKingEndgame[WHITE] = ei->pkentry->eg;
+    }
         
     // Combine evaluation terms for the mid game
     mg = board->midgame + ei->midgame[WHITE] - ei->midgame[BLACK]
-       + ei->pawnMidgame[WHITE] - ei->pawnMidgame[BLACK] + Tempo[board->turn][MG];
+       + ei->pawnKingMidgame[WHITE] - ei->pawnKingMidgame[BLACK] + Tempo[board->turn][MG];
        
     // Combine evaluation terms for the end game
     eg = board->endgame + ei->endgame[WHITE] - ei->endgame[BLACK]
-       + ei->pawnEndgame[WHITE] - ei->pawnEndgame[BLACK] + Tempo[board->turn][EG];
+       + ei->pawnKingEndgame[WHITE] - ei->pawnKingEndgame[BLACK] + Tempo[board->turn][EG];
        
     // Calcuate the game phase based on remaining material (Fruit Method)
     phase = 24 - popcount(board->pieces[QUEEN]) * 4
@@ -251,9 +262,7 @@ int evaluateDraws(Board* board){
     return 0;
 }
 
-void evaluatePieces(EvalInfo* ei, Board* board, PawnTable* ptable){
-    
-    int pmg, peg;
+void evaluatePieces(EvalInfo* ei, Board* board){
     
     evaluatePawns(ei, board, WHITE);
     evaluatePawns(ei, board, BLACK);
@@ -273,28 +282,8 @@ void evaluatePieces(EvalInfo* ei, Board* board, PawnTable* ptable){
     evaluateKings(ei, board, WHITE);
     evaluateKings(ei, board, BLACK);
     
-    // Save a Pawn Eval Entry if we did not find one. We do not make use
-    // of the Pawn Evaluation Table when we are doing texel tuning
-    if (ei->pentry == NULL){
-        
-        if (!TEXEL){
-            pmg = ei->pawnMidgame[WHITE] - ei->pawnMidgame[BLACK];
-            peg = ei->pawnEndgame[WHITE] - ei->pawnEndgame[BLACK];
-            storePawnEntry(ptable, board->phash, ei->passedPawns, pmg, peg);
-        }
-        
-        evaluatePassedPawns(ei, board, WHITE);
-        evaluatePassedPawns(ei, board, BLACK);
-    }
-    
-    // Otherwise, grab the evaluated pawn values from the Entry
-    else {
-        ei->pawnMidgame[WHITE] = ei->pentry->mg;
-        ei->pawnEndgame[WHITE] = ei->pentry->eg;
-        ei->passedPawns = ei->pentry->passed;
-        evaluatePassedPawns(ei, board, WHITE);
-        evaluatePassedPawns(ei, board, BLACK);
-    }
+    evaluatePassedPawns(ei, board, WHITE);
+    evaluatePassedPawns(ei, board, BLACK);
 }
 
 void evaluatePawns(EvalInfo* ei, Board* board, int colour){
@@ -320,7 +309,7 @@ void evaluatePawns(EvalInfo* ei, Board* board, int colour){
     }
     
     // The pawn table holds the rest of the eval information we will calculate
-    if (ei->pentry != NULL) return;
+    if (ei->pkentry != NULL) return;
     
     pawns = board->pieces[PAWN];
     myPawns = tempPawns = pawns & board->colours[colour];
@@ -341,15 +330,15 @@ void evaluatePawns(EvalInfo* ei, Board* board, int colour){
         
         // Apply a penalty if the pawn is isolated
         if (!(IsolatedPawnMasks[sq] & tempPawns)){
-            ei->pawnMidgame[colour] += PawnIsolated[MG];
-            ei->pawnEndgame[colour] += PawnIsolated[EG];
+            ei->pawnKingMidgame[colour] += PawnIsolated[MG];
+            ei->pawnKingEndgame[colour] += PawnIsolated[EG];
             if (TRACE) T.pawnIsolated[colour]++;
         }
         
         // Apply a penalty if the pawn is stacked
         if (Files[File(sq)] & tempPawns){
-            ei->pawnMidgame[colour] += PawnStacked[MG];
-            ei->pawnEndgame[colour] += PawnStacked[EG];
+            ei->pawnKingMidgame[colour] += PawnStacked[MG];
+            ei->pawnKingEndgame[colour] += PawnStacked[EG];
             if (TRACE) T.pawnStacked[colour]++;
         }
         
@@ -359,15 +348,15 @@ void evaluatePawns(EvalInfo* ei, Board* board, int colour){
                 
             semi = !(Files[File(sq)] & enemyPawns);
             
-            ei->pawnMidgame[colour] += PawnBackwards[semi][MG];
-            ei->pawnEndgame[colour] += PawnBackwards[semi][EG];
+            ei->pawnKingMidgame[colour] += PawnBackwards[semi][MG];
+            ei->pawnKingEndgame[colour] += PawnBackwards[semi][EG];
             if (TRACE) T.pawnBackwards[colour][semi]++;
         }
         
         // Apply a bonus if the pawn is connected and not backward
         else if (PawnConnectedMasks[colour][sq] & myPawns){
-            ei->pawnMidgame[colour] += PawnConnected32[relativeSquare32(sq, colour)][MG];
-            ei->pawnEndgame[colour] += PawnConnected32[relativeSquare32(sq, colour)][EG];
+            ei->pawnKingMidgame[colour] += PawnConnected32[relativeSquare32(sq, colour)][MG];
+            ei->pawnKingEndgame[colour] += PawnConnected32[relativeSquare32(sq, colour)][EG];
             if (TRACE) T.pawnConnected[colour][sq]++;
         }
     }
@@ -662,6 +651,9 @@ void evaluateKings(EvalInfo* ei, Board* board, int colour){
         ei->endgame[colour] -= KingSafety[attackCounts];
     }
     
+    // Pawn Shelter evaluation is stored in the PawnKing evaluation table
+    if (ei->pkentry != NULL) return;
+    
     // Evaluate Pawn Shelter. We will look at the King's file and any adjacent files
     // to the King's file. We evaluate the distance between the king and the most backward
     // pawn. We will not look at pawns behind the king, and will consider that as having
@@ -678,8 +670,8 @@ void evaluateKings(EvalInfo* ei, Board* board, int colour){
                                    : kingRank - Rank(getmsb(filePawns))
                                    : 7;
 
-        ei->midgame[colour] += KingShelter[file == kingFile][file][distance][MG];
-        ei->endgame[colour] += KingShelter[file == kingFile][file][distance][EG];
+        ei->pawnKingMidgame[colour] += KingShelter[file == kingFile][file][distance][MG];
+        ei->pawnKingEndgame[colour] += KingShelter[file == kingFile][file][distance][EG];
         if (TRACE) T.kingShelter[colour][file == kingFile][file][distance]++;
     }    
 }
@@ -689,8 +681,11 @@ void evaluatePassedPawns(EvalInfo* ei, Board* board, int colour){
     int sq, rank, canAdvance, safeAdvance;
     uint64_t tempPawns, destination, notEmpty;
     
+    // Fetch Passed Pawns from the Pawn King Entry if we have one
+    if (ei->pkentry != NULL) ei->passedPawns = ei->pkentry->passed;
+    
     tempPawns = board->colours[colour] & ei->passedPawns;
-    notEmpty = board->colours[WHITE] | board->colours[BLACK];
+    notEmpty  = board->colours[WHITE ] | board->colours[BLACK];
     
     // Evaluate each passed pawn
     while (tempPawns != 0ull){
@@ -716,7 +711,7 @@ void evaluatePassedPawns(EvalInfo* ei, Board* board, int colour){
     }
 }
 
-void initializeEvalInfo(EvalInfo* ei, Board* board, PawnTable* ptable){
+void initializeEvalInfo(EvalInfo* ei, Board* board, PawnKingTable* pktable){
     
     uint64_t white   = board->colours[WHITE];
     uint64_t black   = board->colours[BLACK];
@@ -761,9 +756,9 @@ void initializeEvalInfo(EvalInfo* ei, Board* board, PawnTable* ptable){
     ei->midgame[WHITE] = ei->midgame[BLACK] = 0;
     ei->endgame[WHITE] = ei->endgame[BLACK] = 0;
     
-    ei->pawnMidgame[WHITE] = ei->pawnMidgame[BLACK] = 0;
-    ei->pawnEndgame[WHITE] = ei->pawnEndgame[BLACK] = 0;
+    ei->pawnKingMidgame[WHITE] = ei->pawnKingMidgame[BLACK] = 0;
+    ei->pawnKingEndgame[WHITE] = ei->pawnKingEndgame[BLACK] = 0;
     
-    if (TEXEL) ei->pentry = NULL;
-    else       ei->pentry = getPawnEntry(ptable, board->phash);
+    if (TEXEL) ei->pkentry = NULL;
+    else       ei->pkentry = getPawnKingEntry(pktable, board->pkhash);
 }

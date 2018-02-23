@@ -41,9 +41,9 @@ typedef struct Thread {
     int nthreads;
     Thread* threads;
     
-    PawnTable ptable;
     KillerTable killers;
     HistoryTable history;
+    PawnKingTable pktable;
     
 } Thread;
 
