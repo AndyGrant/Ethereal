@@ -98,8 +98,6 @@ const int RookValue[PHASE_NB] = { 396, 438};
 
 const int RookFile[2][PHASE_NB] = { {   6,   2}, {  23,  -8} };
 
-const int RookOnSeventh[PHASE_NB] = {   2,   1};
-
 const int RookMobility[15][PHASE_NB] = {
     {-106, -94}, { -48, -75}, { -11, -42}, {  -4, -18},
     {  -6,  -7}, {  -5,   5}, {  -5,  13}, {  -3,  18},
@@ -528,14 +526,6 @@ void evaluateRooks(EvalInfo* ei, Board* board, int colour){
             ei->midgame[colour] += RookFile[open][MG];
             ei->endgame[colour] += RookFile[open][EG];
             if (TRACE) T.rookFile[colour][open]++;
-        }
-        
-        // Rook gains a bonus for being located
-        // on seventh rank relative to its colour
-        if (Rank(sq) == (colour == BLACK ? 1 : 6)){
-            ei->midgame[colour] += RookOnSeventh[MG];
-            ei->endgame[colour] += RookOnSeventh[EG];
-            if (TRACE) T.rookOnSeventh[colour]++;
         }
         
         // Apply a bonus (or penalty) based on the mobility of the rook

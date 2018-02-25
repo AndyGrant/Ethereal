@@ -84,7 +84,6 @@ extern const int BishopMobility[14][PHASE_NB];
 
 // To determine the starting values for the Rook terms
 extern const int RookFile[2][PHASE_NB];
-extern const int RookOnSeventh[PHASE_NB];
 extern const int RookMobility[15][PHASE_NB];
 
 // To determine the starting values for the Queen terms
@@ -422,10 +421,7 @@ void initializeCoefficients(int coeffs[NT]){
     if (TuneRookFile)
         for (a = 0; a < 2; a++)
             coeffs[i++] = T.rookFile[WHITE][a] - T.rookFile[BLACK][a];
-        
-    if (TuneRookOnSeventh)
-        coeffs[i++] = T.rookOnSeventh[WHITE] - T.rookOnSeventh[BLACK];
-        
+       
     if (TuneRookMobility)
         for (a = 0; a < 15; a++)
             coeffs[i++] = T.rookMobility[WHITE][a] - T.rookMobility[BLACK][a];
@@ -636,12 +632,7 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
             cparams[i][EG] = RookFile[a][EG];
         }
     }
-    
-    if (TuneRookOnSeventh){
-        cparams[i  ][MG] = RookOnSeventh[MG];
-        cparams[i++][EG] = RookOnSeventh[EG];
-    }
-    
+           
     if (TuneRookMobility){
         for (a = 0; a < 15; a++, i++){
             cparams[i][MG] = RookMobility[a][MG];
@@ -918,10 +909,6 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
                 tparams[i+1][MG], tparams[i+1][EG]); i += 2;
     }
             
-    if (TuneRookOnSeventh){
-        printf("\nconst int RookOnSeventh[PHASE_NB] = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
-    }
-        
     if (TuneRookMobility){
         printf("\nconst int RookMobility[15][PHASE_NB] = {");
         for (x = 0; x < 4; x++){
