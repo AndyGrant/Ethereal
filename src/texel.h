@@ -89,8 +89,8 @@
     TuneKnightMobility       + TuneBishopWings          + TuneBishopPair     + \
     TuneBishopAttackedByPawn + TuneBishopOutpost        + TuneBishopMobility + \
     TuneRookFile             + TuneRookMobility         + TuneQueenChecked   + \
-	TuneQueenCheckedByPawn   + TuneQueenMobility        + TuneKingDefenders  + \
-	TuneKingShelter          + TunePassedPawn
+    TuneQueenCheckedByPawn   + TuneQueenMobility        + TuneKingDefenders  + \
+    TuneKingShelter          + TunePassedPawn                                  \
 )
 
 // Try to figure out how much we should allocate for the tuner
