@@ -64,7 +64,6 @@
 
 // Define the Rook Terms
 #define TuneRookFile             (1 * 2  )
-#define TuneRookOnSeventh        (1 * 1  )
 #define TuneRookMobility         (1 * 15 )
 
 // Define the Queen Terms
@@ -89,9 +88,9 @@
     TunePawnConnected        + TuneKnightAttackedByPawn + TuneKnightOutpost  + \
     TuneKnightMobility       + TuneBishopWings          + TuneBishopPair     + \
     TuneBishopAttackedByPawn + TuneBishopOutpost        + TuneBishopMobility + \
-    TuneRookFile             + TuneRookOnSeventh        + TuneRookMobility   + \
-    TuneQueenChecked         + TuneQueenCheckedByPawn   + TuneQueenMobility  + \
-    TuneKingDefenders        + TuneKingShelter          + TunePassedPawn       \
+    TuneRookFile             + TuneRookMobility         + TuneQueenChecked   + \
+	TuneQueenCheckedByPawn   + TuneQueenMobility        + TuneKingDefenders  + \
+	TuneKingShelter          + TunePassedPawn
 )
 
 // Try to figure out how much we should allocate for the tuner

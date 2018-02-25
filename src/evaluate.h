@@ -47,7 +47,6 @@ typedef struct EvalTrace {
     int rookCounts[COLOUR_NB];
     int rookPSQT[COLOUR_NB][SQUARE_NB];
     int rookFile[COLOUR_NB][2];
-    int rookOnSeventh[COLOUR_NB];
     int rookMobility[COLOUR_NB][15];
     
     int queenCounts[COLOUR_NB];
