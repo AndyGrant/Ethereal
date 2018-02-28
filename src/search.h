@@ -77,7 +77,7 @@ static const int BetaPruningDepth = 8;
 
 static const int ProbCutDepth = 5;
 
-static const int ProbCutMargin = 150;
+static const int ProbCutMargin = 100;
 
 static const int InternalIterativeDeepeningDepth = 3;
 
