@@ -227,9 +227,9 @@ void initializeTexelEntries(TexelEntry* tes, Thread* thread){
         
         // Determine the result of the game
         if      (strstr(line, "1-0")) tes[i].result = 1.0;
-        else if (strstr(line, "1/2")) tes[i].result = 0.5;
         else if (strstr(line, "0-1")) tes[i].result = 0.0;
-        else    {printf("Unable to Parse Result\n"); exit(0);}
+        else if (strstr(line, "1/2")) tes[i].result = 0.5;
+        else    {printf("Unable to Parse Result: %s\n", line); exit(0);}
         
         // Search, then and apply all moves in the principle variation
         initializeBoard(&thread->board, line);
