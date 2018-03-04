@@ -742,10 +742,13 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
     
     int tparams[NT][PHASE_NB];
     
-    // Combine the original params and the param deltas
+    int pvalue = PawnValue[MG] + (TunePawnValue ? params[0][MG] : 0);
+    
+    // Combine the original params and the param deltas. Scale the params so
+    // that the mid game value of a pawn is always 100 centipawns
     for (x = 0; x < NT; x++){
-        tparams[x][MG] = (int)(params[x][MG] + cparams[x][MG]);
-        tparams[x][EG] = (int)(params[x][EG] + cparams[x][EG]);
+        tparams[x][MG] = (int)((100.0 / pvalue) * (params[x][MG] + cparams[x][MG]));
+        tparams[x][EG] = (int)((100.0 / pvalue) * (params[x][EG] + cparams[x][EG]));
     }
     
     // Print Piece Values
