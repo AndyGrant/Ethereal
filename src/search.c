@@ -195,7 +195,7 @@ void* iterativeDeepening(void* vthread){
             // meant to determine when we should be concered with score drops. If we just found
             // the this iteration to be +50 from the last, we would not be surprised to find that
             // gain fall to something smaller like +30
-            info->scoreStability *= 1.00 + (info->values[depth-1] - value) / 320.00;
+            info->scoreStability *= 1.00 + (info->values[depth-1] - value) / 500.00;
             
             // Update the PV Stability depending on the best move changing. If the best move is
             // holding stable, we increase the pv stability. This way, if the best move changes
@@ -248,12 +248,12 @@ int aspirationWindow(Thread* thread, int depth){
     if (depth > 4 && abs(values[mainDepth-1]) < MATE / 2){
         
         // Dynamically compute the upper margin based on previous scores
-        upper = MAX(    8,  1.6 * (values[mainDepth-1] - values[mainDepth-2]));
+        upper = MAX(   12,  1.6 * (values[mainDepth-1] - values[mainDepth-2]));
         upper = MAX(upper,  1.3 * (values[mainDepth-2] - values[mainDepth-3]));
         upper = MAX(upper,  1.0 * (values[mainDepth-3] - values[mainDepth-4]));
         
         // Dynamically compute the lower margin based on previous scores
-        lower = MAX(    8, -1.6 * (values[mainDepth-1] - values[mainDepth-2]));
+        lower = MAX(   12, -1.6 * (values[mainDepth-1] - values[mainDepth-2]));
         lower = MAX(lower, -1.3 * (values[mainDepth-2] - values[mainDepth-3]));
         lower = MAX(lower, -1.0 * (values[mainDepth-3] - values[mainDepth-4])); 
         
@@ -262,7 +262,7 @@ int aspirationWindow(Thread* thread, int depth){
         beta  = values[mainDepth-1] + upper;
         
         // Try windows until lower or upper bound exceeds a limit
-        for (; lower <= 640 && upper <= 640; lower *= 2, upper *= 2){
+        for (; lower <= 1000 && upper <= 1000; lower *= 2, upper *= 2){
             
             // Perform the search on the modified window
             value = search(thread, &thread->pv, alpha, beta, depth, 0);
@@ -417,7 +417,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     inCheck = !!board->kingAttackers;
     if (!PvNode){
         eval = evaluateBoard(board, &ei, &thread->pktable);
-        futilityMargin = eval + 70 * depth;
+        futilityMargin = eval + FutilityMargin * depth;
     }
     
     // Step 8. Razoring. If a Quiescence Search for the current position
@@ -443,7 +443,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     if (   !PvNode
         && !inCheck
         &&  depth <= BetaPruningDepth
-        &&  eval - 70 * depth > beta)
+        &&  eval - FutilityMargin * depth > beta)
         return beta;
 
     // Step 10. Null Move Pruning. If our position is so good that
@@ -457,7 +457,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         &&  hasNonPawnMaterial(board, board->turn)
         &&  board->history[board->numMoves-1] != NULL_MOVE){
             
-        R = 4 + depth / 6 + (eval - beta + 200) / 400; 
+        R = 4 + depth / 6 + (eval - beta + 312) / 625; 
             
         applyNullMove(board, undo);
         
