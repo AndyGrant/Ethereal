@@ -457,7 +457,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         &&  hasNonPawnMaterial(board, board->turn)
         &&  board->history[board->numMoves-1] != NULL_MOVE){
             
-        R = 4 + depth / 6 + (eval - beta + 312) / 625; 
+        R = 4 + depth / 6 + (eval - beta + 200) / 400;
             
         applyNullMove(board, undo);
         
@@ -606,7 +606,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             &&  isQuiet){
             
             // Baseline R based on number of moves played and current depth
-            R = 2 + (played - 4) / 8 + (depth - 4) / 6;
+            R = 2 + (played - 4) / 8 + (depth - 6) / 4;
             
             // Increase R by an additional two ply for non PvNodes
             R += 2 * !PvNode;
