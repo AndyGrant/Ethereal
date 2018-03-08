@@ -56,7 +56,6 @@
 #define TuneKnightMobility       (1 * 9  )
 
 // Define the Bishop Terms
-#define TuneBishopWings          (1 * 1  )
 #define TuneBishopPair           (1 * 1  )
 #define TuneBishopAttackedByPawn (1 * 1  )
 #define TuneBishopOutpost        (1 * 2  )
@@ -87,7 +86,7 @@
     TuneRookPSQT             + TuneQueenPSQT            + TuneKingPSQT       + \
     TunePawnIsolated         + TunePawnStacked          + TunePawnBackwards  + \
     TunePawnConnected        + TuneKnightAttackedByPawn + TuneKnightOutpost  + \
-    TuneKnightMobility       + TuneBishopWings          + TuneBishopPair     + \
+    TuneKnightMobility                                  + TuneBishopPair     + \
     TuneBishopAttackedByPawn + TuneBishopOutpost        + TuneBishopMobility + \
     TuneRookFile             + TuneRookOnSeventh        + TuneRookMobility   + \
     TuneQueenChecked         + TuneQueenCheckedByPawn   + TuneQueenMobility  + \
