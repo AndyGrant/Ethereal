@@ -76,7 +76,6 @@ extern const int KnightOutpost[2][PHASE_NB];
 extern const int KnightMobility[9][PHASE_NB];
 
 // To determine the starting values for the Bishop terms
-extern const int BishopWings[PHASE_NB];
 extern const int BishopPair[PHASE_NB];
 extern const int BishopAttackedByPawn[PHASE_NB];
 extern const int BishopOutpost[2][PHASE_NB];
@@ -399,9 +398,6 @@ void initializeCoefficients(int coeffs[NT]){
     
     // Initialize coefficients for the Bishop evaluation terms
     
-    if (TuneBishopWings)
-        coeffs[i++] = T.bishopWings[WHITE] - T.bishopWings[BLACK];
-    
     if (TuneBishopPair)
         coeffs[i++] = T.bishopPair[WHITE] - T.bishopPair[BLACK];
     
@@ -597,11 +593,6 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
     
     
     // Grab the current parameters for the Bishop evaluation terms
-    
-    if (TuneBishopWings){
-        cparams[i  ][MG] = BishopWings[MG];
-        cparams[i++][EG] = BishopWings[EG];
-    }
     
     if (TuneBishopPair){
         cparams[i  ][MG] = BishopPair[MG];
@@ -884,10 +875,6 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
     
     
     // Print Bishop Values
-    
-    if (TuneBishopWings){
-        printf("\nconst int BishopWings[PHASE_NB] = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
-    }
     
     if (TuneBishopPair){
         printf("\nconst int BishopPair[PHASE_NB] = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
