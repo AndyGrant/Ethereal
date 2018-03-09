@@ -299,7 +299,7 @@ void applyPromotionMove(Board* board, uint16_t move, Undo* undo){
     from = MoveFrom(move);
     
     toType = PieceType(board->squares[to]);
-    promotype = KNIGHT + (move >> 14);
+    promotype = MovePromoPiece(move);
     
     fromPiece = board->squares[from];
     toPiece = board->squares[to];
@@ -442,7 +442,7 @@ void revertMove(Board* board, uint16_t move, Undo* undo){
         
         fromType = MakePiece(PAWN, undo->turn);
         toType = PieceType(undo->capturePiece);
-        promotype = KNIGHT + (move >> 14);
+        promotype = MovePromoPiece(move);
         
         board->colours[undo->turn] ^= shiftFrom | shiftTo;
         board->colours[PieceColour(undo->capturePiece)] ^= shiftTo;
@@ -486,7 +486,7 @@ void printMove(uint16_t move){
     int from, to;
     char fromFile, toFile, fromRank, toRank;
     
-    static char table[4] = {'n', 'b', 'r', 'q'};
+    static char table[5] = {'p', 'n', 'b', 'r', 'q'};
     
     from = MoveFrom(move);
     to = MoveTo(move);
@@ -498,7 +498,7 @@ void printMove(uint16_t move){
     toRank = 'a' + (to % 8);
     
     if (MoveType(move) == PROMOTION_MOVE)
-        printf("%c%c%c%c%c", fromRank, fromFile, toRank, toFile, table[move >> 14]);
+        printf("%c%c%c%c%c", fromRank, fromFile, toRank, toFile, table[MovePromoPiece(move)]);
     
     else
         printf("%c%c%c%c", fromRank, fromFile, toRank, toFile);

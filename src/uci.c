@@ -69,7 +69,7 @@ int main(){
         getInput(str);
         
         if (stringEquals(str, "uci")){
-            printf("id name Ethereal 9.18\n");
+            printf("id name Ethereal 9.19\n");
             printf("id author Andrew Grant\n");
             printf("option name Hash type spin default 16 min 1 max 65536\n");
             printf("option name Threads type spin default 1 min 1 max 2048\n");
@@ -279,12 +279,12 @@ void getInput(char* str){
 
 void moveToString(char* str, uint16_t move){
     
-    static char table[4] = {'n', 'b', 'r', 'q'};
+    static char table[5] = {'p', 'n', 'b', 'r', 'q'};
     
     str[0] = 'a' + (MoveFrom(move) % 8);
     str[1] = '1' + (MoveFrom(move) / 8);
     str[2] = 'a' + (  MoveTo(move) % 8);
     str[3] = '1' + (  MoveTo(move) / 8);
-    str[4] = MoveType(move) == PROMOTION_MOVE ? table[move >> 14] : '\0';
+    str[4] = MoveType(move) == PROMOTION_MOVE ? table[MovePromoType(move)] : '\0';
     str[5] = '\0';
 }

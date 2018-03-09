@@ -298,9 +298,8 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     
     int i, value, inCheck = 0, isQuiet, R, repetitions;
     int rAlpha, rBeta, ttValue, oldAlpha = alpha;
-    int quiets = 0, played = 0, bestWasQuiet = 0; 
+    int quiets = 0, played = 0, bestWasQuiet = 0, hist = 0; 
     int best = -MATE, eval = -MATE, futilityMargin = -MATE;
-    int hist = 0; // Fix bogus GCC warning
     
     uint16_t currentMove, quietsTried[MAX_MOVES];
     uint16_t ttMove = NONE_MOVE, bestMove = NONE_MOVE;
@@ -475,7 +474,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     if (   !PvNode
         && !inCheck
         &&  depth >= ProbCutDepth
-        &&  eval + bestTacticalMoveValue(board) >= beta + ProbCutMargin){
+        &&  eval + bestTacticalMoveValue(board, &ei) >= beta + ProbCutMargin){
             
         rBeta = MIN(beta + ProbCutMargin, MATE - MAX_HEIGHT - 1);
             
@@ -532,12 +531,9 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     
     while ((currentMove = selectNextMove(&movePicker, board)) != NONE_MOVE){
         
-        // If this move is quiet we will save it to a list of attemped
-        // quiets, and we will need a history score for pruning decisions
-        if ((isQuiet = !moveIsTactical(board, currentMove))){
+        // If this move is quiet we will save it to a list of attemped quiets
+        if ((isQuiet = !moveIsTactical(board, currentMove)))
             quietsTried[quiets++] = currentMove;
-            hist = getHistoryScore(thread->history, currentMove, board->turn);
-        }
         
         // Step 14. Futility Pruning. If our score is far below alpha,
         // and we don't expect anything from this move, skip it.
@@ -550,29 +546,13 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             
         // Step 15. Weak Capture Pruning. Prune this capture if it is capturing
         // a weaker piece which is protected, so long as we do not have any 
-        // additional support for the attacker. Don't include capture-promotions
+        // additional support for the attacker. This is done for only some depths
         if (    !PvNode
             &&  !isQuiet
             &&  !inCheck
             &&   played >= 1
-            &&   depth <= 5
-            &&   MoveType(currentMove) != ENPASS_MOVE
-            &&   MoveType(currentMove) != PROMOTION_MOVE
-            &&  !ei.positionIsDrawn
-            && !(ei.attackedBy2[board->turn] & (1ull << MoveTo(currentMove)))
-            &&   PieceValues[PieceType(board->squares[MoveTo  (currentMove)])][MG]
-             <   PieceValues[PieceType(board->squares[MoveFrom(currentMove)])][MG]){
-                 
-          
-            // If the target piece has two or more defenders, we will prune up to depth 5
-            if (ei.attackedBy2[!board->turn] & (1ull << MoveTo(currentMove)))
-                continue;
-            
-            // Otherwise, if the piece has one defender, we will prune up to depth 3
-            if (    depth <= 3
-                && (ei.attacked[!board->turn] & (1ull << MoveTo(currentMove))))
-                continue;
-        }
+            &&   captureIsWeak(board, &ei, currentMove, depth))
+            continue;
         
         // Apply and validate move before searching
         applyMove(board, currentMove, undo);
@@ -615,6 +595,10 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             // move, or we are looking at an early quiet move in a situation where
             // we either have no table move, or the table move is not the best so far
             R -= bestWasQuiet || (ttMove != bestMove && quiets <= 2);
+            
+            // Lookup the history score. Note that this is expected to be done before
+            // applying the move to the board, thus we must invert board->turn
+            hist = getHistoryScore(thread->history, currentMove, !board->turn);
             
             // Adjust R based on history score. We will not allow history to increase
             // R by more than 1. History scores are within [-16384, 16384], so we can
@@ -740,7 +724,7 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     
     // Step 4. Delta Pruning. Even the best possible capture and or promotion
     // combo with the additional of the futility margin would still fall below alpha
-    if (value + QFutilityMargin + bestTacticalMoveValue(board) < alpha)
+    if (value + QFutilityMargin + bestTacticalMoveValue(board, &ei) < alpha)
         return eval;
     
     // Step 5. Move Generation and Looping. Generate all tactical moves for this
@@ -756,12 +740,7 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
         // Step 7. Weak Capture Pruning. If we are trying to capture a piece which
         // is protected, and we are the sole attacker, then we can be somewhat safe
         // in skipping this move so long as we are capturing a weaker piece
-        if (     MoveType(currentMove) != PROMOTION_MOVE
-            &&  !ei.positionIsDrawn
-            &&  (ei.attacked[!board->turn]   & (1ull << MoveTo(currentMove)))
-            && !(ei.attackedBy2[board->turn] & (1ull << MoveTo(currentMove)))
-            &&  PieceValues[PieceType(board->squares[MoveTo  (currentMove)])][MG]
-             <  PieceValues[PieceType(board->squares[MoveFrom(currentMove)])][MG])
+        if (captureIsWeak(board, &ei, currentMove, 0))
             continue;
         
         // Apply and validate move before searching
@@ -830,7 +809,7 @@ int thisTacticalMoveValue(Board* board, uint16_t move){
     int value = PieceValues[PieceType(board->squares[MoveTo(move)])][EG];
     
     if (MoveType(move) == PROMOTION_MOVE)
-        value += PieceValues[1 + (move >> 14)][EG] - PieceValues[PAWN][EG];
+        value += PieceValues[MovePromoPiece(move)][EG] - PieceValues[PAWN][EG];
     
     if (MoveType(move) == ENPASS_MOVE)
         value += PieceValues[PAWN][EG];
@@ -838,11 +817,11 @@ int thisTacticalMoveValue(Board* board, uint16_t move){
     return value;
 }
 
-int bestTacticalMoveValue(Board* board){
+int bestTacticalMoveValue(Board* board, EvalInfo* ei){
     
     int value = 0;
     
-    uint64_t targets = board->colours[!board->turn];
+    uint64_t targets = ei->attacked[board->turn];
     
     if (targets & board->pieces[QUEEN]) value += PieceValues[QUEEN][EG];
     
@@ -864,4 +843,28 @@ int bestTacticalMoveValue(Board* board){
         value += PieceValues[QUEEN][EG] - PieceValues[PAWN][EG];
             
     return value;
-} 
+}
+
+int captureIsWeak(Board* board, EvalInfo* ei, uint16_t move, int depth){
+    
+    // If we lack the sufficient depth, the position was drawn and thus
+    // no attackers were computed, or the capture we are looking at is
+    // supported by another piece, then this capture is not a weak one
+    if (    depth > WeakCaptureTwoAttackersDepth
+        ||  ei->positionIsDrawn
+        || (ei->attackedBy2[board->turn] & (1ull << MoveTo(move))))
+        return 0;
+        
+    // Determine how valuable our attacking piece is
+    int attackerValue = PieceValues[PieceType(board->squares[MoveFrom(move)])][EG];
+        
+    // This capture is not weak if we are attacking an equal or greater valued piece, 
+    if (thisTacticalMoveValue(board, move) >= attackerValue)
+        return 0;
+    
+    // Thus, the capture is weak if there are sufficient attackers for a given depth
+    return (   (depth <= WeakCaptureTwoAttackersDepth
+            &&  ei->attackedBy2[!board->turn] & (1ull << MoveTo(move)))
+            || (depth <= WeakCaptureOneAttackersDepth
+            &&  ei->attacked[!board->turn] & (1ull << MoveTo(move))));
+}

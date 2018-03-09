@@ -57,6 +57,7 @@ void printMove(uint16_t move);
 #define MoveTo(move)           (((move) >> 6) & 63)
 #define MoveType(move)         ((move) & (3 << 12))
 #define MovePromoType(move)    ((move) & (3 << 14))
+#define MovePromoPiece(move)   (1 + ((move) >> 14))
 #define MoveMake(from,to,flag) ((from) | ((to) << 6) | (flag))
 
 #endif
