@@ -542,7 +542,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             &&  played >= 1
             &&  futilityMargin <= alpha
             &&  depth <= FutilityPruningDepth)
-            continue;
+            break;
             
         // Step 15. Weak Capture Pruning. Prune this capture if it is capturing
         // a weaker piece which is protected, so long as we do not have any 
