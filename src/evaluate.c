@@ -423,10 +423,9 @@ void evaluateKnights(EvalInfo* ei, Board* board, int colour){
 void evaluateBishops(EvalInfo* ei, Board* board, int colour){
     
     int sq, defended, mobilityCount;
-    uint64_t tempBishops, myPawns, enemyPawns, attacks;
+    uint64_t tempBishops, enemyPawns, attacks;
     
     tempBishops = board->pieces[BISHOP] & board->colours[colour];
-    myPawns = board->pieces[PAWN] & board->colours[colour];
     enemyPawns = board->pieces[PAWN] & board->colours[!colour];
     
     // Apply a bonus for having a pair of bishops

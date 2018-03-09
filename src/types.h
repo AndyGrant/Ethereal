@@ -83,8 +83,11 @@ typedef struct Limits Limits;
 struct Thread;
 typedef struct Thread Thread;
 
-typedef uint16_t KillerTable[MAX_DEPTH][2];
+typedef uint16_t KillerTable[MAX_HEIGHT][2];
 
-typedef int HistoryTable[COLOUR_NB][SQUARE_NB][SQUARE_NB];
+typedef int16_t HistoryTable[COLOUR_NB][SQUARE_NB][SQUARE_NB];
+
+struct EvalInfo;
+typedef struct EvalInfo EvalInfo;
 
 #endif
