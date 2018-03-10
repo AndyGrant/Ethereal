@@ -313,6 +313,11 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     lpv.length = 0;
     pv->length = 0;
     
+    // Increment nodes counter for this Thread. Since we will allow
+    // search to be called with depth zero, we may undo this increment
+    // in order to avoid 
+    thread->nodes++;
+    
     // Step 1A. Check to see if search time has expired. We will force the search
     // to continue after the search time has been used in the event that we have
     // not yet completed our depth one search, and therefore would have no best move
@@ -366,30 +371,14 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             }
         }
     }
-        
-    // Step 5. Go into the Quiescence Search if we have reached
-    // the search horizon and are not currently in check
-    if (depth <= 0){
-        
-        // No king attackers indicates we are not checked
-        if (!board->kingAttackers) 
-            return qsearch(thread, pv, alpha, beta, height);
-        
-        // We do not cap reductions, so here we will make
-        // sure that depth is within the accepktable bounds
-        depth = 0; 
-    }
     
-    // If we did not exit already, we will call this a node
-    thread->nodes += 1;
-    
-    // Step 6. Probe the Transposition Table for an entry
+    // Step 5. Probe the Transposition Table for an entry
     if (getTranspositionEntry(&Table, board->hash, &ttEntry)){
         
         // Entry move may be good in this position
         ttMove = ttEntry.bestMove;
         
-        // Step 6A. Check to see if this entry allows us to exit this
+        // Step 5A. Check to see if this entry allows us to exit this
         // node early. We choose not to do this in the PV line, not because
         // we can't, but because don't want truncated PV lines
         if (!PvNode && ttEntry.depth >= depth){
@@ -406,6 +395,19 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             // Entry allows early exit
             if (rAlpha >= rBeta) return ttValue;
         }
+    }
+    
+    // Step 6. Go into the Quiescence Search if we have reached
+    // the search horizon and are not currently in check
+    if (depth <= 0){
+        
+        // No king attackers indicates we are not checked
+        if (!board->kingAttackers)
+            return thread->nodes--, qsearch(thread, pv, alpha, beta, height);
+        
+        // We do not cap reductions, so here we will make
+        // sure that depth is within the accepktable bounds
+        depth = 0; 
     }
     
     // Step 7. Some initialization. Determine the check status if we have
@@ -695,8 +697,8 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     lpv.length = 0;
     pv->length = 0;
     
-    // Increment the node counter even if we exit early
-    thread->nodes += 1;
+    // Increment nodes for this Thread
+    thread->nodes++;
     
     // Step 1A. Check to see if search time has expired. We will force the search
     // to continue after the search time has been used in the event that we have
