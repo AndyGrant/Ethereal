@@ -46,11 +46,12 @@ int main(){
     
     Board board;
     char str[8192];
+    ThreadsGo threadsgo;
+    pthread_t pthreadsgo;
     
-    int megabytes = 16;
-    
+    int i;
     int nthreads =  1;
-    Thread* threads = createThreadPool(nthreads);
+    int megabytes = 16;
     
     initializeMagics();
     initializeZorbist();
@@ -58,6 +59,8 @@ int main(){
     initializeMasks();
     initializeBoard(&board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     initializeTranspositionTable(&Table, megabytes);
+    
+    Thread* threads = createThreadPool(nthreads);
     
     #ifdef TUNE
         runTexelTuning(threads);
@@ -69,7 +72,7 @@ int main(){
         getInput(str);
         
         if (stringEquals(str, "uci")){
-            printf("id name Ethereal 9.23\n");
+            printf("id name Ethereal 9.24\n");
             printf("id author Andrew Grant\n");
             printf("option name Hash type spin default 16 min 1 max 65536\n");
             printf("option name Threads type spin default 1 min 1 max 2048\n");
@@ -105,8 +108,18 @@ int main(){
         else if (stringStartsWith(str, "position"))
             uciPosition(str, &board);
         
-        else if (stringStartsWith(str, "go"))
-            uciGo(str, threads, &board);
+        else if (stringStartsWith(str, "go")){
+            strncpy(threadsgo.str, str, 512);
+            threadsgo.threads = threads;
+            threadsgo.board = &board;
+            pthread_create(&pthreadsgo, NULL, &uciGo, &threadsgo);
+        }
+        
+        else if (stringEquals(str, "stop")){
+            for (i = 0; i < nthreads; i++)
+                threads[i].abort = 1;
+            pthread_join(pthreadsgo, NULL);
+        }
         
         else if (stringEquals(str, "quit"))
             break;
@@ -123,7 +136,11 @@ int main(){
     return 1;
 }
 
-void uciGo(char* str, Thread* threads, Board* board){
+void* uciGo(void* vthreadsgo){
+    
+    char* str       = ((ThreadsGo*)vthreadsgo)->str;
+    Board* board    = ((ThreadsGo*)vthreadsgo)->board;
+    Thread* threads = ((ThreadsGo*)vthreadsgo)->threads;
     
     Limits limits;
     
@@ -178,6 +195,8 @@ void uciGo(char* str, Thread* threads, Board* board){
     moveToString(move, getBestMove(threads, board, &limits, time, mtg, inc));
     printf("bestmove %s\n", move);
     fflush(stdout);
+    
+    return NULL;
 }
 
 void uciPosition(char* str, Board* board){
