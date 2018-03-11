@@ -30,13 +30,19 @@ typedef struct Limits {
     int depthLimit;
 } Limits;
 
+typedef struct ThreadsGo {
+    char str[512];
+    Thread* threads;
+    Board* board;
+} ThreadsGo;
+
 void getInput(char* str);
 int stringEquals(char* s1, char* s2);
 int stringStartsWith(char* str, char* key);
 int stringContains(char* str, char* key);
 void moveToString(char* str, uint16_t move);
 
-void uciGo(char* str, Thread* threads, Board* board);
+void* uciGo(void* vthreadgo);
 void uciPosition(char* str, Board* board);
 void uciReport(Thread* threads, double startTime, int depth, int value, PVariation* pv);
 
