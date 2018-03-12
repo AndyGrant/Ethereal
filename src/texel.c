@@ -196,7 +196,7 @@ void runTexelTuning(Thread* thread){
 void initializeTexelEntries(TexelEntry* tes, Thread* thread){
     
     int i, j, k;
-    Undo undo;
+    Undo undo[1];
     EvalInfo ei;
     Limits limits;
     int coeffs[NT];
@@ -230,22 +230,28 @@ void initializeTexelEntries(TexelEntry* tes, Thread* thread){
         else if (strstr(line, "1/2")) tes[i].result = 0.5;
         else    {printf("Unable to Parse Result: %s\n", line); exit(0);}
         
-        // Search, then and apply all moves in the principle variation
+        // Setup the board with the FEN from the FENS file
         initializeBoard(&thread->board, line);
-        search(thread, &thread->pv, -MATE, MATE, 0, 0);
-        for (j = 0; j < thread->pv.length; j++)
-            applyMove(&thread->board, thread->pv.line[j], &undo);
-            
-        // Get the eval trace for the final position in the pv
-        T = EmptyTrace;
-        tes[i].eval = evaluateBoard(&thread->board, &ei, NULL);
-        if (thread->board.turn == BLACK) tes[i].eval *= -1;
         
         // Determine the game phase based on remaining material
         tes[i].phase = 24 - 4 * popcount(thread->board.pieces[QUEEN ])
                           - 2 * popcount(thread->board.pieces[ROOK  ])
                           - 1 * popcount(thread->board.pieces[KNIGHT])
                           - 1 * popcount(thread->board.pieces[BISHOP]);
+        
+        
+        // Use the search value as the evaluation, to provide a better
+        // understanding the potential of a position's eval terms. Make
+        // sure the evaluation is from the perspective of WHITE
+        tes[i].eval = search(thread, &thread->pv, -MATE, MATE, 4, 0);
+        if (thread->board.turn == BLACK) tes[i].eval *= -1;
+        
+        // Now collect an evaluation from a quiet position
+        qsearch(thread, &thread->pv, -MATE, MATE, 0);
+        for (j = 0; j < thread->pv.length; j++)
+            applyMove(&thread->board, thread->pv.line[j], undo);
+        T = EmptyTrace;
+        evaluateBoard(&thread->board, &ei, NULL);
                           
         // When updating gradients, we use the coefficients for each
         // term, as well as the phase of the position it came from
