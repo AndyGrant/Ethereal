@@ -641,13 +641,15 @@ void evaluateKings(EvalInfo* ei, Board* board, int colour){
         
         // Cap our attackCounts at 99 (KingSafety has 100 slots)
         attackCounts = ei->attackCounts[!colour];
-        attackCounts = attackCounts >= 100 ? 99 : attackCounts;
+        
+        // Add an extra two attack counts per missing pawn in the king area.
+        attackCounts += 6 - 2 * popcount(myPawns & ei->kingAreas[colour]);
         
         // Scale down attack count if there are no enemy queens
         if (!(board->colours[!colour] & board->pieces[QUEEN]))
             attackCounts *= .25;
     
-        ei->midgame[colour] -= KingSafety[attackCounts];
+        ei->midgame[colour] -= KingSafety[MIN(99, MAX(0, attackCounts))];
     }
     
     // Pawn Shelter evaluation is stored in the PawnKing evaluation table
