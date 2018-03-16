@@ -20,6 +20,8 @@ CCDROID = arm-linux-gnueabi-gcc
 
 EXE = Ethereal
 
+LIBS = -lpthread -lm
+
 WFLAGS = -Wall -Wextra -Wshadow
 
 CFLAGS = -DNDEBUG -O3 $(WFLAGS) -std=c99 -march=native -flto
@@ -35,19 +37,19 @@ TFLAGS = $(CFLAGS) -fopenmp -DTUNE
 SRC = *.c
 
 all:
-	$(CC) $(CFLAGS) $(SRC) -lpthread -o $(EXE)
+	$(CC) $(CFLAGS) $(SRC) $(LIBS) -o $(EXE)
     
 profile:
-	$(CC) $(PFLAGS) $(SRC) -lpthread -o $(EXE)
+	$(CC) $(PFLAGS) $(SRC) $(LIBS) -o $(EXE)
     
 debug:
-	$(CC) $(DFLAGS) $(SRC) -lpthread -o $(EXE)
+	$(CC) $(DFLAGS) $(SRC) $(LIBS) -o $(EXE)
     
 tune:
-	$(CC) $(TFLAGS) $(SRC) -lpthread -lm -o $(EXE)
+	$(CC) $(TFLAGS) $(SRC) $(LIBS) -lm -o $(EXE)
     
 release:
-	$(CC) $(RFLAGS) $(SRC) -lpthread -o $(EXE)$(VER)-Win64.exe
+	$(CC) $(RFLAGS) $(SRC) $(LIBS) -o $(EXE)$(VER)-Win64.exe
     
 android:
-	$(CCDROID) $(RFLAGS) $(SRC) -march=armv5t -lpthread -o $(EXE)$(VER)-Android.exe
+	$(CCDROID) $(RFLAGS) $(SRC) -march=armv5t $(LIBS) -o $(EXE)$(VER)-Android.exe
