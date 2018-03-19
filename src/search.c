@@ -536,7 +536,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         // and we don't expect anything from this move, skip it.
         if (   !PvNode
             &&  isQuiet
-            &&  played >= 1
+            &&  best > MATED_IN_MAX
             &&  futilityMargin <= alpha
             &&  depth <= FutilityPruningDepth)
             break;
@@ -547,7 +547,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         if (    !PvNode
             &&  !isQuiet
             &&  !inCheck
-            &&   played >= 1
+            &&   best > MATED_IN_MAX
             &&   captureIsWeak(board, &ei, currentMove, depth))
             continue;
         
@@ -564,7 +564,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         if (   !PvNode
             && !board->kingAttackers
             &&  isQuiet
-            &&  played >= 1
+            &&  best > MATED_IN_MAX
             &&  depth <= LateMovePruningDepth
             &&  quiets > LateMovePruningCounts[depth]){
             
