@@ -311,7 +311,7 @@ void evaluatePawns(EvalInfo* ei, Board* board, int colour){
     attacks = ei->pawnAttacks[colour] & ei->kingAreas[!colour];
     ei->attackedBy2[colour] = ei->attacked[colour] & ei->pawnAttacks[colour];
     ei->attacked[colour] |= ei->pawnAttacks[colour];
-    ei->attackedNoQueen[colour] |= attacks;
+    ei->attackedNoQueen[colour] = ei->pawnAttacks[colour];
     
     // Update the attack counts and attacker counts for pawns for use in
     // the king safety calculation. We just do this for the pawns as a whole,
@@ -747,8 +747,8 @@ void initializeEvalInfo(EvalInfo* ei, Board* board, PawnKingTable* pktable){
     ei->mobilityAreas[WHITE] = ~(ei->pawnAttacks[BLACK] | (white & kings) | ei->blockedPawns[WHITE]);
     ei->mobilityAreas[BLACK] = ~(ei->pawnAttacks[WHITE] | (black & kings) | ei->blockedPawns[BLACK]);
     
-    ei->attacked[WHITE] = ei->attackedNoQueen[WHITE] = kingAttacks(wKingSq, ~0ull);
-    ei->attacked[BLACK] = ei->attackedNoQueen[BLACK] = kingAttacks(bKingSq, ~0ull);
+    ei->attacked[WHITE] = kingAttacks(wKingSq, ~0ull);
+    ei->attacked[BLACK] = kingAttacks(bKingSq, ~0ull);
     
     ei->occupiedMinusBishops[WHITE] = (white | black) ^ (white & (bishops | queens));
     ei->occupiedMinusBishops[BLACK] = (white | black) ^ (black & (bishops | queens));
