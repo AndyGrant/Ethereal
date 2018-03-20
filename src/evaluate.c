@@ -308,18 +308,17 @@ void evaluatePawns(EvalInfo* ei, Board* board, int colour){
     
     // Update the attacks array with the pawn attacks. We will use this to
     // determine whether or not passed pawns may advance safely later on.
-    attacks = ei->pawnAttacks[colour] & ei->kingAreas[!colour];
-    ei->attackedBy2[colour] = ei->attacked[colour] & ei->pawnAttacks[colour];
-    ei->attacked[colour] |= ei->pawnAttacks[colour];
+    // It is also used to compute pawn threats against minors and majors
+    ei->attackedBy2[colour]     = ei->pawnAttacks[colour] & ei->attacked[colour];
+    ei->attacked[colour]       |= ei->pawnAttacks[colour];
     ei->attackedNoQueen[colour] = ei->pawnAttacks[colour];
     
-    // Update the attack counts and attacker counts for pawns for use in
-    // the king safety calculation. We just do this for the pawns as a whole,
-    // and not individually, to save time, despite the loss in accuracy.
-    if (attacks != 0ull){
-        ei->attackCounts[colour] += popcount(attacks);
-        ei->attackerCounts[colour] += 1;
-    }
+    // Update the attack counts for our pawns. We will not count squares twice
+    // even if they are attacked by two pawns. Also, we do not count pawns
+    // torwards our attackers counts, which is used to decide when to look
+    // at the King Safety of a position.
+    attacks = ei->pawnAttacks[colour] & ei->kingAreas[!colour];
+    ei->attackCounts[colour] += popcount(attacks);
     
     // The pawn table holds the rest of the eval information we will calculate
     if (ei->pkentry != NULL) return;
