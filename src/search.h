@@ -23,22 +23,6 @@
 
 #include "types.h"
 
-typedef struct SearchInfo {
-    
-    int depth;
-    int values[MAX_DEPTH];
-    int bestmoves[MAX_DEPTH];
-    int timeUsage[MAX_DEPTH];
-    
-    double starttime;
-    double idealusage;
-    double maxalloc;
-    double maxusage;
-    
-    double pvStability;
-    
-} SearchInfo;
-
 typedef struct PVariation {
     uint16_t line[MAX_HEIGHT];
     int length;
