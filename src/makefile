@@ -18,9 +18,13 @@ CC = gcc
 
 CCDROID = arm-linux-gnueabi-gcc
 
-EXE = Ethereal
+
+SRC = *.c
 
 LIBS = -lpthread -lm
+
+EXE = Ethereal
+
 
 WFLAGS = -Wall -Wextra -Wshadow
 
@@ -34,22 +38,23 @@ DFLAGS = -O0 $(WFLAGS) -std=c99
 
 TFLAGS = $(CFLAGS) -fopenmp -DTUNE
 
-SRC = *.c
+
+POPCNT = -msse3 -mpopcnt -DUSE_POPCOUNT
+
 
 all:
-	$(CC) $(CFLAGS) $(SRC) $(LIBS) -o $(EXE)
+	$(CC) $(CFLAGS) $(SRC) $(LIBS) $(POPCNT) -o $(EXE)
     
 profile:
-	$(CC) $(PFLAGS) $(SRC) $(LIBS) -o $(EXE)
+	$(CC) $(PFLAGS) $(SRC) $(LIBS) $(POPCNT) -o $(EXE)
     
 debug:
-	$(CC) $(DFLAGS) $(SRC) $(LIBS) -o $(EXE)
+	$(CC) $(DFLAGS) $(SRC) $(LIBS) $(POPCNT) -o $(EXE)
     
 tune:
-	$(CC) $(TFLAGS) $(SRC) $(LIBS) -lm -o $(EXE)
+	$(CC) $(TFLAGS) $(SRC) $(LIBS) $(POPCNT) -o $(EXE)
     
 release:
-	$(CC) $(RFLAGS) $(SRC) $(LIBS) -o $(EXE)$(VER)-Win64.exe
-    
-android:
+	$(CC) $(RFLAGS) $(SRC) $(LIBS) -o $(EXE)$(VER)-Win64-NoPop.exe
+	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(POPCNT) -o $(EXE)$(VER)-Win64.exe
 	$(CCDROID) $(RFLAGS) $(SRC) -march=armv5t $(LIBS) -o $(EXE)$(VER)-Android.exe
