@@ -111,7 +111,6 @@ const uint64_t MagicNumberBishop[SQUARE_NB] = {
 void initializeMagics(){
     
     int i;
-    uint64_t j;
     
     generateKnightMap();
     generateKingMap();
@@ -134,9 +133,12 @@ void initializeMagics(){
         free(OccupancyVariationsRook[i]);
     free(OccupancyVariationsRook);
     
-    // Initalize BitCounts for popcount()
-    for (j = 0ull; j < 0x10000ull; j++)
-        BitCounts[j] = countSetBits(j);
+    // Initalize BitCounts for software popcount()
+    #ifndef USE_POPCOUNT
+        uint64_t j;
+        for (j = 0ull; j < 0x10000ull; j++)
+            BitCounts[j] = countSetBits(j);
+    #endif
 }
 
 void generateKnightMap(){

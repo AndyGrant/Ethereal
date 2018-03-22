@@ -29,6 +29,8 @@ int getmsb(uint64_t bb);
 int poplsb(uint64_t* bb);
 int moreThanOne(uint64_t bb);
 
-int BitCounts[0x10000];
+#ifndef USE_POPCOUNT
+    int BitCounts[0x10000];
+#endif
 
 #endif

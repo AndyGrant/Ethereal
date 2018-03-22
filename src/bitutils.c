@@ -20,8 +20,6 @@
 
 #include "bitutils.h"
 
-int BitCounts[0x10000];
-
 int countSetBits(uint64_t bb){
     
     int count = 0;
@@ -34,12 +32,24 @@ int countSetBits(uint64_t bb){
     return count;
 }
 
-int popcount(uint64_t bb){
-    return  BitCounts[(bb >>  0) & 0xFFFF]
-          + BitCounts[(bb >> 16) & 0xFFFF]
-          + BitCounts[(bb >> 32) & 0xFFFF]
-          + BitCounts[(bb >> 48) & 0xFFFF];
-}
+#ifdef USE_POPCOUNT
+
+    int popcount(uint64_t bb){
+        return __builtin_popcountll(bb);
+    }
+
+#else
+    
+    int BitCounts[0x10000];
+
+    int popcount(uint64_t bb){
+        return  BitCounts[(bb >>  0) & 0xFFFF]
+              + BitCounts[(bb >> 16) & 0xFFFF]
+              + BitCounts[(bb >> 32) & 0xFFFF]
+              + BitCounts[(bb >> 48) & 0xFFFF];
+    }
+
+#endif
 
 void getSetBits(uint64_t bb, int* arr){
     
