@@ -452,12 +452,9 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             &&   captureIsWeak(board, &ei, currentMove, depth))
             continue;
         
-        // Apply and validate move before searching
+        // Apply the move, but do not verify that it was legal
+        // until after we perform Late Move Pruning (Step 16)
         applyMove(board, currentMove, undo);
-        if (!isNotInCheck(board, !board->turn)){
-            revertMove(board, currentMove, undo);
-            continue;
-        }
         
         // Step 16. Late Move Pruning / Move Count Pruning. If we have
         // tried many quiets in this position already, and we don't expect
@@ -469,6 +466,12 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             &&  depth <= LateMovePruningDepth
             &&  quiets > LateMovePruningCounts[depth]){
             
+            revertMove(board, currentMove, undo);
+            continue;
+        }
+        
+        // Now we will search the move, so we verify it was legal
+        if (!isNotInCheck(board, !board->turn)){
             revertMove(board, currentMove, undo);
             continue;
         }
