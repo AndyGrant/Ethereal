@@ -41,6 +41,8 @@
 #include "uci.h"
 #include "zorbist.h"
 
+pthread_mutex_t READYLOCK = PTHREAD_MUTEX_INITIALIZER;
+
 extern TransTable Table;
 
 int main(){
@@ -82,7 +84,7 @@ int main(){
         getInput(str);
         
         if (stringEquals(str, "uci")){
-            printf("id name Ethereal 9.39\n");
+            printf("id name Ethereal 9.40\n");
             printf("id author Andrew Grant\n");
             printf("option name Hash type spin default 16 min 1 max 65536\n");
             printf("option name Threads type spin default 1 min 1 max 2048\n");
@@ -91,8 +93,10 @@ int main(){
         }
         
         else if (stringEquals(str, "isready")){
+            pthread_mutex_lock(&READYLOCK);
             printf("readyok\n");
             fflush(stdout);
+            pthread_mutex_unlock(&READYLOCK);
         } 
         
         else if (stringStartsWith(str, "setoption")){
@@ -148,6 +152,12 @@ int main(){
 
 void* uciGo(void* vthreadsgo){
     
+    // Get our starting time as soon as possible
+    double start = getRealTime();
+    
+    // Grab the ready lock, as we cannot be ready until we finish this search
+    pthread_mutex_lock(&READYLOCK);
+    
     char* str       = ((ThreadsGo*)vthreadsgo)->str;
     Board* board    = ((ThreadsGo*)vthreadsgo)->board;
     Thread* threads = ((ThreadsGo*)vthreadsgo)->threads;
@@ -202,9 +212,12 @@ void* uciGo(void* vthreadsgo){
     inc  = (board->turn == WHITE) ?  winc :  binc;
     
     // Execute the search and report the best move
-    moveToString(move, getBestMove(threads, board, &limits, time, mtg, inc));
+    moveToString(move, getBestMove(threads, board, &limits, start, time, mtg, inc));
     printf("bestmove %s\n", move);
     fflush(stdout);
+    
+    // Drop the ready lock, as we are prepared to handle a new search
+    pthread_mutex_unlock(&READYLOCK);
     
     return NULL;
 }
