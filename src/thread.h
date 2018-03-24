@@ -21,14 +21,14 @@
 
 #include <setjmp.h>
 
-#include "board.h"
-#include "search.h"
-#include "transposition.h"
 #include "types.h"
+#include "transposition.h"
+#include "search.h"
 
 typedef struct Thread {
     
-    Manager* manager;
+    Limits* limits;
+    SearchInfo* info;
     
     Board board;
     PVariation pv;
@@ -52,7 +52,7 @@ Thread* createThreadPool(int nthreads);
 
 void resetThreadPool(Thread* threads);
 
-void newSearchThreadPool(Thread* threads, Board* board, Manager* manager);
+void newSearchThreadPool(Thread* threads, Board* board, Limits* limits, SearchInfo* info);
                                
 uint64_t nodesSearchedThreadPool(Thread* threads);
 

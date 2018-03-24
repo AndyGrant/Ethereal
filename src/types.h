@@ -56,8 +56,8 @@ typedef struct Board Board;
 struct Undo;
 typedef struct Undo Undo;
 
-struct Manager;
-typedef struct Manager Manager;
+struct SearchInfo;
+typedef struct SearchInfo SearchInfo;
 
 struct TransEntry;
 typedef struct TransEntry TransEntry;
