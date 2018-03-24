@@ -71,8 +71,8 @@ void initializeManager(Manager* manager, Limits* limits, double time, double mtg
         
         // Allocate when using X+Y, or simply X
         else {
-            manager->idealUsage =  0.45 * (time + 23 * inc) / 28;
-            manager->maxAlloc   =  4.00 * (time + 23 * inc) / 27;
+            manager->idealUsage =  0.45 * (time + 23 * inc) / 25;
+            manager->maxAlloc   =  4.00 * (time + 23 * inc) / 25;
             manager->maxUsage   = 10.00 * (time + 23 * inc) / 25;
         }
         
