@@ -25,8 +25,8 @@ typedef struct Manager {
     
     // History of Iterative Deepening
     int values[MAX_DEPTH];
-    int bestMoves[MAX_DEPTH];
-    int timeUsage[MAX_DEPTH];
+    uint16_t bestMoves[MAX_DEPTH];
+    double timeUsage[MAX_DEPTH];
     int depth;
     
     // Base time of the search
