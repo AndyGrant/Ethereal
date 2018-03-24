@@ -51,12 +51,44 @@ uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double time,
     
     int i, nthreads = threads[0].nthreads;
     
+    SearchInfo info; memset(&info, 0, sizeof(SearchInfo));
+    
     pthread_t* pthreads = malloc(sizeof(pthread_t) * nthreads);
     
-    Manager manager; initializeManager(&manager, limits, time, mtg, inc);
+    
+    // Some initialization for time management
+    info.starttime = getRealTime();
+    info.pvStability = 1;
+    
+    // Ethereal is responsible for choosing how much time to spend searching
+    if (limits->limitedBySelf){
+        
+        if (mtg >= 0){
+            info.idealusage =  0.65 * time / (mtg +  5) + inc;
+            info.maxalloc   =  4.00 * time / (mtg +  7) + inc;
+            info.maxusage   = 10.00 * time / (mtg + 10) + inc;
+        }
+        
+        else {
+            info.idealusage =  0.45 * (time + 23 * inc) / 25;
+            info.maxalloc   =  4.00 * (time + 23 * inc) / 25;
+            info.maxusage   = 10.00 * (time + 23 * inc) / 25;
+        }
+        
+        info.idealusage = MIN(info.idealusage, time - 100);
+        info.maxalloc   = MIN(info.maxalloc,   time -  75);
+        info.maxusage   = MIN(info.maxusage,   time -  50);
+    }
+    
+    // UCI command told us to look for exactly X seconds
+    if (limits->limitedByTime){
+        info.idealusage = limits->timeLimit;
+        info.maxalloc   = limits->timeLimit;
+        info.maxusage   = limits->timeLimit;
+    }
     
     // Setup the thread pool for a new search with these parameters
-    newSearchThreadPool(threads, board, &manager);
+    newSearchThreadPool(threads, board, limits, &info);
     
     // Launch all of the threads
     for (i = 1; i < nthreads; i++)
@@ -71,16 +103,21 @@ uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double time,
     free(pthreads);
     
     // Return highest depth best move
-    return manager.bestMoves[manager.depth];
+    return info.bestmoves[info.depth];
 }
 
 void* iterativeDeepening(void* vthread){
     
     Thread* const thread   = (Thread*) vthread;
-    Manager* const manager = thread->manager;
+    
+    SearchInfo* const info = thread->info;
+    
+    Limits* const limits   = thread->limits;
+   
     const int mainThread   = thread == &thread->threads[0];
     
     int i, count, value, depth, abort;
+    
     
     for (depth = 1; depth < MAX_DEPTH; depth++){
         
@@ -112,23 +149,78 @@ void* iterativeDeepening(void* vthread){
         abort = setjmp(thread->jbuffer);
         if (abort) return NULL;
         
+            
         // Perform the actual search for the current depth
         value = aspirationWindow(thread, depth);
         
         // Helper threads need not worry about time and search info updates
         if (!mainThread) continue;
         
+        // Update the Search Info structure for the main thread
+        info->depth = depth;
+        info->values[depth] = value;
+        info->bestmoves[depth] = thread->pv.line[0];
+        info->timeUsage[depth] = getRealTime() - info->starttime - info->timeUsage[depth-1];
+        
         // Send information about this search to the interface
-        uciReport(thread->threads, manager->startTime, depth, value, &thread->pv);
+        uciReport(thread->threads, info->starttime, depth, value, &thread->pv);
         
-        // Save results of this search, and update our time managment
-        updateManager(manager, depth, value, thread->pv.line[0]);
+        // If Ethereal is managing the clock, determine if we should be spending
+        // more time on this search, based on the score difference between iterations
+        // and any changes in the principle variation since the last iteration
+        if (limits->limitedBySelf && depth >= 4){
+            
+            // Increase our time if the score suddently dropped by eight centipawns
+            if (info->values[depth-1] > value + 10)
+                info->idealusage *= 1.050;
+            
+            // Decrease our time if the score suddently jumped by eight centipawns
+            if (info->values[depth-1] < value - 10)
+                info->idealusage *= 0.975;
+            
+            // Increase our time if the pv has changed across the last two iterations
+            if (info->bestmoves[depth-1] != thread->pv.line[0])
+                info->idealusage *= MAX(info->pvStability, 1.30);
+            
+            // Decrease our time if the pv has stayed the same between iterations
+            if (info->bestmoves[depth-1] == thread->pv.line[0])
+                info->idealusage *= MAX(0.95, MIN(info->pvStability, 1.00));
+            
+            // Cap our ideal usage at the max allocation of time
+            info->idealusage = MIN(info->idealusage, info->maxalloc);
+            
+            // Update the PV Stability depending on the best move changing. If the best move is
+            // holding stable, we increase the pv stability. This way, if the best move changes
+            // after holding for many iterations, more time will be allocated for the search, and
+            // less time if the best move is in a constant flucation.
+            info->pvStability *= (info->bestmoves[depth-1] != thread->pv.line[0]) ? 0.95 : 1.05;
+        }
         
-        // Check for search termination, kill all helper threads if needed
-        if (terminateSearchHere(manager)){
+        // Check for termination by any of the possible limits
+        if (   (limits->limitedByDepth && depth >= limits->depthLimit)
+            || (limits->limitedByTime  && getRealTime() - info->starttime > limits->timeLimit)
+            || (limits->limitedBySelf  && getRealTime() - info->starttime > info->maxusage)
+            || (limits->limitedBySelf  && getRealTime() - info->starttime > info->idealusage)){
+            
+            // Terminate all helper threads
             for (i = 0; i < thread->nthreads; i++)
                 thread->threads[i].abort = 1;
             return NULL;
+        }
+        
+        // Check to see if we expect to be able to complete the next depth
+        if (thread->limits->limitedBySelf){
+            double timeFactor = info->timeUsage[depth] / MAX(1, info->timeUsage[depth-1]);
+            double estimatedUsage = info->timeUsage[depth] * (timeFactor + .40);
+            double estiamtedEndtime = getRealTime() + estimatedUsage - info->starttime;
+            
+            if (estiamtedEndtime > info->maxusage){
+                
+                // Terminate all helper threads
+                for (i = 0; i < thread->nthreads; i++)
+                    thread->threads[i].abort = 1;
+                return NULL;
+            }
         }
     }
     
@@ -139,9 +231,9 @@ int aspirationWindow(Thread* thread, int depth){
     
     int alpha, beta, value, upper, lower;
     
-    int* const values = thread->manager->values;
+    int* const values = thread->info->values;
     
-    int mainDepth = MAX(5, 1 + thread->manager->depth);
+    int mainDepth = MAX(5, 1 + thread->info->depth);
     
     // Aspiration window only after we have completed the first four
     // depths, and so long as the last score is not near a mate score
@@ -218,10 +310,17 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     // in order to avoid 
     thread->nodes++;
     
-    // Step 1. Check for search time expiration, and check to see if
-    // the main thread has finished its search, and told us to end ours
-    if (searchTimeHasExpired(thread) || thread->abort)
+    // Step 1A. Check to see if search time has expired. We will force the search
+    // to continue after the search time has been used in the event that we have
+    // not yet completed our depth one search, and therefore would have no best move
+    if (   (thread->limits->limitedBySelf || thread->limits->limitedByTime)
+        && (thread->nodes & 4095) == 4095
+        &&  getRealTime() >= thread->info->starttime + thread->info->maxusage
+        &&  thread->depth > 1)
         longjmp(thread->jbuffer, 1);
+        
+    // Step 1B. Check to see if the master thread finished
+    if (thread->abort) longjmp(thread->jbuffer, 1);
         
     // If we allow early exits in the root node (even if they should not happen)
     // we run the risk of returning an empty principle variation, which could then
@@ -530,9 +629,10 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         // normal window. This happens only for the first move in a PvNode
         if (PvNode && (played == 1 || value > alpha))
             value = -search(thread, &lpv, -beta, -alpha, depth-1, height+1);
-        
+
         // Revert the board state
         revertMove(board, currentMove, undo);
+        
         
         // Step 19. Update search stats for the best move and its value. Update
         // our lower bound (alpha) if exceeded, and also update the PV in that case
@@ -604,10 +704,17 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     // Increment nodes for this Thread
     thread->nodes++;
     
-    // Step 1. Check for search time expiration, and check to see if
-    // the main thread has finished its search, and told us to end ours
-    if (searchTimeHasExpired(thread) || thread->abort)
+    // Step 1A. Check to see if search time has expired. We will force the search
+    // to continue after the search time has been used in the event that we have
+    // not yet completed our depth one search, and therefore would have no best move
+    if (   (thread->limits->limitedBySelf || thread->limits->limitedByTime)
+        && (thread->nodes & 4095) == 4095
+        &&  getRealTime() >= thread->info->starttime + thread->info->maxusage
+        &&  thread->depth > 1)
         longjmp(thread->jbuffer, 1);
+        
+    // Step 1B. Check to see if the master thread finished
+    if (thread->abort) longjmp(thread->jbuffer, 1);
     
     // Step 2. Max Height Cutoff. If we are at the maximum search height,
     // then end the search here with a static eval of the current board

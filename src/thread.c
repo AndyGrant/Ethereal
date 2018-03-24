@@ -58,16 +58,19 @@ void resetThreadPool(Thread* threads){
     }
 }
 
-void newSearchThreadPool(Thread* threads, Board* board, Manager* manager){
+void newSearchThreadPool(Thread* threads, Board* board, Limits* limits, SearchInfo* info){
     
     int i;
     
     // Initialize each Thread in the Thread Pool
     for (i = 0; i < threads[0].nthreads; i++){
         
-        // Manager holds the time managment knowledge, as well
-        // as results from the search by the main Thread
-        threads[i].manager = manager;
+        // Save a reference to the original search specifications
+        threads[i].limits = limits;
+        
+        // Save a reference to our displayed search information,
+        // as well as the time usage variables that are being used
+        threads[i].info = info;
         
         // Make our own copy of the original position
         memcpy(&threads[i].board, board, sizeof(Board));

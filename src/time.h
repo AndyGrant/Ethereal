@@ -19,49 +19,6 @@
 #ifndef _MY_TIME_H
 #define _MY_TIME_H
 
-#include "types.h"
-
-typedef struct Manager {
-    
-    // History of Iterative Deepening
-    int values[MAX_DEPTH];
-    uint16_t bestMoves[MAX_DEPTH];
-    double timeUsage[MAX_DEPTH];
-    int depth;
-    
-    // Base time of the search
-    double startTime;
-    
-    // 3-Point Time Managment
-    double idealUsage;
-    double maxAlloc;
-    double maxUsage;
-    
-    // PV stability factor for time changes
-    double pvStability;
-    
-    // Time control UCI limits
-    int depthLimit;
-    double timeLimit;
-    
-    // Time control types
-    int limitedByNone;
-    int limitedByTime;
-    int limitedByDepth;
-    int limitedBySelf;
-    
-} Manager;
-
 double getRealTime();
-
-double getElapsedTime(double reference);
-
-void initializeManager(Manager* manager, Limits* limits, double time, double mtg, double inc);
-
-void updateManager(Manager* manager, int depth, int value, uint16_t bestMove);
-
-int terminateSearchHere(Manager* manager);
-
-int searchTimeHasExpired(Thread* thread);
 
 #endif
