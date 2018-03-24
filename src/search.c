@@ -47,7 +47,7 @@ pthread_mutex_t LOCK = PTHREAD_MUTEX_INITIALIZER;
 
 extern TransTable Table;
 
-uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double time, double mtg, double inc){
+uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double start, double time, double mtg, double inc){
     
     int i, nthreads = threads[0].nthreads;
     
@@ -57,8 +57,8 @@ uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double time,
     
     
     // Some initialization for time management
-    info.starttime = getRealTime();
-    info.pvStability = 1;
+    info.starttime = start;
+    info.pvStability = 1.00;
     
     // Ethereal is responsible for choosing how much time to spend searching
     if (limits->limitedBySelf){
@@ -76,8 +76,8 @@ uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double time,
         }
         
         info.idealusage = MIN(info.idealusage, time - 100);
-        info.maxalloc   = MIN(info.maxalloc,   time -  75);
-        info.maxusage   = MIN(info.maxusage,   time -  50);
+        info.maxalloc   = MIN(info.maxalloc,   time - 100);
+        info.maxusage   = MIN(info.maxusage,   time - 100);
     }
     
     // UCI command told us to look for exactly X seconds
@@ -314,7 +314,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     // to continue after the search time has been used in the event that we have
     // not yet completed our depth one search, and therefore would have no best move
     if (   (thread->limits->limitedBySelf || thread->limits->limitedByTime)
-        && (thread->nodes & 4095) == 4095
+        && (thread->nodes & 1023) == 1023
         &&  getRealTime() >= thread->info->starttime + thread->info->maxusage
         &&  thread->depth > 1)
         longjmp(thread->jbuffer, 1);
@@ -708,7 +708,7 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     // to continue after the search time has been used in the event that we have
     // not yet completed our depth one search, and therefore would have no best move
     if (   (thread->limits->limitedBySelf || thread->limits->limitedByTime)
-        && (thread->nodes & 4095) == 4095
+        && (thread->nodes & 1023) == 1023
         &&  getRealTime() >= thread->info->starttime + thread->info->maxusage
         &&  thread->depth > 1)
         longjmp(thread->jbuffer, 1);
