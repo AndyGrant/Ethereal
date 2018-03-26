@@ -84,6 +84,8 @@ const int PawnConnected32[32][PHASE_NB] = {
 
 // Definition of evaluation terms related to Knights
 
+const int KnightRammedPawns[PHASE_NB] = {   0,   5};
+
 const int KnightAttackedByPawn[PHASE_NB] = { -49, -32};
 
 const int KnightOutpost[2][PHASE_NB] = { {  19, -34}, {  38,   9} };
@@ -98,6 +100,8 @@ const int KnightMobility[9][PHASE_NB] = {
 // Definition of evaluation terms related to Bishops
 
 const int BishopPair[PHASE_NB] = {  43,  68};
+
+const int BishopRammedPawns[PHASE_NB] = {  -8,  -6};
 
 const int BishopAttackedByPawn[PHASE_NB] = { -52, -34};
 
@@ -376,7 +380,7 @@ void evaluatePawns(EvalInfo* ei, Board* board, int colour){
 
 void evaluateKnights(EvalInfo* ei, Board* board, int colour){
     
-    int sq, defended, mobilityCount;
+    int sq, defended, count;
     uint64_t tempKnights, enemyPawns, attacks; 
     
     tempKnights = board->pieces[KNIGHT] & board->colours[colour];
@@ -398,6 +402,12 @@ void evaluateKnights(EvalInfo* ei, Board* board, int colour){
         ei->attacked[colour] |= attacks;
         ei->attackedNoQueen[colour] |= attacks;
         
+        // Apply a bonus for the knight based on number of rammed pawns
+        count = popcount(ei->rammedPawns[colour]);
+        ei->midgame[colour] += count * KnightRammedPawns[MG];
+        ei->endgame[colour] += count * KnightRammedPawns[EG];
+        if (TRACE) T.knightRammedPawns[colour] += count;
+        
         // Apply a penalty if the knight is being attacked by a pawn
         if (ei->pawnAttacks[!colour] & (1ull << sq)){
             ei->midgame[colour] += KnightAttackedByPawn[MG];
@@ -418,10 +428,10 @@ void evaluateKnights(EvalInfo* ei, Board* board, int colour){
         }
         
         // Apply a bonus (or penalty) based on the mobility of the knight
-        mobilityCount = popcount((ei->mobilityAreas[colour] & attacks));
-        ei->midgame[colour] += KnightMobility[mobilityCount][MG];
-        ei->endgame[colour] += KnightMobility[mobilityCount][EG];
-        if (TRACE) T.knightMobility[colour][mobilityCount]++;
+        count = popcount((ei->mobilityAreas[colour] & attacks));
+        ei->midgame[colour] += KnightMobility[count][MG];
+        ei->endgame[colour] += KnightMobility[count][EG];
+        if (TRACE) T.knightMobility[colour][count]++;
         
         // Update the attack and attacker counts for the
         // knight for use in the king safety calculation.
@@ -435,7 +445,7 @@ void evaluateKnights(EvalInfo* ei, Board* board, int colour){
 
 void evaluateBishops(EvalInfo* ei, Board* board, int colour){
     
-    int sq, defended, mobilityCount;
+    int sq, defended, count;
     uint64_t tempBishops, enemyPawns, attacks;
     
     tempBishops = board->pieces[BISHOP] & board->colours[colour];
@@ -464,6 +474,13 @@ void evaluateBishops(EvalInfo* ei, Board* board, int colour){
         ei->attacked[colour] |= attacks;
         ei->attackedNoQueen[colour] |= attacks;
         
+        // Apply a penalty for the bishop based on number of rammed pawns
+        // of our own colour, which reside on the same shade of square as the bishop
+        count = popcount(ei->rammedPawns[colour] & (((1ull << sq) & WHITE_SQUARES ? WHITE_SQUARES : BLACK_SQUARES)));
+        ei->midgame[colour] += count * BishopRammedPawns[MG];
+        ei->endgame[colour] += count * BishopRammedPawns[EG];
+        if (TRACE) T.bishopRammedPawns[colour] += count;
+        
         // Apply a penalty if the bishop is being attacked by a pawn
         if (ei->pawnAttacks[!colour] & (1ull << sq)){
             ei->midgame[colour] += BishopAttackedByPawn[MG];
@@ -484,10 +501,10 @@ void evaluateBishops(EvalInfo* ei, Board* board, int colour){
         }
         
         // Apply a bonus (or penalty) based on the mobility of the bishop
-        mobilityCount = popcount((ei->mobilityAreas[colour] & attacks));
-        ei->midgame[colour] += BishopMobility[mobilityCount][MG];
-        ei->endgame[colour] += BishopMobility[mobilityCount][EG];
-        if (TRACE) T.bishopMobility[colour][mobilityCount]++;
+        count = popcount((ei->mobilityAreas[colour] & attacks));
+        ei->midgame[colour] += BishopMobility[count][MG];
+        ei->endgame[colour] += BishopMobility[count][EG];
+        if (TRACE) T.bishopMobility[colour][count]++;
         
         // Update the attack and attacker counts for the
         // bishop for use in the king safety calculation.
@@ -736,6 +753,9 @@ void initializeEvalInfo(EvalInfo* ei, Board* board, PawnKingTable* pktable){
     
     ei->pawnAttacks[WHITE] = ((whitePawns << 9) & ~FILE_A) | ((whitePawns << 7) & ~FILE_H);
     ei->pawnAttacks[BLACK] = ((blackPawns >> 9) & ~FILE_H) | ((blackPawns >> 7) & ~FILE_A);
+    
+    ei->rammedPawns[WHITE] = (blackPawns >> 8) & whitePawns;
+    ei->rammedPawns[BLACK] = (whitePawns << 8) & blackPawns;
     
     ei->blockedPawns[WHITE] = ((whitePawns << 8) & (white | black)) >> 8;
     ei->blockedPawns[BLACK] = ((blackPawns >> 8) & (white | black)) << 8,

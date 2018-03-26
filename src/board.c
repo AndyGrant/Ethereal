@@ -307,7 +307,7 @@ void runBenchmark(Thread* threads, int depth){
         printf("\nPosition [%2d|%2d]\n", i + 1, NUM_BENCHMARKS);
         initializeBoard(&board, Benchmarks[i]);
 
-        getBestMove(threads, &board, &limits, 0, 0, 0, 0);
+        getBestMove(threads, &board, &limits, getRealTime(), 0, 0, 0);
         nodes += nodesSearchedThreadPool(threads);
         
         clearTranspositionTable(&Table);
