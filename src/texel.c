@@ -72,12 +72,14 @@ extern const int PawnConnected32[32][PHASE_NB];
 
 // To determine the starting values for the Knight terms
 extern const int KnightAttackedByPawn[PHASE_NB];
+extern const int KnightRammedPawns[PHASE_NB];
 extern const int KnightOutpost[2][PHASE_NB];
 extern const int KnightMobility[9][PHASE_NB];
 
 // To determine the starting values for the Bishop terms
 extern const int BishopPair[PHASE_NB];
 extern const int BishopAttackedByPawn[PHASE_NB];
+extern const int BishopRammedPawns[PHASE_NB];
 extern const int BishopOutpost[2][PHASE_NB];
 extern const int BishopMobility[14][PHASE_NB];
 
@@ -243,7 +245,7 @@ void initializeTexelEntries(TexelEntry* tes, Thread* thread){
         // Use the search value as the evaluation, to provide a better
         // understanding the potential of a position's eval terms. Make
         // sure the evaluation is from the perspective of WHITE
-        tes[i].eval = search(thread, &thread->pv, -MATE, MATE, 4, 0);
+        tes[i].eval = search(thread, &thread->pv, -MATE, MATE, 1, 0);
         if (thread->board.turn == BLACK) tes[i].eval *= -1;
         
         // Now collect an evaluation from a quiet position
@@ -393,6 +395,9 @@ void initializeCoefficients(int coeffs[NT]){
     if (TuneKnightAttackedByPawn)
         coeffs[i++] = T.knightAttackedByPawn[WHITE] - T.knightAttackedByPawn[BLACK];
     
+    if (TuneKnightRammedPawns)
+        coeffs[i++] = T.knightRammedPawns[WHITE] - T.knightRammedPawns[BLACK];
+    
     if (TuneKnightOutpost)
         for (a = 0; a < 2; a++)
             coeffs[i++] = T.knightOutpost[WHITE][a] - T.knightOutpost[BLACK][a];
@@ -406,6 +411,9 @@ void initializeCoefficients(int coeffs[NT]){
     
     if (TuneBishopPair)
         coeffs[i++] = T.bishopPair[WHITE] - T.bishopPair[BLACK];
+    
+    if (TuneBishopRammedPawns)
+        coeffs[i++] = T.bishopRammedPawns[WHITE] - T.bishopRammedPawns[BLACK];
     
     if (TuneBishopAttackedByPawn)
         coeffs[i++] = T.bishopAttackedByPawn[WHITE] - T.bishopAttackedByPawn[BLACK];
@@ -583,6 +591,11 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
         cparams[i++][EG] = KnightAttackedByPawn[EG];
     }
     
+    if (TuneKnightRammedPawns){
+        cparams[i  ][MG] = KnightRammedPawns[MG];
+        cparams[i++][EG] = KnightRammedPawns[EG];
+    }
+    
     if (TuneKnightOutpost){
         for (a = 0; a < 2; a++, i++){
             cparams[i][MG] = KnightOutpost[a][MG];
@@ -603,6 +616,11 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
     if (TuneBishopPair){
         cparams[i  ][MG] = BishopPair[MG];
         cparams[i++][EG] = BishopPair[EG];
+    }
+    
+    if (TuneBishopRammedPawns){
+        cparams[i  ][MG] = BishopRammedPawns[MG];
+        cparams[i++][EG] = BishopRammedPawns[EG];
     }
     
     if (TuneBishopAttackedByPawn){
@@ -864,6 +882,10 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
         printf("\nconst int KnightAttackedByPawn[PHASE_NB] = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
     }
     
+    if (TuneKnightRammedPawns){
+        printf("\nconst int KnightRammedPawns[PHASE_NB] = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
+    }
+    
     if (TuneKnightOutpost){
         printf("\nconst int KnightOutpost[2][PHASE_NB] = { {%4d,%4d}, {%4d,%4d} };\n",
                 tparams[i  ][MG], tparams[i  ][EG],
@@ -884,6 +906,10 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
     
     if (TuneBishopPair){
         printf("\nconst int BishopPair[PHASE_NB] = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
+    }
+    
+    if (TuneBishopRammedPawns){
+        printf("\nconst int BishopRammedPawns[PHASE_NB] = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
     }
     
     if (TuneBishopAttackedByPawn){

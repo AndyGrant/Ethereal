@@ -22,7 +22,7 @@
 #include "types.h"
 
 // Number of Positions in the data set
-#define NP (147000)
+#define NP (1470000)
 
 // Every tunable component of the evaluation includes a definition of
 // TuneParamName, which is equal to an ON/OFF flag, multipled by the
@@ -52,11 +52,13 @@
 
 // Define the Knight Terms
 #define TuneKnightAttackedByPawn (1 * 1  )
+#define TuneKnightRammedPawns    (1 * 1  )
 #define TuneKnightOutpost        (1 * 2  )
 #define TuneKnightMobility       (1 * 9  )
 
 // Define the Bishop Terms
 #define TuneBishopPair           (1 * 1  )
+#define TuneBishopRammedPawns    (1 * 1  )
 #define TuneBishopAttackedByPawn (1 * 1  )
 #define TuneBishopOutpost        (1 * 2  )
 #define TuneBishopMobility       (1 * 14 )
@@ -79,18 +81,19 @@
 #define TunePassedPawn           (1 * 32 )
 
 // Compute Number Of Terms (NT) based on what is turned on and off
-#define NT (                                                                   \
-    TunePawnValue            + TuneKnightValue          + TuneBishopValue    + \
-    TuneRookValue            + TuneQueenValue           + TuneKingValue      + \
-    TunePawnPSQT             + TuneKnightPSQT           + TuneBishopPSQT     + \
-    TuneRookPSQT             + TuneQueenPSQT            + TuneKingPSQT       + \
-    TunePawnIsolated         + TunePawnStacked          + TunePawnBackwards  + \
-    TunePawnConnected        + TuneKnightAttackedByPawn + TuneKnightOutpost  + \
-    TuneKnightMobility                                  + TuneBishopPair     + \
-    TuneBishopAttackedByPawn + TuneBishopOutpost        + TuneBishopMobility + \
-    TuneRookFile             + TuneRookOnSeventh        + TuneRookMobility   + \
-    TuneQueenChecked         + TuneQueenCheckedByPawn   + TuneQueenMobility  + \
-    TuneKingDefenders        + TuneKingShelter          + TunePassedPawn       \
+#define NT (                                                                         \
+    TunePawnValue            + TuneKnightValue          + TuneBishopValue          + \
+    TuneRookValue            + TuneQueenValue           + TuneKingValue            + \
+    TunePawnPSQT             + TuneKnightPSQT           + TuneBishopPSQT           + \
+    TuneRookPSQT             + TuneQueenPSQT            + TuneKingPSQT             + \
+    TunePawnIsolated         + TunePawnStacked          + TunePawnBackwards        + \
+    TunePawnConnected        + TuneKnightRammedPawns    + TuneKnightAttackedByPawn + \
+    TuneKnightOutpost        + TuneKnightMobility       + TuneBishopPair           + \
+    TuneBishopRammedPawns    + TuneBishopAttackedByPawn + TuneBishopOutpost        + \
+    TuneBishopMobility       + TuneRookFile             + TuneRookOnSeventh        + \
+    TuneRookMobility         + TuneQueenChecked         + TuneQueenCheckedByPawn   + \
+    TuneQueenMobility        + TuneKingDefenders        + TuneKingShelter          + \
+    TunePassedPawn                                                                   \
 )
 
 // Try to figure out how much we should allocate for the tuner
