@@ -35,7 +35,7 @@ typedef struct SearchInfo {
     double maxalloc;
     double maxusage;
     
-    double pvStability;
+    int bestMoveChanges;
     
 } SearchInfo;
 

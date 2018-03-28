@@ -58,19 +58,19 @@ uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double start
     
     // Some initialization for time management
     info.starttime = start;
-    info.pvStability = 1.00;
+    info.bestMoveChanges = 0;
     
     // Ethereal is responsible for choosing how much time to spend searching
     if (limits->limitedBySelf){
         
         if (mtg >= 0){
-            info.idealusage =  0.65 * time / (mtg +  5) + inc;
+            info.idealusage =  0.75 * time / (mtg +  5) + inc;
             info.maxalloc   =  4.00 * time / (mtg +  7) + inc;
             info.maxusage   = 10.00 * time / (mtg + 10) + inc;
         }
         
         else {
-            info.idealusage =  0.45 * (time + 23 * inc) / 25;
+            info.idealusage =  0.52 * (time + 23 * inc) / 25;
             info.maxalloc   =  4.00 * (time + 23 * inc) / 25;
             info.maxusage   = 10.00 * (time + 23 * inc) / 25;
         }
@@ -178,22 +178,30 @@ void* iterativeDeepening(void* vthread){
             if (info->values[depth-1] < value - 10)
                 info->idealusage *= 0.975;
             
-            // Increase our time if the pv has changed across the last two iterations
-            if (info->bestmoves[depth-1] != thread->pv.line[0])
-                info->idealusage *= MAX(info->pvStability, 1.30);
+            if (info->bestmoves[depth] == info->bestmoves[depth-1]){
+                
+                // If we still have remaining increments from best move
+                // changes reduce our ideal time usage by a factor of 5%
+                info->idealusage *= info->bestMoveChanges ? 0.935 : 1.000;
+                
+                // Reduce our best move change debt
+                info->bestMoveChanges = MAX(0, info->bestMoveChanges - 1);
+            }
             
-            // Decrease our time if the pv has stayed the same between iterations
-            if (info->bestmoves[depth-1] == thread->pv.line[0])
-                info->idealusage *= MAX(0.95, MIN(info->pvStability, 1.00));
+            else {
+                
+                // Increase our time by based on our best move debt. If this is the
+                // first PV change in some time, we increase our time by 30%. If we
+                // have recently changed best moves, we will only adjust our usage
+                // to get back to the initial 30% time allocation by the first change
+                info->idealusage *= 1.000 + 0.080 * (6 - info->bestMoveChanges);
+                
+                // Set out counter back to six as the best move has changed
+                info->bestMoveChanges = 6;
+            }
             
-            // Cap our ideal usage at the max allocation of time
+            // Cap our ideal usage using our maximum allocation
             info->idealusage = MIN(info->idealusage, info->maxalloc);
-            
-            // Update the PV Stability depending on the best move changing. If the best move is
-            // holding stable, we increase the pv stability. This way, if the best move changes
-            // after holding for many iterations, more time will be allocated for the search, and
-            // less time if the best move is in a constant flucation.
-            info->pvStability *= (info->bestmoves[depth-1] != thread->pv.line[0]) ? 0.95 : 1.05;
         }
         
         // Check for termination by any of the possible limits
