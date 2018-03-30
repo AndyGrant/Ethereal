@@ -181,19 +181,20 @@ void* iterativeDeepening(void* vthread){
             if (info->bestmoves[depth] == info->bestmoves[depth-1]){
                 
                 // If we still have remaining increments from best move
-                // changes reduce our ideal time usage by a factor of 5%
+                // changes reduce our ideal time usage by a factor, such that
+                // after we deplete bestMoveChanges, we are near the original time
                 info->idealusage *= info->bestMoveChanges ? 0.935 : 1.000;
                 
-                // Reduce our best move change debt
+                // We have recovered one best move change
                 info->bestMoveChanges = MAX(0, info->bestMoveChanges - 1);
             }
             
             else {
                 
                 // Increase our time by based on our best move debt. If this is the
-                // first PV change in some time, we increase our time by 30%. If we
+                // first PV change in some time, we increase our time by 48%. If we
                 // have recently changed best moves, we will only adjust our usage
-                // to get back to the initial 30% time allocation by the first change
+                // to get back to the initial 48% time allocation by the first change
                 info->idealusage *= 1.000 + 0.080 * (6 - info->bestMoveChanges);
                 
                 // Set out counter back to six as the best move has changed
@@ -413,14 +414,23 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         depth = 0; 
     }
     
-    // Step 7. Some initialization. Grab the inCheck flag based on any threats
-    // to our king. Get a static eval of the node for pruning decisions, and
-    // compute a futilityMargin for use later when doing futility pruning inloop.
-    // Also, we determine if the move progression leading up until this node is
-    // good enough to warrent an 'improving' status, used for pruning decisions
+    // Step 7. Initialize flags and values used by pruning and search methods
+    
+    // We can grab in check based on the already computed king attackers bitboard
     inCheck = !!board->kingAttackers;
+    
+    // Here we perform our check extension, for non-root pvnodes, or for non-root
+    // nodes near depth zero. Note that when we bypass the qsearch as a result of
+    // being in check, we set depth to zero. This step adjusts depth back to one.
+    depth += inCheck && !RootNode && (PvNode || depth <= 6);
+    
+    // Compute and save off a static evaluation. Also, compute our futilityMargin
     eval = thread->evalStack[height] = evaluateBoard(board, &ei, &thread->pktable);
     futilityMargin = eval + FutilityMargin * depth;
+    
+    // Finally, we define a node to be improving if the last two moves have increased
+    // the static eval by at least 16 centipawns. In order to have two last moves, we
+    // must have a height of at least 4.
     improving =    height >= 4
                &&  thread->evalStack[height-0] >= thread->evalStack[height-2] + 16
                &&  thread->evalStack[height-2] >= thread->evalStack[height-4] + 16;
@@ -528,9 +538,6 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         if (getTranspositionEntry(&Table, board->hash, &ttEntry))
             ttMove = ttEntry.bestMove;
     }
-    
-    // Step 13. Check Extension at non Root nodes that are PV or low depth
-    depth += inCheck && !RootNode && (PvNode || depth <= 6);
     
     initializeMovePicker(&movePicker, thread, ttMove, height, 0);
     
