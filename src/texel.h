@@ -22,7 +22,7 @@
 #include "types.h"
 
 // Number of Positions in the data set
-#define NP (1470000)
+#define NP (1000)
 
 // Every tunable component of the evaluation includes a definition of
 // TuneParamName, which is equal to an ON/OFF flag, multipled by the

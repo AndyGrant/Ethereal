@@ -168,10 +168,9 @@ PawnKingEntry * getPawnKingEntry(PawnKingTable* pktable, uint64_t pkhash){
     return pkentry->pkhash == pkhash ? pkentry : NULL;
 }
 
-void storePawnKingEntry(PawnKingTable* pktable, uint64_t pkhash, uint64_t passed, int mg, int eg){
+void storePawnKingEntry(PawnKingTable* pktable, uint64_t pkhash, uint64_t passed, int eval){
     PawnKingEntry* pkentry = &(pktable->entries[pkhash >> 48]);
     pkentry->pkhash = pkhash;
     pkentry->passed = passed;
-    pkentry->mg     = mg;
-    pkentry->eg     = eg;
+    pkentry->eval   = eval;
 }

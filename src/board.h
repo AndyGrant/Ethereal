@@ -32,8 +32,7 @@ typedef struct Board {
     int castleRights;
     int epSquare;
     int fiftyMoveRule;
-    int midgame;
-    int endgame;
+    int psqtmat;
     int numMoves;
     uint64_t history[512];
 } Board;
@@ -46,8 +45,7 @@ typedef struct Undo {
     int castleRights;
     int epSquare;
     int fiftyMoveRule;
-    int midgame;
-    int endgame;
+    int psqtmat;
     int captureSquare;
     int capturePiece;
 } Undo;

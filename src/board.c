@@ -215,10 +215,8 @@ void initializeBoard(Board* board, char* fen){
         board->pkhash ^= PawnKingKeys[board->squares[i]][i];
         
     // Initalize Piece Square and Material value counters
-    for(i = 0, board->midgame = 0, board->endgame = 0; i < 64; i++){
-        board->midgame += PSQTMidgame[board->squares[i]][i];
-        board->endgame += PSQTEndgame[board->squares[i]][i];
-    }
+    for(i = 0, board->psqtmat = 0; i < 64; i++)
+        board->psqtmat += PSQT[board->squares[i]][i];
     
     // Number of moves since this (root) position
     board->numMoves = 0;
