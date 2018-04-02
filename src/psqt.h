@@ -21,7 +21,6 @@
 
 void initializePSQT();
 
-extern int PSQTMidgame[32][SQUARE_NB];
-extern int PSQTEndgame[32][SQUARE_NB];
+extern int PSQT[32][SQUARE_NB];
 
 #endif

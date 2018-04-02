@@ -48,8 +48,7 @@ void applyMove(Board* board, uint16_t move, Undo* undo){
     undo->castleRights = board->castleRights;
     undo->epSquare = board->epSquare;
     undo->fiftyMoveRule = board->fiftyMoveRule;
-    undo->midgame = board->midgame;
-    undo->endgame = board->endgame;
+    undo->psqtmat = board->psqtmat;
     
     // Update the hash history and the move count
     board->history[board->numMoves++] = board->hash;
@@ -113,15 +112,10 @@ void applyNormalMove(Board* board, uint16_t move, Undo* undo){
     // Swap the turn
     board->turn = !board->turn;
     
-    // Update the PSQT value for the midgame
-    board->midgame += PSQTMidgame[fromPiece][to]
-                    - PSQTMidgame[fromPiece][from]
-                    - PSQTMidgame[toPiece][to];
-    
-    // Update the PSQT value for the endgame
-    board->endgame += PSQTEndgame[fromPiece][to]
-                    - PSQTEndgame[fromPiece][from]
-                    - PSQTEndgame[toPiece][to];
+    // Update the PSQT and Material values
+    board->psqtmat += PSQT[fromPiece][to]
+                   -  PSQT[fromPiece][from]
+                   -  PSQT[toPiece][to];
                     
     // Update the main zorbist hash
     board->hash   ^= ZorbistKeys[fromPiece][from]
@@ -197,17 +191,11 @@ void applyCastleMove(Board* board, uint16_t move, Undo* undo){
     // Swap the turn
     board->turn = !board->turn;
     
-    // Update the PSQT value for the midgame
-    board->midgame += PSQTMidgame[fromPiece][to]
-                    - PSQTMidgame[fromPiece][from]
-                    + PSQTMidgame[rFromPiece][rTo]
-                    - PSQTMidgame[rFromPiece][rFrom];
-                    
-    // Update the PSQT value for the endgame
-    board->endgame += PSQTEndgame[fromPiece][to]
-                    - PSQTEndgame[fromPiece][from]
-                    + PSQTEndgame[rFromPiece][rTo]
-                    - PSQTEndgame[rFromPiece][rFrom];
+    // Update the PSQT and Material values
+    board->psqtmat += PSQT[fromPiece][to]
+                    - PSQT[fromPiece][from]
+                    + PSQT[rFromPiece][rTo]
+                    - PSQT[rFromPiece][rFrom];
     
     // Update the main zorbist hash
     board->hash   ^= ZorbistKeys[fromPiece][from]
@@ -265,15 +253,10 @@ void applyEnpassMove(Board* board, uint16_t move, Undo* undo){
     // Swap the turn
     board->turn = !board->turn;
     
-    // Update the PSQT value for the midgame
-    board->midgame += PSQTMidgame[fromPiece][to]
-                    - PSQTMidgame[fromPiece][from]
-                    - PSQTMidgame[enpassPiece][ep];
-                    
-    // Update the PSQT value for the endgame
-    board->endgame += PSQTEndgame[fromPiece][to]
-                    - PSQTEndgame[fromPiece][from]
-                    - PSQTEndgame[enpassPiece][ep];
+    // Update the PSQT and Material values
+    board->psqtmat += PSQT[fromPiece][to]
+                    - PSQT[fromPiece][from]
+                    - PSQT[enpassPiece][ep];
     
     // Update the main zorbist key
     board->hash   ^= ZorbistKeys[fromPiece][from]
@@ -333,15 +316,10 @@ void applyPromotionMove(Board* board, uint16_t move, Undo* undo){
     // Swap the turn
     board->turn = !board->turn;
     
-    // Update the PSQT value for the midgame
-    board->midgame += PSQTMidgame[promoPiece][to]
-                    - PSQTMidgame[fromPiece][from] 
-                    - PSQTMidgame[toPiece][to];
-                    
-    // Update the PSQT value for the endgame
-    board->endgame += PSQTEndgame[promoPiece][to]
-                    - PSQTEndgame[fromPiece][from]
-                    - PSQTEndgame[toPiece][to];
+    // Update the PSQT and Material values
+    board->psqtmat += PSQT[promoPiece][to]
+                    - PSQT[fromPiece][from] 
+                    - PSQT[toPiece][to];
     
     // Update the main zorbist hash
     board->hash   ^= ZorbistKeys[fromPiece][from]
@@ -394,8 +372,7 @@ void revertMove(Board* board, uint16_t move, Undo* undo){
     board->castleRights = undo->castleRights;
     board->epSquare = undo->epSquare;
     board->fiftyMoveRule = undo->fiftyMoveRule;
-    board->midgame = undo->midgame;
-    board->endgame = undo->endgame;
+    board->psqtmat = undo->psqtmat;
     
     to = MoveTo(move);
     from = MoveFrom(move);

@@ -44,7 +44,7 @@ typedef struct TransTable {
 typedef struct PawnKingEntry {
     uint64_t pkhash;
     uint64_t passed;
-    int mg, eg;
+    int eval;
 } PawnKingEntry;
 
 typedef struct PawnKingTable {
@@ -61,6 +61,6 @@ int getTranspositionEntry(TransTable* table, uint64_t hash, TransEntry* ttEntry)
 void storeTranspositionEntry(TransTable* table, int depth, int type, int value, int bestMove, uint64_t hash);
 
 PawnKingEntry * getPawnKingEntry(PawnKingTable* pktable, uint64_t pkhash);
-void storePawnKingEntry(PawnKingTable* pktable, uint64_t pkhash, uint64_t passed, int mg, int eg);
+void storePawnKingEntry(PawnKingTable* pktable, uint64_t pkhash, uint64_t passed, int eval);
 
 #endif 

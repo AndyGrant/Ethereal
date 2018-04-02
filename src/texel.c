@@ -49,56 +49,56 @@ extern TransTable Table;
 extern EvalTrace T, EmptyTrace;
 
 // To determine the starting values for the Piece Values
-extern const int PawnValue[PHASE_NB];
-extern const int KnightValue[PHASE_NB];
-extern const int BishopValue[PHASE_NB];
-extern const int RookValue[PHASE_NB];
-extern const int QueenValue[PHASE_NB];
-extern const int KingValue[PHASE_NB];
+extern const int PawnValue;
+extern const int KnightValue;
+extern const int BishopValue;
+extern const int RookValue;
+extern const int QueenValue;
+extern const int KingValue;
 
 // To determine the starting values for Piece Square Table Values
-extern const int PawnPSQT32[32][PHASE_NB];
-extern const int KnightPSQT32[32][PHASE_NB];
-extern const int BishopPSQT32[32][PHASE_NB];
-extern const int RookPSQT32[32][PHASE_NB];
-extern const int QueenPSQT32[32][PHASE_NB];
-extern const int KingPSQT32[32][PHASE_NB];
+extern const int PawnPSQT32[32];
+extern const int KnightPSQT32[32];
+extern const int BishopPSQT32[32];
+extern const int RookPSQT32[32];
+extern const int QueenPSQT32[32];
+extern const int KingPSQT32[32];
 
 // To determine the starting values for the Pawn terms
-extern const int PawnIsolated[PHASE_NB];
-extern const int PawnStacked[PHASE_NB];
-extern const int PawnBackwards[2][PHASE_NB];
-extern const int PawnConnected32[32][PHASE_NB];
+extern const int PawnIsolated;
+extern const int PawnStacked;
+extern const int PawnBackwards[2];
+extern const int PawnConnected32[32];
 
 // To determine the starting values for the Knight terms
-extern const int KnightAttackedByPawn[PHASE_NB];
-extern const int KnightRammedPawns[PHASE_NB];
-extern const int KnightOutpost[2][PHASE_NB];
-extern const int KnightMobility[9][PHASE_NB];
+extern const int KnightAttackedByPawn;
+extern const int KnightRammedPawns;
+extern const int KnightOutpost[2];
+extern const int KnightMobility[9];
 
 // To determine the starting values for the Bishop terms
-extern const int BishopPair[PHASE_NB];
-extern const int BishopAttackedByPawn[PHASE_NB];
-extern const int BishopRammedPawns[PHASE_NB];
-extern const int BishopOutpost[2][PHASE_NB];
-extern const int BishopMobility[14][PHASE_NB];
+extern const int BishopPair;
+extern const int BishopAttackedByPawn;
+extern const int BishopRammedPawns;
+extern const int BishopOutpost[2];
+extern const int BishopMobility[14];
 
 // To determine the starting values for the Rook terms
-extern const int RookFile[2][PHASE_NB];
-extern const int RookOnSeventh[PHASE_NB];
-extern const int RookMobility[15][PHASE_NB];
+extern const int RookFile[2];
+extern const int RookOnSeventh;
+extern const int RookMobility[15];
 
 // To determine the starting values for the Queen terms
-extern const int QueenChecked[PHASE_NB];
-extern const int QueenCheckedByPawn[PHASE_NB];
-extern const int QueenMobility[28][PHASE_NB];
+extern const int QueenChecked;
+extern const int QueenCheckedByPawn;
+extern const int QueenMobility[28];
 
 // To determine the starting values for the King terms
-extern const int KingDefenders[12][PHASE_NB];
-extern const int KingShelter[2][FILE_NB][RANK_NB][PHASE_NB];
+extern const int KingDefenders[12];
+extern const int KingShelter[2][FILE_NB][RANK_NB];
 
 // To determine the starting values for the Passed Pawn terms
-extern const int PassedPawn[2][2][RANK_NB][PHASE_NB];
+extern const int PassedPawn[2][2][RANK_NB];
 
 
 void runTexelTuning(Thread* thread){
@@ -482,33 +482,33 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
     // Grab the current parameters for each Piece Value
     
     if (TunePawnValue){
-        cparams[i  ][MG] = PawnValue[MG];
-        cparams[i++][EG] = PawnValue[EG];
+        cparams[i  ][MG] = ScoreMG(PawnValue);
+        cparams[i++][EG] = ScoreEG(PawnValue);
     }
     
     if (TuneKnightValue){
-        cparams[i  ][MG] = KnightValue[MG];
-        cparams[i++][EG] = KnightValue[EG];
+        cparams[i  ][MG] = ScoreMG(KnightValue);
+        cparams[i++][EG] = ScoreEG(KnightValue);
     }
     
     if (TuneBishopValue){
-        cparams[i  ][MG] = BishopValue[MG];
-        cparams[i++][EG] = BishopValue[EG];
+        cparams[i  ][MG] = ScoreMG(BishopValue);
+        cparams[i++][EG] = ScoreEG(BishopValue);
     }
     
     if (TuneRookValue){
-        cparams[i  ][MG] = RookValue[MG];
-        cparams[i++][EG] = RookValue[EG];
+        cparams[i  ][MG] = ScoreMG(RookValue);
+        cparams[i++][EG] = ScoreEG(RookValue);
     }
     
     if (TuneQueenValue){
-        cparams[i  ][MG] = QueenValue[MG];
-        cparams[i++][EG] = QueenValue[EG];
+        cparams[i  ][MG] = ScoreMG(QueenValue);
+        cparams[i++][EG] = ScoreEG(QueenValue);
     }
     
     if (TuneKingValue){
-        cparams[i  ][MG] = KingValue[MG];
-        cparams[i++][EG] = KingValue[EG];
+        cparams[i  ][MG] = ScoreMG(KingValue);
+        cparams[i++][EG] = ScoreEG(KingValue);
     }
     
     
@@ -516,43 +516,43 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
 
     if (TunePawnPSQT){
         for (a = 0; a < 32; a++, i++){
-            cparams[i][MG] = PawnPSQT32[a][MG];
-            cparams[i][EG] = PawnPSQT32[a][EG];
+            cparams[i][MG] = ScoreMG(PawnPSQT32[a]);
+            cparams[i][EG] = ScoreEG(PawnPSQT32[a]);
         }
     }
     
     if (TuneKnightPSQT){
         for (a = 0; a < 32; a++, i++){
-            cparams[i][MG] = KnightPSQT32[a][MG];
-            cparams[i][EG] = KnightPSQT32[a][EG];
+            cparams[i][MG] = ScoreMG(KnightPSQT32[a]);
+            cparams[i][EG] = ScoreEG(KnightPSQT32[a]);
         }
     }
     
     if (TuneBishopPSQT){
         for (a = 0; a < 32; a++, i++){
-            cparams[i][MG] = BishopPSQT32[a][MG];
-            cparams[i][EG] = BishopPSQT32[a][EG];
+            cparams[i][MG] = ScoreMG(BishopPSQT32[a]);
+            cparams[i][EG] = ScoreEG(BishopPSQT32[a]);
         }
     }
         
     if (TuneRookPSQT){
         for (a = 0; a < 32; a++, i++){
-            cparams[i][MG] = RookPSQT32[a][MG];
-            cparams[i][EG] = RookPSQT32[a][EG];
+            cparams[i][MG] = ScoreMG(RookPSQT32[a]);
+            cparams[i][EG] = ScoreEG(RookPSQT32[a]);
         }
     }
         
     if (TuneQueenPSQT){
         for (a = 0; a < 32; a++, i++){
-            cparams[i][MG] = QueenPSQT32[a][MG];
-            cparams[i][EG] = QueenPSQT32[a][EG];
+            cparams[i][MG] = ScoreMG(QueenPSQT32[a]);
+            cparams[i][EG] = ScoreEG(QueenPSQT32[a]);
         }
     }
     
     if (TuneKingPSQT){
         for (a = 0; a < 32; a++, i++){
-            cparams[i][MG] = KingPSQT32[a][MG];
-            cparams[i][EG] = KingPSQT32[a][EG];
+            cparams[i][MG] = ScoreMG(KingPSQT32[a]);
+            cparams[i][EG] = ScoreEG(KingPSQT32[a]);
         }
     }
     
@@ -560,26 +560,26 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
     // Grab the current parameters for the Pawn evaluation terms
     
     if (TunePawnIsolated){
-        cparams[i  ][MG] = PawnIsolated[MG];
-        cparams[i++][EG] = PawnIsolated[EG];
+        cparams[i  ][MG] = ScoreMG(PawnIsolated);
+        cparams[i++][EG] = ScoreEG(PawnIsolated);
     }
     
     if (TunePawnStacked){
-        cparams[i  ][MG] = PawnStacked[MG];
-        cparams[i++][EG] = PawnStacked[EG];
+        cparams[i  ][MG] = ScoreMG(PawnStacked);
+        cparams[i++][EG] = ScoreEG(PawnStacked);
     }
     
     if (TunePawnBackwards){
         for (a = 0; a < 2; a++, i++){
-            cparams[i][MG] = PawnBackwards[a][MG];
-            cparams[i][EG] = PawnBackwards[a][EG];
+            cparams[i][MG] = ScoreMG(PawnBackwards[a]);
+            cparams[i][EG] = ScoreEG(PawnBackwards[a]);
         }    
     }
     
     if (TunePawnConnected){
         for (a = 0; a < 32; a++, i++){
-            cparams[i][MG] = PawnConnected32[a][MG];
-            cparams[i][EG] = PawnConnected32[a][EG];
+            cparams[i][MG] = ScoreMG(PawnConnected32[a]);
+            cparams[i][EG] = ScoreEG(PawnConnected32[a]);
         }
     }
     
@@ -587,26 +587,26 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
     // Grab the current parameters for the Knight evaluation terms
     
     if (TuneKnightAttackedByPawn){
-        cparams[i  ][MG] = KnightAttackedByPawn[MG];
-        cparams[i++][EG] = KnightAttackedByPawn[EG];
+        cparams[i  ][MG] = ScoreMG(KnightAttackedByPawn);
+        cparams[i++][EG] = ScoreEG(KnightAttackedByPawn);
     }
     
     if (TuneKnightRammedPawns){
-        cparams[i  ][MG] = KnightRammedPawns[MG];
-        cparams[i++][EG] = KnightRammedPawns[EG];
+        cparams[i  ][MG] = ScoreMG(KnightRammedPawns);
+        cparams[i++][EG] = ScoreEG(KnightRammedPawns);
     }
     
     if (TuneKnightOutpost){
         for (a = 0; a < 2; a++, i++){
-            cparams[i][MG] = KnightOutpost[a][MG];
-            cparams[i][EG] = KnightOutpost[a][EG];
+            cparams[i][MG] = ScoreMG(KnightOutpost[a]);
+            cparams[i][EG] = ScoreEG(KnightOutpost[a]);
         }
     }
     
     if (TuneKnightMobility){
         for (a = 0; a < 9; a++, i++){
-            cparams[i][MG] = KnightMobility[a][MG];
-            cparams[i][EG] = KnightMobility[a][EG];
+            cparams[i][MG] = ScoreMG(KnightMobility[a]);
+            cparams[i][EG] = ScoreEG(KnightMobility[a]);
         }
     }
     
@@ -614,31 +614,31 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
     // Grab the current parameters for the Bishop evaluation terms
     
     if (TuneBishopPair){
-        cparams[i  ][MG] = BishopPair[MG];
-        cparams[i++][EG] = BishopPair[EG];
+        cparams[i  ][MG] = ScoreMG(BishopPair);
+        cparams[i++][EG] = ScoreEG(BishopPair);
     }
     
     if (TuneBishopRammedPawns){
-        cparams[i  ][MG] = BishopRammedPawns[MG];
-        cparams[i++][EG] = BishopRammedPawns[EG];
+        cparams[i  ][MG] = ScoreMG(BishopRammedPawns);
+        cparams[i++][EG] = ScoreEG(BishopRammedPawns);
     }
     
     if (TuneBishopAttackedByPawn){
-        cparams[i  ][MG] = BishopAttackedByPawn[MG];
-        cparams[i++][EG] = BishopAttackedByPawn[EG];
+        cparams[i  ][MG] = ScoreMG(BishopAttackedByPawn);
+        cparams[i++][EG] = ScoreEG(BishopAttackedByPawn);
     }
     
     if (TuneBishopOutpost){
         for (a = 0; a < 2; a++, i++){
-            cparams[i][MG] = BishopOutpost[a][MG];
-            cparams[i][EG] = BishopOutpost[a][EG];
+            cparams[i][MG] = ScoreMG(BishopOutpost[a]);
+            cparams[i][EG] = ScoreEG(BishopOutpost[a]);
         }
     }
     
     if (TuneKnightMobility){
         for (a = 0; a < 14; a++, i++){
-            cparams[i][MG] = BishopMobility[a][MG];
-            cparams[i][EG] = BishopMobility[a][EG];
+            cparams[i][MG] = ScoreMG(BishopMobility[a]);
+            cparams[i][EG] = ScoreEG(BishopMobility[a]);
         }
     }
     
@@ -647,20 +647,20 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
     
     if (TuneRookFile){
         for (a = 0; a < 2; a++, i++){
-            cparams[i][MG] = RookFile[a][MG];
-            cparams[i][EG] = RookFile[a][EG];
+            cparams[i][MG] = ScoreMG(RookFile[a]);
+            cparams[i][EG] = ScoreEG(RookFile[a]);
         }
     }
     
     if (TuneRookOnSeventh){
-        cparams[i  ][MG] = RookOnSeventh[MG];
-        cparams[i++][EG] = RookOnSeventh[EG];
+        cparams[i  ][MG] = ScoreMG(RookOnSeventh);
+        cparams[i++][EG] = ScoreEG(RookOnSeventh);
     }
     
     if (TuneRookMobility){
         for (a = 0; a < 15; a++, i++){
-            cparams[i][MG] = RookMobility[a][MG];
-            cparams[i][EG] = RookMobility[a][EG];
+            cparams[i][MG] = ScoreMG(RookMobility[a]);
+            cparams[i][EG] = ScoreEG(RookMobility[a]);
         }
     }
     
@@ -668,19 +668,19 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
     // Grab the current parameters for the Queen evaluation terms
     
     if (TuneQueenChecked){
-        cparams[i  ][MG] = QueenChecked[MG];
-        cparams[i++][EG] = QueenChecked[EG];
+        cparams[i  ][MG] = ScoreMG(QueenChecked);
+        cparams[i++][EG] = ScoreEG(QueenChecked);
     }
     
     if (TuneQueenCheckedByPawn){
-        cparams[i  ][MG] = QueenCheckedByPawn[MG];
-        cparams[i++][EG] = QueenCheckedByPawn[EG];
+        cparams[i  ][MG] = ScoreMG(QueenCheckedByPawn);
+        cparams[i++][EG] = ScoreEG(QueenCheckedByPawn);
     }
     
     if (TuneQueenMobility){
         for (a = 0; a < 28; a++, i++){
-            cparams[i][MG] = QueenMobility[a][MG];
-            cparams[i][EG] = QueenMobility[a][EG];
+            cparams[i][MG] = ScoreMG(QueenMobility[a]);
+            cparams[i][EG] = ScoreEG(QueenMobility[a]);
         }
     }
 
@@ -689,8 +689,8 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
 
     if (TuneKingDefenders){
         for (a = 0; a < 12; a++, i++){
-            cparams[i][MG] = KingDefenders[a][MG];
-            cparams[i][EG] = KingDefenders[a][EG];
+            cparams[i][MG] = ScoreMG(KingDefenders[a]);
+            cparams[i][EG] = ScoreEG(KingDefenders[a]);
         }
     }
     
@@ -698,8 +698,8 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
         for (a = 0; a < 2; a++){
             for (b = 0; b < FILE_NB; b++){
                 for (c = 0; c < RANK_NB; c++, i++){
-                    cparams[i][MG] = KingShelter[a][b][c][MG];
-                    cparams[i][EG] = KingShelter[a][b][c][EG];
+                    cparams[i][MG] = ScoreMG(KingShelter[a][b][c]);
+                    cparams[i][EG] = ScoreEG(KingShelter[a][b][c]);
                 }
             }
         }
@@ -712,8 +712,8 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
         for (a = 0; a < 2; a++){
             for (b = 0; b < 2; b++){
                 for (c = 0; c < RANK_NB; c++, i++){
-                    cparams[i][MG] = PassedPawn[a][b][c][MG];
-                    cparams[i][EG] = PassedPawn[a][b][c][EG];
+                    cparams[i][MG] = ScoreMG(PassedPawn[a][b][c]);
+                    cparams[i][EG] = ScoreEG(PassedPawn[a][b][c]);
                 }
             }
         }
@@ -757,7 +757,7 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
     
     int tparams[NT][PHASE_NB];
     
-    int pvalue = PawnValue[MG] + (TunePawnValue ? params[0][MG] : 0);
+    int pvalue = ScoreMG(PawnValue) + (TunePawnValue ? params[0][MG] : 0);
     
     // Combine the original params and the param deltas. Scale the params so
     // that the mid game value of a pawn is always 100 centipawns
@@ -767,230 +767,249 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
     }
     
     // Print Piece Values
+
+    printf("\n\n// Definition of Values for each Piece type\n");
     
     if (TunePawnValue){
-        printf("\nconst int PawnValue[PHASE_NB]   = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
+        printf("\nconst int PawnValue   = S(%4d,%4d);", tparams[i][MG], tparams[i][EG]); i++;
     }
     
     if (TuneKnightValue){
-        printf("\nconst int KnightValue[PHASE_NB] = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
+        printf("\nconst int KnightValue = S(%4d,%4d);", tparams[i][MG], tparams[i][EG]); i++;
     }
     
     if (TuneBishopValue){
-        printf("\nconst int BishopValue[PHASE_NB] = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
+        printf("\nconst int BishopValue = S(%4d,%4d);", tparams[i][MG], tparams[i][EG]); i++;
     }
     
     if (TuneRookValue){
-        printf("\nconst int RookValue[PHASE_NB]   = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
+        printf("\nconst int RookValue   = S(%4d,%4d);", tparams[i][MG], tparams[i][EG]); i++;
     }
     
     if (TuneQueenValue){
-        printf("\nconst int QueenValue[PHASE_NB]  = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
+        printf("\nconst int QueenValue  = S(%4d,%4d);", tparams[i][MG], tparams[i][EG]); i++;
     }
     
     if (TuneKingValue){
-        printf("\nconst int KingValue[PHASE_NB]   = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
+        printf("\nconst int KingValue   = S(%4d,%4d);", tparams[i][MG], tparams[i][EG]); i++;
     }
     
     
     // Print Piece Square Table Values
     
     if (TunePawnPSQT){
-        printf("\nconst int PawnPSQT32[32][PHASE_NB] = {");
+        printf("\nconst int PawnPSQT32[32] = {");
         for (x = 0; x < 8; x++){
             printf("\n   ");
             for (y = 0; y < 4; y++, i++)
-                printf(" {%4d,%4d},", tparams[i][MG], tparams[i][EG]);
+                printf(" S(%4d,%4d),", tparams[i][MG], tparams[i][EG]);
         } printf("\n};\n");
     }
     
     if (TuneKnightPSQT){
-        printf("\nconst int KnightPSQT32[32][PHASE_NB] = {");
+        printf("\nconst int KnightPSQT32[32] = {");
         for (x = 0; x < 8; x++){
             printf("\n   ");
             for (y = 0; y < 4; y++, i++)
-                printf(" {%4d,%4d},", tparams[i][MG], tparams[i][EG]);
+                printf(" S(%4d,%4d),", tparams[i][MG], tparams[i][EG]);
         } printf("\n};\n");
     }
     
     if (TuneBishopPSQT){
-        printf("\nconst int BishopPSQT32[32][PHASE_NB] = {");
+        printf("\nconst int BishopPSQT32[32] = {");
         for (x = 0; x < 8; x++){
             printf("\n   ");
             for (y = 0; y < 4; y++, i++)
-                printf(" {%4d,%4d},", tparams[i][MG], tparams[i][EG]);
+                printf(" S(%4d,%4d),", tparams[i][MG], tparams[i][EG]);
         } printf("\n};\n");
     }
     
     if (TuneRookPSQT){
-        printf("\nconst int RookPSQT32[32][PHASE_NB] = {");
+        printf("\nconst int RookPSQT32[32] = {");
         for (x = 0; x < 8; x++){
             printf("\n   ");
             for (y = 0; y < 4; y++, i++)
-                printf(" {%4d,%4d},", tparams[i][MG], tparams[i][EG]);
+                printf(" S(%4d,%4d),", tparams[i][MG], tparams[i][EG]);
         } printf("\n};\n");
     }
     
     if (TuneQueenPSQT){
-        printf("\nconst int QueenPSQT32[32][PHASE_NB] = {");
+        printf("\nconst int QueenPSQT32[32] = {");
         for (x = 0; x < 8; x++){
             printf("\n   ");
             for (y = 0; y < 4; y++, i++)
-                printf(" {%4d,%4d},", tparams[i][MG], tparams[i][EG]);
+                printf(" S(%4d,%4d),", tparams[i][MG], tparams[i][EG]);
         } printf("\n};\n");
     }
     
     if (TuneKingPSQT){
-        printf("\nconst int KingPSQT32[32][PHASE_NB] = {");
+        printf("\nconst int KingPSQT32[32] = {");
         for (x = 0; x < 8; x++){
             printf("\n   ");
             for (y = 0; y < 4; y++, i++)
-                printf(" {%4d,%4d},", tparams[i][MG], tparams[i][EG]);
+                printf(" S(%4d,%4d),", tparams[i][MG], tparams[i][EG]);
         } printf("\n};\n");
     }
     
     
     // Print Pawn Values
-    
+
+    printf("\n\n// Definition of evaluation terms related to Pawns\n");
+
     if (TunePawnIsolated){
-        printf("\nconst int PawnIsolated[PHASE_NB] = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
+        printf("\nconst int PawnIsolated = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
     }
     
     if (TunePawnStacked){
-        printf("\nconst int PawnStacked[PHASE_NB] = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
+        printf("\nconst int PawnStacked = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
     }
     
     if (TunePawnBackwards){
-        printf("\nconst int PawnBackwards[2][PHASE_NB] = { {%4d,%4d}, {%4d,%4d} };\n",
+        printf("\nconst int PawnBackwards[2] = { S(%4d,%4d), S(%4d,%4d) };\n",
                 tparams[i  ][MG], tparams[i  ][EG],
                 tparams[i+1][MG], tparams[i+1][EG]); i += 2;
     }
     
     if (TunePawnConnected){
-        printf("\nconst int PawnConnected32[32][PHASE_NB] = {");
+        printf("\nconst int PawnConnected32[32] = {");
         for (x = 0; x < 8; x++){
             printf("\n   ");
             for (y = 0; y < 4; y++, i++)
-                printf(" {%4d,%4d},", tparams[i][MG], tparams[i][EG]);
+                printf(" S(%4d,%4d),", tparams[i][MG], tparams[i][EG]);
         } printf("\n};\n");
     }
     
     
     // Print Knight Values
+
+    printf("\n\n// Definition of evaluation terms related to Knights\n");
     
     if (TuneKnightAttackedByPawn){
-        printf("\nconst int KnightAttackedByPawn[PHASE_NB] = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
+        printf("\nconst int KnightAttackedByPawn = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
     }
     
     if (TuneKnightRammedPawns){
-        printf("\nconst int KnightRammedPawns[PHASE_NB] = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
+        printf("\nconst int KnightRammedPawns = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
     }
     
     if (TuneKnightOutpost){
-        printf("\nconst int KnightOutpost[2][PHASE_NB] = { {%4d,%4d}, {%4d,%4d} };\n",
+        printf("\nconst int KnightOutpost[2] = { S(%4d,%4d), S(%4d,%4d) };\n",
                 tparams[i  ][MG], tparams[i  ][EG],
                 tparams[i+1][MG], tparams[i+1][EG]); i += 2;
     }
             
     if (TuneKnightMobility){
-        printf("\nconst int KnightMobility[9][PHASE_NB] = {");
+        printf("\nconst int KnightMobility[9] = {");
         for (x = 0; x < 3; x++){
             printf("\n   ");
             for (y = 0; y < 3; y++, i++)
-                printf(" {%4d,%4d},", tparams[i][MG], tparams[i][EG]);
+                printf(" S(%4d,%4d),", tparams[i][MG], tparams[i][EG]);
         } printf("\n};\n");
     }
     
     
     // Print Bishop Values
-    
+
+    printf("\n\n// Definition of evaluation terms related to Bishops\n");    
+
     if (TuneBishopPair){
-        printf("\nconst int BishopPair[PHASE_NB] = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
+        printf("\nconst int BishopPair = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
     }
     
     if (TuneBishopRammedPawns){
-        printf("\nconst int BishopRammedPawns[PHASE_NB] = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
+        printf("\nconst int BishopRammedPawns = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
     }
     
     if (TuneBishopAttackedByPawn){
-        printf("\nconst int BishopAttackedByPawn[PHASE_NB] = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
+        printf("\nconst int BishopAttackedByPawn = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
     }
     
     if (TuneBishopOutpost){
-        printf("\nconst int BishopOutpost[2][PHASE_NB] = { {%4d,%4d}, {%4d,%4d} };\n",
+        printf("\nconst int BishopOutpost[2] = { S(%4d,%4d), S(%4d,%4d) };\n",
                 tparams[i  ][MG], tparams[i  ][EG],
                 tparams[i+1][MG], tparams[i+1][EG]); i += 2;
     }
     
     if (TuneBishopMobility){
-        printf("\nconst int BishopMobility[14][PHASE_NB] = {");
+        printf("\nconst int BishopMobility[14] = {");
         for (x = 0; x < 4; x++){
             printf("\n   ");
             for (y = 0; y < 4 && 4 * x + y < 14; y++, i++)
-                printf(" {%4d,%4d},", tparams[i][MG], tparams[i][EG]);
+                printf(" S(%4d,%4d),", tparams[i][MG], tparams[i][EG]);
         } printf("\n};\n");
     }
     
     
     // Print Rook Values
-    
+
+    printf("\n\n// Definition of evaluation terms related to Rooks\n");    
+
     if (TuneRookFile){
-        printf("\nconst int RookFile[2][PHASE_NB] = { {%4d,%4d}, {%4d,%4d} };\n",
+        printf("\nconst int RookFile[2] = { S(%4d,%4d), S(%4d,%4d) };\n",
                 tparams[i  ][MG], tparams[i  ][EG],
                 tparams[i+1][MG], tparams[i+1][EG]); i += 2;
     }
             
     if (TuneRookOnSeventh){
-        printf("\nconst int RookOnSeventh[PHASE_NB] = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
+        printf("\nconst int RookOnSeventh = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
     }
         
     if (TuneRookMobility){
-        printf("\nconst int RookMobility[15][PHASE_NB] = {");
+        printf("\nconst int RookMobility[15] = {");
         for (x = 0; x < 4; x++){
             printf("\n   ");
             for (y = 0; y < 4 && x * 4 + y < 15; y++, i++)
-                printf(" {%4d,%4d},", tparams[i][MG], tparams[i][EG]);
+                printf(" S(%4d,%4d),", tparams[i][MG], tparams[i][EG]);
         } printf("\n};\n");
     }
     
     
     // Print Queen Values
-    
+
+    printf("\n\n// Definition of evaluation terms related to Queens\n");    
+
     if (TuneQueenChecked){
-        printf("\nconst int QueenChecked[PHASE_NB] = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
+        printf("\nconst int QueenChecked = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
     }
     
     if (TuneQueenCheckedByPawn){
-        printf("\nconst int QueenCheckedByPawn[PHASE_NB] = {%4d,%4d};\n", tparams[i][MG], tparams[i][EG]); i++;
+        printf("\nconst int QueenCheckedByPawn = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
     }
         
     if (TuneQueenMobility){
-        printf("\nconst int QueenMobility[28][PHASE_NB] = {");
+        printf("\nconst int QueenMobility[28] = {");
         for (x = 0; x < 7; x++){
             printf("\n   ");
             for (y = 0; y < 4; y++, i++)
-                printf(" {%4d,%4d},", tparams[i][MG], tparams[i][EG]);
+                printf(" S(%4d,%4d),", tparams[i][MG], tparams[i][EG]);
         } printf("\n};\n");
     }
     
     
     // Print King Values
-    
+
+    printf("\n\n// Definition of evaluation terms related to Kings\n\n");
+    printf("int KingSafety[64]; // Defined by the Polynomial below\n\n");
+    printf("const double KingPolynomial[6] = {\n");
+    printf("    0.00000011, -0.00009948,  0.00797308,\n");
+    printf("    0.03141319,  2.18429452, -3.33669140,\n");
+    printf("};");
+
     if (TuneKingDefenders){
-        printf("\nconst int KingDefenders[12][PHASE_NB] = {");
+        printf("\nconst int KingDefenders[12] = {");
         for (x = 0; x < 3; x++){
             printf("\n   ");
             for (y = 0; y < 4; y++, i++)
-                printf(" {%4d,%4d},", tparams[i][MG], tparams[i][EG]);
+                printf(" S(%4d,%4d),", tparams[i][MG], tparams[i][EG]);
         } printf("\n};\n");
     }
     
     if (TuneKingShelter){
-        printf("\nconst int KingShelter[2][FILE_NB][RANK_NB][PHASE_NB] = {");
+        printf("\nconst int KingShelter[2][FILE_NB][RANK_NB] = {");
         for (x = 0; x < 16; x++){
             printf("\n  %s", x % 8 ? " {" : "{{");
             for (y = 0; y < RANK_NB; y++, i++){
-                printf("{%4d,%4d}", tparams[i][MG], tparams[i][EG]);
+                printf("S(%4d,%4d)", tparams[i][MG], tparams[i][EG]);
                 printf("%s", y < RANK_NB - 1 ? ", " : x % 8 == 7 ? "}}," : "},");
             }
         } printf("\n};\n");
@@ -998,17 +1017,26 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
     
     
     // Print Passed Pawn Values
+
+    printf("\n\n// Definition of evaluation terms related to Passed Pawns\n");
     
     if (TunePassedPawn){
-        printf("\nconst int PassedPawn[2][2][RANK_NB][PHASE_NB] = {");
+        printf("\nconst int PassedPawn[2][2][RANK_NB] = {");
         for (x = 0; x < 4; x++){
             printf("\n  %s", x % 2 ? " {" : "{{");
             for (y = 0; y < RANK_NB; y++, i++){
-                printf("{%4d,%4d}", tparams[i][MG], tparams[i][EG]);
+                printf("S(%4d,%4d)", tparams[i][MG], tparams[i][EG]);
                 printf("%s", y < RANK_NB - 1 ? ", " : x % 2 ? "}}," : "},");
             }
         } printf("\n};\n");
     }
+    
+    
+    // Print any remaining General Evaluation values
+    
+    printf("\n\n// Definition of evaluation terms related to general properties\n");
+
+    printf("\nconst int Tempo[COLOUR_NB] = { S(  25,  12), S( -25, -12) };");
 }
 
 double computeOptimalK(TexelEntry* tes){
