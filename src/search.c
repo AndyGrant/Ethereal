@@ -632,7 +632,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         // all other possible moves, we will extend the search of the table move
         singular =   !RootNode
                   && !checkExtended
-                  &&  depth >= 8
+                  &&  depth >= 10
                   &&  move == ttMove
                   &&  ttEntry.depth >= depth - 3
                   && (ttEntry.type == PVNODE || ttEntry.type == CUTNODE)
