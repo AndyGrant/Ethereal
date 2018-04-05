@@ -552,7 +552,8 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         }
         
         // Step 14. Futility Pruning. If our score is far below alpha,
-        // and we don't expect anything from this move, skip it.
+        // and we don't expect anything from this move, we can skip this
+        // one, and also skip all other quiet moves from this position
         if (   !PvNode
             &&  isQuiet
             &&  best > MATED_IN_MAX
@@ -577,7 +578,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         
         // Step 16. Late Move Pruning / Move Count Pruning. If we have
         // tried many quiets in this position already, and we don't expect
-        // anything from this move, we can undo it and move on.
+        // anything from this move, we can undo it and skip all remaining quiets
         if (   !PvNode
             && !board->kingAttackers
             &&  isQuiet
@@ -586,7 +587,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             &&  quiets > LateMovePruningCounts[depth]){
             
             revertMove(board, move, undo);
-            continue;
+            break;
         }
         
         // Now we will search the move, so we verify it was legal
