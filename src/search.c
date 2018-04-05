@@ -297,13 +297,12 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     
     Board* const board = &thread->board;
     
-    int i, inCheck, isQuiet, R, repetitions, improving;
-    int rAlpha, rBeta, ttValue, oldAlpha = alpha, best = -MATE;
-    int quiets = 0, played = 0, bestWasQuiet = 0, hist = 0;
-    int value = -MATE, eval = -MATE, futilityMargin = -MATE;
+    int i, repetitions, quiets = 0, played = 0, hist = 0;
+    int R, newDepth, rAlpha, rBeta, ttValue, oldAlpha = alpha;
+    int eval, value = -MATE, best = -MATE, futilityMargin = -MATE;
+    int inCheck, isQuiet, improving, checkExtended, singular, bestWasQuiet = 0;
     
-    uint16_t currentMove, quietsTried[MAX_MOVES];
-    uint16_t ttMove = NONE_MOVE, bestMove = NONE_MOVE;
+    uint16_t move, ttMove = NONE_MOVE, bestMove = NONE_MOVE, quietsTried[MAX_MOVES];
     
     Undo undo[1];
     EvalInfo ei;
@@ -422,6 +421,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     // Here we perform our check extension, for non-root pvnodes, or for non-root
     // nodes near depth zero. Note that when we bypass the qsearch as a result of
     // being in check, we set depth to zero. This step adjusts depth back to one.
+    checkExtended = inCheck && !RootNode && (PvNode || depth <= 6);
     depth += inCheck && !RootNode && (PvNode || depth <= 6);
     
     // Compute and save off a static evaluation. Also, compute our futilityMargin
@@ -496,17 +496,17 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             
         initializeMovePicker(&movePicker, thread, NONE_MOVE, height, 1);
         
-        while ((currentMove = selectNextMove(&movePicker, board)) != NONE_MOVE){
+        while ((move = selectNextMove(&movePicker, board)) != NONE_MOVE){
             
             // Even if we keep the capture piece and or the promotion piece
             // we will fail to exceed rBeta, then we will skip this move
-            if (eval + thisTacticalMoveValue(board, currentMove) < rBeta)
+            if (eval + thisTacticalMoveValue(board, move) < rBeta)
                 continue;
             
             // Apply and validate move before searching
-            applyMove(board, currentMove, undo);
+            applyMove(board, move, undo);
             if (!isNotInCheck(board, !board->turn)){
-                revertMove(board, currentMove, undo);
+                revertMove(board, move, undo);
                 continue;
             }
             
@@ -516,12 +516,12 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             if (   -search(thread, &lpv, -rBeta, -rBeta+1,       0, height+1) >= rBeta
                 && -search(thread, &lpv, -rBeta, -rBeta+1, depth-4, height+1) >= rBeta){
                     
-                revertMove(board, currentMove, undo);
+                revertMove(board, move, undo);
                 return beta;
             }
              
             // Revert the board state
-            revertMove(board, currentMove, undo);
+            revertMove(board, move, undo);
         }
     }
     
@@ -539,15 +539,16 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             ttMove = ttEntry.bestMove;
     }
     
+    // Step 13. Initialize the Move Picker and being searching through each
+    // move one at a time, until we run out or a move generates a cutoff
     initializeMovePicker(&movePicker, thread, ttMove, height, 0);
-    
-    while ((currentMove = selectNextMove(&movePicker, board)) != NONE_MOVE){
+    while ((move = selectNextMove(&movePicker, board)) != NONE_MOVE){
         
         // If this move is quiet we will save it to a list of attemped quiets.
         // Also lookup the history score, as we will in most cases need it.
-        if ((isQuiet = !moveIsTactical(board, currentMove))){
-            quietsTried[quiets++] = currentMove;
-            hist = getHistoryScore(thread->history, currentMove, board->turn);
+        if ((isQuiet = !moveIsTactical(board, move))){
+            quietsTried[quiets++] = move;
+            hist = getHistoryScore(thread->history, move, board->turn);
         }
         
         // Step 14. Futility Pruning. If our score is far below alpha,
@@ -567,12 +568,12 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             &&  !isQuiet
             &&  !inCheck
             &&   best > MATED_IN_MAX
-            &&   captureIsWeak(board, &ei, currentMove, depth))
+            &&   captureIsWeak(board, &ei, move, depth))
             continue;
         
         // Apply the move, but do not verify that it was legal
         // until after we perform Late Move Pruning (Step 16)
-        applyMove(board, currentMove, undo);
+        applyMove(board, move, undo);
         
         // Step 16. Late Move Pruning / Move Count Pruning. If we have
         // tried many quiets in this position already, and we don't expect
@@ -584,13 +585,13 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             &&  depth <= LateMovePruningDepth
             &&  quiets > LateMovePruningCounts[depth]){
             
-            revertMove(board, currentMove, undo);
+            revertMove(board, move, undo);
             continue;
         }
         
         // Now we will search the move, so we verify it was legal
         if (!isNotInCheck(board, !board->turn)){
-            revertMove(board, currentMove, undo);
+            revertMove(board, move, undo);
             continue;
         }
         
@@ -626,35 +627,48 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             
         } else R = 1;
         
-        // Step 18A. If we triggered the LMR conditions (which we know by the value of R),
+        // Step 18. Singular Move Extensions. If we are looking at a table move,
+        // and it seems that under some conditions, the table move is better than
+        // all other possible moves, we will extend the search of the table move
+        singular =   !RootNode
+                  && !checkExtended
+                  &&  depth >= 8
+                  &&  move == ttMove
+                  &&  ttEntry.depth >= depth - 3
+                  && (ttEntry.type == PVNODE || ttEntry.type == CUTNODE)
+                  &&  moveIsSingular(thread, board, &ttEntry, undo, depth, height);
+            
+        // New depth is what our search depth would be, assuming that we do no LMR
+        newDepth = depth + singular;
+        
+        // Step 19A. If we triggered the LMR conditions (which we know by the value of R),
         // then we will perform a reduced search on the null alpha window, as we have no
         // expectation that this move will be worth looking into deeper
-        if (R != 1) value = -search(thread, &lpv, -alpha-1, -alpha, depth-R, height+1);
+        if (R != 1) value = -search(thread, &lpv, -alpha-1, -alpha, newDepth-R, height+1);
         
-        // Step 18B. There are two situations in which we will search again on a null window,
+        // Step 19B. There are two situations in which we will search again on a null window,
         // but without a depth reduction R. First, if the LMR search happened, and failed
         // high, secondly, if we did not try an LMR search, and this is not the first move
         // we have tried in a PvNode, we will research with the normally reduced depth
         if ((R != 1 && value > alpha) || (R == 1 && !(PvNode && played == 1)))
-            value = -search(thread, &lpv, -alpha-1, -alpha, depth-1, height+1);
+            value = -search(thread, &lpv, -alpha-1, -alpha, newDepth-1, height+1);
         
-        // Step 18C. Finally, if we are in a PvNode and a move beat alpha while being
+        // Step 19C. Finally, if we are in a PvNode and a move beat alpha while being
         // search on a reduced depth, we will search again on the normal window. Also,
         // if we did not perform Step 18B, we will search for the first time on the
         // normal window. This happens only for the first move in a PvNode
         if (PvNode && (played == 1 || value > alpha))
-            value = -search(thread, &lpv, -beta, -alpha, depth-1, height+1);
+            value = -search(thread, &lpv, -beta, -alpha, newDepth-1, height+1);
 
         // Revert the board state
-        revertMove(board, currentMove, undo);
+        revertMove(board, move, undo);
         
-        
-        // Step 19. Update search stats for the best move and its value. Update
+        // Step 20. Update search stats for the best move and its value. Update
         // our lower bound (alpha) if exceeded, and also update the PV in that case
         if (value > best){
             
             best = value;
-            bestMove = currentMove;
+            bestMove = move;
             bestWasQuiet = isQuiet;
             
             if (value > alpha){
@@ -662,43 +676,44 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
                 
                 // Copy our child's PV and prepend this move to it
                 pv->length = 1 + lpv.length;
-                pv->line[0] = currentMove;
+                pv->line[0] = move;
                 memcpy(pv->line + 1, lpv.line, sizeof(uint16_t) * lpv.length);
             }
         }
         
-        // Step 20. Search has failed high. Update Killer Moves and exit search
+        // Step 21. Search has failed high. Update Killer Moves and exit search
         if (alpha >= beta){
             
-            if (isQuiet && thread->killers[height][0] != currentMove){
+            if (isQuiet && thread->killers[height][0] != move){
                 thread->killers[height][1] = thread->killers[height][0];
-                thread->killers[height][0] = currentMove;
+                thread->killers[height][0] = move;
             }
             
             break;
         }
     }
     
-    // Step 21. Stalemate and Checkmate detection. If no moves were found to
+    // Step 22. Stalemate and Checkmate detection. If no moves were found to
     // be legal (search makes sure to play at least one legal move, if any),
     // then we are either mated or stalemated, which we can tell by the inCheck
     // flag. For mates, return a score based on the distance from root, so we
     // can differentiate between close mates and far away mates from the root
     if (played == 0) return inCheck ? -MATE + height : 0;
     
-    // Step 22. Update History counters on a fail high for a quiet move
+    // Step 23. Update History counters on a fail high for a quiet move
     if (best >= beta && !moveIsTactical(board, bestMove)){
         updateHistory(thread->history, bestMove, board->turn, depth*depth);
         for (i = 0; i < quiets - 1; i++)
             updateHistory(thread->history, quietsTried[i], board->turn, -depth*depth);
     }
     
-    // Step 23. Store the results of the search in the transposition table.
+    // Step 24. Store the results of the search in the transposition table.
     // We must determine a bound for the result based on alpha and beta, and
     // must also convert the search value to a tt value, which handles mates
     storeTranspositionEntry(&Table, depth, (best > oldAlpha && best < beta)
                             ? PVNODE : best >= beta ? CUTNODE : ALLNODE,
                             valueToTT(best, height), bestMove, board->hash);
+                            
     return best;
 }
 
@@ -707,7 +722,7 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     Board* const board = &thread->board;
     
     int eval, value, best;
-    uint16_t currentMove;
+    uint16_t move;
     Undo undo[1];
     MovePicker movePicker;
     EvalInfo ei;
@@ -751,23 +766,23 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     // Step 5. Move Generation and Looping. Generate all tactical moves for this
     // position (includes Captures, Promotions, and Enpass) and try them
     initializeMovePicker(&movePicker, thread, NONE_MOVE, height, 1);
-    while ((currentMove = selectNextMove(&movePicker, board)) != NONE_MOVE){
+    while ((move = selectNextMove(&movePicker, board)) != NONE_MOVE){
         
         // Step 6. Futility Pruning. Similar to Delta Pruning, if this capture in the
         // best case would still fail to beat alpha minus some margin, we can skip it
-        if (eval + QFutilityMargin + thisTacticalMoveValue(board, currentMove) < alpha)
+        if (eval + QFutilityMargin + thisTacticalMoveValue(board, move) < alpha)
             continue;
         
         // Step 7. Weak Capture Pruning. If we are trying to capture a piece which
         // is protected, and we are the sole attacker, then we can be somewhat safe
         // in skipping this move so long as we are capturing a weaker piece
-        if (captureIsWeak(board, &ei, currentMove, 0))
+        if (captureIsWeak(board, &ei, move, 0))
             continue;
         
         // Apply and validate move before searching
-        applyMove(board, currentMove, undo);
+        applyMove(board, move, undo);
         if (!isNotInCheck(board, !board->turn)){
-            revertMove(board, currentMove, undo);
+            revertMove(board, move, undo);
             continue;
         }
         
@@ -775,7 +790,7 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
         value = -qsearch(thread, &lpv, -beta, -alpha, height+1);
         
         // Revert move from board
-        revertMove(board, currentMove, undo);
+        revertMove(board, move, undo);
         
         // Improved current value
         if (value > best){
@@ -787,7 +802,7 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
                 
                 // Update the Principle Variation
                 pv->length = 1 + lpv.length;
-                pv->line[0] = currentMove;
+                pv->line[0] = move;
                 memcpy(pv->line + 1, lpv.line, sizeof(uint16_t) * lpv.length);
             }
         }
@@ -888,4 +903,50 @@ int captureIsWeak(Board* board, EvalInfo* ei, uint16_t move, int depth){
             &&  ei->attackedBy2[!board->turn] & (1ull << MoveTo(move)))
             || (depth <= WeakCaptureOneAttackersDepth
             &&  ei->attacked[!board->turn] & (1ull << MoveTo(move))));
+}
+
+int moveIsSingular(Thread* thread, Board* board, TransEntry* ttEntry, Undo* undo, int depth, int height){
+    
+    uint16_t move;
+    MovePicker movePicker;
+    int value = -MATE;
+    int rBeta = MAX(ttEntry->value - 2 * depth, -MATE);
+    
+    // Use a dummy lpv, as we will throw it away
+    PVariation lpv; lpv.length = 0;
+    
+    // We check for move singularity after we have already applied the move.
+    // Thus we must revert the move, check for singularity, and reapply it
+    revertMove(board, ttEntry->bestMove, undo);
+    
+    // Search over each move, we will skip the ttMove inside the loop
+    initializeMovePicker(&movePicker, thread, NONE_MOVE, height, 0);
+    while ((move = selectNextMove(&movePicker, board)) != NONE_MOVE){
+        
+        // Don't search the move we are checking for singularity
+        if (move == ttEntry->bestMove) continue;
+        
+        // Make the move, and verify legality before searching
+        // Verify legality before searching
+        applyMove(board, move, undo);
+        if (!isNotInCheck(board, !board->turn)){
+            revertMove(board, move, undo);
+            continue;
+        }
+        
+        // Perform a reduced depth search on a null rbeta window
+        value = -search(thread, &lpv, -rBeta-1, -rBeta, depth / 2 - 1, height+1);
+        
+        // Set the board state to what it was initially
+        revertMove(board, move, undo);
+        
+        // Move failed high, thus ttMove is not singular
+        if (value > rBeta) break;
+    }
+    
+    // Fix the board state to what it was initially
+    applyMove(board, ttEntry->bestMove, undo);
+
+    // Move in singular if all evals failed low
+    return value <= rBeta;    
 }
