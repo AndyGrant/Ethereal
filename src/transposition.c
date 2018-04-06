@@ -43,10 +43,11 @@ void initializeTranspositionTable(TransTable* table, uint64_t megabytes){
     keySize -= 1;
     
     // Setup Table's data members
-    table->buckets      = calloc(1ull << keySize, sizeof(TransBucket));
+    table->buckets      = malloc((1ull << keySize) * sizeof(TransBucket));
     table->numBuckets   = 1ull << keySize;
     table->keySize      = keySize;
-    table->generation   = 0u;
+
+    clearTranspositionTable(table);
 }
 
 void destroyTranspositionTable(TransTable* table){
@@ -58,23 +59,11 @@ void updateTranspositionTable(TransTable* table){
 }
 
 void clearTranspositionTable(TransTable* table){
-    
-    unsigned int i; int j;
-    TransEntry* entry;
-    
+
     table->generation = 0u;
+
+    memset(table->buckets, 0, sizeof(TransBucket) * table->numBuckets);
     
-    for (i = 0u; i < table->numBuckets; i++){
-        for (j = 0; j < BUCKET_SIZE; j++){
-            entry = &(table->buckets[i].entries[j]);
-            entry->value = 0;
-            entry->depth = 0u;
-            entry->age = 0u;
-            entry->type = 0u;
-            entry->bestMove = 0u;
-            entry->hash16 = 0u;
-        }
-    }
 }
 
 int estimateHashfull(TransTable* table){
