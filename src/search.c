@@ -572,25 +572,18 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             &&   captureIsWeak(board, &ei, move, depth))
             continue;
         
-        // Apply the move, but do not verify that it was legal
-        // until after we perform Late Move Pruning (Step 16)
-        applyMove(board, move, undo);
-        
         // Step 16. Late Move Pruning / Move Count Pruning. If we have
         // tried many quiets in this position already, and we don't expect
         // anything from this move, we can undo it and skip all remaining quiets
         if (   !PvNode
-            && !board->kingAttackers
             &&  isQuiet
             &&  best > MATED_IN_MAX
             &&  depth <= LateMovePruningDepth
-            &&  quiets > LateMovePruningCounts[depth]){
-            
-            revertMove(board, move, undo);
+            &&  quiets > LateMovePruningCounts[depth])
             break;
-        }
         
-        // Now we will search the move, so we verify it was legal
+        // Apply the move, and verify legality
+        applyMove(board, move, undo);
         if (!isNotInCheck(board, !board->turn)){
             revertMove(board, move, undo);
             continue;
