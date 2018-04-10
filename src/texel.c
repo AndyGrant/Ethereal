@@ -71,14 +71,12 @@ extern const int PawnBackwards[2];
 extern const int PawnConnected32[32];
 
 // To determine the starting values for the Knight terms
-extern const int KnightAttackedByPawn;
 extern const int KnightRammedPawns;
 extern const int KnightOutpost[2];
 extern const int KnightMobility[9];
 
 // To determine the starting values for the Bishop terms
 extern const int BishopPair;
-extern const int BishopAttackedByPawn;
 extern const int BishopRammedPawns;
 extern const int BishopOutpost[2];
 extern const int BishopMobility[14];
@@ -89,8 +87,6 @@ extern const int RookOnSeventh;
 extern const int RookMobility[15];
 
 // To determine the starting values for the Queen terms
-extern const int QueenChecked;
-extern const int QueenCheckedByPawn;
 extern const int QueenMobility[28];
 
 // To determine the starting values for the King terms
@@ -99,6 +95,13 @@ extern const int KingShelter[2][FILE_NB][RANK_NB];
 
 // To determine the starting values for the Passed Pawn terms
 extern const int PassedPawn[2][2][RANK_NB];
+
+// To determine the starting values for the Threat terms
+extern const int ThreatPawnAttackedByOne;
+extern const int ThreatMinorAttackedByPawn;
+extern const int ThreatMinorAttackedByMajor; 
+extern const int ThreatMajorAttackedByMinor;
+extern const int ThreatQueenAttackedByOne;
 
 
 void runTexelTuning(Thread* thread){
@@ -245,7 +248,7 @@ void initializeTexelEntries(TexelEntry* tes, Thread* thread){
         // Use the search value as the evaluation, to provide a better
         // understanding the potential of a position's eval terms. Make
         // sure the evaluation is from the perspective of WHITE
-        tes[i].eval = search(thread, &thread->pv, -MATE, MATE, 1, 0);
+        tes[i].eval = search(thread, &thread->pv, -MATE, MATE, TEXEL_DEPTH, 0);
         if (thread->board.turn == BLACK) tes[i].eval *= -1;
         
         // Now collect an evaluation from a quiet position
@@ -392,9 +395,6 @@ void initializeCoefficients(int coeffs[NT]){
     
     // Initialize coefficients for the Knight evaluation terms
     
-    if (TuneKnightAttackedByPawn)
-        coeffs[i++] = T.knightAttackedByPawn[WHITE] - T.knightAttackedByPawn[BLACK];
-    
     if (TuneKnightRammedPawns)
         coeffs[i++] = T.knightRammedPawns[WHITE] - T.knightRammedPawns[BLACK];
     
@@ -414,9 +414,6 @@ void initializeCoefficients(int coeffs[NT]){
     
     if (TuneBishopRammedPawns)
         coeffs[i++] = T.bishopRammedPawns[WHITE] - T.bishopRammedPawns[BLACK];
-    
-    if (TuneBishopAttackedByPawn)
-        coeffs[i++] = T.bishopAttackedByPawn[WHITE] - T.bishopAttackedByPawn[BLACK];
     
     if (TuneBishopOutpost)
         for (a = 0; a < 2; a++)
@@ -442,12 +439,6 @@ void initializeCoefficients(int coeffs[NT]){
         
     
     // Initialize coefficients for the Queen evaluation terms
-    
-    if (TuneQueenChecked)
-        coeffs[i++] = T.queenChecked[WHITE] - T.queenChecked[BLACK];
-    
-    if (TuneQueenCheckedByPawn)
-        coeffs[i++] = T.queenCheckedByPawn[WHITE] - T.queenCheckedByPawn[BLACK];
 
     if (TuneQueenMobility)
         for (a = 0; a < 28; a++)
@@ -466,6 +457,7 @@ void initializeCoefficients(int coeffs[NT]){
                 for (c = 0; c < RANK_NB; c++)
                     coeffs[i++] = T.kingShelter[WHITE][a][b][c] - T.kingShelter[BLACK][a][b][c];
     
+    
     // Initialize coefficients for the Passed Pawn evaluation terms
     
     if (TunePassedPawn)
@@ -473,6 +465,24 @@ void initializeCoefficients(int coeffs[NT]){
             for (b = 0; b < 2; b++)
                 for (c = 0; c < RANK_NB; c++)
                     coeffs[i++] = T.passedPawn[WHITE][a][b][c] - T.passedPawn[BLACK][a][b][c];
+                
+                
+    // Initialize coefficients for the Threat evaluation terms
+    
+    if (TuneThreatPawnAttackedByOne)
+        coeffs[i++] = T.threatPawnAttackedByOne[WHITE] - T.threatPawnAttackedByOne[BLACK];
+    
+    if (TuneThreatMinorAttackedByPawn)
+        coeffs[i++] = T.threatMinorAttackedByPawn[WHITE] - T.threatMinorAttackedByPawn[BLACK];
+    
+    if (TuneThreatMinorAttackedByMajor)
+        coeffs[i++] = T.threatMinorAttackedByMajor[WHITE] - T.threatMinorAttackedByMajor[BLACK];
+    
+    if (TuneThreatMajorAttackedByMinor)
+        coeffs[i++] = T.threatMajorAttackedByMinor[WHITE] - T.threatMajorAttackedByMinor[BLACK];    
+    
+    if (TuneThreatQueenAttackedByOne)
+        coeffs[i++] = T.threatQueenAttackedByOne[WHITE] - T.threatQueenAttackedByOne[BLACK];    
 }
 
 void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
@@ -586,11 +596,6 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
     
     // Grab the current parameters for the Knight evaluation terms
     
-    if (TuneKnightAttackedByPawn){
-        cparams[i  ][MG] = ScoreMG(KnightAttackedByPawn);
-        cparams[i++][EG] = ScoreEG(KnightAttackedByPawn);
-    }
-    
     if (TuneKnightRammedPawns){
         cparams[i  ][MG] = ScoreMG(KnightRammedPawns);
         cparams[i++][EG] = ScoreEG(KnightRammedPawns);
@@ -621,11 +626,6 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
     if (TuneBishopRammedPawns){
         cparams[i  ][MG] = ScoreMG(BishopRammedPawns);
         cparams[i++][EG] = ScoreEG(BishopRammedPawns);
-    }
-    
-    if (TuneBishopAttackedByPawn){
-        cparams[i  ][MG] = ScoreMG(BishopAttackedByPawn);
-        cparams[i++][EG] = ScoreEG(BishopAttackedByPawn);
     }
     
     if (TuneBishopOutpost){
@@ -667,16 +667,6 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
     
     // Grab the current parameters for the Queen evaluation terms
     
-    if (TuneQueenChecked){
-        cparams[i  ][MG] = ScoreMG(QueenChecked);
-        cparams[i++][EG] = ScoreEG(QueenChecked);
-    }
-    
-    if (TuneQueenCheckedByPawn){
-        cparams[i  ][MG] = ScoreMG(QueenCheckedByPawn);
-        cparams[i++][EG] = ScoreEG(QueenCheckedByPawn);
-    }
-    
     if (TuneQueenMobility){
         for (a = 0; a < 28; a++, i++){
             cparams[i][MG] = ScoreMG(QueenMobility[a]);
@@ -717,6 +707,34 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
                 }
             }
         }
+    }
+    
+    
+    // Grab the current parameters for the Threat evaluation terms
+    
+    if (TuneThreatPawnAttackedByOne){
+        cparams[i  ][MG] = ScoreMG(ThreatPawnAttackedByOne);
+        cparams[i++][EG] = ScoreEG(ThreatPawnAttackedByOne);
+    }
+        
+    if (TuneThreatMinorAttackedByPawn){
+        cparams[i  ][MG] = ScoreMG(ThreatMinorAttackedByPawn);
+        cparams[i++][EG] = ScoreEG(ThreatMinorAttackedByPawn);
+    }
+        
+    if (TuneThreatMinorAttackedByMajor){
+        cparams[i  ][MG] = ScoreMG(ThreatMinorAttackedByMajor);
+        cparams[i++][EG] = ScoreEG(ThreatMinorAttackedByMajor);
+    }
+        
+    if (TuneThreatMajorAttackedByMinor){
+        cparams[i  ][MG] = ScoreMG(ThreatMajorAttackedByMinor);
+        cparams[i++][EG] = ScoreEG(ThreatMajorAttackedByMinor);
+    }
+        
+    if (TuneThreatQueenAttackedByOne){
+        cparams[i  ][MG] = ScoreMG(ThreatQueenAttackedByOne);
+        cparams[i++][EG] = ScoreEG(ThreatQueenAttackedByOne);
     }
 }
 
@@ -884,10 +902,6 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
 
     printf("\n\n// Definition of evaluation terms related to Knights\n");
     
-    if (TuneKnightAttackedByPawn){
-        printf("\nconst int KnightAttackedByPawn = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
-    }
-    
     if (TuneKnightRammedPawns){
         printf("\nconst int KnightRammedPawns = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
     }
@@ -918,10 +932,6 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
     
     if (TuneBishopRammedPawns){
         printf("\nconst int BishopRammedPawns = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
-    }
-    
-    if (TuneBishopAttackedByPawn){
-        printf("\nconst int BishopAttackedByPawn = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
     }
     
     if (TuneBishopOutpost){
@@ -966,15 +976,7 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
     
     // Print Queen Values
 
-    printf("\n\n// Definition of evaluation terms related to Queens\n");    
-
-    if (TuneQueenChecked){
-        printf("\nconst int QueenChecked = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
-    }
-    
-    if (TuneQueenCheckedByPawn){
-        printf("\nconst int QueenCheckedByPawn = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
-    }
+    printf("\n\n// Definition of evaluation terms related to Queens\n");
         
     if (TuneQueenMobility){
         printf("\nconst int QueenMobility[28] = {");
@@ -1031,6 +1033,30 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
         } printf("\n};\n");
     }
     
+    
+    // Print Threat Values
+    
+    printf("\n\n// Definition of evaluation terms related to Threats\n");
+    
+    if (TuneThreatPawnAttackedByOne){
+        printf("\nconst int ThreatPawnAttackedByOne    = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
+    }
+    
+    if (TuneThreatMinorAttackedByPawn){
+        printf("\nconst int ThreatMinorAttackedByPawn  = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
+    }
+    
+    if (TuneThreatMinorAttackedByMajor){
+        printf("\nconst int ThreatMinorAttackedByMajor = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
+    }
+    
+    if (TuneThreatMajorAttackedByMinor){
+        printf("\nconst int ThreatMajorAttackedByMinor = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
+    }
+    
+    if (TuneThreatQueenAttackedByOne){
+        printf("\nconst int ThreatQueenAttackedByOne   = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
+    }
     
     // Print any remaining General Evaluation values
     
