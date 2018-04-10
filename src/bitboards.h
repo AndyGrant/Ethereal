@@ -47,6 +47,8 @@
 #define WHITE_SQUARES (0x55AA55AA55AA55AAull)
 #define BLACK_SQUARES (0xAA55AA55AA55AA55ull)
 
+#define PROMOTION_RANKS (RANK_1 | RANK_8)
+
 extern const uint64_t Files[FILE_NB];
 extern const uint64_t Ranks[RANK_NB];
 
