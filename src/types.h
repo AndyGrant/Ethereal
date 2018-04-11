@@ -26,13 +26,12 @@
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
 #define MAX(A, B) ((A) > (B) ? (A) : (B))
 
-#define MAX_DEPTH  (128)
-#define MAX_HEIGHT (256)
+#define MAX_PLY    (128)
 #define MAX_MOVES  (256)
 
 #define MATE         (16000)
-#define MATE_IN_MAX  (+MATE - MAX_HEIGHT)
-#define MATED_IN_MAX (-MATE + MAX_HEIGHT)
+#define MATE_IN_MAX  (+MATE - 2 * MAX_PLY)
+#define MATED_IN_MAX (-MATE + 2 * MAX_PLY)
 
 #define SQUARE_NB (64)
 #define COLOUR_NB ( 2)
@@ -86,7 +85,7 @@ typedef struct Limits Limits;
 struct Thread;
 typedef struct Thread Thread;
 
-typedef uint16_t KillerTable[MAX_HEIGHT][2];
+typedef uint16_t KillerTable[MAX_PLY][2];
 
 typedef int16_t HistoryTable[COLOUR_NB][SQUARE_NB][SQUARE_NB];
 
