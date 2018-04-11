@@ -70,7 +70,7 @@ int estimateHashfull(TransTable* table){
     
     int i, used = 0;
     
-    for (i = 0; i < 1250 && i < (int64_t)table->numBuckets; i++)
+    for (i = 0; i < 250 && i < (int64_t)table->numBuckets; i++)
         used += (table->buckets[i].entries[0].type != 0)
              +  (table->buckets[i].entries[1].type != 0)
              +  (table->buckets[i].entries[2].type != 0)
