@@ -84,7 +84,7 @@ int main(){
         getInput(str);
         
         if (stringEquals(str, "uci")){
-            printf("id name Ethereal 9.54\n");
+            printf("id name Ethereal 9.55\n");
             printf("id author Andrew Grant\n");
             printf("option name Hash type spin default 16 min 1 max 65536\n");
             printf("option name Threads type spin default 1 min 1 max 2048\n");
@@ -283,6 +283,8 @@ void uciReport(Thread* threads, int alpha, int beta, int value){
     int hashfull   = estimateHashfull(&Table);
     int nps        = (int)(1000 * (nodes / (1 + elapsed)));
     PVariation* pv = &threads[0].pv;
+    
+    value = MAX(alpha, MIN(value, beta));
     
     int score   = value >=  MATE_IN_MAX ?  (MATE - value + 1) / 2
                 : value <= MATED_IN_MAX ? -(value + MATE)     / 2 : value;
