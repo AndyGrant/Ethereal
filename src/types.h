@@ -29,7 +29,7 @@
 #define MAX_PLY    (128)
 #define MAX_MOVES  (256)
 
-#define MATE         (16000)
+#define MATE         (32000)
 #define MATE_IN_MAX  (+MATE - 2 * MAX_PLY)
 #define MATED_IN_MAX (-MATE + 2 * MAX_PLY)
 

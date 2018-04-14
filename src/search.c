@@ -266,6 +266,10 @@ int aspirationWindow(Thread* thread, int depth){
     // Keep trying larger windows until one works
     for (;; lower *= 2, upper *= 2){
         
+        // If we are nearing a mate, force a full search
+        if (abs(alpha) >= MATE / 4) alpha = -MATE, beta = MATE;
+        if (abs(beta ) >= MATE / 4) alpha = -MATE, beta = MATE;
+        
         // Perform the search on the modified window
         value = search(thread, &thread->pv, alpha, beta, depth, 0);
         
@@ -493,6 +497,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     // captures that won't exceed rbeta or captures that fail at a low depth
     if (   !PvNode
         && !inCheck
+        &&  abs(beta) < MATE_IN_MAX
         &&  depth >= ProbCutDepth
         &&  eval + bestTacticalMoveValue(board, &ei) >= beta + ProbCutMargin){
             
