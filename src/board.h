@@ -21,7 +21,7 @@
 
 #include "types.h"
 
-typedef struct Board {
+struct Board {
     uint8_t squares[SQUARE_NB];
     uint64_t pieces[8]; 
     uint64_t colours[3];
@@ -35,9 +35,9 @@ typedef struct Board {
     int psqtmat;
     int numMoves;
     uint64_t history[512];
-} Board;
+};
 
-typedef struct Undo {
+struct Undo {
     uint64_t hash;
     uint64_t pkhash;
     uint64_t kingAttackers;
@@ -48,7 +48,7 @@ typedef struct Undo {
     int psqtmat;
     int captureSquare;
     int capturePiece;
-} Undo;
+};
 
 void initializeBoard(Board* board, char* fen);
 void printBoard(Board* board);

@@ -23,7 +23,7 @@
 
 #include "types.h"
 
-typedef struct SearchInfo {
+struct SearchInfo {
     
     int depth;
     int values[MAX_PLY];
@@ -37,12 +37,12 @@ typedef struct SearchInfo {
     
     int bestMoveChanges;
     
-} SearchInfo;
+};
 
-typedef struct PVariation {
+struct PVariation {
     uint16_t line[MAX_PLY];
     int length;
-} PVariation;
+};
 
 
 uint16_t getBestMove(Thread* threads, Board* board, Limits* limits, double start, double time, double mtg, double inc);

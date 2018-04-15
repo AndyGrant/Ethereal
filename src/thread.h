@@ -25,7 +25,7 @@
 #include "transposition.h"
 #include "search.h"
 
-typedef struct Thread {
+struct Thread {
     
     Limits* limits;
     SearchInfo* info;
@@ -48,7 +48,7 @@ typedef struct Thread {
     HistoryTable history;
     PawnKingTable pktable;
     
-} Thread;
+};
 
 
 Thread* createThreadPool(int nthreads);

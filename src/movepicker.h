@@ -26,7 +26,7 @@ enum {
     STAGE_KILLER_2, STAGE_GENERATE_QUIET, STAGE_QUIET, STAGE_DONE
 };
 
-typedef struct MovePicker {
+struct MovePicker {
     
     int skipQuiets, stage, split;
     int noisySize, quietSize;
@@ -37,7 +37,7 @@ typedef struct MovePicker {
     
     HistoryTable* history;
     
-} MovePicker;
+};
 
 void initializeMovePicker(MovePicker* mp, Thread* thread, uint16_t ttMove, int height, int skipQuiets);
 uint16_t selectNextMove(MovePicker* mp, Board* board);

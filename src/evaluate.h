@@ -21,7 +21,7 @@
 
 #include "types.h"
 
-typedef struct EvalTrace {
+struct EvalTrace {
     
     int pawnCounts[COLOUR_NB];
     int pawnPSQT[COLOUR_NB][SQUARE_NB];
@@ -65,9 +65,9 @@ typedef struct EvalTrace {
     int threatMajorAttackedByMinor[COLOUR_NB];
     int threatQueenAttackedByOne[COLOUR_NB];
     
-} EvalTrace;
+};
 
-typedef struct EvalInfo {
+struct EvalInfo {
     
     uint64_t pawnAttacks[COLOUR_NB];
     uint64_t rammedPawns[COLOUR_NB];
@@ -86,7 +86,7 @@ typedef struct EvalInfo {
     int positionIsDrawn;
     PawnKingEntry* pkentry;
     
-} EvalInfo;
+};
 
 int evaluateBoard(Board* board, EvalInfo* ei, PawnKingTable* pktable);
 int evaluateDraws(Board* board);

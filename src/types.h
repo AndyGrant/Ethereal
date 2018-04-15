@@ -49,47 +49,30 @@
 #define MG (0)
 #define EG (1)
 
-struct Board;
+// Declare each structure in the order in which they appear
+// as you go through each header file one at a time
+
 typedef struct Board Board;
-
-struct Undo;
 typedef struct Undo Undo;
-
-struct SearchInfo;
-typedef struct SearchInfo SearchInfo;
-
-struct TransEntry;
-typedef struct TransEntry TransEntry;
-
-struct TransBucket;
-typedef struct TransBucket TransBucket;
-
-struct TransTable;
-typedef struct TransTable TransTable;
-
-struct PawnKingEntry;
-typedef struct PawnKingEntry PawnKingEntry;
-
-struct PawnKingTable;
-typedef struct PawnKingTable PawnKingTable;
-
-struct MovePicker;
+typedef struct EvalTrace EvalTrace;
+typedef struct EvalInfo EvalInfo;
 typedef struct MovePicker MovePicker;
-
-struct PVariation;
+typedef struct SearchInfo SearchInfo;
 typedef struct PVariation PVariation;
-
-struct Limits;
-typedef struct Limits Limits;
-
-struct Thread;
+typedef struct TexelTuple TexelTuple;
+typedef struct TexelEntry TexelEntry;
 typedef struct Thread Thread;
+typedef struct TransEntry TransEntry;
+typedef struct TransBucket TransBucket;
+typedef struct TransTable TransTable;
+typedef struct PawnKingEntry PawnKingEntry;
+typedef struct PawnKingTable PawnKingTable;
+typedef struct Limits Limits;
+typedef struct ThreadsGo ThreadsGo;
+
+// We define some simple renamings here
 
 typedef uint16_t KillerTable[MAX_PLY][2];
-
 typedef int16_t HistoryTable[COLOUR_NB][SQUARE_NB][SQUARE_NB];
-
-struct EvalInfo;
-typedef struct EvalInfo EvalInfo;
 
 #endif
