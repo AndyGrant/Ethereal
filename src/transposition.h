@@ -23,33 +23,33 @@
 
 #include "types.h"
 
-typedef struct TransEntry {
+struct TransEntry {
     int16_t value;
-    uint8_t depth;
+    int8_t depth;
     uint8_t age: 6, type: 2;
     uint16_t bestMove, hash16;
-} TransEntry;
+};
 
-typedef struct TransBucket {
+struct TransBucket {
     TransEntry entries[BUCKET_SIZE];
-} TransBucket;
+};
 
-typedef struct TransTable {
+struct TransTable {
     TransBucket * buckets;
     uint64_t numBuckets;
     uint64_t keySize;
     uint8_t generation;
-} TransTable;
+};
 
-typedef struct PawnKingEntry {
+struct PawnKingEntry {
     uint64_t pkhash;
     uint64_t passed;
     int eval;
-} PawnKingEntry;
+};
 
-typedef struct PawnKingTable {
+struct PawnKingTable {
     PawnKingEntry entries[0x10000];
-} PawnKingTable;
+};
 
 void initializeTranspositionTable(TransTable* table, uint64_t megabytes);
 void destroyTranspositionTable(TransTable* table);

@@ -107,8 +107,7 @@ void storeTranspositionEntry(TransTable* table, int depth, int type, int value, 
     assert(type == PVNODE || type == CUTNODE || type == ALLNODE);
     assert(value <= MATE && value >= -MATE);
     
-    TransBucket* bucket = &(table->buckets[hash & (table->numBuckets - 1)]);
-    TransEntry* entries = bucket->entries;
+    TransEntry* entries = table->buckets[hash & (table->numBuckets - 1)].entries;
     TransEntry* oldOption = NULL;
     TransEntry* lowDraftOption = NULL;
     TransEntry* toReplace = NULL;
@@ -120,36 +119,47 @@ void storeTranspositionEntry(TransTable* table, int depth, int type, int value, 
         // Found an unused entry
         if (entries[i].type == 0){
             toReplace = &(entries[i]);
-            goto Replace;
+            break;
         }
         
-        // Found an entry with the same hash key
+        // Found an entry with the same hash
         if (entries[i].hash16 == hash16){
             toReplace = &(entries[i]);
-            goto Replace;
+            break;
         }
         
         // Search for the lowest draft of an old entry
-        if (entries[i].age != table->generation)
-            if (oldOption == NULL || oldOption->depth >= entries[i].depth)
-                oldOption = &(entries[i]);
+        if (    entries[i].age != table->generation
+            && (oldOption == NULL || oldOption->depth >= entries[i].depth))
+            oldOption = &(entries[i]);
         
         // Search for the lowest draft if no old entry has been found yet
-        if (oldOption == NULL)
-            if (lowDraftOption == NULL || lowDraftOption->depth >= entries[i].depth)
-                lowDraftOption = &(entries[i]);
+        if (    oldOption == NULL
+            && (lowDraftOption == NULL || lowDraftOption->depth >= entries[i].depth))
+            lowDraftOption = &(entries[i]);
     }
     
-    // If no old option, use the lowest draft
-    toReplace = oldOption != NULL ? oldOption : lowDraftOption;
+    // If we found an empty slot or matching hash we will replace that,
+    // otherwise we look an entry which came from a different generation,
+    // and finally we replace the lowest depth entry in the bucket
+    toReplace = toReplace != NULL ? toReplace 
+              : oldOption != NULL ? oldOption 
+              : lowDraftOption;
     
-    Replace:
+    // We will not overwrite an entry from the same position, unless
+    // the search depth is near the entry depth, or if the entry we
+    // are saving is an exact bound. This is taken from Stockfish.
+    if (    type == PVNODE
+        ||  hash16 != toReplace->hash16
+        ||  depth >= toReplace->depth - 3){
+        
         toReplace->value    = value;
         toReplace->depth    = depth;
         toReplace->age      = table->generation;
         toReplace->type     = type;
         toReplace->bestMove = bestMove;
         toReplace->hash16   = hash16;
+    }
 }
 
 PawnKingEntry * getPawnKingEntry(PawnKingTable* pktable, uint64_t pkhash){

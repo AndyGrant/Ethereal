@@ -26,18 +26,17 @@ LIBS = -lpthread -lm
 EXE = Ethereal
 
 
-WFLAGS = -Wall -Wextra -Wshadow
+WFLAGS = -Wall -Wextra -Wshadow -std=c99
 
-CFLAGS = -DNDEBUG -O3 $(WFLAGS) -std=c99 -march=native -flto
+CFLAGS = -DNDEBUG -O3 $(WFLAGS) -march=native -flto
 
-RFLAGS = -DNDEBUG -O3 $(WFLAGS) -std=c99 -flto -static
+RFLAGS = -DNDEBUG -O3 $(WFLAGS) -flto -static
 
-PFLAGS = -DNDEBUG -O0 $(WFLAGS) -std=c99 -p -pg
+PFLAGS = -DNDEBUG -O0 $(WFLAGS) -p -pg
 
 DFLAGS = -O0 $(WFLAGS) -std=c99
 
 TFLAGS = $(CFLAGS) -fopenmp -DTUNE
-
 
 POPCNT = -msse3 -mpopcnt -DUSE_POPCOUNT
 

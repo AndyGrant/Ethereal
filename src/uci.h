@@ -21,20 +21,20 @@
 
 #include "types.h"
 
-typedef struct Limits {
+struct Limits {
     int limitedByNone;
     int limitedByTime;
     int limitedByDepth;
     int limitedBySelf;
     double timeLimit;
     int depthLimit;
-} Limits;
+};
 
-typedef struct ThreadsGo {
+struct ThreadsGo {
     char str[512];
     Thread* threads;
     Board* board;
-} ThreadsGo;
+};
 
 void getInput(char* str);
 int stringEquals(char* s1, char* s2);

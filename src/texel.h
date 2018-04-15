@@ -105,18 +105,18 @@
 // Try to figure out how much we should allocate for the tuner
 #define STACKSIZE ((int)((double) NP * NT / 64))
 
-typedef struct TexelTuple {
+struct TexelTuple {
     int index;
     int coeff;
-} TexelTuple;
+};
 
-typedef struct TexelEntry {
+struct TexelEntry {
     int ntuples;
     double result;
     double eval, phase;
     double factors[PHASE_NB];
     TexelTuple* tuples;
-} TexelEntry;
+};
 
 void runTexelTuning(Thread* thread);
 
