@@ -872,22 +872,38 @@ int bestTacticalMoveValue(Board* board, EvalInfo* ei){
     
     int value = 0;
     
-    uint64_t targets = ei->attacked[board->turn];
+    // Look at enemy pieces we attacked to get a best value for our
+    // moves. If the board is a known draw then we have not computed
+    // any attack information, so we just look at all enemy pieces
+    uint64_t targets =  board->colours[!board->turn]
+                     & (ei->positionIsDrawn ? ~0ull : ei->attacked[board->turn]);
     
-    if (targets & board->pieces[QUEEN]) value += PieceValues[QUEEN][EG];
+    // We may have a queen capture
+    if (targets & board->pieces[QUEEN]) 
+        value += PieceValues[QUEEN][EG];
     
-    else if (targets & board->pieces[ROOK]) value += PieceValues[ROOK][EG];
+    // We may have a rook capture
+    else if (targets & board->pieces[ROOK])
+        value += PieceValues[ROOK][EG];
     
+    // We may have a minor capture
     else if (targets & (board->pieces[KNIGHT] | board->pieces[BISHOP]))
         value += MAX(
             !!(targets & board->pieces[KNIGHT]) * PieceValues[KNIGHT][EG],
             !!(targets & board->pieces[BISHOP]) * PieceValues[BISHOP][EG]
         );
         
-    else 
+    // We may have a pawn capture
+    else if (targets & board->pieces[PAWN])
+        value += PieceValues[PAWN][EG];
+    
+    // We may have an enpass capture
+    else if (board->epSquare != -1)
         value += PieceValues[PAWN][EG];
         
-        
+    
+    // See if we have any pawns on promoting ranks. If so, assume that
+    // we can promote one of our pawns to at least a queen
     if (   board->pieces[PAWN] 
         &  board->colours[board->turn]
         & (board->turn == WHITE ? RANK_7 : RANK_2))
