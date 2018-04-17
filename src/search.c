@@ -298,7 +298,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     int i, repetitions, quiets = 0, played = 0, hist = 0;
     int R, newDepth, rAlpha, rBeta, ttValue, oldAlpha = alpha;
     int eval, value = -MATE, best = -MATE, futilityMargin = -MATE;
-    int inCheck, isQuiet, improving, checkExtended, singular, bestWasQuiet = 0;
+    int inCheck, isQuiet, improving, checkExtended, extension, bestWasQuiet = 0;
     
     uint16_t move, ttMove = NONE_MOVE, bestMove = NONE_MOVE, quietsTried[MAX_MOVES];
     
@@ -429,8 +429,8 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     // Here we perform our check extension, for non-root pvnodes, or for non-root
     // nodes near depth zero. Note that when we bypass the qsearch as a result of
     // being in check, we set depth to zero. This step adjusts depth back to one.
-    checkExtended = inCheck && !RootNode && (PvNode || depth <= 6);
-    depth += inCheck && !RootNode && (PvNode || depth <= 6);
+    checkExtended = inCheck && !RootNode && depth <= 8;
+    depth += inCheck && !RootNode && depth <= 8;
     
     // Compute and save off a static evaluation. Also, compute our futilityMargin
     eval = thread->evalStack[height] = evaluateBoard(board, &ei, &thread->pktable);
@@ -630,19 +630,28 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             
         } else R = 1;
         
-        // Step 16. Singular Move Extensions. If we are looking at a table move,
+        // Step 16A. Singular Move Extensions. If we are looking at a table move,
         // and it seems that under some conditions, the table move is better than
         // all other possible moves, we will extend the search of the table move
-        singular =   !RootNode
+        extension =  !RootNode
                   && !checkExtended
                   &&  depth >= 10
                   &&  move == ttMove
                   &&  ttEntry.depth >= depth - 3
                   && (ttEntry.type == PVNODE || ttEntry.type == CUTNODE)
                   &&  moveIsSingular(thread, board, &ttEntry, undo, depth, height);
+                  
+        // Step 16B. Check Extensions. If we are in a PvNode and we have not already
+        // extended the depth before the move loop, and this move is not singular,
+        // then we will extend it if we have a capture of a quiet with a good history
+        extension +=   PvNode
+                   &&  inCheck
+                   && !extension
+                   && !checkExtended
+                   && (hist >= 2048 || !isQuiet);
             
         // New depth is what our search depth would be, assuming that we do no LMR
-        newDepth = depth + singular;
+        newDepth = depth + extension;
         
         // Step 17A. If we triggered the LMR conditions (which we know by the value of R),
         // then we will perform a reduced search on the null alpha window, as we have no
