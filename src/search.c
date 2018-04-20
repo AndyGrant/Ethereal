@@ -437,11 +437,10 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     futilityMargin = eval + FutilityMargin * depth;
     
     // Finally, we define a node to be improving if the last two moves have increased
-    // the static eval by at least 16 centipawns. In order to have two last moves, we
-    // must have a height of at least 4.
+    // the static eval. To have two last moves, we must have a height of at least 4.
     improving =    height >= 4
-               &&  thread->evalStack[height-0] >= thread->evalStack[height-2] + 16
-               &&  thread->evalStack[height-2] >= thread->evalStack[height-4] + 16;
+               &&  thread->evalStack[height-0] > thread->evalStack[height-2]
+               &&  thread->evalStack[height-2] > thread->evalStack[height-4];
     
     // Step 6. Razoring. If a Quiescence Search for the current position
     // still falls way below alpha, we will assume that the score from
@@ -643,12 +642,13 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
                   
         // Step 16B. Check Extensions. If we are in a PvNode and we have not already
         // extended the depth before the move loop, and this move is not singular,
-        // then we will extend it if we have a capture of a quiet with a good history
+        // then we will extend it if we have a capture of a quiet with a good history,
+        // or if the node is improving, ie we expect something to beat alpha
         extension +=   PvNode
                    &&  inCheck
                    && !extension
                    && !checkExtended
-                   && (hist >= 2048 || !isQuiet);
+                   && (improving || !isQuiet || hist >= 2048);
             
         // New depth is what our search depth would be, assuming that we do no LMR
         newDepth = depth + extension;
