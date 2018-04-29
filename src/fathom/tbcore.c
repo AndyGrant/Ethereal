@@ -202,10 +202,10 @@ static void unmap_file(char *data, uint64 mapping)
 {
   if (!data) return;
   if (!UnmapViewOfFile(data)) {
-	  fprintf(stderr, "unmap failed, error code %d", GetLastError());
+	  fprintf(stderr, "unmap failed, error code %d", (int)GetLastError());
   }
   if (!CloseHandle((HANDLE)mapping)) {
-	  fprintf(stderr, "CloseHandle failed, error code %d", GetLastError());
+	  fprintf(stderr, "CloseHandle failed, error code %d", (int)GetLastError());
   }
 }
 #endif

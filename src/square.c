@@ -16,8 +16,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "types.h"
+#include "piece.h"
 #include "square.h"
+#include "types.h"
 
 const int SQInv[SQUARE_NB] = {
     56,  57,  58,  59,  60,  61,  62,  63,
