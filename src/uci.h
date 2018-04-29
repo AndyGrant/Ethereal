@@ -45,5 +45,6 @@ void moveToString(char* str, uint16_t move);
 void* uciGo(void* vthreadgo);
 void uciPosition(char* str, Board* board);
 void uciReport(Thread* threads, int alpha, int beta, int value);
+void uciReportTBRoot(uint16_t move, unsigned wdl, unsigned dtz);
 
 #endif

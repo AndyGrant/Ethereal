@@ -25,6 +25,7 @@
 
 #include "board.h"
 #include "evaluate.h"
+#include "fathom/tbprobe.h"
 #include "history.h"
 #include "magics.h"
 #include "masks.h"
@@ -41,14 +42,20 @@
 #include "uci.h"
 #include "zorbist.h"
 
+
+extern TransTable Table; // Defined by Transposition.c
+
+extern int MoveOverhead; // Defined by search.c
+
+extern unsigned TB_PROBE_DEPTH; // Defined by Syzygy.c
+
 pthread_mutex_t READYLOCK = PTHREAD_MUTEX_INITIALIZER;
 
-extern TransTable Table;
 
 int main(){
     
     Board board;
-    char str[8192];
+    char str[8192], *ptr;
     ThreadsGo threadsgo;
     pthread_t pthreadsgo;
     
@@ -84,10 +91,13 @@ int main(){
         getInput(str);
         
         if (stringEquals(str, "uci")){
-            printf("id name Ethereal 9.64\n");
+            printf("id name Ethereal 9.65\n");
             printf("id author Andrew Grant\n");
             printf("option name Hash type spin default 16 min 1 max 65536\n");
             printf("option name Threads type spin default 1 min 1 max 2048\n");
+            printf("option name MoveOverhead type spin default 100 min 0 max 10000\n");
+            printf("option name SyzygyPath type string default <empty>\n");
+            printf("option name SyzygyProbeDepth type spin default 0 min 0 max 127\n");
             printf("uciok\n");
             fflush(stdout);
         }
@@ -101,17 +111,36 @@ int main(){
         
         else if (stringStartsWith(str, "setoption")){
             
-            if (stringStartsWith(str, "setoption name Hash value")){
-                megabytes = atoi(str + strlen("setoption name Hash value"));
+            if (stringStartsWith(str, "setoption name Hash value ")){
+                megabytes = atoi(str + strlen("setoption name Hash value "));
                 destroyTranspositionTable(&Table);
                 initializeTranspositionTable(&Table, megabytes);
+                printf("info string set Hash to %dMB\n", megabytes);
             }
             
-            if (stringStartsWith(str, "setoption name Threads value")){
+            if (stringStartsWith(str, "setoption name Threads value ")){
                 free(threads);
-                nthreads = atoi(str + strlen("setoption name Threads value"));
+                nthreads = atoi(str + strlen("setoption name Threads value "));
                 threads = createThreadPool(nthreads);
+                printf("info string set Threads to %d\n", nthreads);
             }
+            
+            if (stringStartsWith(str, "setoption name MoveOverhead value ")){
+                MoveOverhead = atoi(str + strlen("setoption name MoveOverhead value "));
+                printf("info string set MoveOverhead to %d\n", MoveOverhead);
+            }
+            
+            if (stringStartsWith(str, "setoption name SyzygyPath value ")){
+                ptr = str + strlen("setoption name SyzygyPath value ");
+                tb_init(ptr); printf("info string set SyzygyPath to %s\n", ptr);
+            }
+            
+            if (stringStartsWith(str, "setoption name SyzygyProbeDepth value ")){
+                TB_PROBE_DEPTH = atoi(str + strlen("setoption name SyzygyProbeDepth value "));
+                printf("info string set SyzygyProbeDepth to %u\n", TB_PROBE_DEPTH);
+            }
+            
+            fflush(stdout);
         }
         
         else if (stringEquals(str, "ucinewgame")){
@@ -276,35 +305,57 @@ void uciPosition(char* str, Board* board){
 void uciReport(Thread* threads, int alpha, int beta, int value){
     
     int i;
-    int depth      = threads[0].depth;
-    int seldepth   = threads[0].seldepth;
-    int elapsed    = (int)(getRealTime() - threads[0].info->starttime);
-    uint64_t nodes =  nodesSearchedThreadPool(threads);
-    int hashfull   = estimateHashfull(&Table);
-    int nps        = (int)(1000 * (nodes / (1 + elapsed)));
-    PVariation* pv = &threads[0].pv;
+    int depth       = threads[0].depth;
+    int seldepth    = threads[0].seldepth;
+    int elapsed     = (int)(getRealTime() - threads[0].info->starttime);
+    uint64_t nodes  = nodesSearchedThreadPool(threads);
+    uint64_t tbhits = tbhitsSearchedThreadPool(threads);
+    int hashfull    = estimateHashfull(&Table);
+    int nps         = (int)(1000 * (nodes / (1 + elapsed)));
+    PVariation* pv  = &threads[0].pv;
     
     value = MAX(alpha, MIN(value, beta));
     
+    // If the score is MATE or MATED in X, convert to X
     int score   = value >=  MATE_IN_MAX ?  (MATE - value + 1) / 2
                 : value <= MATED_IN_MAX ? -(value + MATE)     / 2 : value;
                
+    // Two possible score types, mate and cp = centipawns
     char* type  = value >=  MATE_IN_MAX ? "mate"
                 : value <= MATED_IN_MAX ? "mate" : "cp";
                 
+    // Partial results from a window'ed search have bounds
     char* bound = value >=  beta ? " lowerbound " 
                 : value <= alpha ? " upperbound " : " ";
                 
+    // Main chunk of interface reporting
     printf("info depth %d seldepth %d score %s %d%stime %d "
-           "nodes %"PRIu64" nps %d hashfull %d pv ",
-           depth, seldepth, type, score, bound, elapsed, nodes, nps, hashfull);
+           "nodes %"PRIu64" nps %d tbhits %"PRIu64" hashfull %d pv ",
+           depth, seldepth, type, score, bound, elapsed, nodes, nps, tbhits, hashfull);
            
+    // Iterate over the PV and print each move
     for (i = 0; i < pv->length; i++){
         printMove(pv->line[i]);
         printf(" ");
     }
     
     printf("\n");
+    fflush(stdout);
+}
+
+void uciReportTBRoot(uint16_t move, unsigned wdl, unsigned dtz){
+    
+    int hashfull = estimateHashfull(&Table);
+    
+    int score = wdl == TB_LOSS ? -MATE + MAX_PLY + dtz + 1
+              : wdl == TB_WIN  ?  MATE - MAX_PLY - dtz - 1 : 0;
+    
+    printf("info depth %d seldepth %d score cp %d time 0 "
+           "nodes 0 tbhits 1 nps 0 hashfull %d pv ",
+           MAX_PLY - 1, MAX_PLY - 1, score, hashfull);
+           
+    printMove(move);
+    printf(" \n");
     fflush(stdout);
 }
 
