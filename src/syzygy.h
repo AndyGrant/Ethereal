@@ -16,50 +16,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _THREAD_H
-#define _THREAD_H
-
-#include <setjmp.h>
+#ifndef _SYZYGY_H
+#define _SYZYGY_H
 
 #include "types.h"
-#include "transposition.h"
-#include "search.h"
 
-struct Thread {
-    
-    Limits* limits;
-    SearchInfo* info;
-    
-    Board board;
-    PVariation pv;
-    int depth;
-    int seldepth;
-    uint64_t nodes;
-    uint64_t tbhits;
-    
-    int evalStack[MAX_PLY];
-    
-    int abort;
-    jmp_buf jbuffer;
-    
-    int nthreads;
-    Thread* threads;
-    
-    KillerTable killers;
-    HistoryTable history;
-    PawnKingTable pktable;
-    
-};
+int tablebasesProbeDTZ(Board* board, uint16_t* move);
 
-
-Thread* createThreadPool(int nthreads);
-
-void resetThreadPool(Thread* threads);
-
-void newSearchThreadPool(Thread* threads, Board* board, Limits* limits, SearchInfo* info);
-                               
-uint64_t nodesSearchedThreadPool(Thread* threads);
-
-uint64_t tbhitsSearchedThreadPool(Thread* threads);
+unsigned tablebasesProbeWDL(Board* board, int depth, int height);
 
 #endif

@@ -18,15 +18,14 @@ CC = gcc
 
 CCDROID = arm-linux-gnueabi-gcc
 
-
-SRC = *.c
+SRC = *.c fathom/tbprobe.c 
 
 LIBS = -lpthread -lm
 
 EXE = Ethereal
 
 
-WFLAGS = -Wall -Wextra -Wshadow -std=c99
+WFLAGS = -std=c11
 
 CFLAGS = -DNDEBUG -O3 $(WFLAGS) -march=native -flto
 
