@@ -25,6 +25,7 @@
 #include "fathom/tbprobe.h"
 #include "move.h"
 #include "movegen.h"
+#include "piece.h"
 #include "types.h"
 #include "uci.h"
 
@@ -89,7 +90,7 @@ int tablebasesProbeDTZ(Board* board, uint16_t* move){
     unsigned wdl, dtz, to, from, ep, promo;
     
     // Check to make sure we expect to be within the Syzygy tables
-    if (popcount(board->colours[WHITE] | board->colours[BLACK]) > TB_LARGEST)
+    if (popcount(board->colours[WHITE] | board->colours[BLACK]) > (int)TB_LARGEST)
         return 0;
     
     // Tap into Fathom's API routines

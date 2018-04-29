@@ -530,7 +530,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             
         applyNullMove(board, undo);
         
-        value = -search(thread, &lpv, -beta, -beta + 1, depth - R, height + 1);
+        value = -search(thread, &lpv, -beta, -beta+1, depth-R, height+1);
         
         revertNullMove(board, undo);
         

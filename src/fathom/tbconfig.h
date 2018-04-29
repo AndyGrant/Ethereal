@@ -25,6 +25,9 @@
 #ifndef TBCONFIG_H
 #define TBCONFIG_H
 
+#include "../bitutils.h" // For access to bitwise utilities
+#include "../movegen.h" // For access to move generation
+
 /****************************************************************************/
 /* BUILD CONFIG:                                                            */
 /****************************************************************************/
@@ -35,6 +38,7 @@
  * here:
  */
 /* #define TB_CUSTOM_POP_COUNT(x) <DEFINITION> */
+ #define TB_CUSTOM_POP_COUNT(x) (popcount((x)))
 
 /*
  * Define TB_CUSTOM_LSB to override the internal lsb
@@ -114,25 +118,25 @@
  * Define TB_KING_ATTACKS(square) to return the king attacks bitboard for a
  * king at `square'.
  */
-/* #define TB_KING_ATTACKS(square)          <DEFINITION> */
+ #define TB_KING_ATTACKS(square) (kingAttacks((square), ~0ull))
 
 /*
  * Define TB_KNIGHT_ATTACKS(square) to return the knight attacks bitboard for
  * a knight at `square'.
  */
-/* #define TB_KNIGHT_ATTACKS(square)        <DEFINITION> */
+ #define TB_KNIGHT_ATTACKS(square) (knightAttacks((square), ~0ull))
 
 /*
  * Define TB_ROOK_ATTACKS(square, occ) to return the rook attacks bitboard
  * for a rook at `square' assuming the given `occ' occupancy bitboard.
  */
-/* #define TB_ROOK_ATTACKS(square, occ)     <DEFINITION> */
+ #define TB_ROOK_ATTACKS(square, occ) (rookAttacks((square), (occ), ~0ull))
 
 /*
  * Define TB_BISHOP_ATTACKS(square, occ) to return the bishop attacks bitboard
  * for a bishop at `square' assuming the given `occ' occupancy bitboard.
  */
-/* #define TB_BISHOP_ATTACKS(square, occ)   <DEFINITION> */
+ #define TB_BISHOP_ATTACKS(square, occ) (bishopAttacks((square), (occ), ~0ull))
 
 /*
  * Define TB_QUEEN_ATTACKS(square, occ) to return the queen attacks bitboard
@@ -150,6 +154,6 @@
  *       nothing.  Etc.
  * NOTE: This definition must not include en passant captures.
  */
-/* #define TB_PAWN_ATTACKS(square, color)   <DEFINITION> */
+ #define TB_PAWN_ATTACKS(square, color) (pawnAttacks((square), ~0ull, (!color)))
 
 #endif
