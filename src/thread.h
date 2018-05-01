@@ -32,14 +32,15 @@ struct Thread {
     
     Board board;
     PVariation pv;
+    
     int depth;
     int seldepth;
+    
     uint64_t nodes;
     uint64_t tbhits;
     
     int evalStack[MAX_PLY];
     
-    int abort;
     jmp_buf jbuffer;
     
     int nthreads;
@@ -48,7 +49,6 @@ struct Thread {
     KillerTable killers;
     HistoryTable history;
     PawnKingTable pktable;
-    
 };
 
 

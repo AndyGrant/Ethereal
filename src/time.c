@@ -24,6 +24,15 @@
 
 #include <stdlib.h>
 
+#include "search.h"
+#include "time.h"
+#include "types.h"
+#include "uci.h"
+
+
+int MoveOverhead = 100; // Set by UCI options
+
+
 double getRealTime(){
 #if defined(_WIN32) || defined(_WIN64)
     return (double)(GetTickCount());
@@ -37,4 +46,57 @@ double getRealTime(){
     
     return secsInMilli + usecsInMilli;
 #endif
+}
+
+double elapsedTime(SearchInfo* info){
+    
+    return getRealTime() - info->startTime;
+    
+}
+
+double estimatedUsage(SearchInfo* info){
+    
+    const int depth = info->depth;
+        
+    double timeFactor = info->timeUsage[depth] / MAX(1, info->timeUsage[depth-1]);
+
+    return info->timeUsage[depth] * (timeFactor + .40);
+    
+}
+
+void initializeTimeManagment(SearchInfo* info, Limits* limits){
+
+    info->startTime = limits->start; // Save off the start time of the search
+    
+    info->bestMoveChanges = 0; // Clear our stability time usage heuristic
+    
+    // Allocate time if Ethereal is handling the clock
+    if (limits->limitedBySelf){
+        
+        // Playing using X / Y or X / Y + Z time controls
+        if (limits->mtg >= 0){
+            info->idealUsage =  0.75 * limits->time / (limits->mtg +  5) + limits->inc;
+            info->maxAlloc   =  4.00 * limits->time / (limits->mtg +  7) + limits->inc;
+            info->maxUsage   = 10.00 * limits->time / (limits->mtg + 10) + limits->inc;
+        }
+        
+        // Playing using X + Y or X time controls
+        else {
+            info->idealUsage =  0.52 * (limits->time + 23 * limits->inc) / 25;
+            info->maxAlloc   =  4.00 * (limits->time + 23 * limits->inc) / 25;
+            info->maxUsage   = 10.00 * (limits->time + 23 * limits->inc) / 25;
+        }
+        
+        // Cap all time allocations using the move time buffer
+        info->idealUsage = MIN(info->idealUsage, limits->time - MoveOverhead);
+        info->maxAlloc   = MIN(info->maxAlloc,   limits->time - MoveOverhead);
+        info->maxUsage   = MIN(info->maxUsage,   limits->time - MoveOverhead);
+    }
+    
+    // Interface told us to search for a predefined duration
+    if (limits->limitedByTime){
+        info->idealUsage = limits->timeLimit;
+        info->maxAlloc   = limits->timeLimit;
+        info->maxUsage   = limits->timeLimit;
+    }
 }

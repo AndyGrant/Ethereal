@@ -22,12 +22,19 @@
 #include "types.h"
 
 struct Limits {
+    
+    int depthLimit;
+    double timeLimit;
     int limitedByNone;
     int limitedByTime;
     int limitedByDepth;
     int limitedBySelf;
-    double timeLimit;
-    int depthLimit;
+    
+    double start;
+    double time;
+    double inc;
+    double mtg;
+    
 };
 
 struct ThreadsGo {
