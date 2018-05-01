@@ -19,6 +19,14 @@
 #ifndef _MY_TIME_H
 #define _MY_TIME_H
 
+#include "types.h"
+
 double getRealTime();
+
+double elapsedTime(SearchInfo* info);
+
+double estimatedUsage(SearchInfo* info);
+
+void initializeTimeManagment(SearchInfo* info, Limits* limits);
 
 #endif
