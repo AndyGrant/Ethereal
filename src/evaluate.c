@@ -192,7 +192,7 @@ const int ThreatMinorAttackedByPawn  = S( -68, -49);
 
 const int ThreatMinorAttackedByMajor = S( -38, -32);
 
-const int ThreatMajorAttackedByMinor = S( -41, -21);
+const int ThreatQueenAttackedByMinor = S( -41, -21);
 
 const int ThreatQueenAttackedByOne   = S( -42, -19);
 
@@ -722,7 +722,6 @@ int evaluateThreats(EvalInfo* ei, Board* board, int colour){
     uint64_t pawns   = board->colours[colour] & board->pieces[PAWN  ];
     uint64_t knights = board->colours[colour] & board->pieces[KNIGHT];
     uint64_t bishops = board->colours[colour] & board->pieces[BISHOP];
-    uint64_t rooks   = board->colours[colour] & board->pieces[ROOK  ];
     uint64_t queens  = board->colours[colour] & board->pieces[QUEEN ];
     
     uint64_t attacksByPawns  = ei->attackedBy[!colour][PAWN  ];
@@ -744,10 +743,10 @@ int evaluateThreats(EvalInfo* ei, Board* board, int colour){
     eval += count * ThreatMinorAttackedByMajor;
     if (TRACE) T.threatMinorAttackedByMajor[colour] += count;
     
-    // Penalty for all minor threats against our rooks and queens
-    count = popcount((rooks | queens) & (attacksByMinors));
-    eval += count * ThreatMajorAttackedByMinor;
-    if (TRACE) T.threatMajorAttackedByMinor[colour] += count;
+    // Penalty for all minor threats against our queens
+    count = popcount(queens & (attacksByMinors));
+    eval += count * ThreatQueenAttackedByMinor;
+    if (TRACE) T.threatQueenAttackedByMinor[colour] += count;
     
     // Penalty for any threat against our queens
     count = popcount(queens & ei->attacked[!colour]);

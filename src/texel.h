@@ -77,13 +77,13 @@
 #define TuneKingShelter   (0 * 128)
 
 // Define the Passed Pawn Terms
-#define TunePassedPawn (0 * 32)
+#define TunePassedPawn (1 * 32)
 
 // Define the Threat Terms
 #define TuneThreatPawnAttackedByOne     (0 * 1)
 #define TuneThreatMinorAttackedByPawn   (0 * 1)
 #define TuneThreatMinorAttackedByMajor  (0 * 1)
-#define TuneThreatMajorAttackedByMinor  (0 * 1)
+#define TuneThreatQueenAttackedByMinor  (0 * 1)
 #define TuneThreatQueenAttackedByOne    (0 * 1)
 
 // Compute Number Of Terms (NT) based on what is turned on and off
@@ -99,7 +99,7 @@
     TuneRookOnSeventh              + TuneRookMobility               + TuneQueenMobility              + \
     TuneKingDefenders              + TuneKingShelter                + TunePassedPawn                 + \
     TuneThreatPawnAttackedByOne    + TuneThreatMinorAttackedByPawn  + TuneThreatMinorAttackedByMajor + \
-    TuneThreatMajorAttackedByMinor + TuneThreatQueenAttackedByOne                                      \
+    TuneThreatQueenAttackedByMinor + TuneThreatQueenAttackedByOne                                      \
 )
 
 // Try to figure out how much we should allocate for the tuner
