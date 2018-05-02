@@ -101,7 +101,7 @@ extern const int PassedPawn[2][2][RANK_NB];
 extern const int ThreatPawnAttackedByOne;
 extern const int ThreatMinorAttackedByPawn;
 extern const int ThreatMinorAttackedByMajor; 
-extern const int ThreatMajorAttackedByMinor;
+extern const int ThreatQueenAttackedByMinor;
 extern const int ThreatQueenAttackedByOne;
 
 
@@ -219,7 +219,6 @@ void initializeTexelEntries(TexelEntry* tes, Thread* thread){
     // Initialize the thread for the search
     thread->limits = &limits;
     thread->depth  = 1;
-    thread->abort  = 0;
     
     FILE * fin = fopen("FENS", "r");
     
@@ -479,8 +478,8 @@ void initializeCoefficients(int coeffs[NT]){
     if (TuneThreatMinorAttackedByMajor)
         coeffs[i++] = T.threatMinorAttackedByMajor[WHITE] - T.threatMinorAttackedByMajor[BLACK];
     
-    if (TuneThreatMajorAttackedByMinor)
-        coeffs[i++] = T.threatMajorAttackedByMinor[WHITE] - T.threatMajorAttackedByMinor[BLACK];    
+    if (TuneThreatQueenAttackedByMinor)
+        coeffs[i++] = T.threatQueenAttackedByMinor[WHITE] - T.threatQueenAttackedByMinor[BLACK];    
     
     if (TuneThreatQueenAttackedByOne)
         coeffs[i++] = T.threatQueenAttackedByOne[WHITE] - T.threatQueenAttackedByOne[BLACK];    
@@ -728,9 +727,9 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
         cparams[i++][EG] = ScoreEG(ThreatMinorAttackedByMajor);
     }
         
-    if (TuneThreatMajorAttackedByMinor){
-        cparams[i  ][MG] = ScoreMG(ThreatMajorAttackedByMinor);
-        cparams[i++][EG] = ScoreEG(ThreatMajorAttackedByMinor);
+    if (TuneThreatQueenAttackedByMinor){
+        cparams[i  ][MG] = ScoreMG(ThreatQueenAttackedByMinor);
+        cparams[i++][EG] = ScoreEG(ThreatQueenAttackedByMinor);
     }
         
     if (TuneThreatQueenAttackedByOne){
@@ -1051,8 +1050,8 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
         printf("\nconst int ThreatMinorAttackedByMajor = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
     }
     
-    if (TuneThreatMajorAttackedByMinor){
-        printf("\nconst int ThreatMajorAttackedByMinor = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
+    if (TuneThreatQueenAttackedByMinor){
+        printf("\nconst int ThreatQueenAttackedByMinor = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
     }
     
     if (TuneThreatQueenAttackedByOne){
