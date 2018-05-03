@@ -21,6 +21,8 @@
 
 #include "types.h"
 
+#define ETHEREAL_VERSION "9.69"
+
 struct Limits {
     
     int depthLimit;

@@ -71,9 +71,9 @@ uint64_t rookAttacks(int sq, uint64_t occupied, uint64_t targets){
     return MoveDatabaseRook[MagicRookIndexes[sq] + index] & targets;
 }
 
-uint64_t queenAttacks(int sq, uint64_t occupiedDiagonol, uint64_t occupiedStraight, uint64_t targets){
-    return  bishopAttacks(sq, occupiedDiagonol, targets)
-            | rookAttacks(sq, occupiedStraight, targets);
+uint64_t queenAttacks(int sq, uint64_t occupied, uint64_t targets){
+    return  bishopAttacks(sq, occupied, targets)
+            | rookAttacks(sq, occupied, targets);
 }
 
 uint64_t kingAttacks(int sq, uint64_t targets){
