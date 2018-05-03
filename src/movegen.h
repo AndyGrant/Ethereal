@@ -31,7 +31,7 @@ uint64_t pawnEnpassCaptures(uint64_t pawns, int epsq, int colour);
 uint64_t knightAttacks(int sq, uint64_t targets);
 uint64_t bishopAttacks(int sq, uint64_t occupied, uint64_t targets);
 uint64_t rookAttacks(int sq, uint64_t occupied, uint64_t targets);
-uint64_t queenAttacks(int sq, uint64_t occupiedDiagonol, uint64_t occupiedStraight, uint64_t targets);
+uint64_t queenAttacks(int sq, uint64_t occupied, uint64_t targets);
 uint64_t kingAttacks(int sq, uint64_t tagets);
 
 void genAllLegalMoves(Board* board, uint16_t* moves, int* size);

@@ -51,7 +51,7 @@ uint16_t selectNextMove(MovePicker* mp, Board* board){
     switch (mp->stage){
         
         case STAGE_TABLE:
-        
+            
             // Play the table move if it is from this
             // position, also advance to the next stage
             mp->stage = STAGE_GENERATE_NOISY;
@@ -220,177 +220,135 @@ void evaluateQuietMoves(MovePicker* mp, Board* board){
 
 int moveIsPsuedoLegal(Board* board, uint16_t move){
     
-    int from, to, moveType, promoType, fromType; 
-    int castleStart, castleEnd, rights, crossover;
-    uint64_t friendly, enemy, empty, options, map;
-    uint64_t forwardOne, forwardTwo, leftward, rightward;
-    uint64_t promoForward, promoLeftward, promoRightward;
+    int colour = board->turn;
+    int to     = MoveTo(move);
+    int from   = MoveFrom(move);
+    int type   = MoveType(move);
+    int ptype  = MovePromoType(move);
+    int ftype  = PieceType(board->squares[from]);
     
+    uint64_t friendly = board->colours[ colour];
+    uint64_t enemy    = board->colours[!colour];
+    uint64_t occupied = friendly | enemy;
+    uint64_t left, right, forward;
+    
+    // Quick check against obvious illegal moves
     if (move == NULL_MOVE || move == NONE_MOVE)
         return 0;
     
-    from = MoveFrom(move);
-    to = MoveTo(move);
-    moveType = MoveType(move);
-    promoType = MovePromoType(move);
-    fromType = PieceType(board->squares[from]);
-    friendly = board->colours[board->turn];
-    enemy = board->colours[!board->turn];
-    empty = ~(friendly | enemy);
-    
-    // Trying to move an empty square, or an enemy piece
-    if (PieceColour(board->squares[from]) != board->turn)
+    // Verify the moving piece is our own
+    if (PieceColour(board->squares[from]) != colour)
         return 0;
     
-    // Non promotion moves should be marked as Knight Promotions
-    if (promoType != PROMOTE_TO_KNIGHT && moveType != PROMOTION_MOVE)
+    // Non promotions should be marked as PROMOTE_TO_KNIGHT
+    if (ptype != PROMOTE_TO_KNIGHT && type != PROMOTION_MOVE)
         return 0;
     
-    switch (fromType){
-        
-        case PAWN:
-        
-            // Pawns cannot be involved in a Castle
-            if (moveType == CASTLE_MOVE)
-                return 0;
-        
-            // Compute bitboards for possible movement of a Pawn
-            if (board->turn == WHITE){
-                
-                forwardOne     = ((1ull << from) << 8) & empty;
-                forwardTwo     = ((forwardOne & RANK_3) << 8) & empty;
-                leftward       = ((1ull << from) << 7) & ~FILE_H;
-                rightward      = ((1ull << from) << 9) & ~FILE_A;
-                promoForward   = forwardOne & RANK_8;
-                promoLeftward  = leftward & RANK_8 & enemy;
-                promoRightward = rightward & RANK_8 & enemy;
-                forwardOne     = forwardOne & ~RANK_8;
-                leftward       = leftward & ~RANK_8;
-                rightward      = rightward & ~RANK_8;
-                
-            } else {
-                
-                forwardOne     = ((1ull << from) >> 8) & empty;
-                forwardTwo     = ((forwardOne & RANK_6) >> 8) & empty;
-                leftward       = ((1ull << from) >> 7) & ~FILE_A;
-                rightward      = ((1ull << from) >> 9) & ~FILE_H;
-                promoForward   = forwardOne & RANK_1;
-                promoLeftward  = leftward & RANK_1 & enemy;
-                promoRightward = rightward & RANK_1 & enemy;
-                forwardOne     = forwardOne & ~RANK_1;
-                leftward       = leftward & ~RANK_1;
-                rightward      = rightward & ~RANK_1;
-            }
+    
+    // Knight, Rook, Bishop, and Queen moves are legal so long as the
+    // move type is NORMAL and the destination is an attacked square
+    
+    if (ftype == KNIGHT)
+        return    type == NORMAL_MOVE
+            && !!(knightAttacks(from, ~friendly) & (1ull << to));
             
-            if (moveType == ENPASS_MOVE){
-                
-                // Make sure we can move to the enpass square
-                if (!((leftward | rightward) & (1ull << board->epSquare))) return 0;
-                
-                // If the square matchs the to, then the move is valid
-                return to == board->epSquare;
-            }
+    if (ftype == BISHOP)
+        return    type == NORMAL_MOVE
+            && !!(bishopAttacks(from, occupied, ~friendly) & (1ull << to));
             
-            // Correct the movement bitboards
-            leftward &= enemy; rightward &= enemy;
+    if (ftype == ROOK)
+        return    type == NORMAL_MOVE
+            && !!(rookAttacks(from, occupied, ~friendly) & (1ull << to));
             
-            // Determine the possible movements based on move type
-            if (moveType == NORMAL_MOVE)
-                options = forwardOne | forwardTwo | leftward | rightward;
-            else
-                options = promoForward | promoLeftward | promoRightward;
-            
-            // See if one of the possible moves includs to to square
-            return (options & (1ull << to)) >> to;
-                
-        case KNIGHT:
-            
-            // First ensure the move type is correct
-            if (moveType != NORMAL_MOVE) return 0;
-            
-            // Generate Knight attacks and compare to destination
-            options = knightAttacks(from, ~friendly);
-            return (options & (1ull << to)) >> to;
+    if (ftype == QUEEN)
+        return    type == NORMAL_MOVE
+            && !!(queenAttacks(from, occupied, ~friendly) & (1ull << to));
+    
+    if (ftype == PAWN){
         
-        
-        case BISHOP:
-            
-            // First ensure the move type is correct
-            if (moveType != NORMAL_MOVE) return 0;
-        
-            // Generate Bishop attacks and compare to destination
-            options = bishopAttacks(from, ~empty, ~friendly);
-            return (options & (1ull << to)) >> to;
-        
-        
-        case ROOK:
-        
-            // First ensure the move type is correct
-            if (moveType != NORMAL_MOVE) return 0;
-            
-            // Generate Rook attacks and compare to destination
-            options = rookAttacks(from, ~empty, ~friendly);
-            return (options & (1ull << to)) >> to;
-        
-        
-        case QUEEN:
-        
-            // First ensure the move type is correct
-            if (moveType != NORMAL_MOVE) return 0;
-            
-            // Generate Queen attacks and compare to destination
-            options = bishopAttacks(from, ~empty, ~friendly)
-                    | rookAttacks(from, ~empty, ~friendly);
-            return (options & (1ull << to)) >> to;
-        
-        
-        case KING:
-        
-            // If normal move, generate King attacks and compare to destination
-            if (moveType == NORMAL_MOVE){
-                options = kingAttacks(from, ~friendly);
-                return (options & (1ull << to)) >> to;
-            }
-            
-            else if (moveType == CASTLE_MOVE){
-                
-                // Determine the squares which must be unoccupied,
-                // the needed castle rights, and the crossover square
-                if (board->turn == WHITE){
-                    map = (to > from)       ? WHITE_CASTLE_KING_SIDE_MAP : WHITE_CASTLE_QUEEN_SIDE_MAP;
-                    rights = (to > from)    ? WHITE_KING_RIGHTS : WHITE_QUEEN_RIGHTS;
-                    crossover = (to > from) ? 5 : 3;
-                    castleEnd = (to > from) ? 6 : 2;
-                    castleStart = 4;
-                } 
-                
-                else {
-                    map = (to > from)       ? BLACK_CASTLE_KING_SIDE_MAP : BLACK_CASTLE_QUEEN_SIDE_MAP;
-                    rights = (to > from)    ? BLACK_KING_RIGHTS : BLACK_QUEEN_RIGHTS;
-                    crossover = (to > from) ? 61 : 59;
-                    castleEnd = (to > from) ? 62 : 58;
-                    castleStart = 60;
-                }
-                
-                // Inorder to be psuedo legal, the from square must
-                // match the starting king square, the to square
-                // must must the correct movement, the area between the king
-                // and the rook must be empty, we must have the proper
-                // castling rights, we must not current be in check,
-                // and we must also not cross through a checked square.
-                if (from != castleStart) return 0;
-                if (to != castleEnd) return 0;
-                if (~empty & map) return 0;
-                if (!(board->castleRights & rights)) return 0;
-                if (!isNotInCheck(board, board->turn)) return 0;
-                return !squareIsAttacked(board, board->turn, crossover);
-            }
-            
-            else
-                return 0;
-            
-        default:
-            assert(0);
+        // Throw out castle moves with our pawn
+        if (type == CASTLE_MOVE)
             return 0;
+        
+        // Look at the squares which our pawn threatens
+        left  = pawnLeftAttacks(1ull << from, ~0ull, colour);
+        right = pawnRightAttacks(1ull << from, ~0ull, colour);
+        
+        // Enpass moves are legal if our to square is the enpass
+        // square and we could attack a piece on the enpass square
+        if (type == ENPASS_MOVE)
+            return   to == board->epSquare
+                && ((left | right) & (1ull << board->epSquare));
+        
+        // Ensure that left and right are now captures, compute advances
+        left = left & enemy;
+        right = right & enemy;
+        forward = pawnAdvance(1ull << from, occupied, colour);
+        
+        // Promotion moves are legal if we can move to one of the promotion
+        // ranks, defined by PROMOTION_RANKS, independent of moving colour
+        if (type == PROMOTION_MOVE)
+            return !!(PROMOTION_RANKS & (left | right | forward) & (1ull << to));
+        
+        // Add the double advance to forward
+        forward |= pawnAdvance(forward & (!colour ? RANK_3 : RANK_6), occupied, colour);
+        
+        // Normal moves are legal if we can move there
+        return !!((left | right | forward) & (1ull << to) & ~PROMOTION_RANKS);
     }
+    
+    if (ftype == KING){
+        
+        // Normal moves are legal if to square is a valid target
+        if (type == NORMAL_MOVE)
+            return !!(kingAttacks(from, ~friendly) & (1ull << to));
+        
+        // Kings cannot castle or promote
+        if (type == ENPASS_MOVE || type == PROMOTION_MOVE)
+            return 0;
+        
+        // Kings cannot castle out of check
+        if (board->kingAttackers) 
+            return 0;
+        
+        // Castling is hard to verify directly, so just generate
+        // the possible castling options, and check equality
+        
+        if (colour == WHITE){
+            
+            if (  ((occupied & WHITE_CASTLE_KING_SIDE_MAP) == 0ull)
+                && (board->castleRights & WHITE_KING_RIGHTS)
+                &&  MoveMake(4, 6, CASTLE_MOVE) == move
+                && !squareIsAttacked(board, WHITE, 5))
+                return 1;
+                
+            if (  ((occupied & WHITE_CASTLE_QUEEN_SIDE_MAP) == 0ull)
+                && (board->castleRights & WHITE_QUEEN_RIGHTS)
+                &&  MoveMake(4, 2, CASTLE_MOVE) == move
+                && !squareIsAttacked(board, WHITE, 3))
+                return 1;
+        }
+        
+        if (colour == BLACK){
+            
+            if (  ((occupied & BLACK_CASTLE_KING_SIDE_MAP) == 0ull)
+                && (board->castleRights & BLACK_KING_RIGHTS)
+                &&  MoveMake(60, 62, CASTLE_MOVE) == move
+                && !squareIsAttacked(board, BLACK, 61))
+                return 1;
+                         
+            if (  ((occupied & BLACK_CASTLE_QUEEN_SIDE_MAP) == 0ull)
+                && (board->castleRights & BLACK_QUEEN_RIGHTS)
+                &&  MoveMake(60, 58, CASTLE_MOVE) == move
+                && !squareIsAttacked(board, BLACK, 59))
+                return 1;
+        }
+        
+        // No such castle was found via generation
+        return 0;
+    }
+    
+    // The colour check should (assuming board->squares only contains pieces
+    // and EMPTY flags...) should ensure that ftype is an actual piece
+    assert(0); return 0;
 }
