@@ -36,7 +36,6 @@ struct SearchInfo {
     double maxUsage;
     
     int bestMoveChanges;
-    
 };
 
 struct PVariation {
@@ -54,6 +53,8 @@ int aspirationWindow(Thread* thread, int depth);
 int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int height);
 
 int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height);
+
+int staticExchangeEvaluation(Board* board, uint16_t move, int threshold);
 
 int moveIsTactical(Board* board, uint16_t move);
 
@@ -101,5 +102,7 @@ static const int LateMovePruningDepth = 8;
 static const int LateMovePruningCounts[] = {0, 4, 6, 10, 15, 23, 31, 40, 52};
 
 static const int QFutilityMargin = 100;
+
+static const int QStaticExchanceMargin = -100;
 
 #endif

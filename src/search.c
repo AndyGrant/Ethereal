@@ -787,6 +787,11 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
         if (captureIsWeak(board, &ei, move, 0))
             continue;
         
+        // Step 8. Static Exchance Evaluation Pruning. If the move fails a generous
+        // SEE threadhold, then it is unlikely to be useful in improving our position
+        if (!staticExchangeEvaluation(board, move, QStaticExchanceMargin))
+            continue;
+        
         // Apply and validate move before searching
         applyMove(board, move, undo);
         if (!isNotInCheck(board, !board->turn)){
@@ -822,6 +827,92 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     
     return best;
 }
+
+int staticExchangeEvaluation(Board* board, uint16_t move, int threshold){
+    
+    // Assume that enpass and promotion are worth at least 0
+    if (MoveType(move) != NORMAL_MOVE)
+        return 0 >= threshold;
+    
+    int from = MoveFrom(move), to = MoveTo(move);
+    int nextVictim = PieceType(board->squares[from]);
+    int colour = !board->turn;
+    
+    // Best case for us is taking the to-square without re-capture
+    int balance = PieceValues[PieceType(board->squares[to])][MG] - threshold;
+    
+    // Best case fails to beat our threshold
+    if (balance < 0) return 0;
+    
+    // Worst case is our opponent re-captures for free
+    balance -= PieceValues[nextVictim][MG];
+    if (balance >= 0) return 1;
+    
+    // Grab sliders for updating revealed attackers
+    uint64_t bishops = board->pieces[BISHOP] | board->pieces[QUEEN ];
+    uint64_t rooks   = board->pieces[ROOK  ] | board->pieces[QUEEN ];
+    
+    // Let occupied suppose that the move was actually made
+    uint64_t occupied = (board->colours[WHITE] | board->colours[BLACK]) ^ (1ull << from) ^ (1ull << to);
+    
+    // Get all pieces which attack the target square. And with occupied
+    // so that we do not let the same piece attack twice
+    uint64_t attackers = allAttackersToSquare(board, occupied, to) & occupied;
+    uint64_t myAttackers;
+                       
+    while (1){
+        
+        // If we have no more attackers left we lose
+        myAttackers = attackers & board->colours[colour];
+        if (myAttackers == 0ull) break;
+        
+        // Find our weakest piece to attack with
+        for (nextVictim = PAWN; nextVictim <= QUEEN; nextVictim++)
+            if (myAttackers & board->pieces[nextVictim])
+                break;
+            
+        // Remove this attacker from the occupied
+        occupied ^= (1ull << getlsb(myAttackers & board->pieces[nextVictim]));
+        
+        // A diagonal move may reveal bishop or queen attackers 
+        if (nextVictim == PAWN || nextVictim == BISHOP || nextVictim == QUEEN)
+            attackers |= bishopAttacks(to, occupied, bishops);
+        
+        // A vertical or horizontal move may reveal rook or queen attackers
+        if (nextVictim == ROOK || nextVictim == QUEEN)
+            attackers |=   rookAttacks(to, occupied, rooks);
+        
+        // Make sure we did not add any already used attacks
+        attackers &= occupied;
+        
+        // Swap the turn
+        colour = !colour;
+        
+        // Negamax the balance and add the value of the next victim
+        balance = -balance - 1 - PieceValues[nextVictim][MG];
+        
+        // If balance is non negative after giving away our piece,
+        // then we have won. We swap the side to move if we attacked
+        // with our king, and our opponent can attack back. This way,
+        // we will (when pruning before move legality check) save time.
+        
+        // If the balance is non negative after giving away our piece then we win
+        if (balance >= 0){
+            
+            // As a slide speed up for move legality checking, if our last attacking
+            // piece is a king, and our opponent still has attackers, then we've
+            // lost as the move we followed would be illegal
+            if (nextVictim == KING && (attackers & board->colours[colour]))
+                colour = !colour;
+            
+            break;
+        }
+    }
+    
+    // Side to move after the loop loses
+    return board->turn != colour;
+}
+
 
 int moveIsTactical(Board* board, uint16_t move){
     return board->squares[MoveTo(move)] != EMPTY
