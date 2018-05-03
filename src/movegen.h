@@ -43,6 +43,7 @@ int isNotInCheck(Board* board, int colour);
 int squareIsAttacked(Board* board, int colour, int sq);
 
 uint64_t attackersToSquare(Board* board, int colour, int sq);
+uint64_t allAttackersToSquare(Board* board, uint64_t occupied, int sq);
 uint64_t attackersToKingSquare(Board* board);
 
 #endif

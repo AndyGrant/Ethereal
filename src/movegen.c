@@ -376,6 +376,16 @@ uint64_t attackersToSquare(Board* board, int colour, int sq){
            |    kingAttacks(sq, enemy & board->pieces[KING  ]);
 }
 
+uint64_t allAttackersToSquare(Board* board, uint64_t occupied, int sq){
+    
+    return      pawnAttacks(sq, board->colours[WHITE] & board->pieces[PAWN], BLACK)
+           |    pawnAttacks(sq, board->colours[BLACK] & board->pieces[PAWN], WHITE)
+           |  knightAttacks(sq, board->pieces[KNIGHT])
+           |  bishopAttacks(sq, occupied, board->pieces[BISHOP] | board->pieces[QUEEN])
+           |    rookAttacks(sq, occupied, board->pieces[ROOK  ] | board->pieces[QUEEN])
+           |    kingAttacks(sq, board->pieces[KING]);
+}
+
 uint64_t attackersToKingSquare(Board* board){
     int kingsq = getlsb(board->colours[board->turn] & board->pieces[KING]);
     return attackersToSquare(board, board->turn, kingsq);
