@@ -21,7 +21,7 @@
 
 #include "types.h"
 
-#define ETHEREAL_VERSION "9.70"
+#define ETHEREAL_VERSION "9.71"
 
 struct Limits {
     
@@ -36,7 +36,6 @@ struct Limits {
     double time;
     double inc;
     double mtg;
-    
 };
 
 struct ThreadsGo {
