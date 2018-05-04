@@ -87,22 +87,26 @@ static const int ProbCutDepth = 5;
 
 static const int ProbCutMargin = 100;
 
-static const int InternalIterativeDeepeningDepth = 3;
+static const int IIDDepth = 3;
 
 static const int FutilityMargin = 100;
 
 static const int FutilityPruningDepth = 8;
 
-static const int WeakCaptureTwoAttackersDepth = 5;
-
-static const int WeakCaptureOneAttackersDepth = 3;
-
 static const int LateMovePruningDepth = 8;
 
 static const int LateMovePruningCounts[] = {0, 4, 6, 10, 15, 23, 31, 40, 52};
 
+static const int WeakCaptureTwoAttackersDepth = 5;
+
+static const int WeakCaptureOneAttackersDepth = 3;
+
+static const int SEEPruningDepth = 8;
+
+static const int SEEMargin = -25;
+
 static const int QFutilityMargin = 100;
 
-static const int QStaticExchanceMargin = -100;
+static const int QSEEMargin = -100;
 
 #endif
