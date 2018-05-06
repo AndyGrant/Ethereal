@@ -142,16 +142,19 @@ const int QueenMobility[28] = {
 
 // Definition of evaluation terms related to Kings
 
-int KingSafety[64]; // Defined by the Polynomial below
-
-const double KingPolynomial[6] = {
-    0.00000011, -0.00009948,  0.00797308,
-    0.03141319,  2.18429452, -3.33669140,
-};
 const int KingDefenders[12] = {
     S( -37,  -4), S( -18,   6), S(   0,   1), S(  10,   0),
     S(  24,  -3), S(  35,   2), S(  39,  14), S(  28,-207),
     S(  12,   6), S(  12,   6), S(  12,   6), S(  12,   6),
+};
+
+const int KingThreatWeight[PIECE_NB] = { 4, 8, 8, 12, 16, 0 };
+
+int KingSafety[256]; // Defined by the Polynomial below
+
+const double KingPolynomial[6] = {
+    0.00000011, -0.00009948,  0.00797308,
+    0.03141319,  2.18429452, -3.33669140,
 };
 
 const int KingShelter[2][FILE_NB][RANK_NB] = {
@@ -326,7 +329,7 @@ int evaluatePawns(EvalInfo* ei, Board* board, int colour){
     // torwards our attackers counts, which is used to decide when to look
     // at the King Safety of a position.
     attacks = ei->pawnAttacks[colour] & ei->kingAreas[!colour];
-    ei->attackCounts[colour] += popcount(attacks);
+    ei->attackCounts[colour] += KingThreatWeight[PAWN] * popcount(attacks);
     
     // The pawn table holds the rest of the eval information we will calculate.
     // We return the saved value only when we evaluate for white, since we save
@@ -431,7 +434,7 @@ int evaluateKnights(EvalInfo* ei, Board* board, int colour){
         // knight for use in the king safety calculation.
         attacks = attacks & ei->kingAreas[!colour];
         if (attacks != 0ull){
-            ei->attackCounts[colour] += 2 * popcount(attacks);
+            ei->attackCounts[colour] += KingThreatWeight[KNIGHT] * popcount(attacks);
             ei->attackerCounts[colour] += 1;
         }
     }
@@ -495,7 +498,7 @@ int evaluateBishops(EvalInfo* ei, Board* board, int colour){
         // bishop for use in the king safety calculation.
         attacks = attacks & ei->kingAreas[!colour];
         if (attacks != 0ull){
-            ei->attackCounts[colour] += 2 * popcount(attacks);
+            ei->attackCounts[colour] += KingThreatWeight[BISHOP] * popcount(attacks);
             ei->attackerCounts[colour] += 1;
         }
     }
@@ -557,7 +560,7 @@ int evaluateRooks(EvalInfo* ei, Board* board, int colour){
         // rook for use in the king safety calculation.
         attacks = attacks & ei->kingAreas[!colour];
         if (attacks != 0ull){
-            ei->attackCounts[colour] += 3 * popcount(attacks);
+            ei->attackCounts[colour] += KingThreatWeight[ROOK] * popcount(attacks);
             ei->attackerCounts[colour] += 1;
         }
     }
@@ -601,7 +604,7 @@ int evaluateQueens(EvalInfo* ei, Board* board, int colour){
         // pieces. This way King Safety is always used with the Queen attacks
         attacks = attacks & ei->kingAreas[!colour];
         if (attacks != 0ull){
-            ei->attackCounts[colour] += 4 * popcount(attacks);
+            ei->attackCounts[colour] += KingThreatWeight[QUEEN] * popcount(attacks);
             ei->attackerCounts[colour] += 2;
         }
     }
@@ -614,7 +617,7 @@ int evaluateKings(EvalInfo* ei, Board* board, int colour){
     int file, kingFile, kingRank, kingSq;
     int distance, count, eval = 0, pkeval = 0;
     
-    uint64_t filePawns;
+    uint64_t filePawns, weak;
     
     uint64_t myPawns = board->pieces[PAWN] & board->colours[colour];
     uint64_t myKings = board->pieces[KING] & board->colours[colour];
@@ -639,16 +642,25 @@ int evaluateKings(EvalInfo* ei, Board* board, int colour){
     // based on the number of squares attacked, and the strength of the attackers
     if (ei->attackerCounts[!colour] >= 2){
         
-        count = ei->attackCounts[!colour];
+        // Attacked squares are weak if we only defend once with king or queen.
+        // This definition of square weakness is taken from Stockfish's king safety
+        weak =  ei->attacked[!colour]
+             & ~ei->attackedBy2[colour]
+             & (  ~ei->attacked[colour]
+                |  ei->attackedBy[colour][QUEEN] 
+                |  ei->attackedBy[colour][KING]);
         
-        // Add an extra two attack counts per missing pawn in the king area.
-        count += 6 - 2 * popcount(myPawns & ei->kingAreas[colour]);
-        
+        // Compute King Safety index based on safety factors
+        count =  8                                              // King Safety Baseline
+              +  1 * ei->attackCounts[!colour]                  // Computed attack weights
+              + 16 * popcount(weak & ei->kingAreas[colour])     // Weak squares in King Area
+              -  8 * popcount(myPawns & ei->kingAreas[colour]); // Pawns sitting in our King Area
+              
         // Scale down attack count if there are no enemy queens
         if (!(board->colours[!colour] & board->pieces[QUEEN]))
             count *= .25;
     
-        eval -= KingSafety[MIN(63, MAX(0, count))];
+        eval -= KingSafety[MIN(255, MAX(0, count))];
     }
     
     // Pawn Shelter evaluation is stored in the PawnKing evaluation table
@@ -809,14 +821,17 @@ void initializeEvaluation(){
     
     int i;
     
-    // Compute values for the King Safety based on the King Polynomial. We only
-    // apply King Safety to the midgame score, so as an extra, but non-needed step,
-    // we compute a combined score with a zero EG argument.
-    for (i = 0; i < 64; i++){
+    // Compute values for the King Safety based on the King Polynomial
+    
+    for (i = 0; i < 256; i++){
+        
         KingSafety[i] = (int)(
-            + KingPolynomial[0] * pow(i, 5) + KingPolynomial[1] * pow(i, 4)
-            + KingPolynomial[2] * pow(i, 3) + KingPolynomial[3] * pow(i, 2)
-            + KingPolynomial[4] * pow(i, 1) + KingPolynomial[5] * pow(i, 0)
+            + KingPolynomial[0] * pow(i / 4.0, 5) 
+            + KingPolynomial[1] * pow(i / 4.0, 4)
+            + KingPolynomial[2] * pow(i / 4.0, 3) 
+            + KingPolynomial[3] * pow(i / 4.0, 2)
+            + KingPolynomial[4] * pow(i / 4.0, 1) 
+            + KingPolynomial[5] * pow(i / 4.0, 0)
         );
         
         KingSafety[i] = MakeScore(KingSafety[i], 0);
