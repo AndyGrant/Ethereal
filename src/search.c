@@ -590,7 +590,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
              && !inCheck
              &&  depth <= SEEPruningDepth
              &&  best > MATED_IN_MAX
-             && !staticExchangeEvaluation(board, move, SEEMargin * depth * depth))
+             && !staticExchangeEvaluation(board, move, SEEMargin[improving] * depth * depth))
              continue;
         
         // Apply the move, and verify legality
