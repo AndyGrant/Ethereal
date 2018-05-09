@@ -21,7 +21,7 @@
 
 #include "types.h"
 
-#define ETHEREAL_VERSION "9.73"
+#define ETHEREAL_VERSION "9.74"
 
 struct Limits {
     
