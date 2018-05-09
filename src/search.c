@@ -498,9 +498,8 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         
         while ((move = selectNextMove(&movePicker, board)) != NONE_MOVE){
             
-            // Even if we keep the capture piece and or the promotion piece
-            // we will fail to exceed rBeta, then we will skip this move
-            if (eval + thisTacticalMoveValue(board, move) < rBeta)
+            // Move should pass an SEE() to be worth at least rBeta
+            if (!staticExchangeEvaluation(board, move, rBeta - eval))
                 continue;
             
             // Apply and validate move before searching
@@ -840,35 +839,48 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
 
 int staticExchangeEvaluation(Board* board, uint16_t move, int threshold){
     
-    // Assume that enpass and promotion are worth at least 0
-    if (MoveType(move) != NORMAL_MOVE)
-        return 0 >= threshold;
+    int from, to, type, ptype, colour, balance, nextVictim;
+    uint64_t bishops, rooks, occupied, attackers, myAttackers;
     
-    int from = MoveFrom(move), to = MoveTo(move);
-    int nextVictim = PieceType(board->squares[from]);
-    int colour = !board->turn;
+    // Unpack move information
+    from  = MoveFrom(move); 
+    to    = MoveTo(move);
+    type  = MoveType(move);
+    ptype = MovePromoPiece(move);
     
-    // Best case for us is taking the to-square without re-capture
-    int balance = PieceValues[PieceType(board->squares[to])][MG] - threshold;
+    // Next victim is moved piece, or promotion type when promoting
+    nextVictim = type != PROMOTION_MOVE 
+               ? PieceType(board->squares[from]) 
+               : ptype;
     
-    // Best case fails to beat our threshold
+    // Balance is the value of the move minus threshold. Function
+    // call takes care for Enpass and Promotion moves. Castling is
+    // handled as a result of a King's value being zero, by trichotomy
+    // either the best case or the worst case condition will be hit
+    balance = thisTacticalMoveValue(board, move) - threshold;
+    
+    // Best case is we lose nothing for the move
     if (balance < 0) return 0;
     
-    // Worst case is our opponent re-captures for free
+    // Worst case is losing the moved piece
     balance -= PieceValues[nextVictim][MG];
     if (balance >= 0) return 1;
     
     // Grab sliders for updating revealed attackers
-    uint64_t bishops = board->pieces[BISHOP] | board->pieces[QUEEN ];
-    uint64_t rooks   = board->pieces[ROOK  ] | board->pieces[QUEEN ];
+    bishops = board->pieces[BISHOP] | board->pieces[QUEEN];
+    rooks   = board->pieces[ROOK  ] | board->pieces[QUEEN];
     
     // Let occupied suppose that the move was actually made
-    uint64_t occupied = (board->colours[WHITE] | board->colours[BLACK]) ^ (1ull << from) ^ (1ull << to);
+    occupied = (board->colours[WHITE] | board->colours[BLACK]);
+    occupied = (occupied ^ (1ull << from)) | (1ull << to);
+    if (type == ENPASS_MOVE) occupied ^= (1ull << board->epSquare);
     
     // Get all pieces which attack the target square. And with occupied
     // so that we do not let the same piece attack twice
-    uint64_t attackers = allAttackersToSquare(board, occupied, to) & occupied;
-    uint64_t myAttackers;
+    attackers = allAttackersToSquare(board, occupied, to) & occupied;
+    
+    // Now our opponents turn to recapture
+    colour = !board->turn;
                        
     while (1){
         
@@ -900,11 +912,6 @@ int staticExchangeEvaluation(Board* board, uint16_t move, int threshold){
         
         // Negamax the balance and add the value of the next victim
         balance = -balance - 1 - PieceValues[nextVictim][MG];
-        
-        // If balance is non negative after giving away our piece,
-        // then we have won. We swap the side to move if we attacked
-        // with our king, and our opponent can attack back. This way,
-        // we will (when pruning before move legality check) save time.
         
         // If the balance is non negative after giving away our piece then we win
         if (balance >= 0){
@@ -950,13 +957,13 @@ int valueToTT(int value, int height){
 
 int thisTacticalMoveValue(Board* board, uint16_t move){
     
-    int value = PieceValues[PieceType(board->squares[MoveTo(move)])][EG];
+    int value = PieceValues[PieceType(board->squares[MoveTo(move)])][MG];
     
     if (MoveType(move) == PROMOTION_MOVE)
-        value += PieceValues[MovePromoPiece(move)][EG] - PieceValues[PAWN][EG];
+        value += PieceValues[MovePromoPiece(move)][MG] - PieceValues[PAWN][MG];
     
     if (MoveType(move) == ENPASS_MOVE)
-        value += PieceValues[PAWN][EG];
+        value += PieceValues[PAWN][MG];
     
     return value;
 }
@@ -973,26 +980,26 @@ int bestTacticalMoveValue(Board* board, EvalInfo* ei){
     
     // We may have a queen capture
     if (targets & board->pieces[QUEEN]) 
-        value += PieceValues[QUEEN][EG];
+        value += PieceValues[QUEEN][MG];
     
     // We may have a rook capture
     else if (targets & board->pieces[ROOK])
-        value += PieceValues[ROOK][EG];
+        value += PieceValues[ROOK][MG];
     
     // We may have a minor capture
     else if (targets & (board->pieces[KNIGHT] | board->pieces[BISHOP]))
         value += MAX(
-            !!(targets & board->pieces[KNIGHT]) * PieceValues[KNIGHT][EG],
-            !!(targets & board->pieces[BISHOP]) * PieceValues[BISHOP][EG]
+            !!(targets & board->pieces[KNIGHT]) * PieceValues[KNIGHT][MG],
+            !!(targets & board->pieces[BISHOP]) * PieceValues[BISHOP][MG]
         );
         
     // We may have a pawn capture
     else if (targets & board->pieces[PAWN])
-        value += PieceValues[PAWN][EG];
+        value += PieceValues[PAWN][MG];
     
     // We may have an enpass capture
     else if (board->epSquare != -1)
-        value += PieceValues[PAWN][EG];
+        value += PieceValues[PAWN][MG];
         
     
     // See if we have any pawns on promoting ranks. If so, assume that
@@ -1000,7 +1007,7 @@ int bestTacticalMoveValue(Board* board, EvalInfo* ei){
     if (   board->pieces[PAWN] 
         &  board->colours[board->turn]
         & (board->turn == WHITE ? RANK_7 : RANK_2))
-        value += PieceValues[QUEEN][EG] - PieceValues[PAWN][EG];
+        value += PieceValues[QUEEN][MG] - PieceValues[PAWN][MG];
             
     return value;
 }
@@ -1016,7 +1023,7 @@ int captureIsWeak(Board* board, EvalInfo* ei, uint16_t move, int depth){
         return 0;
         
     // Determine how valuable our attacking piece is
-    int attackerValue = PieceValues[PieceType(board->squares[MoveFrom(move)])][EG];
+    int attackerValue = PieceValues[PieceType(board->squares[MoveFrom(move)])][MG];
         
     // This capture is not weak if we are attacking an equal or greater valued piece, 
     if (thisTacticalMoveValue(board, move) >= attackerValue)
