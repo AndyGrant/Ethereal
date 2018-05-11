@@ -642,15 +642,14 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
                   && (ttEntry.type == PVNODE || ttEntry.type == CUTNODE)
                   &&  moveIsSingular(thread, board, &ttEntry, undo, depth, height);
                   
-        // Step 18B. Check Extensions. If we are in a PvNode and we have not already
-        // extended the depth before the move loop, and this move is not singular,
-        // then we will extend it if we have a capture of a quiet with a good history,
-        // or if the node is improving, ie we expect something to beat alpha
-        extension +=   PvNode
-                   &&  inCheck
-                   && !extension
-                   && !checkExtended
-                   && (improving || !isQuiet || hist >= 2048);
+        // Step 18B. Check Extensions. We extend quiets moves from in check
+        // positions, so long as on other extension has been made and the move
+        // has resonable history. 
+        extension +=  inCheck
+                  && !isQuiet
+                  && !extension
+                  && !checkExtended
+                  &&  hist >= 4096;
             
         // New depth is what our search depth would be, assuming that we do no LMR
         newDepth = depth + extension;
