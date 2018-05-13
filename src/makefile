@@ -37,7 +37,7 @@ DFLAGS = -O0 $(WFLAGS) -std=c99
 
 TFLAGS = $(CFLAGS) -fopenmp -DTUNE
 
-POPCNT = -msse3 -mpopcnt -DUSE_POPCOUNT
+POPCNT = -msse3 -mpopcnt
 
 
 all:

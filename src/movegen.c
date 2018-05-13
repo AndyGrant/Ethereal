@@ -199,7 +199,7 @@ void genAllNoisyMoves(Board* board, uint16_t* moves, int* size){
     
     // If there are two threats to the king, the only moves
     // which could be legal are captures made by the king
-    if (moreThanOne(board->kingAttackers)){
+    if (several(board->kingAttackers)){
         buildKingMoves(moves, size, myKings, enemy);
         return;
     }
@@ -268,7 +268,7 @@ void genAllQuietMoves(Board* board, uint16_t* moves, int* size){
     
     // If there are two threats to the king, the only moves which
     // could be legal are moves made by the king, except castling
-    if (moreThanOne(board->kingAttackers)){
+    if (several(board->kingAttackers)){
         buildKingMoves(moves, size, myKings, empty);
         return;
     }
