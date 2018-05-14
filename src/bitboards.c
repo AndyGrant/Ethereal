@@ -24,12 +24,18 @@
 const uint64_t Files[FILE_NB] = {FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H};
 const uint64_t Ranks[RANK_NB] = {RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8};
 
-int File(int sq) {
+int fileOf(int sq) {
     assert(0 <= sq && sq < SQUARE_NB);
     return sq % FILE_NB;
 }
 
-int Rank(int sq) {
+int rankOf(int sq) {
     assert(0 <= sq && sq < SQUARE_NB);
     return sq / FILE_NB;
+}
+
+int square(int r, int f) {
+    assert(0 <= r && r < RANK_NB);
+    assert(0 <= f && f < FILE_NB);
+    return r * FILE_NB + f;
 }

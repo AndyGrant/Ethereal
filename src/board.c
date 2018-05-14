@@ -204,7 +204,7 @@ void initializeBoard(Board* board, char* fen){
     
     // Factor in the enpass square
     if (board->epSquare != -1)
-        board->hash ^= ZorbistKeys[ENPASS][File(board->epSquare)];
+        board->hash ^= ZorbistKeys[ENPASS][fileOf(board->epSquare)];
     
     // Factor in the turn
     if (board->turn == BLACK)

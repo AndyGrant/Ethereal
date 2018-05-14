@@ -61,29 +61,29 @@ void initializeMasks(){
     
     // Initalize isolated pawn masks
     for (i = 0; i < SQUARE_NB; i++){
-        if (File(i) > 0 && File(i) < 7)
-            IsolatedPawnMasks[i] = Files[File(i)+1] | Files[File(i)-1];
-        else if (File(i) > 0)
-            IsolatedPawnMasks[i] = Files[File(i)-1];
+        if (fileOf(i) > 0 && fileOf(i) < 7)
+            IsolatedPawnMasks[i] = Files[fileOf(i)+1] | Files[fileOf(i)-1];
+        else if (fileOf(i) > 0)
+            IsolatedPawnMasks[i] = Files[fileOf(i)-1];
         else
-            IsolatedPawnMasks[i] = Files[File(i)+1];
+            IsolatedPawnMasks[i] = Files[fileOf(i)+1];
     }
     
     // Initalize passed pawn masks and outpost masks
     for (i = 0; i < SQUARE_NB; i++){
         
-        files = IsolatedPawnMasks[i] | Files[File(i)];
+        files = IsolatedPawnMasks[i] | Files[fileOf(i)];
         
         PassedPawnMasks[WHITE][i] = files;
-        for (j = Rank(i); j >= 0; j--)
+        for (j = rankOf(i); j >= 0; j--)
             PassedPawnMasks[WHITE][i] &= ~(Ranks[j]);
         
         PassedPawnMasks[BLACK][i] = files;
-        for (j = Rank(i); j <= 7; j++)
+        for (j = rankOf(i); j <= 7; j++)
             PassedPawnMasks[BLACK][i] &= ~(Ranks[j]);
         
-        OutpostSquareMasks[WHITE][i] = PassedPawnMasks[WHITE][i] & ~Files[File(i)];
-        OutpostSquareMasks[BLACK][i] = PassedPawnMasks[BLACK][i] & ~Files[File(i)];
+        OutpostSquareMasks[WHITE][i] = PassedPawnMasks[WHITE][i] & ~Files[fileOf(i)];
+        OutpostSquareMasks[BLACK][i] = PassedPawnMasks[BLACK][i] & ~Files[fileOf(i)];
     }
     
     // Initalize relative outpost ranks
@@ -92,12 +92,12 @@ void initializeMasks(){
     
     // Initalize pawn connected masks
     for (i = 8 ; i < 56; i++){
-        if (File(i) == 0){
+        if (fileOf(i) == 0){
             PawnConnectedMasks[WHITE][i] = (1ull << (i+1)) | (1ull << (i-7));
             PawnConnectedMasks[BLACK][i] = (1ull << (i+1)) | (1ull << (i+9));
         }
         
-        else if (File(i) == 7){
+        else if (fileOf(i) == 7){
             PawnConnectedMasks[WHITE][i] = (1ull << (i-1)) | (1ull << (i-9));
             PawnConnectedMasks[BLACK][i] = (1ull << (i-1)) | (1ull << (i+7));
         }
