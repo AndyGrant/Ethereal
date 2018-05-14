@@ -132,13 +132,6 @@ void initializeMagics(){
     for (i = 0; i < SQUARE_NB; i++)
         free(OccupancyVariationsRook[i]);
     free(OccupancyVariationsRook);
-    
-    // Initalize BitCounts for software popcount()
-    #ifndef USE_POPCOUNT
-        uint64_t j;
-        for (j = 0ull; j < 0x10000ull; j++)
-            BitCounts[j] = countSetBits(j);
-    #endif
 }
 
 void generateKnightMap(){
@@ -295,6 +288,16 @@ void generateOccupancyMaskBishop(){
     }
 }
 
+static void getSetBits(uint64_t bb, int* arr) {
+
+    int count = 0;
+
+    while (bb)
+        arr[count++] = poplsb(&bb);
+
+    arr[count] = -1;
+}
+
 void generateOccupancyVariationsRook(){
     
     uint64_t mask;
@@ -310,7 +313,7 @@ void generateOccupancyVariationsRook(){
     for (sq = 0; sq < SQUARE_NB; sq++){
         mask = OccupancyMaskRook[sq];
         getSetBits(mask, maskBits);
-        variationCount = (int)(1ull << countSetBits(mask));
+        variationCount = (int)(1ull << popcount(mask));
         
         // Compute for each possible variation on this square
         for (i = 0, mask = 0ull; i < variationCount; i++, mask = 0ull){
@@ -337,7 +340,7 @@ void generateOccupancyVariationsBishop(){
     for (sq = 0; sq < SQUARE_NB; sq++){
         mask = OccupancyMaskBishop[sq];
         getSetBits(mask, maskBits);
-        variationCount = (int)(1ull << countSetBits(mask));
+        variationCount = (int)(1ull << popcount(mask));
         
         // Compute for each possible variation on this square
         for (i = 0, mask = 0ull; i < variationCount; i++, mask = 0ull){
@@ -362,7 +365,7 @@ void generateMoveDatabaseRook(){
     for (sq = 0; sq < SQUARE_NB; sq++){
         
         // Computer number of variations of blockers
-        variations = (1 << countSetBits(OccupancyMaskRook[sq]));
+        variations = (1 << popcount(OccupancyMaskRook[sq]));
         
         // Fetch the corresponding magic values for this square
         magic = MagicNumberRook[sq];
@@ -424,7 +427,7 @@ void generateMoveDatabaseBishop(){
     for (sq = 0; sq < SQUARE_NB; sq++){
         
         // Computer number of variations of blockers
-        variations = (1 << countSetBits(OccupancyMaskBishop[sq]));
+        variations = (1 << popcount(OccupancyMaskBishop[sq]));
         
         // Fetch the corresponding magic values for this square
         magic = MagicNumberBishop[sq];
