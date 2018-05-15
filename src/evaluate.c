@@ -360,7 +360,7 @@ int evaluatePawns(EvalInfo* ei, Board* board, int colour){
         }
         
         // Apply a penalty if the pawn is stacked
-        if (Files[File(sq)] & tempPawns){
+        if (Files[fileOf(sq)] & tempPawns){
             eval += PawnStacked;
             if (TRACE) T.pawnStacked[colour]++;
         }
@@ -368,7 +368,7 @@ int evaluatePawns(EvalInfo* ei, Board* board, int colour){
         // Apply a penalty if the pawn is backward
         if (   !(PassedPawnMasks[!colour][sq] & myPawns)
             &&  (ei->pawnAttacks[!colour] & (1ull << (sq + forward)))){
-            semi = !(Files[File(sq)] & enemyPawns);
+            semi = !(Files[fileOf(sq)] & enemyPawns);
             eval += PawnBackwards[semi];
             if (TRACE) T.pawnBackwards[colour][semi]++;
         }
@@ -537,16 +537,16 @@ int evaluateRooks(EvalInfo* ei, Board* board, int colour){
         // Rook is on a semi-open file if there are no
         // pawns of the Rook's colour on the file. If
         // there are no pawns at all, it is an open file
-        if (!(myPawns & Files[File(sq)])){
-            open = !(enemyPawns & Files[File(sq)]);
+        if (!(myPawns & Files[fileOf(sq)])){
+            open = !(enemyPawns & Files[fileOf(sq)]);
             eval += RookFile[open];
             if (TRACE) T.rookFile[colour][open]++;
         }
         
         // Rook gains a bonus for being located on seventh rank relative to its
         // colour so long as the enemy king is on the last two ranks of the board
-        if (   Rank(sq) == (colour == BLACK ? 1 : 6)
-            && Rank(relativeSquare(getlsb(enemyKings), colour)) >= 6){
+        if (   rankOf(sq) == (colour == BLACK ? 1 : 6)
+            && rankOf(relativeSquare(getlsb(enemyKings), colour)) >= 6){
             eval += RookOnSeventh;
             if (TRACE) T.rookOnSeventh[colour]++;
         }
@@ -627,8 +627,8 @@ int evaluateKings(EvalInfo* ei, Board* board, int colour){
                           | (board->pieces[BISHOP] & board->colours[colour]);
                           
     kingSq = getlsb(myKings);
-    kingFile = File(kingSq);
-    kingRank = Rank(kingSq);
+    kingFile = fileOf(kingSq);
+    kingRank = rankOf(kingSq);
     
     // For Tuning Piece Square Table for Kings
     if (TRACE) T.kingPSQT[colour][kingSq]++;
@@ -678,8 +678,8 @@ int evaluateKings(EvalInfo* ei, Board* board, int colour){
         filePawns = myPawns & Files[file] & RanksAtOrAboveMasks[colour][kingRank];
         
         distance = filePawns ? 
-                   colour == WHITE ? Rank(getlsb(filePawns)) - kingRank
-                                   : kingRank - Rank(getmsb(filePawns))
+                   colour == WHITE ? rankOf(getlsb(filePawns)) - kingRank
+                                   : kingRank - rankOf(getmsb(filePawns))
                                    : 7;
 
         pkeval += KingShelter[file == kingFile][file][distance];
@@ -709,7 +709,7 @@ int evaluatePassedPawns(EvalInfo* ei, Board* board, int colour){
         sq = poplsb(&tempPawns);
         
         // Determine the releative rank
-        rank = (colour == BLACK) ? (7 - Rank(sq)) : Rank(sq);
+        rank = (colour == BLACK) ? (7 - rankOf(sq)) : rankOf(sq);
         
         // Determine where the pawn would advance to
         destination = (colour == BLACK) ? ((1ull << sq) >> 8): ((1ull << sq) << 8);
@@ -793,8 +793,8 @@ void initializeEvalInfo(EvalInfo* ei, Board* board, PawnKingTable* pktable){
     ei->blockedPawns[WHITE] = ((whitePawns << 8) & (white | black)) >> 8;
     ei->blockedPawns[BLACK] = ((blackPawns >> 8) & (white | black)) << 8,
     
-    ei->kingAreas[WHITE] = KingMap[wKingSq] | (1ull << wKingSq) | (KingMap[wKingSq] << 8);
-    ei->kingAreas[BLACK] = KingMap[bKingSq] | (1ull << bKingSq) | (KingMap[bKingSq] >> 8);
+    ei->kingAreas[WHITE] = KingAttacks[wKingSq] | (1ull << wKingSq) | (KingAttacks[wKingSq] << 8);
+    ei->kingAreas[BLACK] = KingAttacks[bKingSq] | (1ull << bKingSq) | (KingAttacks[bKingSq] >> 8);
     
     ei->mobilityAreas[WHITE] = ~(ei->pawnAttacks[BLACK] | (white & kings) | ei->blockedPawns[WHITE]);
     ei->mobilityAreas[BLACK] = ~(ei->pawnAttacks[WHITE] | (black & kings) | ei->blockedPawns[BLACK]);

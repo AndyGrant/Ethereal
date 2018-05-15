@@ -41,6 +41,21 @@ int poplsb(uint64_t* bb) {
     return lsb;
 }
 
-int several(uint64_t bb) {
-    return !!(bb & (bb - 1));
+bool several(uint64_t bb) {
+    return bb & (bb - 1);
+}
+
+void setBit(uint64_t *bb, int i) {
+    assert(!testBit(*bb, i));
+    *bb ^= 1ull << i;
+}
+
+void clearBit(uint64_t *bb, int i) {
+    assert(testBit(*bb, i));
+    *bb ^= 1ull << i;
+}
+
+bool testBit(uint64_t bb, int i) {
+    assert(0 <= i && i < 64);
+    return bb & (1ull << i);
 }

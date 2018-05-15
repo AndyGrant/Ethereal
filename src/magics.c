@@ -29,12 +29,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "bitboards.h"
 #include "bitutils.h"
 #include "magics.h"
 #include "types.h"
 
-uint64_t KnightMap[SQUARE_NB];
-uint64_t KingMap[SQUARE_NB];
+uint64_t KnightAttacks[SQUARE_NB];
+uint64_t KingAttacks[SQUARE_NB];
 
 uint64_t OccupancyMaskRook[SQUARE_NB];
 uint64_t OccupancyMaskBishop[SQUARE_NB];
@@ -108,73 +109,27 @@ const uint64_t MagicNumberBishop[SQUARE_NB] = {
     0x0400000260142410ull, 0x0800633408100500ull, 0xfc087e8e4bb2f736ull, 0x43ff9e4ef4ca2c89ull
 };
 
-void initializeMagics(){
-    
-    int i;
-    
-    generateKnightMap();
-    generateKingMap();
-    generateRookIndexes();
-    generateBishopIndexes();
-    generateOccupancyMaskRook();
-    generateOccupancyMaskBishop();
-    generateOccupancyVariationsRook();
-    generateOccupancyVariationsBishop();
-    generateMoveDatabaseRook();
-    generateMoveDatabaseBishop();
-    
-    // Clean up occupancy variations for bishops
-    for (i = 0; i < SQUARE_NB; i++)
-        free(OccupancyVariationsBishop[i]);
-    free(OccupancyVariationsBishop);
-    
-    // Clean up occupancy variations for rooks
-    for (i = 0; i < SQUARE_NB; i++)
-        free(OccupancyVariationsRook[i]);
-    free(OccupancyVariationsRook);
+static void setSquare(uint64_t *bb, int r, int f) {
+    if (0 <= r && r < RANK_NB && 0 <= f && f < FILE_NB)
+        setBit(bb, square(r, f));
 }
 
-void generateKnightMap(){
-    
-    int i;
-    
-    for(i = 0; i < SQUARE_NB; i++){
-        
-        // Up and to the Right
-        if (i + 17 < SQUARE_NB && i % 8 != 7)
-            KnightMap[i] |= 1ull << (i + 17);
-        
-        // Down and to the Left
-        if (i - 17 >= 0 && i % 8 != 0)
-            KnightMap[i] |= 1ull << (i - 17);
-        
-        // Up and to the Left
-        if (i + 15 < SQUARE_NB && i % 8 != 0)
-            KnightMap[i] |= 1ull << (i + 15);
-        
-        // Down and to the Right
-        if (i - 15 >= 0 && i % 8 != 7)
-            KnightMap[i] |= 1ull << (i - 15);
-        
-        // To the Right and Up
-        if (i + 10 < SQUARE_NB && i % 8 <= 5)
-            KnightMap[i] |= 1ull << (i + 10);
-        
-        // To the Left and Down
-        if (i - 10 >= 0 && i % 8 >= 2)
-            KnightMap[i] |= 1ull << (i - 10);
-        
-        // To the Left and Up
-        if (i + 6  < SQUARE_NB && i % 8 >= 2)
-            KnightMap[i] |= 1ull << (i + 6);
-        
-        // To the Right and Down
-        if (i - 6  >= 0 && i % 8 <= 5)
-            KnightMap[i] |= 1ull << (i - 6);
+static void generateLeaperAttacks() {
+
+    const int KnightLeaps[8][2] = {{-2,-1}, {-2,1}, {-1,-2}, {-1,2}, {1,-2}, {1,2}, {2,-1}, {2,1}};
+    const int KingLeaps[8][2] = {{-1,-1}, {-1,0}, {-1,1}, {0,-1}, {0,1}, {1,-1}, {1,0}, {1,1}};
+
+    for (int s = 0; s < SQUARE_NB; s++) {
+        const int r = rankOf(s), f = fileOf(s);
+
+        for (int d = 0; d < 8; d++) {
+            setSquare(&KnightAttacks[s], r + KnightLeaps[d][0], f + KnightLeaps[d][1]);
+            setSquare(&KingAttacks[s], r + KingLeaps[d][0], f + KingLeaps[d][1]);
+        }
     }
 }
 
-void generateRookIndexes(){
+static void generateRookIndexes(){
     
     int i, sum;
     
@@ -184,7 +139,7 @@ void generateRookIndexes(){
     }
 }
 
-void generateBishopIndexes(){
+static void generateBishopIndexes(){
     
     int i, sum;
     
@@ -194,47 +149,7 @@ void generateBishopIndexes(){
     }
 }
 
-void generateKingMap(){
-    
-    int i;
-    
-    for(i = 0; i < SQUARE_NB; i++){
-        
-        // Up and to the Right
-        if (i + 9 < SQUARE_NB && i % 8 != 7)
-            KingMap[i] |= 1ull << (i + 9);
-        
-        // Down and to the Left
-        if (i - 9 >= 0 && i % 8 != 0)
-            KingMap[i] |= 1ull << (i - 9); 
-        
-        // Up and the the Left
-        if (i + 7 < SQUARE_NB && i % 8 != 0)
-            KingMap[i] |= 1ull << (i + 7);
-        
-        // Down and to the Right
-        if (i - 7 >= 0 && i % 8 != 7)
-            KingMap[i] |= 1ull << (i - 7); 
-        
-        // To the Right
-        if (i + 1 < SQUARE_NB && i % 8 != 7)
-            KingMap[i] |= 1ull << (i + 1);
-        
-        // To the Left
-        if (i - 1 >= 0 && i % 8 != 0)
-            KingMap[i] |= 1ull << (i - 1);
-        
-        // Up
-        if (i + 8 < SQUARE_NB)
-            KingMap[i] |= 1ull << (i + 8);
-        
-        // Down
-        if (i - 8 >= 0)
-            KingMap[i] |= 1ull << (i - 8);
-    }
-}
-
-void generateOccupancyMaskRook(){
+static void generateOccupancyMaskRook(){
     
     int i, bit;
     uint64_t mask;
@@ -261,7 +176,7 @@ void generateOccupancyMaskRook(){
     }
 }
 
-void generateOccupancyMaskBishop(){
+static void generateOccupancyMaskBishop(){
     
     int i, bit; 
     uint64_t mask;
@@ -298,7 +213,7 @@ static void getSetBits(uint64_t bb, int* arr) {
     arr[count] = -1;
 }
 
-void generateOccupancyVariationsRook(){
+static void generateOccupancyVariationsRook(){
     
     uint64_t mask;
     int i, j, sq, variationCount;
@@ -325,7 +240,7 @@ void generateOccupancyVariationsRook(){
     }
 }
 
-void generateOccupancyVariationsBishop(){
+static void generateOccupancyVariationsBishop(){
     
     uint64_t mask;
     int i, j, sq, variationCount;
@@ -352,7 +267,7 @@ void generateOccupancyVariationsBishop(){
     }
 }
 
-void generateMoveDatabaseRook(){
+static void generateMoveDatabaseRook(){
     
     uint64_t moves, occupancy, magic;
     int i, j, sq, variations, tablesize, shift, index;
@@ -414,7 +329,7 @@ void generateMoveDatabaseRook(){
     }
 }
 
-void generateMoveDatabaseBishop(){
+static void generateMoveDatabaseBishop(){
     
     uint64_t moves, occupancy, magic;
     int i, j, sq, variations, tablesize, shift, index;
@@ -474,4 +389,29 @@ void generateMoveDatabaseBishop(){
             MoveDatabaseBishop[MagicBishopIndexes[sq] + index] = moves;
         }
     }
+}
+
+void initializeMagics() {
+
+    int i;
+    
+    generateLeaperAttacks();
+    generateRookIndexes();
+    generateBishopIndexes();
+    generateOccupancyMaskRook();
+    generateOccupancyMaskBishop();
+    generateOccupancyVariationsRook();
+    generateOccupancyVariationsBishop();
+    generateMoveDatabaseRook();
+    generateMoveDatabaseBishop();
+    
+    // Clean up occupancy variations for bishops
+    for (i = 0; i < SQUARE_NB; i++)
+        free(OccupancyVariationsBishop[i]);
+    free(OccupancyVariationsBishop);
+    
+    // Clean up occupancy variations for rooks
+    for (i = 0; i < SQUARE_NB; i++)
+        free(OccupancyVariationsRook[i]);
+    free(OccupancyVariationsRook);
 }

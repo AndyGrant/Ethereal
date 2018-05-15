@@ -56,7 +56,7 @@ uint64_t pawnEnpassCaptures(uint64_t pawns, int epsq, int colour){
 }
 
 uint64_t knightAttacks(int sq, uint64_t targets){
-    return KnightMap[sq] & targets;
+    return KnightAttacks[sq] & targets;
 }
 
 uint64_t bishopAttacks(int sq, uint64_t occupied, uint64_t targets){
@@ -77,7 +77,7 @@ uint64_t queenAttacks(int sq, uint64_t occupied, uint64_t targets){
 }
 
 uint64_t kingAttacks(int sq, uint64_t targets){
-    return KingMap[sq] & targets;
+    return KingAttacks[sq] & targets;
 }
 
 
