@@ -130,7 +130,7 @@ void applyNormalMove(Board* board, uint16_t move, Undo* undo){
     // If there was a possible enpass move, we must
     // xor the main zorbist key for it before moving on
     if (board->epSquare != -1)
-        board->hash ^= ZorbistKeys[ENPASS][File(board->epSquare)];
+        board->hash ^= ZorbistKeys[ENPASS][fileOf(board->epSquare)];
     
     // Zero out the enpass square for now
     board->epSquare = -1;
@@ -146,7 +146,7 @@ void applyNormalMove(Board* board, uint16_t move, Undo* undo){
         
         if (enemyPawns){
             board->epSquare = from + ((to-from) >> 1);
-            board->hash ^= ZorbistKeys[ENPASS][File(from)];
+            board->hash ^= ZorbistKeys[ENPASS][fileOf(from)];
         } 
     }
 }
@@ -210,7 +210,7 @@ void applyCastleMove(Board* board, uint16_t move, Undo* undo){
     // If there was a possible enpass move, we must
     // xor the main zorbist key for it before moving on
     if (board->epSquare != -1){
-        board->hash ^= ZorbistKeys[ENPASS][File(board->epSquare)];
+        board->hash ^= ZorbistKeys[ENPASS][fileOf(board->epSquare)];
         board->epSquare = -1;
     }
     
@@ -262,7 +262,7 @@ void applyEnpassMove(Board* board, uint16_t move, Undo* undo){
     board->hash   ^= ZorbistKeys[fromPiece][from]
                   ^  ZorbistKeys[fromPiece][to]
                   ^  ZorbistKeys[enpassPiece][ep]
-                  ^  ZorbistKeys[ENPASS][File(ep)];
+                  ^  ZorbistKeys[ENPASS][fileOf(ep)];
                 
     // Update the PawnKing zorbist key
     board->pkhash ^= PawnKingKeys[fromPiece][from]
@@ -332,7 +332,7 @@ void applyPromotionMove(Board* board, uint16_t move, Undo* undo){
     // If there was a possible enpass move, we must
     // xor the main zorbist key for it before moving on
     if (board->epSquare != -1){
-        board->hash ^= ZorbistKeys[ENPASS][File(board->epSquare)];
+        board->hash ^= ZorbistKeys[ENPASS][fileOf(board->epSquare)];
         board->epSquare = -1;
     }
 }
@@ -354,7 +354,7 @@ void applyNullMove(Board* board, Undo* undo){
     
     // Must empty the enpass square and update hash
     if (board->epSquare != -1){
-        board->hash ^= ZorbistKeys[ENPASS][File(board->epSquare)];
+        board->hash ^= ZorbistKeys[ENPASS][fileOf(board->epSquare)];
         board->epSquare = -1;
     }
 }

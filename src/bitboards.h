@@ -53,5 +53,6 @@ enum {
 extern const uint64_t Files[FILE_NB];
 extern const uint64_t Ranks[RANK_NB];
 
-int File(int sq);
-int Rank(int sq);
+int fileOf(int sq);
+int rankOf(int sq);
+int square(int r, int f);

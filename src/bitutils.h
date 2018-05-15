@@ -18,10 +18,15 @@
 
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 
 int popcount(uint64_t bb);
 int getlsb(uint64_t bb);
 int getmsb(uint64_t bb);
 int poplsb(uint64_t* bb);
-int several(uint64_t bb);
+bool several(uint64_t bb);
+
+void setBit(uint64_t *bb, int i);
+void clearBit(uint64_t *bb, int i);
+bool testBit(uint64_t bb, int i);
