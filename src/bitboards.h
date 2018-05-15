@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "types.h"
@@ -53,6 +54,16 @@ enum {
 extern const uint64_t Files[FILE_NB];
 extern const uint64_t Ranks[RANK_NB];
 
-int fileOf(int sq);
-int rankOf(int sq);
+int fileOf(int s);
+int rankOf(int s);
 int square(int r, int f);
+
+int popcount(uint64_t b);
+int getlsb(uint64_t b);
+int getmsb(uint64_t b);
+int poplsb(uint64_t* b);
+bool several(uint64_t b);
+
+void setBit(uint64_t *b, int i);
+void clearBit(uint64_t *b, int i);
+bool testBit(uint64_t b, int i);

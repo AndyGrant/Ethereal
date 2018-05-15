@@ -22,22 +22,10 @@
 
 #include "types.h"
 
-void initializeMagics();
+void initAttacks();
 
 extern uint64_t KnightAttacks[SQUARE_NB];
 extern uint64_t KingAttacks[SQUARE_NB];
 
-extern uint64_t OccupancyMaskRook[SQUARE_NB];
-extern uint64_t OccupancyMaskBishop[SQUARE_NB];
-
-extern uint64_t* MoveDatabaseRook;
-extern uint64_t* MoveDatabaseBishop;
-
-extern int MagicRookIndexes[SQUARE_NB];
-extern int MagicBishopIndexes[SQUARE_NB];
-
-extern const int MagicShiftsRook[SQUARE_NB];
-extern const int MagicShiftsBishop[SQUARE_NB];
-
-extern const uint64_t MagicNumberRook[SQUARE_NB];
-extern const uint64_t MagicNumberBishop[SQUARE_NB];
+uint64_t bishop_attacks(int s, uint64_t occ);
+uint64_t rook_attacks(int s, uint64_t occ);

@@ -25,7 +25,6 @@
 #include <string.h>
 #include <time.h>
 
-#include "bitutils.h"
 #include "bitboards.h"
 #include "board.h"
 #include "castle.h"

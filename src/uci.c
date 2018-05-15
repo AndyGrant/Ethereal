@@ -65,7 +65,7 @@ int main(){
     int megabytes = 16;
     
     // Initialize the core components of Ethereal
-    initializeMagics();
+    initAttacks();
     initializePSQT();
     initializeMasks();
     initializeZorbist();

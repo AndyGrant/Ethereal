@@ -24,7 +24,6 @@
 
 #include "board.h"
 #include "bitboards.h"
-#include "bitutils.h"
 #include "castle.h"
 #include "evaluate.h"
 #include "magics.h"
@@ -469,7 +468,7 @@ int evaluateBishops(EvalInfo* ei, Board* board, int colour){
         
         // Update the attacks array with the bishop attacks. We will use this to
         // determine whether or not passed pawns may advance safely later on.
-        attacks = bishopAttacks(sq, ei->occupiedMinusBishops[colour], ~0ull);
+        attacks = bishop_attacks(sq, ei->occupiedMinusBishops[colour]);
         ei->attackedBy2[colour]        |= attacks & ei->attacked[colour];
         ei->attacked[colour]           |= attacks;
         ei->attackedBy[colour][BISHOP] |= attacks;
@@ -529,7 +528,7 @@ int evaluateRooks(EvalInfo* ei, Board* board, int colour){
         
         // Update the attacks array with the rooks attacks. We will use this to
         // determine whether or not passed pawns may advance safely later on.
-        attacks = rookAttacks(sq, ei->occupiedMinusRooks[colour], ~0ull);
+        attacks = rook_attacks(sq, ei->occupiedMinusRooks[colour]);
         ei->attackedBy2[colour]      |= attacks & ei->attacked[colour];
         ei->attacked[colour]         |= attacks;
         ei->attackedBy[colour][ROOK] |= attacks;
@@ -588,8 +587,8 @@ int evaluateQueens(EvalInfo* ei, Board* board, int colour){
         
         // Update the attacks array with the rooks attacks. We will use this to
         // determine whether or not passed pawns may advance safely later on.
-        attacks = rookAttacks(sq, ei->occupiedMinusRooks[colour], ~0ull)
-                | bishopAttacks(sq, ei->occupiedMinusBishops[colour], ~0ull);
+        attacks = rook_attacks(sq, ei->occupiedMinusRooks[colour])
+                | bishop_attacks(sq, ei->occupiedMinusBishops[colour]);
         ei->attackedBy2[colour]       |= attacks & ei->attacked[colour];
         ei->attacked[colour]          |= attacks;
         ei->attackedBy[colour][QUEEN] |= attacks;

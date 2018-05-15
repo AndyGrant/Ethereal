@@ -21,7 +21,6 @@
 
 #include "board.h"
 #include "bitboards.h"
-#include "bitutils.h"
 #include "castle.h"
 #include "magics.h"
 #include "masks.h"
@@ -59,21 +58,19 @@ uint64_t knightAttacks(int sq, uint64_t targets){
     return KnightAttacks[sq] & targets;
 }
 
-uint64_t bishopAttacks(int sq, uint64_t occupied, uint64_t targets){
-    uint64_t mask = occupied & OccupancyMaskBishop[sq];
-    int index     = (mask * MagicNumberBishop[sq]) >> MagicShiftsBishop[sq];
-    return MoveDatabaseBishop[MagicBishopIndexes[sq] + index] & targets;
+uint64_t bishopAttacks(int sq, uint64_t occupied, uint64_t targets)
+{
+    return bishop_attacks(sq, occupied) & targets;
 }
 
-uint64_t rookAttacks(int sq, uint64_t occupied, uint64_t targets){
-    uint64_t mask = occupied & OccupancyMaskRook[sq];
-    int index     = (mask * MagicNumberRook[sq]) >> MagicShiftsRook[sq];
-    return MoveDatabaseRook[MagicRookIndexes[sq] + index] & targets;
+uint64_t rookAttacks(int sq, uint64_t occupied, uint64_t targets)
+{
+    return rook_attacks(sq, occupied) & targets;
 }
 
-uint64_t queenAttacks(int sq, uint64_t occupied, uint64_t targets){
-    return  bishopAttacks(sq, occupied, targets)
-            | rookAttacks(sq, occupied, targets);
+uint64_t queenAttacks(int sq, uint64_t occupied, uint64_t targets)
+{
+    return (bishop_attacks(sq, occupied) | rook_attacks(sq, occupied)) & targets;
 }
 
 uint64_t kingAttacks(int sq, uint64_t targets){

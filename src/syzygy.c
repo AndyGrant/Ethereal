@@ -20,7 +20,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "bitutils.h"
+#include "bitboards.h"
 #include "board.h"
 #include "fathom/tbprobe.h"
 #include "move.h"

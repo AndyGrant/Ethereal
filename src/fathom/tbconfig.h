@@ -25,7 +25,7 @@
 #ifndef TBCONFIG_H
 #define TBCONFIG_H
 
-#include "../bitutils.h" // For access to bitwise utilities
+#include "../bitboards.h" // For access to bitwise utilities
 #include "../movegen.h" // For access to move generation
 
 /****************************************************************************/

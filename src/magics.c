@@ -1,77 +1,32 @@
 /*
   Ethereal is a UCI chess playing engine authored by Andrew Grant.
   <https://github.com/AndyGrant/Ethereal>     <andrew@grantnet.us>
-  
+
   Ethereal is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   Ethereal is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/* 
-    Some Magic Numbers and Magic Shifts, are taken directly
-    from a version of the Java engine Rival Chess. The code to
-    build the move lookup tables is dervived directly from a blog
-    post made by the author of Rival Chess.
-    
-    Other Magic Numbers are taken from the best of list, found on CPW:
-        https://chessprogramming.wikispaces.com/Best+Magics+so+far
-*/
-
+#include <assert.h>
 #include <stdint.h>
-#include <stdlib.h>
 
 #include "bitboards.h"
-#include "bitutils.h"
 #include "magics.h"
 #include "types.h"
 
 uint64_t KnightAttacks[SQUARE_NB];
 uint64_t KingAttacks[SQUARE_NB];
 
-uint64_t OccupancyMaskRook[SQUARE_NB];
-uint64_t OccupancyMaskBishop[SQUARE_NB];
-
-uint64_t** OccupancyVariationsRook;
-uint64_t** OccupancyVariationsBishop;
-
-uint64_t* MoveDatabaseRook;
-uint64_t* MoveDatabaseBishop;
-
-int MagicRookIndexes[SQUARE_NB];
-int MagicBishopIndexes[SQUARE_NB];
-
-const int MagicShiftsRook[SQUARE_NB] = {
-    52,53,53,53,53,53,53,52,
-    53,54,54,54,54,54,54,53,
-    53,54,54,54,54,54,54,53,
-    53,54,54,54,54,54,54,53,
-    53,54,54,54,54,54,54,53,
-    53,54,54,54,54,54,54,53,
-    54,55,55,55,55,55,54,54,
-    53,54,54,54,54,53,54,53
-};
-
-const int MagicShiftsBishop[SQUARE_NB] = {
-    59,60,59,59,59,59,60,59,
-    60,60,59,59,59,59,60,60,
-    60,60,57,57,57,57,60,60,
-    59,59,57,55,55,57,59,59,
-    59,59,57,55,55,57,59,59,
-    60,60,57,57,57,57,60,60,
-    60,60,59,59,59,59,60,60,
-    59,60,59,59,59,59,60,59
-};
-
-const uint64_t MagicNumberRook[SQUARE_NB] = {
+const uint64_t RookMagic[SQUARE_NB] = {
     0xa180022080400230ull, 0x0040100040022000ull, 0x0080088020001002ull, 0x0080080280841000ull,
     0x4200042010460008ull, 0x04800a0003040080ull, 0x0400110082041008ull, 0x008000a041000880ull,
     0x10138001a080c010ull, 0x0000804008200480ull, 0x00010011012000c0ull, 0x0022004128102200ull,
@@ -90,7 +45,7 @@ const uint64_t MagicNumberRook[SQUARE_NB] = {
     0x411fffddffdbf4d6ull, 0x0801000804000603ull, 0x0003ffef27eebe74ull, 0x7645fffecbfea79eull
 };
 
-const uint64_t MagicNumberBishop[SQUARE_NB] = {
+const uint64_t BishopMagic[SQUARE_NB] = {
     0xffedf9fd7cfcffffull, 0xfc0962854a77f576ull, 0x5822022042000000ull, 0x2ca804a100200020ull,
     0x0204042200000900ull, 0x2002121024000002ull, 0xfc0a66c64a7ef576ull, 0x7ffdfdfcbd79ffffull,
     0xfc0846a64a34fff6ull, 0xfc087a874a3cf7f6ull, 0x1001080204002100ull, 0x1810080489021800ull,
@@ -109,309 +64,99 @@ const uint64_t MagicNumberBishop[SQUARE_NB] = {
     0x0400000260142410ull, 0x0800633408100500ull, 0xfc087e8e4bb2f736ull, 0x43ff9e4ef4ca2c89ull
 };
 
+static uint64_t RookAttacks[0x19000], BishopAttacks[0x1480];
+static uint64_t *BishopAttacksPtr[SQUARE_NB], *RookAttacksPtr[SQUARE_NB];
+
+static uint64_t BishopMask[SQUARE_NB], RookMask[SQUARE_NB];
+static unsigned BishopShift[SQUARE_NB], RookShift[SQUARE_NB];
+
+static uint64_t sliderAttacks(int s, uint64_t occ, const int dir[4][2])
+{
+    uint64_t result = 0;
+
+    for (int i = 0; i < 4; i++) {
+        int dr = dir[i][0], df = dir[i][1];
+        int r, f;
+
+        for (r = rankOf(s) + dr, f = fileOf(s) + df;
+                (unsigned)r < RANK_NB && (unsigned)f < FILE_NB;
+                r += dr, f += df) {
+            const int sq = square(r, f);
+            setBit(&result, sq);
+
+            if (testBit(occ, sq))
+                break;
+        }
+    }
+
+    return result;
+}
+
+static int sliderIndex(uint64_t occ, uint64_t mask, uint64_t magic, unsigned shift)
+{
+    return ((occ & mask) * magic) >> shift;
+}
+
+static void initSliderAttacks(int s, uint64_t mask[SQUARE_NB], const uint64_t magic[SQUARE_NB],
+    unsigned shift[SQUARE_NB], uint64_t *attacksPtr[SQUARE_NB], const int dir[4][2])
+{
+    const uint64_t edges = ((RANK_1 | RANK_8) & ~Ranks[rankOf(s)])
+                         | ((FILE_A | FILE_H) & ~Files[fileOf(s)]);
+    mask[s] = sliderAttacks(s, 0, dir) & ~edges;
+    shift[s] = 64 - popcount(mask[s]);
+
+    if (s < SQUARE_NB - 1)
+        attacksPtr[s + 1] = attacksPtr[s] + (1 << popcount(mask[s]));
+
+    // Use the Carry-Rippler trick to loop over the subsets of mask[s]
+    uint64_t occ = 0;
+
+    do {
+        attacksPtr[s][sliderIndex(occ, mask[s], magic[s], shift[s])] = sliderAttacks(s, occ, dir);
+        occ = (occ - mask[s]) & mask[s];
+    } while (occ);
+}
+
 static void setSquare(uint64_t *bb, int r, int f) {
     if (0 <= r && r < RANK_NB && 0 <= f && f < FILE_NB)
         setBit(bb, square(r, f));
 }
 
-static void generateLeaperAttacks() {
+void initAttacks()
+{
+    const int KnightDir[8][2] = {{-2,-1}, {-2,1}, {-1,-2}, {-1,2}, {1,-2}, {1,2}, {2,-1}, {2,1}};
+    const int KingDir[8][2] = {{-1,-1}, {-1,0}, {-1,1}, {0,-1}, {0,1}, {1,-1}, {1,0}, {1,1}};
+    const int BishopDir[4][2] = {{-1,-1}, {-1,1}, {1,-1}, {1,1}};
+    const int RookDir[4][2] = {{-1,0}, {0,-1}, {0,1}, {1,0}};
 
-    const int KnightLeaps[8][2] = {{-2,-1}, {-2,1}, {-1,-2}, {-1,2}, {1,-2}, {1,2}, {2,-1}, {2,1}};
-    const int KingLeaps[8][2] = {{-1,-1}, {-1,0}, {-1,1}, {0,-1}, {0,1}, {1,-1}, {1,0}, {1,1}};
-
+    // Initialise leaper attacks
     for (int s = 0; s < SQUARE_NB; s++) {
         const int r = rankOf(s), f = fileOf(s);
 
         for (int d = 0; d < 8; d++) {
-            setSquare(&KnightAttacks[s], r + KnightLeaps[d][0], f + KnightLeaps[d][1]);
-            setSquare(&KingAttacks[s], r + KingLeaps[d][0], f + KingLeaps[d][1]);
+            setSquare(&KnightAttacks[s], r + KnightDir[d][0], f + KnightDir[d][1]);
+            setSquare(&KingAttacks[s], r + KingDir[d][0], f + KingDir[d][1]);
         }
     }
-}
 
-static void generateRookIndexes(){
-    
-    int i, sum;
-    
-    for (i = 0, sum = 0; i < SQUARE_NB; i++){
-        MagicRookIndexes[i] = sum;
-        sum += (1 << (64 - MagicShiftsRook[i]));
+    // Initialise slider attacks
+    BishopAttacksPtr[0] = BishopAttacks;
+    RookAttacksPtr[0] = RookAttacks;
+
+    for (int s = 0; s < SQUARE_NB; s++) {
+        initSliderAttacks(s, BishopMask, BishopMagic, BishopShift, BishopAttacksPtr, BishopDir);
+        initSliderAttacks(s, RookMask, RookMagic, RookShift, RookAttacksPtr, RookDir);
     }
 }
 
-static void generateBishopIndexes(){
-    
-    int i, sum;
-    
-    for (i = 0, sum = 0; i < SQUARE_NB; i++){
-        MagicBishopIndexes[i] = sum;
-        sum += (1 << (64 - MagicShiftsBishop[i]));
-    }
+uint64_t bishop_attacks(int s, uint64_t occ)
+{
+    assert(0 <= s && s < SQUARE_NB);
+    return BishopAttacksPtr[s][sliderIndex(occ, BishopMask[s], BishopMagic[s], BishopShift[s])];
 }
 
-static void generateOccupancyMaskRook(){
-    
-    int i, bit;
-    uint64_t mask;
-    
-    for (bit = 0, mask = 0; bit < SQUARE_NB; bit++, mask = 0){
-        
-        // Moving Upwards
-        for (i = bit + 8; i <= 55; i += 8)
-            mask |= (1ull << i);
-        
-        // Moving Downwards
-        for (i = bit - 8; i >= 8; i -= 8)
-            mask |= (1ull << i);
-        
-        // Moving to the Right
-        for (i = bit + 1; i % 8 != 7 && i % 8 != 0; i++)
-            mask |= (1ull << i);
-        
-        // Moving to the Left
-        for (i = bit - 1; i % 8 != 7 && i % 8 !=0 && i >= 0; i--)
-            mask |= (1ull << i);
-        
-        OccupancyMaskRook[bit] = mask;
-    }
-}
-
-static void generateOccupancyMaskBishop(){
-    
-    int i, bit; 
-    uint64_t mask;
-    
-    for (bit = 0, mask = 0; bit < SQUARE_NB; bit++, mask = 0){
-        
-        // Moving Up and to the Right
-        for (i = bit + 9; i % 8 != 7 && i % 8 != 0 && i <= 55; i += 9)
-            mask |= (1ull << i);
-        
-        // Moving Down and to the Left
-        for (i = bit - 9; i % 8 != 7 && i % 8 != 0 && i >=  8; i -= 9)
-            mask |= (1ull << i);
-        
-        // Moving Up and to the Left
-        for (i = bit + 7; i % 8 != 7 && i % 8 != 0 && i <= 55; i += 7)
-            mask |= (1ull << i);
-        
-        // Moving Down and to the Right
-        for (i = bit - 7; i % 8 != 7 && i % 8 !=0  && i >=  8; i -= 7)
-            mask |= (1ull << i);
-        
-        OccupancyMaskBishop[bit] = mask;
-    }
-}
-
-static void getSetBits(uint64_t bb, int* arr) {
-
-    int count = 0;
-
-    while (bb)
-        arr[count++] = poplsb(&bb);
-
-    arr[count] = -1;
-}
-
-static void generateOccupancyVariationsRook(){
-    
-    uint64_t mask;
-    int i, j, sq, variationCount;
-    int maskBits[20], indexBits[20];
-    
-    // Allocate space for the occupancy variations
-    OccupancyVariationsRook = malloc(sizeof(uint64_t*) * SQUARE_NB);
-    for (i = 0; i < SQUARE_NB; i++)
-        OccupancyVariationsRook[i] = malloc(sizeof(uint64_t) * 4096);
-    
-    // Compute sets of variations for each square
-    for (sq = 0; sq < SQUARE_NB; sq++){
-        mask = OccupancyMaskRook[sq];
-        getSetBits(mask, maskBits);
-        variationCount = (int)(1ull << popcount(mask));
-        
-        // Compute for each possible variation on this square
-        for (i = 0, mask = 0ull; i < variationCount; i++, mask = 0ull){
-            getSetBits(i, indexBits);
-            for (j = 0; indexBits[j] != -1; j++)
-                mask |= (1ull << maskBits[indexBits[j]]);
-            OccupancyVariationsRook[sq][i] = mask; 
-        }
-    }
-}
-
-static void generateOccupancyVariationsBishop(){
-    
-    uint64_t mask;
-    int i, j, sq, variationCount;
-    int maskBits[20], indexBits[20];
-    
-    // Allocate space for the occupancy variations
-    OccupancyVariationsBishop = malloc(sizeof(uint64_t*) * SQUARE_NB);
-    for (i = 0; i < SQUARE_NB; i++)
-        OccupancyVariationsBishop[i] = malloc(sizeof(uint64_t) * 512);
-    
-    // Compute sets of variations for each square
-    for (sq = 0; sq < SQUARE_NB; sq++){
-        mask = OccupancyMaskBishop[sq];
-        getSetBits(mask, maskBits);
-        variationCount = (int)(1ull << popcount(mask));
-        
-        // Compute for each possible variation on this square
-        for (i = 0, mask = 0ull; i < variationCount; i++, mask = 0ull){
-            getSetBits(i, indexBits);
-            for (j = 0; indexBits[j] != -1; j++)
-                mask |= 1ull << maskBits[indexBits[j]];
-            OccupancyVariationsBishop[sq][i] = mask; 
-        }
-    }
-}
-
-static void generateMoveDatabaseRook(){
-    
-    uint64_t moves, occupancy, magic;
-    int i, j, sq, variations, tablesize, shift, index;
-    
-    // Allocate space for the rook's look up table
-    tablesize = MagicRookIndexes[SQUARE_NB-1];
-    tablesize += 1 << (64 - MagicShiftsRook[SQUARE_NB-1]);
-    MoveDatabaseRook = malloc(sizeof(uint64_t) * tablesize);
-    
-    for (sq = 0; sq < SQUARE_NB; sq++){
-        
-        // Computer number of variations of blockers
-        variations = (1 << popcount(OccupancyMaskRook[sq]));
-        
-        // Fetch the corresponding magic values for this square
-        magic = MagicNumberRook[sq];
-        shift = MagicShiftsRook[sq];
-        
-        // For each possible variation, compute the move list
-        for (i = 0, moves = 0ull; i < variations; i++, moves = 0ull){
-            
-            // Fetch the blockers for this iteration
-            occupancy = OccupancyVariationsRook[sq][i];
-            
-            // Compute the magic index
-            index = (int)((occupancy * magic) >> shift);
-            
-            // Moving Upwards until we hit a blocker
-            for (j = sq + 8; j < SQUARE_NB; j += 8) { 
-                moves |= (1ull << j); 
-                if (occupancy & (1ull << j))
-                    break; 
-            }
-            
-            // Moving Downwards until we hit a blocker
-            for (j = sq - 8; j >= 0; j -= 8) { 
-                moves |= (1ull << j); 
-                if (occupancy & (1ull << j))
-                    break; 
-            }
-            
-            // Moving to the Right until we hit a blocker
-            for (j = sq + 1; j % 8 != 0; j++) { 
-                moves |= (1ull << j);
-                if (occupancy & (1ull << j))
-                    break;
-            }
-            
-            // Moving to the Left until we hit a blocker
-            for (j = sq - 1; j % 8 != 7 && j >= 0; j--) {
-                moves |= (1ull << j);
-                if (occupancy & (1ull << j))
-                    break;
-            }
-            
-            // Finally, save the moves for the square and blocker combination
-            MoveDatabaseRook[MagicRookIndexes[sq] + index] = moves;
-        }
-    }
-}
-
-static void generateMoveDatabaseBishop(){
-    
-    uint64_t moves, occupancy, magic;
-    int i, j, sq, variations, tablesize, shift, index;
-    
-    // Allocate space for the bishop's look up table
-    tablesize = MagicBishopIndexes[SQUARE_NB-1];
-    tablesize += 1 << (64 - MagicShiftsBishop[SQUARE_NB-1]);
-    MoveDatabaseBishop = malloc(sizeof(uint64_t) * tablesize);
-    
-    for (sq = 0; sq < SQUARE_NB; sq++){
-        
-        // Computer number of variations of blockers
-        variations = (1 << popcount(OccupancyMaskBishop[sq]));
-        
-        // Fetch the corresponding magic values for this square
-        magic = MagicNumberBishop[sq];
-        shift = MagicShiftsBishop[sq];
-        
-        // For each possible variation, compute the move list
-        for (i = 0, moves = 0ull; i < variations; i++, moves = 0ull){
-            
-            // Fetch the blockers for this iteration
-            occupancy = OccupancyVariationsBishop[sq][i];
-            
-            // Compute the magic index
-            index = (int)((occupancy * magic) >> shift);
-            
-            // Moving Upwards and to the Right until we hit a blocker
-            for (j = sq + 9; j % 8 != 0 && j < SQUARE_NB; j += 9) { 
-                moves |= (1ull << j); 
-                if (occupancy & (1ull << j))
-                    break; 
-            }
-            
-            // Moving Downwards and to the Left until we hit a blocker
-            for (j = sq - 9; j % 8 != 7 && j >= 0; j -= 9) { 
-                moves |= (1ull << j); 
-                if (occupancy & (1ull << j))
-                    break; 
-            }
-            
-            // Moving Upwards and to the Left until we hit a blocker
-            for (j = sq + 7; j % 8 != 7 && j < SQUARE_NB; j += 7) { 
-                moves |= (1ull << j); 
-                if (occupancy & (1ull << j))
-                    break; 
-            }
-            
-            // Moving Downwards and to the Right until we hit a blocker
-            for (j = sq - 7; j % 8 !=0 && j >= 0; j -= 7) { 
-                moves |= (1ull << j); 
-                if (occupancy & (1ull << j))
-                    break; 
-            }
-            
-            // Finally, save the moves for the square and blocker combination
-            MoveDatabaseBishop[MagicBishopIndexes[sq] + index] = moves;
-        }
-    }
-}
-
-void initializeMagics() {
-
-    int i;
-    
-    generateLeaperAttacks();
-    generateRookIndexes();
-    generateBishopIndexes();
-    generateOccupancyMaskRook();
-    generateOccupancyMaskBishop();
-    generateOccupancyVariationsRook();
-    generateOccupancyVariationsBishop();
-    generateMoveDatabaseRook();
-    generateMoveDatabaseBishop();
-    
-    // Clean up occupancy variations for bishops
-    for (i = 0; i < SQUARE_NB; i++)
-        free(OccupancyVariationsBishop[i]);
-    free(OccupancyVariationsBishop);
-    
-    // Clean up occupancy variations for rooks
-    for (i = 0; i < SQUARE_NB; i++)
-        free(OccupancyVariationsRook[i]);
-    free(OccupancyVariationsRook);
+uint64_t rook_attacks(int s, uint64_t occ)
+{
+    assert(0 <= s && s < SQUARE_NB);
+    return RookAttacksPtr[s][sliderIndex(occ, RookMask[s], RookMagic[s], RookShift[s])];
 }

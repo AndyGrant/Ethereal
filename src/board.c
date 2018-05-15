@@ -22,7 +22,6 @@
 #include <inttypes.h>
 
 #include "bitboards.h"
-#include "bitutils.h"
 #include "board.h"
 #include "castle.h"
 #include "magics.h"
