@@ -70,8 +70,8 @@ static uint64_t *BishopAttacksPtr[SQUARE_NB], *RookAttacksPtr[SQUARE_NB];
 static uint64_t BishopMask[SQUARE_NB], RookMask[SQUARE_NB];
 static unsigned BishopShift[SQUARE_NB], RookShift[SQUARE_NB];
 
-static uint64_t sliderAttacks(int s, uint64_t occ, const int dir[4][2])
-{
+static uint64_t sliderAttacks(int s, uint64_t occ, const int dir[4][2]) {
+
     uint64_t result = 0;
 
     for (int i = 0; i < 4; i++) {
@@ -79,7 +79,7 @@ static uint64_t sliderAttacks(int s, uint64_t occ, const int dir[4][2])
         int r, f;
 
         for (r = rankOf(s) + dr, f = fileOf(s) + df;
-                (unsigned)r < RANK_NB && (unsigned)f < FILE_NB;
+                0 <= r && r < RANK_NB && 0 <= f && f < FILE_NB;
                 r += dr, f += df) {
             const int sq = square(r, f);
             setBit(&result, sq);
@@ -92,14 +92,13 @@ static uint64_t sliderAttacks(int s, uint64_t occ, const int dir[4][2])
     return result;
 }
 
-static int sliderIndex(uint64_t occ, uint64_t mask, uint64_t magic, unsigned shift)
-{
+static int sliderIndex(uint64_t occ, uint64_t mask, uint64_t magic, unsigned shift) {
     return ((occ & mask) * magic) >> shift;
 }
 
 static void initSliderAttacks(int s, uint64_t mask[SQUARE_NB], const uint64_t magic[SQUARE_NB],
-    unsigned shift[SQUARE_NB], uint64_t *attacksPtr[SQUARE_NB], const int dir[4][2])
-{
+    unsigned shift[SQUARE_NB], uint64_t *attacksPtr[SQUARE_NB], const int dir[4][2]) {
+
     const uint64_t edges = ((RANK_1 | RANK_8) & ~Ranks[rankOf(s)])
                          | ((FILE_A | FILE_H) & ~Files[fileOf(s)]);
     mask[s] = sliderAttacks(s, 0, dir) & ~edges;
@@ -122,8 +121,8 @@ static void setSquare(uint64_t *bb, int r, int f) {
         setBit(bb, square(r, f));
 }
 
-void initAttacks()
-{
+void initAttacks() {
+
     const int KnightDir[8][2] = {{-2,-1}, {-2,1}, {-1,-2}, {-1,2}, {1,-2}, {1,2}, {2,-1}, {2,1}};
     const int KingDir[8][2] = {{-1,-1}, {-1,0}, {-1,1}, {0,-1}, {0,1}, {1,-1}, {1,0}, {1,1}};
     const int BishopDir[4][2] = {{-1,-1}, {-1,1}, {1,-1}, {1,1}};
@@ -149,14 +148,12 @@ void initAttacks()
     }
 }
 
-uint64_t bishop_attacks(int s, uint64_t occ)
-{
+uint64_t bishopAttacks(int s, uint64_t occ) {
     assert(0 <= s && s < SQUARE_NB);
     return BishopAttacksPtr[s][sliderIndex(occ, BishopMask[s], BishopMagic[s], BishopShift[s])];
 }
 
-uint64_t rook_attacks(int s, uint64_t occ)
-{
+uint64_t rookAttacks(int s, uint64_t occ) {
     assert(0 <= s && s < SQUARE_NB);
     return RookAttacksPtr[s][sliderIndex(occ, RookMask[s], RookMagic[s], RookShift[s])];
 }

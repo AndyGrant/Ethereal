@@ -468,7 +468,7 @@ int evaluateBishops(EvalInfo* ei, Board* board, int colour){
         
         // Update the attacks array with the bishop attacks. We will use this to
         // determine whether or not passed pawns may advance safely later on.
-        attacks = bishop_attacks(sq, ei->occupiedMinusBishops[colour]);
+        attacks = bishopAttacks(sq, ei->occupiedMinusBishops[colour]);
         ei->attackedBy2[colour]        |= attacks & ei->attacked[colour];
         ei->attacked[colour]           |= attacks;
         ei->attackedBy[colour][BISHOP] |= attacks;
@@ -528,7 +528,7 @@ int evaluateRooks(EvalInfo* ei, Board* board, int colour){
         
         // Update the attacks array with the rooks attacks. We will use this to
         // determine whether or not passed pawns may advance safely later on.
-        attacks = rook_attacks(sq, ei->occupiedMinusRooks[colour]);
+        attacks = rookAttacks(sq, ei->occupiedMinusRooks[colour]);
         ei->attackedBy2[colour]      |= attacks & ei->attacked[colour];
         ei->attacked[colour]         |= attacks;
         ei->attackedBy[colour][ROOK] |= attacks;
@@ -587,8 +587,8 @@ int evaluateQueens(EvalInfo* ei, Board* board, int colour){
         
         // Update the attacks array with the rooks attacks. We will use this to
         // determine whether or not passed pawns may advance safely later on.
-        attacks = rook_attacks(sq, ei->occupiedMinusRooks[colour])
-                | bishop_attacks(sq, ei->occupiedMinusBishops[colour]);
+        attacks = rookAttacks(sq, ei->occupiedMinusRooks[colour])
+                | bishopAttacks(sq, ei->occupiedMinusBishops[colour]);
         ei->attackedBy2[colour]       |= attacks & ei->attacked[colour];
         ei->attacked[colour]          |= attacks;
         ei->attackedBy[colour][QUEEN] |= attacks;

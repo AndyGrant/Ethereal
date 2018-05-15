@@ -43,12 +43,12 @@ void initializeMasks(){
         for (j = 0; j < SQUARE_NB; j++){
             
             // Aligned on a diagonal
-            if (bishop_attacks(i, 0ull) & (1ull << j))
-                BitsBetweenMasks[i][j] = bishop_attacks(i, 1ull << j) & bishop_attacks(j, 1ull << i);
+            if (bishopAttacks(i, 0ull) & (1ull << j))
+                BitsBetweenMasks[i][j] = bishopAttacks(i, 1ull << j) & bishopAttacks(j, 1ull << i);
             
             // Aligned on a straight
-            if (rook_attacks(i, 0ull) & (1ull << j))
-                BitsBetweenMasks[i][j] = rook_attacks(i, 1ull << j) & rook_attacks(j, 1ull << i);
+            if (rookAttacks(i, 0ull) & (1ull << j))
+                BitsBetweenMasks[i][j] = rookAttacks(i, 1ull << j) & rookAttacks(j, 1ull << i);
         }
     }
     

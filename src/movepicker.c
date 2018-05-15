@@ -24,6 +24,7 @@
 #include "castle.h"
 #include "evaluate.h"
 #include "history.h"
+#include "magics.h"
 #include "move.h"
 #include "movegen.h"
 #include "movepicker.h"
@@ -254,11 +255,11 @@ int moveIsPsuedoLegal(Board* board, uint16_t move){
             
     if (ftype == BISHOP)
         return    type == NORMAL_MOVE
-            && !!(bishopAttacks(from, occupied, ~friendly) & (1ull << to));
+            && !!(bishopAttacks(from, occupied) & ~friendly & (1ull << to));
             
     if (ftype == ROOK)
         return    type == NORMAL_MOVE
-            && !!(rookAttacks(from, occupied, ~friendly) & (1ull << to));
+            && !!(rookAttacks(from, occupied) & ~friendly & (1ull << to));
             
     if (ftype == QUEEN)
         return    type == NORMAL_MOVE

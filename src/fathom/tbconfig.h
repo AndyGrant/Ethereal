@@ -26,6 +26,7 @@
 #define TBCONFIG_H
 
 #include "../bitboards.h" // For access to bitwise utilities
+#include "../magics.h"
 #include "../movegen.h" // For access to move generation
 
 /****************************************************************************/
@@ -130,13 +131,13 @@
  * Define TB_ROOK_ATTACKS(square, occ) to return the rook attacks bitboard
  * for a rook at `square' assuming the given `occ' occupancy bitboard.
  */
- #define TB_ROOK_ATTACKS(square, occ) (rookAttacks((square), (occ), ~0ull))
+ #define TB_ROOK_ATTACKS(square, occ) rookAttacks(square, occ)
 
 /*
  * Define TB_BISHOP_ATTACKS(square, occ) to return the bishop attacks bitboard
  * for a bishop at `square' assuming the given `occ' occupancy bitboard.
  */
- #define TB_BISHOP_ATTACKS(square, occ) (bishopAttacks((square), (occ), ~0ull))
+ #define TB_BISHOP_ATTACKS(square, occ) bishopAttacks(square, occ)
 
 /*
  * Define TB_QUEEN_ATTACKS(square, occ) to return the queen attacks bitboard

@@ -27,5 +27,5 @@ void initAttacks();
 extern uint64_t KnightAttacks[SQUARE_NB];
 extern uint64_t KingAttacks[SQUARE_NB];
 
-uint64_t bishop_attacks(int s, uint64_t occ);
-uint64_t rook_attacks(int s, uint64_t occ);
+uint64_t bishopAttacks(int s, uint64_t occ);
+uint64_t rookAttacks(int s, uint64_t occ);
