@@ -157,3 +157,7 @@ uint64_t rookAttacks(int s, uint64_t occ) {
     assert(0 <= s && s < SQUARE_NB);
     return RookAttacksPtr[s][sliderIndex(occ, RookMask[s], RookMagic[s], RookShift[s])];
 }
+
+uint64_t queenAttacks(int s, uint64_t occ) {
+    return rookAttacks(s, occ) | bishopAttacks(s, occ);
+}

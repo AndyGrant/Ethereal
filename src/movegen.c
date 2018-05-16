@@ -58,11 +58,6 @@ uint64_t knightAttacks(int sq, uint64_t targets){
     return KnightAttacks[sq] & targets;
 }
 
-uint64_t queenAttacks(int sq, uint64_t occupied, uint64_t targets)
-{
-    return (bishopAttacks(sq, occupied) | rookAttacks(sq, occupied)) & targets;
-}
-
 uint64_t kingAttacks(int sq, uint64_t targets){
     return KingAttacks[sq] & targets;
 }
@@ -343,11 +338,11 @@ int squareIsAttacked(Board* board, int colour, int sq){
     uint64_t enemyRooks   = enemy & (board->pieces[ROOK  ] | board->pieces[QUEEN]);
     uint64_t enemyKings   = enemy &  board->pieces[KING  ];
 
-    return    (                pawnAttacks(sq, enemyPawns, colour)          )
-           || (enemyKnights && knightAttacks(sq, enemyKnights)              )
-           || (enemyBishops && (bishopAttacks(sq, occupied) & enemyBishops))
-           || (enemyRooks   && (rookAttacks(sq, occupied) & enemyRooks)    )
-           || (                kingAttacks(sq, enemyKings)                  );
+    return pawnAttacks(sq, enemyPawns, colour)
+        || (enemyKnights && knightAttacks(sq, enemyKnights))
+        || (enemyBishops && (bishopAttacks(sq, occupied) & enemyBishops))
+        || (enemyRooks && (rookAttacks(sq, occupied) & enemyRooks))
+        ||  kingAttacks(sq, enemyKings);
 }
 
 uint64_t attackersToSquare(Board* board, int colour, int sq){

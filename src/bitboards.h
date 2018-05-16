@@ -61,7 +61,7 @@ int square(int r, int f);
 int popcount(uint64_t b);
 int getlsb(uint64_t b);
 int getmsb(uint64_t b);
-int poplsb(uint64_t* b);
+int poplsb(uint64_t *b);
 bool several(uint64_t b);
 
 void setBit(uint64_t *b, int i);

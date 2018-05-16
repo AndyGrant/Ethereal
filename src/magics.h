@@ -29,3 +29,4 @@ extern uint64_t KingAttacks[SQUARE_NB];
 
 uint64_t bishopAttacks(int s, uint64_t occ);
 uint64_t rookAttacks(int s, uint64_t occ);
+uint64_t queenAttacks(int s, uint64_t occ);

@@ -263,7 +263,7 @@ int moveIsPsuedoLegal(Board* board, uint16_t move){
             
     if (ftype == QUEEN)
         return    type == NORMAL_MOVE
-            && !!(queenAttacks(from, occupied, ~friendly) & (1ull << to));
+            && !!(queenAttacks(from, occupied) & ~friendly & (1ull << to));
     
     if (ftype == PAWN){
         

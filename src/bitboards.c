@@ -54,7 +54,7 @@ int getmsb(uint64_t b) {
     return __builtin_clzll(b) ^ 63;
 }
 
-int poplsb(uint64_t* b) {
+int poplsb(uint64_t *b) {
     int lsb = getlsb(*b);
     *b &= *b - 1;
     return lsb;
