@@ -23,8 +23,8 @@
 #include "magics.h"
 #include "types.h"
 
-uint64_t KnightAttacks[SQUARE_NB];
-uint64_t KingAttacks[SQUARE_NB];
+static uint64_t KnightAttacks[SQUARE_NB];
+static uint64_t KingAttacks[SQUARE_NB];
 
 const uint64_t RookMagic[SQUARE_NB] = {
     0xa180022080400230ull, 0x0040100040022000ull, 0x0080088020001002ull, 0x0080080280841000ull,
@@ -146,6 +146,14 @@ void initAttacks() {
         initSliderAttacks(s, BishopMask, BishopMagic, BishopShift, BishopAttacksPtr, BishopDir);
         initSliderAttacks(s, RookMask, RookMagic, RookShift, RookAttacksPtr, RookDir);
     }
+}
+
+uint64_t knightAttacks(int s) {
+    return KnightAttacks[s];
+}
+
+uint64_t kingAttacks(int s) {
+    return KingAttacks[s];
 }
 
 uint64_t bishopAttacks(int s, uint64_t occ) {

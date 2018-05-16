@@ -119,13 +119,13 @@
  * Define TB_KING_ATTACKS(square) to return the king attacks bitboard for a
  * king at `square'.
  */
- #define TB_KING_ATTACKS(square) (kingAttacks((square), ~0ull))
+ #define TB_KING_ATTACKS(square) kingAttacks(square)
 
 /*
  * Define TB_KNIGHT_ATTACKS(square) to return the knight attacks bitboard for
  * a knight at `square'.
  */
- #define TB_KNIGHT_ATTACKS(square) (knightAttacks((square), ~0ull))
+ #define TB_KNIGHT_ATTACKS(square) knightAttacks(square)
 
 /*
  * Define TB_ROOK_ATTACKS(square, occ) to return the rook attacks bitboard

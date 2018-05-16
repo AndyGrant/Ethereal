@@ -54,14 +54,6 @@ uint64_t pawnEnpassCaptures(uint64_t pawns, int epsq, int colour){
     return epsq == -1 ? 0ull : pawnAttacks(epsq, pawns, !colour);
 }
 
-uint64_t knightAttacks(int sq, uint64_t targets){
-    return KnightAttacks[sq] & targets;
-}
-
-uint64_t kingAttacks(int sq, uint64_t targets){
-    return KingAttacks[sq] & targets;
-}
-
 
 /* For Building Actual Move Lists For Each Piece Type */
 
@@ -99,7 +91,7 @@ void buildNonPawnMoves(uint16_t* moves, int* size, uint64_t attacks, int sq){
 void buildKnightMoves(uint16_t* moves, int* size, uint64_t pieces, uint64_t targets){
     while (pieces){
         int sq = poplsb(&pieces);
-        buildNonPawnMoves(moves, size, knightAttacks(sq, targets), sq);
+        buildNonPawnMoves(moves, size, knightAttacks(sq) & targets, sq);
     }
 }
 
@@ -119,7 +111,7 @@ void buildRookAndQueenMoves(uint16_t* moves, int* size, uint64_t pieces, uint64_
 
 void buildKingMoves(uint16_t* moves, int* size, uint64_t pieces, uint64_t targets){
     int sq = getlsb(pieces);
-    buildNonPawnMoves(moves, size, kingAttacks(sq, targets), sq);
+    buildNonPawnMoves(moves, size, kingAttacks(sq) & targets, sq);
 }
 
 
@@ -339,10 +331,10 @@ int squareIsAttacked(Board* board, int colour, int sq){
     uint64_t enemyKings   = enemy &  board->pieces[KING  ];
 
     return pawnAttacks(sq, enemyPawns, colour)
-        || (enemyKnights && knightAttacks(sq, enemyKnights))
+        || (knightAttacks(sq) & enemyKnights)
         || (enemyBishops && (bishopAttacks(sq, occupied) & enemyBishops))
         || (enemyRooks && (rookAttacks(sq, occupied) & enemyRooks))
-        ||  kingAttacks(sq, enemyKings);
+        || (kingAttacks(sq) & enemyKings);
 }
 
 uint64_t attackersToSquare(Board* board, int colour, int sq){
@@ -352,20 +344,20 @@ uint64_t attackersToSquare(Board* board, int colour, int sq){
     uint64_t occupied = friendly | enemy;
     
     return    pawnAttacks(sq, enemy & board->pieces[PAWN], colour)
-           |  knightAttacks(sq, enemy & board->pieces[KNIGHT])
+           | (knightAttacks(sq) & enemy & board->pieces[KNIGHT])
            | (bishopAttacks(sq, occupied) & enemy & (board->pieces[BISHOP] | board->pieces[QUEEN]))
            | (rookAttacks(sq, occupied) & enemy & (board->pieces[ROOK] | board->pieces[QUEEN]))
-           |  kingAttacks(sq, enemy & board->pieces[KING]);
+           | (kingAttacks(sq) & enemy & board->pieces[KING]);
 }
 
 uint64_t allAttackersToSquare(Board* board, uint64_t occupied, int sq){
     
     return    pawnAttacks(sq, board->colours[WHITE] & board->pieces[PAWN], BLACK)
            |  pawnAttacks(sq, board->colours[BLACK] & board->pieces[PAWN], WHITE)
-           |  knightAttacks(sq, board->pieces[KNIGHT])
+           | (knightAttacks(sq) & board->pieces[KNIGHT])
            | (bishopAttacks(sq, occupied) & (board->pieces[BISHOP] | board->pieces[QUEEN]))
            | (rookAttacks(sq, occupied) & (board->pieces[ROOK] | board->pieces[QUEEN]))
-           |  kingAttacks(sq, board->pieces[KING]);
+           | (kingAttacks(sq) & board->pieces[KING]);
 }
 
 uint64_t attackersToKingSquare(Board* board){

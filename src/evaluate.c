@@ -405,7 +405,7 @@ int evaluateKnights(EvalInfo* ei, Board* board, int colour){
         
         // Update the attacks array with the knight attacks. We will use this to
         // determine whether or not passed pawns may advance safely later on.
-        attacks = knightAttacks(sq, ~0ull);
+        attacks = knightAttacks(sq);
         ei->attackedBy2[colour]        |= attacks & ei->attacked[colour];
         ei->attacked[colour]           |= attacks;
         ei->attackedBy[colour][KNIGHT] |= attacks;
@@ -792,14 +792,14 @@ void initializeEvalInfo(EvalInfo* ei, Board* board, PawnKingTable* pktable){
     ei->blockedPawns[WHITE] = ((whitePawns << 8) & (white | black)) >> 8;
     ei->blockedPawns[BLACK] = ((blackPawns >> 8) & (white | black)) << 8,
     
-    ei->kingAreas[WHITE] = KingAttacks[wKingSq] | (1ull << wKingSq) | (KingAttacks[wKingSq] << 8);
-    ei->kingAreas[BLACK] = KingAttacks[bKingSq] | (1ull << bKingSq) | (KingAttacks[bKingSq] >> 8);
+    ei->kingAreas[WHITE] = kingAttacks(wKingSq) | (1ull << wKingSq) | (kingAttacks(wKingSq) << 8);
+    ei->kingAreas[BLACK] = kingAttacks(bKingSq) | (1ull << bKingSq) | (kingAttacks(bKingSq) >> 8);
     
     ei->mobilityAreas[WHITE] = ~(ei->pawnAttacks[BLACK] | (white & kings) | ei->blockedPawns[WHITE]);
     ei->mobilityAreas[BLACK] = ~(ei->pawnAttacks[WHITE] | (black & kings) | ei->blockedPawns[BLACK]);
     
-    ei->attacked[WHITE] = ei->attackedBy[WHITE][KING] = kingAttacks(wKingSq, ~0ull);
-    ei->attacked[BLACK] = ei->attackedBy[BLACK][KING] = kingAttacks(bKingSq, ~0ull);
+    ei->attacked[WHITE] = ei->attackedBy[WHITE][KING] = kingAttacks(wKingSq);
+    ei->attacked[BLACK] = ei->attackedBy[BLACK][KING] = kingAttacks(bKingSq);
     
     ei->occupiedMinusBishops[WHITE] = (white | black) ^ (white & (bishops | queens));
     ei->occupiedMinusBishops[BLACK] = (white | black) ^ (black & (bishops | queens));
