@@ -21,11 +21,10 @@
 #include <string.h>
 #include <inttypes.h>
 
+#include "attacks.h"
 #include "bitboards.h"
-#include "bitutils.h"
 #include "board.h"
 #include "castle.h"
-#include "magics.h"
 #include "masks.h"
 #include "piece.h"
 #include "psqt.h"

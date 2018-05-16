@@ -18,15 +18,14 @@
 
 #pragma once
 
-#include <stdbool.h>
-#include <stdint.h>
+#include <stdio.h>
 
-int popcount(uint64_t bb);
-int getlsb(uint64_t bb);
-int getmsb(uint64_t bb);
-int poplsb(uint64_t* bb);
-bool several(uint64_t bb);
+#include "types.h"
 
-void setBit(uint64_t *bb, int i);
-void clearBit(uint64_t *bb, int i);
-bool testBit(uint64_t bb, int i);
+void initAttacks();
+
+uint64_t knightAttacks(int s);
+uint64_t bishopAttacks(int s, uint64_t occ);
+uint64_t rookAttacks(int s, uint64_t occ);
+uint64_t queenAttacks(int s, uint64_t occ);
+uint64_t kingAttacks(int s);

@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "attacks.h"
 #include "bitboards.h"
 #include "masks.h"
 #include "movegen.h"
@@ -42,12 +43,12 @@ void initializeMasks(){
         for (j = 0; j < SQUARE_NB; j++){
             
             // Aligned on a diagonal
-            if (bishopAttacks(i, 0ull, 1ull << j))
-                BitsBetweenMasks[i][j] = bishopAttacks(i, 1ull << j, ~0ull) & bishopAttacks(j, 1ull << i, ~0ull);
+            if (bishopAttacks(i, 0ull) & (1ull << j))
+                BitsBetweenMasks[i][j] = bishopAttacks(i, 1ull << j) & bishopAttacks(j, 1ull << i);
             
             // Aligned on a straight
-            if (rookAttacks(i, 0ull, 1ull << j))
-                BitsBetweenMasks[i][j] = rookAttacks(i, 1ull << j, ~0ull) & rookAttacks(j, 1ull << i, ~0ull);
+            if (rookAttacks(i, 0ull) & (1ull << j))
+                BitsBetweenMasks[i][j] = rookAttacks(i, 1ull << j) & rookAttacks(j, 1ull << i);
         }
     }
     

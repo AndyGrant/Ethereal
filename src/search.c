@@ -25,7 +25,6 @@
 #include <string.h>
 #include <time.h>
 
-#include "bitutils.h"
 #include "bitboards.h"
 #include "board.h"
 #include "castle.h"
@@ -895,11 +894,11 @@ int staticExchangeEvaluation(Board* board, uint16_t move, int threshold){
         
         // A diagonal move may reveal bishop or queen attackers 
         if (nextVictim == PAWN || nextVictim == BISHOP || nextVictim == QUEEN)
-            attackers |= bishopAttacks(to, occupied, bishops);
+            attackers |= bishopAttacks(to, occupied) & bishops;
         
         // A vertical or horizontal move may reveal rook or queen attackers
         if (nextVictim == ROOK || nextVictim == QUEEN)
-            attackers |=   rookAttacks(to, occupied, rooks);
+            attackers |= rookAttacks(to, occupied) & rooks;
         
         // Make sure we did not add any already used attacks
         attackers &= occupied;

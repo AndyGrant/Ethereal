@@ -23,11 +23,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "attacks.h"
 #include "board.h"
 #include "evaluate.h"
 #include "fathom/tbprobe.h"
 #include "history.h"
-#include "magics.h"
 #include "masks.h"
 #include "move.h"
 #include "movegen.h"
@@ -65,7 +65,7 @@ int main(){
     int megabytes = 16;
     
     // Initialize the core components of Ethereal
-    initializeMagics();
+    initAttacks();
     initializePSQT();
     initializeMasks();
     initializeZorbist();
