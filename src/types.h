@@ -1,17 +1,17 @@
 /*
   Ethereal is a UCI chess playing engine authored by Andrew Grant.
   <https://github.com/AndyGrant/Ethereal>     <andrew@grantnet.us>
-  
+
   Ethereal is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   Ethereal is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -42,7 +42,12 @@
 #define CUTNODE (2)
 #define ALLNODE (3)
 
-#define BUCKET_SIZE (4)
+enum {
+    BOUND_NONE  = 0,
+    BOUND_LOWER = 1,
+    BOUND_UPPER = 2,
+    BOUND_EXACT = 3,
+};
 
 #define MG (0)
 #define EG (1)
@@ -60,9 +65,9 @@ typedef struct PVariation PVariation;
 typedef struct TexelTuple TexelTuple;
 typedef struct TexelEntry TexelEntry;
 typedef struct Thread Thread;
-typedef struct TransEntry TransEntry;
-typedef struct TransBucket TransBucket;
-typedef struct TransTable TransTable;
+typedef struct TTEntry TTEntry;
+typedef struct TTBucket TTBucket;
+typedef struct TTable TTable;
 typedef struct PawnKingEntry PawnKingEntry;
 typedef struct PawnKingTable PawnKingTable;
 typedef struct Limits Limits;

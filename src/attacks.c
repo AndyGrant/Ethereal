@@ -149,10 +149,12 @@ void initAttacks() {
 }
 
 uint64_t knightAttacks(int s) {
+    assert(0 <= s && s < SQUARE_NB);
     return KnightAttacks[s];
 }
 
 uint64_t kingAttacks(int s) {
+    assert(0 <= s && s < SQUARE_NB);
     return KingAttacks[s];
 }
 
@@ -167,5 +169,6 @@ uint64_t rookAttacks(int s, uint64_t occ) {
 }
 
 uint64_t queenAttacks(int s, uint64_t occ) {
+    assert(0 <= s && s < SQUARE_NB);
     return rookAttacks(s, occ) | bishopAttacks(s, occ);
 }
