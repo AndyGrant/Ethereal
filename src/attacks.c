@@ -19,8 +19,8 @@
 #include <assert.h>
 #include <stdint.h>
 
+#include "attacks.h"
 #include "bitboards.h"
-#include "magics.h"
 #include "types.h"
 
 static uint64_t KnightAttacks[SQUARE_NB];

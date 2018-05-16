@@ -19,8 +19,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "attacks.h"
 #include "bitboards.h"
-#include "magics.h"
 #include "masks.h"
 #include "movegen.h"
 #include "piece.h"

@@ -19,10 +19,10 @@
 #include <stdint.h>
 #include <assert.h>
 
+#include "attacks.h"
 #include "board.h"
 #include "bitboards.h"
 #include "castle.h"
-#include "magics.h"
 #include "masks.h"
 #include "move.h"
 #include "movegen.h"

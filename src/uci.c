@@ -23,11 +23,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "attacks.h"
 #include "board.h"
 #include "evaluate.h"
 #include "fathom/tbprobe.h"
 #include "history.h"
-#include "magics.h"
 #include "masks.h"
 #include "move.h"
 #include "movegen.h"

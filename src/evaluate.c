@@ -22,11 +22,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "attacks.h"
 #include "board.h"
 #include "bitboards.h"
 #include "castle.h"
 #include "evaluate.h"
-#include "magics.h"
 #include "masks.h"
 #include "movegen.h"
 #include "piece.h"
