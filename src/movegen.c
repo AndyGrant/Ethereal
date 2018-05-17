@@ -31,11 +31,6 @@
 
 /* For Generating Attack BitBoards */
 
-uint64_t pawnAttacks(int sq, uint64_t targets, int colour){
-    return targets & (colour == WHITE ? ((((1ull << sq) << 7) & ~FILE_H) | (((1ull << sq) << 9) & ~FILE_A))
-                                      : ((((1ull << sq) >> 7) & ~FILE_A) | (((1ull << sq) >> 9) & ~FILE_H)));
-}
-
 uint64_t pawnLeftAttacks(uint64_t pawns, uint64_t targets, int colour){
     return targets & (colour == WHITE ? (pawns << 7) & ~FILE_H
                                       : (pawns >> 7) & ~FILE_A);
@@ -51,7 +46,7 @@ uint64_t pawnAdvance(uint64_t pawns, uint64_t occupied, int colour){
 }
 
 uint64_t pawnEnpassCaptures(uint64_t pawns, int epsq, int colour){
-    return epsq == -1 ? 0ull : pawnAttacks(epsq, pawns, !colour);
+    return epsq == -1 ? 0ull : pawnAttacks(!colour, epsq) & pawns;
 }
 
 
@@ -330,7 +325,7 @@ int squareIsAttacked(Board* board, int colour, int sq){
     uint64_t enemyRooks   = enemy & (board->pieces[ROOK  ] | board->pieces[QUEEN]);
     uint64_t enemyKings   = enemy &  board->pieces[KING  ];
 
-    return pawnAttacks(sq, enemyPawns, colour)
+    return (pawnAttacks(colour, sq) & enemyPawns)
         || (knightAttacks(sq) & enemyKnights)
         || (enemyBishops && (bishopAttacks(sq, occupied) & enemyBishops))
         || (enemyRooks && (rookAttacks(sq, occupied) & enemyRooks))
@@ -343,7 +338,7 @@ uint64_t attackersToSquare(Board* board, int colour, int sq){
     uint64_t enemy    = board->colours[!colour];
     uint64_t occupied = friendly | enemy;
     
-    return    pawnAttacks(sq, enemy & board->pieces[PAWN], colour)
+    return   (pawnAttacks(colour, sq) & enemy & board->pieces[PAWN])
            | (knightAttacks(sq) & enemy & board->pieces[KNIGHT])
            | (bishopAttacks(sq, occupied) & enemy & (board->pieces[BISHOP] | board->pieces[QUEEN]))
            | (rookAttacks(sq, occupied) & enemy & (board->pieces[ROOK] | board->pieces[QUEEN]))
@@ -352,8 +347,8 @@ uint64_t attackersToSquare(Board* board, int colour, int sq){
 
 uint64_t allAttackersToSquare(Board* board, uint64_t occupied, int sq){
     
-    return    pawnAttacks(sq, board->colours[WHITE] & board->pieces[PAWN], BLACK)
-           |  pawnAttacks(sq, board->colours[BLACK] & board->pieces[PAWN], WHITE)
+    return   (pawnAttacks(BLACK, sq) & board->colours[WHITE] & board->pieces[PAWN])
+           | (pawnAttacks(WHITE, sq) & board->colours[BLACK] & board->pieces[PAWN])
            | (knightAttacks(sq) & board->pieces[KNIGHT])
            | (bishopAttacks(sq, occupied) & (board->pieces[BISHOP] | board->pieces[QUEEN]))
            | (rookAttacks(sq, occupied) & (board->pieces[ROOK] | board->pieces[QUEEN]))

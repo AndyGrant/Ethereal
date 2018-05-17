@@ -155,6 +155,6 @@
  *       nothing.  Etc.
  * NOTE: This definition must not include en passant captures.
  */
- #define TB_PAWN_ATTACKS(square, color) (pawnAttacks((square), ~0ull, (!color)))
+ #define TB_PAWN_ATTACKS(square, color) pawnAttacks(!color, square)
 
 #endif
