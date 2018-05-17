@@ -19,6 +19,10 @@
 #include <assert.h>
 #include <stdint.h>
 
+#ifdef USE_PEXT
+    #include <immintrin.h> // for _pext_u64() intrinsic
+#endif
+
 #include "attacks.h"
 #include "bitboards.h"
 #include "types.h"
@@ -93,7 +97,13 @@ static uint64_t sliderAttacks(int s, uint64_t occ, const int dir[4][2]) {
 }
 
 static int sliderIndex(uint64_t occ, uint64_t mask, uint64_t magic, unsigned shift) {
+
+#ifdef USE_PEXT
+    (void)magic, (void)shift;  // Silence compiler warnings (unused variables)
+    return _pext_u64(occ, mask);
+#else
     return ((occ & mask) * magic) >> shift;
+#endif
 }
 
 static void initSliderAttacks(int s, uint64_t mask[SQUARE_NB], const uint64_t magic[SQUARE_NB],

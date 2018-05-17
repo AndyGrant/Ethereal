@@ -27,7 +27,7 @@ EXE = Ethereal
 
 WFLAGS = -std=c11 -Wall -Wextra -Wshadow
 
-CFLAGS = -DNDEBUG -O3 $(WFLAGS) -march=native -flto
+CFLAGS = -DUSE_PEXT -DNDEBUG -O3 $(WFLAGS) -march=native -flto
 
 RFLAGS = -DNDEBUG -O3 $(WFLAGS) -flto -static
 
