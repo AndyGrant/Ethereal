@@ -351,11 +351,11 @@ int evaluatePawns(EvalInfo* ei, Board* board, int colour){
         if (TRACE) T.pawnPSQT[colour][sq]++;
 
         // Save the fact that this pawn is passed
-        if (!(PassedPawnMasks[colour][sq] & enemyPawns))
+        if (!(passedPawnMasks(colour, sq) & enemyPawns))
             ei->passedPawns |= (1ull << sq);
 
         // Apply a penalty if the pawn is isolated
-        if (!(IsolatedPawnMasks[sq] & tempPawns)){
+        if (!(isolatedPawnMasks(sq) & tempPawns)){
             eval += PawnIsolated;
             if (TRACE) T.pawnIsolated[colour]++;
         }
@@ -367,7 +367,7 @@ int evaluatePawns(EvalInfo* ei, Board* board, int colour){
         }
 
         // Apply a penalty if the pawn is backward
-        if (   !(PassedPawnMasks[!colour][sq] & myPawns)
+        if (   !(passedPawnMasks(!colour, sq) & myPawns)
             &&  (ei->pawnAttacks[!colour] & (1ull << (sq + forward)))){
             semi = !(Files[fileOf(sq)] & enemyPawns);
             eval += PawnBackwards[semi];
@@ -375,7 +375,7 @@ int evaluatePawns(EvalInfo* ei, Board* board, int colour){
         }
 
         // Apply a bonus if the pawn is connected and not backward
-        else if (PawnConnectedMasks[colour][sq] & myPawns){
+        else if (pawnConnectedMasks(colour, sq) & myPawns){
             eval += PawnConnected32[relativeSquare32(sq, colour)];
             if (TRACE) T.pawnConnected[colour][sq]++;
         }
@@ -419,8 +419,8 @@ int evaluateKnights(EvalInfo* ei, Board* board, int colour){
 
         // Apply a bonus if the knight is on an outpost square, and cannot be attacked
         // by an enemy pawn. Increase the bonus if one of our pawns supports the knight.
-        if (    (OutpostRanks[colour] & (1ull << sq))
-            && !(OutpostSquareMasks[colour][sq] & enemyPawns)){
+        if (    (outpostRanks(colour) & (1ull << sq))
+            && !(outpostSquareMasks(colour, sq) & enemyPawns)){
             defended = !!(ei->pawnAttacks[colour] & (1ull << sq));
             eval += KnightOutpost[defended];
             if (TRACE) T.knightOutpost[colour][defended]++;
@@ -483,8 +483,8 @@ int evaluateBishops(EvalInfo* ei, Board* board, int colour){
 
         // Apply a bonus if the bishop is on an outpost square, and cannot be attacked
         // by an enemy pawn. Increase the bonus if one of our pawns supports the bishop.
-        if (    (OutpostRanks[colour] & (1ull << sq))
-            && !(OutpostSquareMasks[colour][sq] & enemyPawns)){
+        if (    (outpostRanks(colour) & (1ull << sq))
+            && !(outpostSquareMasks(colour, sq) & enemyPawns)){
             defended = !!(ei->pawnAttacks[colour] & (1ull << sq));
             eval += BishopOutpost[defended];
             if (TRACE) T.bishopOutpost[colour][defended]++;
@@ -676,7 +676,7 @@ int evaluateKings(EvalInfo* ei, Board* board, int colour){
 
     for (file = MAX(0, kingFile - 1); file <= MIN(7, kingFile + 1); file++){
 
-        filePawns = myPawns & Files[file] & RanksAtOrAboveMasks[colour][kingRank];
+        filePawns = myPawns & Files[file] & ranksAtOrAboveMasks(colour, kingRank);
 
         distance = filePawns ?
                    colour == WHITE ? rankOf(getlsb(filePawns)) - kingRank

@@ -187,7 +187,7 @@ void initializeBoard(Board* board, char* fen){
     // Update the enpass square to reflect a possible enpass
     if (board->epSquare != -1){
         enemyPawns  = board->colours[board->turn] & board->pieces[PAWN];
-        enemyPawns &= IsolatedPawnMasks[board->epSquare];
+        enemyPawns &= isolatedPawnMasks(board->epSquare);
         enemyPawns &= board->turn == BLACK ? RANK_4 : RANK_5;
         if (enemyPawns == 0ull) board->epSquare = -1;
     }

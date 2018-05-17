@@ -141,7 +141,7 @@ void applyNormalMove(Board* board, uint16_t move, Undo* undo){
         // Determine if there is an enemy pawn that may perform an enpassant.
         // If so, we must factor in the hash for the enpassant square.
         enemyPawns  = board->pieces[PAWN] & board->colours[board->turn];
-        enemyPawns &= IsolatedPawnMasks[from];
+        enemyPawns &= isolatedPawnMasks(from);
         enemyPawns &= (board->turn == BLACK) ? RANK_4 : RANK_5;
         
         if (enemyPawns){
