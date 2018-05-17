@@ -21,7 +21,15 @@
 
 #include "types.h"
 
-#define ETHEREAL_VERSION "9.81"
+#define VERSION_ID "9.84"
+
+#if defined(USE_PEXT)
+    #define ETHEREAL_VERSION VERSION_ID" (PEXT)"
+#elif defined(USE_POPCNT)
+    #define ETHEREAL_VERSION VERSION_ID" (POPCNT)"
+#else
+    #define ETHEREAL_VERSION VERSION_ID
+#endif
 
 struct Limits {
 
