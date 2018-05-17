@@ -30,6 +30,7 @@
 #define MATE         (32000)
 #define MATE_IN_MAX  (+MATE - MAX_PLY)
 #define MATED_IN_MAX (-MATE + MAX_PLY)
+#define VALUE_NONE   (32001)
 
 #define SQUARE_NB (64)
 #define COLOUR_NB ( 2)

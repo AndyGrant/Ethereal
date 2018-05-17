@@ -26,13 +26,15 @@
 struct TTEntry {
     int8_t depth;
     uint8_t generation;
+    int16_t eval;
     int16_t value;
     uint16_t move;
     uint16_t hash16;
 };
 
 struct TTBucket {
-    TTEntry slots[4];
+    TTEntry slots[3];
+    uint16_t padding;
 };
 
 struct TTable {
@@ -55,8 +57,8 @@ void initTT(uint64_t megabytes);
 void updateTT();
 void clearTT();
 int hashfullTT();
-int getTTEntry(uint64_t hash, uint16_t *move, int *value, int *depth, int *bound);
-void storeTTEntry(uint64_t hash, uint16_t move, int value, int depth, int bound);
+int getTTEntry(uint64_t hash, uint16_t *move, int *value, int *eval, int *depth, int *bound);
+void storeTTEntry(uint64_t hash, uint16_t move, int value, int eval, int depth, int bound);
 
 PawnKingEntry* getPawnKingEntry(PawnKingTable *pktable, uint64_t pkhash);
 void storePawnKingEntry(PawnKingTable *pktable, uint64_t pkhash, uint64_t passed, int eval);

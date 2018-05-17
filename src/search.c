@@ -250,7 +250,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     Board* const board = &thread->board;
 
     unsigned tbresult;
-    int ttHit, ttValue = 0, ttDepth = 0, ttBound = 0;
+    int ttHit, ttValue = 0, ttEval = 0, ttDepth = 0, ttBound = 0;
     int i, reps, R, newDepth, rAlpha, rBeta, oldAlpha = alpha;
     int inCheck, isQuiet, improving, checkExtended, extension;
     int quiets = 0, played = 0, hist = 0, bestWasQuiet = 0;
@@ -258,10 +258,9 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     uint16_t move, ttMove = NONE_MOVE, bestMove = NONE_MOVE, quietsTried[MAX_MOVES];
 
     Undo undo[1];
-    EvalInfo ei;
-    PVariation lpv;
     MovePicker movePicker;
 
+    PVariation lpv;
     lpv.length = 0;
     pv->length = 0;
 
@@ -291,7 +290,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
 
         // Check to see if we have exceeded the maxiumum search draft
         if (height >= MAX_PLY)
-            return evaluateBoard(board, &ei, &thread->pktable);
+            return evaluateBoard(board, &thread->pktable);
 
         // Mate Distance Pruning. Check to see if this line is so
         // good, or so bad, that being mated in the ply, or  mating in
@@ -327,7 +326,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     }
 
     // Step 3. Probe the Transposition Table, adjust the value, and consider cutoffs
-    if ((ttHit = getTTEntry(board->hash, &ttMove, &ttValue, &ttDepth, &ttBound))){
+    if ((ttHit = getTTEntry(board->hash, &ttMove, &ttValue, &ttEval, &ttDepth, &ttBound))){
 
         ttValue = valueFromTT(ttValue, height); // Adjust any MATE scores
 
@@ -384,7 +383,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             || (ttBound == BOUND_LOWER && value >= beta)
             || (ttBound == BOUND_UPPER && value <= alpha)){
 
-            storeTTEntry(board->hash, NONE_MOVE, value, MAX_PLY-1, ttBound);
+            storeTTEntry(board->hash, NONE_MOVE, value, VALUE_NONE, MAX_PLY-1, ttBound);
             return value;
         }
     }
@@ -401,7 +400,8 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     depth += inCheck && !RootNode && depth <= 8;
 
     // Compute and save off a static evaluation. Also, compute our futilityMargin
-    eval = thread->evalStack[height] = evaluateBoard(board, &ei, &thread->pktable);
+    eval = thread->evalStack[height] = ttHit && ttEval != VALUE_NONE ? ttEval
+                                     : evaluateBoard(board, &thread->pktable);
     futilityMargin = eval + FutilityMargin * depth;
 
     // Finally, we define a node to be improving if the last two moves have increased
@@ -466,7 +466,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         && !inCheck
         &&  abs(beta) < MATE_IN_MAX
         &&  depth >= ProbCutDepth
-        &&  eval + bestTacticalMoveValue(board, &ei) >= beta + ProbCutMargin){
+        &&  eval + bestTacticalMoveValue(board) >= beta + ProbCutMargin){
 
         rBeta = MIN(beta + ProbCutMargin, MATE - MAX_PLY - 1);
 
@@ -510,7 +510,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         value = search(thread, &lpv, alpha, beta, depth-2, height);
 
         // Probe for a new table move, and adjust any mate scores
-        ttHit = getTTEntry(board->hash, &ttMove, &ttValue, &ttDepth, &ttBound);
+        ttHit = getTTEntry(board->hash, &ttMove, &ttValue, &ttEval, &ttDepth, &ttBound);
         if (ttHit) ttValue = valueFromTT(ttValue, height);
     }
 
@@ -548,25 +548,15 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             &&  quiets > LateMovePruningCounts[depth])
             break;
 
-        // Step 15. Weak Capture Pruning. Prune this capture if it is capturing
-        // a weaker piece which is protected, so long as we do not have any
-        // additional support for the attacker. This is done for only some depths
-        if (    !PvNode
-            &&  !isQuiet
-            &&  !inCheck
-            &&   best > MATED_IN_MAX
-            &&   captureIsWeak(board, &ei, move, depth))
+        // Step 15. Static Exchange Evaluation Pruning. Prune moves which fail
+        // to beat a depth dependent SEE threshold. The usual exceptions for
+        // positions in check, pvnodes, and MATED positions apply here as well.
+        if (   !PvNode
+            && !inCheck
+            &&  depth <= SEEPruningDepth
+            &&  best > MATED_IN_MAX
+            && !staticExchangeEvaluation(board, move, SEEMargin[improving] * depth * depth))
             continue;
-
-         // Step 16. Static Exchange Evaluation Pruning. Prune moves which fail
-         // to beat a depth dependent SEE threshold. The usual exceptions for
-         // positions in check, pvnodes, and MATED positions apply here as well.
-         if (   !PvNode
-             && !inCheck
-             &&  depth <= SEEPruningDepth
-             &&  best > MATED_IN_MAX
-             && !staticExchangeEvaluation(board, move, SEEMargin[improving] * depth * depth))
-             continue;
 
         // Apply the move, and verify legality
         applyMove(board, move, undo);
@@ -578,7 +568,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         // Update counter of moves actually played
         played += 1;
 
-        // Step 17. Late Move Reductions. We will search some moves at a
+        // Step 16. Late Move Reductions. We will search some moves at a
         // lower depth. If they look poor at a lower depth, then we will
         // move on. If they look good, we will search with a full depth.
         if (    played >= 4
@@ -607,7 +597,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
 
         } else R = 1;
 
-        // Step 18A. Singular Move Extensions. If we are looking at a table move,
+        // Step 17A. Singular Move Extensions. If we are looking at a table move,
         // and it seems that under some conditions, the table move is better than
         // all other possible moves, we will extend the search of the table move
         extension =  !RootNode
@@ -618,7 +608,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
                   && (ttBound & BOUND_LOWER)
                   &&  moveIsSingular(thread, ttMove, ttValue, undo, depth, height);
 
-        // Step 18B. Check Extensions. We extend captures from any in
+        // Step 17B. Check Extensions. We extend captures from any in
         // check positions, so long as no other extension has been made
         extension +=  inCheck
                   && !isQuiet
@@ -628,19 +618,19 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         // New depth is what our search depth would be, assuming that we do no LMR
         newDepth = depth + extension;
 
-        // Step 19A. If we triggered the LMR conditions (which we know by the value of R),
+        // Step 18A. If we triggered the LMR conditions (which we know by the value of R),
         // then we will perform a reduced search on the null alpha window, as we have no
         // expectation that this move will be worth looking into deeper
         if (R != 1) value = -search(thread, &lpv, -alpha-1, -alpha, newDepth-R, height+1);
 
-        // Step 19B. There are two situations in which we will search again on a null window,
+        // Step 18B. There are two situations in which we will search again on a null window,
         // but without a depth reduction R. First, if the LMR search happened, and failed
         // high, secondly, if we did not try an LMR search, and this is not the first move
         // we have tried in a PvNode, we will research with the normally reduced depth
         if ((R != 1 && value > alpha) || (R == 1 && !(PvNode && played == 1)))
             value = -search(thread, &lpv, -alpha-1, -alpha, newDepth-1, height+1);
 
-        // Step 19C. Finally, if we are in a PvNode and a move beat alpha while being
+        // Step 18C. Finally, if we are in a PvNode and a move beat alpha while being
         // search on a reduced depth, we will search again on the normal window. Also,
         // if we did not perform Step 18B, we will search for the first time on the
         // normal window. This happens only for the first move in a PvNode
@@ -650,7 +640,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         // Revert the board state
         revertMove(board, move, undo);
 
-        // Step 20. Update search stats for the best move and its value. Update
+        // Step 19. Update search stats for the best move and its value. Update
         // our lower bound (alpha) if exceeded, and also update the PV in that case
         if (value > best){
 
@@ -668,7 +658,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             }
         }
 
-        // Step 21. Search has failed high. Update Killer Moves and exit search
+        // Step 20. Search has failed high. Update Killer Moves and exit search
         if (alpha >= beta){
 
             if (isQuiet && thread->killers[height][0] != move){
@@ -680,24 +670,24 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         }
     }
 
-    // Step 22. Stalemate and Checkmate detection. If no moves were found to
+    // Step 21. Stalemate and Checkmate detection. If no moves were found to
     // be legal (search makes sure to play at least one legal move, if any),
     // then we are either mated or stalemated, which we can tell by the inCheck
     // flag. For mates, return a score based on the distance from root, so we
     // can differentiate between close mates and far away mates from the root
     if (played == 0) return inCheck ? -MATE + height : 0;
 
-    // Step 23. Update History counters on a fail high for a quiet move
+    // Step 22. Update History counters on a fail high for a quiet move
     if (best >= beta && !moveIsTactical(board, bestMove)){
         updateHistory(thread->history, bestMove, board->turn, depth*depth);
         for (i = 0; i < quiets - 1; i++)
             updateHistory(thread->history, quietsTried[i], board->turn, -depth*depth);
     }
 
-    // Step 24. Store results of search into the table
+    // Step 23. Store results of search into the table
     ttBound = best >= beta    ? BOUND_LOWER
             : best > oldAlpha ? BOUND_EXACT : BOUND_UPPER;
-    storeTTEntry(board->hash, bestMove, valueToTT(best, height), depth, ttBound);
+    storeTTEntry(board->hash, bestMove, valueToTT(best, height), eval, depth, ttBound);
 
     return best;
 }
@@ -708,9 +698,9 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
 
     int eval, value, best;
     uint16_t move;
+
     Undo undo[1];
     MovePicker movePicker;
-    EvalInfo ei;
 
     PVariation lpv;
     lpv.length = 0;
@@ -737,18 +727,18 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     // Step 2. Max Draft Cutoff. If we are at the maximum search draft,
     // then end the search here with a static eval of the current board
     if (height >= MAX_PLY)
-        return evaluateBoard(board, &ei, &thread->pktable);
+        return evaluateBoard(board, &thread->pktable);
 
     // Step 3. Eval Pruning. If a static evaluation of the board will
     // exceed beta, then we can stop the search here. Also, if the static
     // eval exceeds alpha, we can call our static eval the new alpha
-    best = value = eval = evaluateBoard(board, &ei, &thread->pktable);
+    best = value = eval = evaluateBoard(board, &thread->pktable);
     alpha = MAX(alpha, value);
     if (alpha >= beta) return value;
 
     // Step 4. Delta Pruning. Even the best possible capture and or promotion
-    // combo with the additional of the futility margin would still fall below alpha
-    if (value + QFutilityMargin + bestTacticalMoveValue(board, &ei) < alpha)
+    // combo with the additional of the futility margin would still fail
+    if (value + QFutilityMargin + bestTacticalMoveValue(board) < alpha)
         return eval;
 
     // Step 5. Move Generation and Looping. Generate all tactical moves for this
@@ -759,12 +749,6 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
         // Step 6. Futility Pruning. Similar to Delta Pruning, if this capture in the
         // best case would still fail to beat alpha minus some margin, we can skip it
         if (eval + QFutilityMargin + thisTacticalMoveValue(board, move) < alpha)
-            continue;
-
-        // Step 7. Weak Capture Pruning. If we are trying to capture a piece which
-        // is protected, and we are the sole attacker, then we can be somewhat safe
-        // in skipping this move so long as we are capturing a weaker piece
-        if (captureIsWeak(board, &ei, move, 0))
             continue;
 
         // Step 8. Static Exchance Evaluation Pruning. If the move fails a generous
@@ -939,15 +923,12 @@ int thisTacticalMoveValue(Board* board, uint16_t move){
     return value;
 }
 
-int bestTacticalMoveValue(Board* board, EvalInfo* ei){
+int bestTacticalMoveValue(Board* board){
 
     int value = 0;
 
-    // Look at enemy pieces we attacked to get a best value for our
-    // moves. If the board is a known draw then we have not computed
-    // any attack information, so we just look at all enemy pieces
-    uint64_t targets =  board->colours[!board->turn]
-                     & (ei->positionIsDrawn ? ~0ull : ei->attacked[board->turn]);
+    // Look at enemy pieces we might try to capture
+    uint64_t targets = board->colours[!board->turn];
 
     // We may have a queen capture
     if (targets & board->pieces[QUEEN])
@@ -972,7 +953,6 @@ int bestTacticalMoveValue(Board* board, EvalInfo* ei){
     else if (board->epSquare != -1)
         value += PieceValues[PAWN][MG];
 
-
     // See if we have any pawns on promoting ranks. If so, assume that
     // we can promote one of our pawns to at least a queen
     if (   board->pieces[PAWN]
@@ -981,30 +961,6 @@ int bestTacticalMoveValue(Board* board, EvalInfo* ei){
         value += PieceValues[QUEEN][MG] - PieceValues[PAWN][MG];
 
     return value;
-}
-
-int captureIsWeak(Board* board, EvalInfo* ei, uint16_t move, int depth){
-
-    // If we lack the sufficient depth, the position was drawn and thus
-    // no attackers were computed, or the capture we are looking at is
-    // supported by another piece, then this capture is not a weak one
-    if (    depth > WeakCaptureTwoAttackersDepth
-        ||  ei->positionIsDrawn
-        || (ei->attackedBy2[board->turn] & (1ull << MoveTo(move))))
-        return 0;
-
-    // Determine how valuable our attacking piece is
-    int attackerValue = PieceValues[PieceType(board->squares[MoveFrom(move)])][MG];
-
-    // This capture is not weak if we are attacking an equal or greater valued piece,
-    if (thisTacticalMoveValue(board, move) >= attackerValue)
-        return 0;
-
-    // Thus, the capture is weak if there are sufficient attackers for a given depth
-    return (   (depth <= WeakCaptureTwoAttackersDepth
-            &&  ei->attackedBy2[!board->turn] & (1ull << MoveTo(move)))
-            || (depth <= WeakCaptureOneAttackersDepth
-            &&  ei->attacked[!board->turn] & (1ull << MoveTo(move))));
 }
 
 int moveIsSingular(Thread* thread, uint16_t ttMove, int ttValue, Undo* undo, int depth, int height){

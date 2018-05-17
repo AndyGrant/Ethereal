@@ -66,22 +66,22 @@ int hashfullTT() {
 
     int used = 0;
 
-    // Sample the first 1,000 slots of the table
-    for (int i = 0; i < 250; i++)
-        for (int j = 0; j < 4; j++)
+    // Sample the first 3,000 slots of the table
+    for (int i = 0; i < 1000; i++)
+        for (int j = 0; j < 3; j++)
             used += (Table.buckets[i].slots[j].generation & 0x0C) != 0x00
                  && (Table.buckets[i].slots[j].generation & 0xFC) == Table.generation;
 
-    return used;
+    return used / 3;
 }
 
-int getTTEntry(uint64_t hash, uint16_t *move, int *value, int *depth, int *bound) {
+int getTTEntry(uint64_t hash, uint16_t *move, int *value, int *eval, int *depth, int *bound) {
 
     const uint16_t hash16 = hash >> 48;
     TTEntry *slots = &Table.buckets[hash & Table.hashMask].slots[0];
 
     // Search for a matching hash signature
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 3; i++) {
 
         if (slots[i].hash16 == hash16) {
 
@@ -91,6 +91,7 @@ int getTTEntry(uint64_t hash, uint16_t *move, int *value, int *depth, int *bound
             // Copy over the TTEntry and signal success
             *move  = slots[i].move;
             *value = slots[i].value;
+            *eval  = slots[i].eval;
             *depth = slots[i].depth;
             *bound = slots[i].generation & 0x3;
             return 1;
@@ -100,16 +101,17 @@ int getTTEntry(uint64_t hash, uint16_t *move, int *value, int *depth, int *bound
     return 0; // No TTEntry found
 }
 
-void storeTTEntry(uint64_t hash, uint16_t move, int value, int depth, int bound) {
+void storeTTEntry(uint64_t hash, uint16_t move, int value, int eval, int depth, int bound) {
 
-    assert(abs(value) <= MATE); // Scores over MATE may not be converted correctly
-    assert(0 <= depth && depth < MAX_PLY); // Depth should be within our regular search
+    assert(abs(value) <= MATE);
+    assert(abs(eval) <= MATE || eval == VALUE_NONE);
+    assert(0 <= depth && depth < MAX_PLY);
     assert(bound == BOUND_LOWER || bound == BOUND_UPPER || bound == BOUND_EXACT);
 
     const uint16_t hash16 = hash >> 48;
     TTEntry *replace = NULL, *slots = &Table.buckets[hash & Table.hashMask].slots[0];
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 3; i++) {
 
         // Found a matching hash or an unused entry
         if (slots[i].hash16 == hash16 || (slots[i].generation & 0x3) == 0u) {
@@ -140,6 +142,7 @@ void storeTTEntry(uint64_t hash, uint16_t move, int value, int depth, int bound)
     replace->depth      = (int8_t)depth;
     replace->generation = (uint8_t)bound | Table.generation;
     replace->value      = (int16_t)value;
+    replace->eval       = (int16_t)eval;
     replace->move       = (uint16_t)move;
     replace->hash16     = (uint16_t)hash16;
 }

@@ -66,9 +66,7 @@ int valueToTT(int value, int height);
 
 int thisTacticalMoveValue(Board* board, uint16_t move);
 
-int bestTacticalMoveValue(Board* board, EvalInfo* ei);
-
-int captureIsWeak(Board* board, EvalInfo* ei, uint16_t move, int depth);
+int bestTacticalMoveValue(Board* board);
 
 int moveIsSingular(Thread* thread, uint16_t ttMove, int ttValue, Undo* undo, int depth, int height);
 
