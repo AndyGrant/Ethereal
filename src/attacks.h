@@ -24,6 +24,7 @@
 
 void initAttacks();
 
+uint64_t pawnAttacks(int c, int s);
 uint64_t knightAttacks(int s);
 uint64_t bishopAttacks(int s, uint64_t occ);
 uint64_t rookAttacks(int s, uint64_t occ);
