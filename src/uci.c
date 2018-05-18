@@ -65,7 +65,7 @@ int main(){
     // Initialize the core components of Ethereal
     initAttacks();
     initializePSQT();
-    initializeMasks();
+    initMasks();
     initializeZorbist();
 
     // Setup any evaluation tables defined by functions

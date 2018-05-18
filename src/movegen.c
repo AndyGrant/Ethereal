@@ -256,7 +256,7 @@ void genAllQuietMoves(Board* board, uint16_t* moves, int* size){
         // The attacker is a sliding piece, therefore we can either block the attack
         // by moving a piece infront of the attacking path if the slider, or we can
         // again simple move our king (Castling excluded, of course)
-        destinations = empty & BitsBetweenMasks[getlsb(myKings)][getlsb(board->kingAttackers)];
+        destinations = empty & bitsBetweenMasks(getlsb(myKings), getlsb(board->kingAttackers));
     }
     
     // We are not being attacked, and therefore will look at any quiet move,
