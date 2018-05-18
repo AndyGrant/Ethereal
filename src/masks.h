@@ -24,10 +24,10 @@
 
 void initMasks();
 
-extern uint64_t bitsBetweenMasks(int s1, int s2);
-extern uint64_t ranksAtOrAboveMasks(int c, int r);
-extern uint64_t isolatedPawnMasks(int s);
-extern uint64_t passedPawnMasks(int c, int s);
-extern uint64_t pawnConnectedMasks(int c, int s);
-extern uint64_t outpostSquareMasks(int c, int s);
-extern uint64_t outpostRanks(int c);
+uint64_t bitsBetweenMasks(int s1, int s2);
+uint64_t ranksAtOrAboveMasks(int c, int r);
+uint64_t isolatedPawnMasks(int s);
+uint64_t passedPawnMasks(int c, int s);
+uint64_t pawnConnectedMasks(int c, int s);
+uint64_t outpostSquareMasks(int c, int s);
+uint64_t outpostRanks(int c);
