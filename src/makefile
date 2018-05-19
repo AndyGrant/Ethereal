@@ -20,7 +20,7 @@ SRC     = *.c fathom/tbprobe.c
 LIBS    = -lpthread -lm
 EXE     = Ethereal
 
-WFLAGS = -std=c11 -Wall -Wextra -Wshadow
+WFLAGS = -std=gnu11 -Wall -Wextra -Wshadow
 CFLAGS = -DNDEBUG -O3 $(WFLAGS) -march=native -flto
 RFLAGS = -DNDEBUG -O3 $(WFLAGS) -flto -static
 AFLAGS = -DNDEBUG -O3 $(WFLAGS) -march=armv7 -flto -static
