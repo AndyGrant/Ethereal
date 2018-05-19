@@ -224,19 +224,25 @@ void initializeBoard(Board* board, char* fen){
 void printBoard(Board* board) {
 
     static const char PieceLabel[2][7] = {"PNBRQK", "pnbrqk"};
+    static const char *sep = "  |---|---|---|---|---|---|---|---|";
 
     for (int r = 7; r >= 0; r--) {
-        char line[] = ". . . . . . . .";
+        char line[] = "  | . | . | . | . | . | . | . | . |";
+        line[0] = r + '1';
+        puts(sep);
 
         for (int f = 0; f < FILE_NB; f++) {
             const int s = square(r, f), v = board->squares[s];
-            line[2 * f] = v != EMPTY
+            line[4 + 4 * f] = v != EMPTY
                 ? PieceLabel[PieceColour(v)][PieceType(v)]
                 : s == board->epSquare ? '*' : '.';
         }
 
         puts(line);
     }
+
+    puts(sep);
+    puts("    A   B   C   D   E   F   G   H");
 }
 
 uint64_t perft(Board* board, int depth){
