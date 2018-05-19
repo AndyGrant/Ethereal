@@ -30,7 +30,7 @@
 #include "masks.h"
 #include "movegen.h"
 #include "piece.h"
-#include "square.h"
+#include "psqt.h"
 #include "transposition.h"
 #include "types.h"
 
@@ -547,7 +547,7 @@ int evaluateRooks(EvalInfo* ei, Board* board, int colour){
         // Rook gains a bonus for being located on seventh rank relative to its
         // colour so long as the enemy king is on the last two ranks of the board
         if (   rankOf(sq) == (colour == BLACK ? 1 : 6)
-            && rankOf(relativeSquare(getlsb(enemyKings), colour)) >= 6){
+            && relativeRankOf(colour, getlsb(enemyKings)) >= 6) {
             eval += RookOnSeventh;
             if (TRACE) T.rookOnSeventh[colour]++;
         }
