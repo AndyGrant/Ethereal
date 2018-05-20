@@ -18,6 +18,7 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "bitboards.h"
 #include "piece.h"
@@ -84,4 +85,20 @@ void clearBit(uint64_t *b, int i) {
 bool testBit(uint64_t b, int i) {
     assert(0 <= i && i < 64);
     return b & (1ull << i);
+}
+
+void printBitboard(uint64_t b) {
+
+    for (int r = 7; r >= 0; r--) {
+        char line[] = ". . . . . . . .";
+
+        for (int f = 0; f < FILE_NB; f++) {
+            if (testBit(b, square(r, f)))
+                line[2 * f] = 'X';
+        }
+
+        puts(line);
+    }
+
+    puts("");
 }

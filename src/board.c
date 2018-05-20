@@ -221,39 +221,28 @@ void initializeBoard(Board* board, char* fen){
     board->kingAttackers = attackersToKingSquare(board);
 }
 
-void printBoard(Board* board){
+void printBoard(Board* board) {
 
-    int i, j, f, c, t;
+    static const char PieceLabel[2][7] = {"PNBRQK", "pnbrqk"};
+    static const char *sep = "  |---|---|---|---|---|---|---|---|";
 
-    static const char table[3][7] = {
-        {'P','N','B','R','Q','K'},
-        {'p','n','b','r','q','k'},
-        {' ',' ',' ',' ',' ',' '}
-    };
+    for (int r = 7; r >= 0; r--) {
+        char line[] = "  | . | . | . | . | . | . | . | . |";
+        line[0] = r + '1';
+        puts(sep);
 
-    // Print each row of the board, starting from the top
-    for(i = 56, f = 8; i >= 0; i -= 8, f--){
-
-        printf("\n     |----|----|----|----|----|----|----|----|\n");
-        printf("    %d",f);
-
-        // Print each square in a row, starting from the left
-        for(j = 0; j < 8; j++){
-            c = PieceColour(board->squares[i+j]);
-            t = PieceType(board->squares[i+j]);
-
-            switch(c){
-                case WHITE: printf("| *%c ", table[c][t]); break;
-                case BLACK: printf("|  %c ", table[c][t]); break;
-                default   : printf("|    "); break;
-            }
+        for (int f = 0; f < FILE_NB; f++) {
+            const int s = square(r, f), v = board->squares[s];
+            line[4 + 4 * f] = v != EMPTY
+                ? PieceLabel[PieceColour(v)][PieceType(v)]
+                : s == board->epSquare ? '*' : '.';
         }
 
-        printf("|");
+        puts(line);
     }
 
-    printf("\n     |----|----|----|----|----|----|----|----|");
-    printf("\n        A    B    C    D    E    F    G    H\n");
+    puts(sep);
+    puts("    A   B   C   D   E   F   G   H");
 }
 
 uint64_t perft(Board* board, int depth){
