@@ -114,16 +114,21 @@ static int stringToSquare(const char *str) {
     if (str[0] == '-')
         return -1;
     else
-        return square(str[0] - 'a', str[1] - '1');
+        return square(str[1] - '1', str[0] - 'a');
 }
 
 static void squareToString(int s, char *str) {
 
-    assert(0 <= s && s < SQUARE_NB);
+    assert(-1 <= s && s < SQUARE_NB);
 
-    str[0] = fileOf(s) + 'a';
-    str[1] = rankOf(s) + '1';
-    str[2] = '\0';
+    if (s == -1)
+        *str++ = '-';
+    else {
+        *str++ = fileOf(s) + 'a';
+        *str++ = rankOf(s) + '1';
+    }
+
+    *str++ = '\0';
 }
 
 void setBoard(Board *board, const char *fen) {
@@ -193,6 +198,50 @@ void setBoard(Board *board, const char *fen) {
     free(str);
 }
 
+void getBoard(Board *board, char *fen) {
+
+    // Piece placement
+    for (int r = 7; r >= 0; r--) {
+        int cnt = 0;
+
+        for (int f = 0; f < FILE_NB; f++) {
+            const int s = square(r, f);
+            const int v = board->squares[s];
+
+            if (v != EMPTY) {
+                if (cnt)
+                    *fen++ = cnt + '0';
+
+                *fen++ = PieceLabel[PieceColour(v)][PieceType(v)];
+                cnt = 0;
+            } else
+                cnt++;
+        }
+
+        if (cnt)
+            *fen++ = cnt + '0';
+
+        *fen++ = r == 0 ? ' ' : '/';
+    }
+
+    // Turn of play
+    *fen++ = board->turn == WHITE ? 'w' : 'b';
+    *fen++ = ' ';
+
+    if (board->castleRights & WHITE_KING_RIGHTS)
+        *fen++ = 'K';
+    if (board->castleRights & WHITE_QUEEN_RIGHTS)
+        *fen++ = 'Q';
+    if (board->castleRights & BLACK_KING_RIGHTS)
+        *fen++ = 'k';
+    if (board->castleRights & BLACK_QUEEN_RIGHTS)
+        *fen++ = 'q';
+
+    char str[3];
+    squareToString(board->epSquare, str);
+    sprintf(fen, " %s %d", str, board->fiftyMoveRule);
+}
+
 void printBoard(Board* board) {
 
     static const char *sep = "  |---|---|---|---|---|---|---|---|";
@@ -215,11 +264,16 @@ void printBoard(Board* board) {
     puts(sep);
     puts("    A   B   C   D   E   F   G   H");
 
+    // Print FEN
+    char fen[256];
+    getBoard(board, fen);
+    printf("fen: %s\n", fen);
+
     // Print checkers, if any
     uint64_t b = board->kingAttackers;
 
     if (b) {
-        puts("checkers:");
+        printf("checkers:");
         char str[3];
 
         while (b) {
