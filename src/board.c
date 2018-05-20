@@ -133,12 +133,11 @@ void setBoard(Board *board, const char *fen) {
         else if (ch == '/')
             s -= 16;
         else {
-            for (int c = 0; c < COLOUR_NB; c++) {
-                const char *p = strchr(PieceLabel[c], ch);
+            const bool c = islower(ch);
+            const char *p = strchr(PieceLabel[c], ch);
 
-                if (p)
-                    setSquare(board, c, p - PieceLabel[c], s++);
-            }
+            if (p)
+                setSquare(board, c, p - PieceLabel[c], s++);
         }
     }
 
