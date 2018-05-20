@@ -49,7 +49,9 @@ struct Undo {
     int capturePiece;
 };
 
-void setBoard(Board *board, const char *fen);
+void boardFromFEN(Board *board, const char *fen);
+void boardToFEN(Board *board, char *fen);
+
 void printBoard(Board *board);
 uint64_t perft(Board *board, int depth);
 void runBenchmark(Thread *threads, int depth);

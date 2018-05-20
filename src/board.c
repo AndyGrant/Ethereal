@@ -131,7 +131,7 @@ static void squareToString(int s, char *str) {
     *str++ = '\0';
 }
 
-void setBoard(Board *board, const char *fen) {
+void boardFromFEN(Board *board, const char *fen) {
 
     clearBoard(board);
     char *str = strdup(fen), *strPos = NULL;
@@ -198,7 +198,7 @@ void setBoard(Board *board, const char *fen) {
     free(str);
 }
 
-void getBoard(Board *board, char *fen) {
+void boardToFEN(Board *board, char *fen) {
 
     // Piece placement
     for (int r = 7; r >= 0; r--) {
@@ -206,13 +206,13 @@ void getBoard(Board *board, char *fen) {
 
         for (int f = 0; f < FILE_NB; f++) {
             const int s = square(r, f);
-            const int v = board->squares[s];
+            const int p = board->squares[s];
 
-            if (v != EMPTY) {
+            if (p != EMPTY) {
                 if (cnt)
                     *fen++ = cnt + '0';
 
-                *fen++ = PieceLabel[PieceColour(v)][PieceType(v)];
+                *fen++ = PieceLabel[PieceColour(p)][PieceType(p)];
                 cnt = 0;
             } else
                 cnt++;
@@ -244,12 +244,12 @@ void getBoard(Board *board, char *fen) {
 
 void printBoard(Board* board) {
 
-    static const char *sep = "  |---|---|---|---|---|---|---|---|";
+    static const char *separator = "  |---|---|---|---|---|---|---|---|";
 
     for (int r = 7; r >= 0; r--) {
         char line[] = "  | . | . | . | . | . | . | . | . |";
         line[0] = r + '1';
-        puts(sep);
+        puts(separator);
 
         for (int f = 0; f < FILE_NB; f++) {
             const int s = square(r, f), v = board->squares[s];
@@ -261,12 +261,12 @@ void printBoard(Board* board) {
         puts(line);
     }
 
-    puts(sep);
+    puts(separator);
     puts("    A   B   C   D   E   F   G   H");
 
     // Print FEN
     char fen[256];
-    getBoard(board, fen);
+    boardToFEN(board, fen);
     printf("fen: %s\n", fen);
 
     // Print checkers, if any
@@ -330,7 +330,7 @@ void runBenchmark(Thread* threads, int depth){
     // Search each benchmark position
     for (i = 0; i < NUM_BENCHMARKS; i++){
         printf("\nPosition [%2d|%2d]\n", i + 1, NUM_BENCHMARKS);
-        setBoard(&board, Benchmarks[i]);
+        boardFromFEN(&board, Benchmarks[i]);
 
         limits.start = getRealTime();
         getBestMove(threads, &board, &limits);
