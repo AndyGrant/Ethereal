@@ -75,7 +75,7 @@ int main(){
     initTT(megabytes);
 
     // Not required, but always setup the board from the starting position
-    initializeBoard(&board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    boardFromFEN(&board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
     // Build our Thread Pool, with default size of 1-thread
     Thread* threads = createThreadPool(nthreads);
@@ -260,11 +260,11 @@ void uciPosition(char* str, Board* board){
 
     // Position is defined by a FEN string
     if (stringContains(str, "fen"))
-        initializeBoard(board, strstr(str, "fen") + strlen("fen "));
+        boardFromFEN(board, strstr(str, "fen") + strlen("fen "));
 
     // Position just starts at the normal beggining of game
     else if (stringContains(str, "startpos"))
-        initializeBoard(board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        boardFromFEN(board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
     // Position command may include a list of moves
     ptr = strstr(str, "moves");

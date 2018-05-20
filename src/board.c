@@ -17,8 +17,10 @@
 */
 
 #include <assert.h>
+#include <ctype.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "attacks.h"
@@ -82,154 +84,172 @@ char Benchmarks[NUM_BENCHMARKS][256] = {
     "r2r1n2/pp2bk2/2p1p2p/3q4/3PN1QP/2P3R1/P4PP1/5RK1 w - - 0 1",
 };
 
-void initializeBoard(Board* board, char* fen){
+static const char *PieceLabel[COLOUR_NB] = {"PNBRQK", "pnbrqk"};
 
-    int i, j, sq;
-    char rank, file;
-    uint64_t enemyPawns;
-
-    // Initialze board->squares from FEN notation;
-    for(i = 0, sq = 56; fen[i] != ' '; i++){
-
-        // End of a row of the FEN notation
-        if (fen[i] == '/' || fen[i] == '\\'){
-            sq -= 16;
-            continue;
-        }
-
-        // Initalize any empty squares
-        else if (fen[i] <= '8' && fen[i] >= '1')
-            for(j = 0; j < fen[i] - '0'; j++, sq++)
-                board->squares[sq] = EMPTY;
-
-        // Index contains an actual piece, determine its type
-        else {
-            switch(fen[i]){
-                case 'P': board->squares[sq++] = WHITE_PAWN;   break;
-                case 'N': board->squares[sq++] = WHITE_KNIGHT; break;
-                case 'B': board->squares[sq++] = WHITE_BISHOP; break;
-                case 'R': board->squares[sq++] = WHITE_ROOK;   break;
-                case 'Q': board->squares[sq++] = WHITE_QUEEN;  break;
-                case 'K': board->squares[sq++] = WHITE_KING;   break;
-                case 'p': board->squares[sq++] = BLACK_PAWN;   break;
-                case 'n': board->squares[sq++] = BLACK_KNIGHT; break;
-                case 'b': board->squares[sq++] = BLACK_BISHOP; break;
-                case 'r': board->squares[sq++] = BLACK_ROOK;   break;
-                case 'q': board->squares[sq++] = BLACK_QUEEN;  break;
-                case 'k': board->squares[sq++] = BLACK_KING;   break;
-            }
-        }
-    }
-
-    // Determine turn
-    switch(fen[++i]){
-        case 'w': board->turn = WHITE; break;
-        case 'b': board->turn = BLACK; break;
-    }
-
-    i++; // Skip over space between turn and castle rights
-
-    // Determine Castle Rights
-    board->castleRights = 0;
-    while(fen[++i] != ' '){
-        switch(fen[i]){
-            case 'K' : board->castleRights |= WHITE_KING_RIGHTS;  break;
-            case 'Q' : board->castleRights |= WHITE_QUEEN_RIGHTS; break;
-            case 'k' : board->castleRights |= BLACK_KING_RIGHTS;  break;
-            case 'q' : board->castleRights |= BLACK_QUEEN_RIGHTS; break;
-            case '-' : /* Indicates that no side may castle */    break;
-        }
-    }
-
-    // Determine Enpass Square
+static void clearBoard(Board *board) {
+    memset(board, 0, sizeof(*board));
+    memset(&board->squares, EMPTY, sizeof(board->squares));
     board->epSquare = -1;
-    if (fen[++i] != '-'){
-        rank = fen[i] - 'a';
-        file = fen[++i] - '1';
-        board->epSquare = rank + (8 * file);
-    }
+}
 
-    i++; // Skip over space between ensquare and halfmove count
+static void setSquare(Board *board, int c, int p, int s) {
 
-    // Determine number of half moves into the fifty move rule
-    if (fen[++i] != '-'){
+    assert(0 <= c && c < COLOUR_NB);
+    assert(0 <= p && p < PIECE_NB);
+    assert(0 <= s && s < SQUARE_NB);
 
-        // Two Digit Number
-        if (fen[i+1] != ' '){
-            board->fiftyMoveRule = (10 * (fen[i] - '0')) + fen[i+1] - '0';
-            i++;
-        }
+    board->squares[s] = MakePiece(p, c);
+    setBit(&board->colours[c], s);
+    setBit(&board->pieces[p], s);
 
-        // One Digit Number
-        else
-            board->fiftyMoveRule = fen[i] - '0';
-    }
+    board->hash ^= ZorbistKeys[board->squares[s]][s];
+    board->psqtmat += PSQT[board->squares[s]][s];
 
+    if (p == PAWN || p == KING)
+        board->pkhash ^= PawnKingKeys[board->squares[s]][s];
+}
+
+static int stringToSquare(const char *str) {
+
+    if (str[0] == '-')
+        return -1;
     else
-        board->fiftyMoveRule = 0;
+        return square(str[1] - '1', str[0] - 'a');
+}
 
-    // Zero out each of the used BitBoards
-    board->colours[WHITE] = 0ull;
-    board->colours[BLACK] = 0ull;
-    board->pieces[PAWN]   = 0ull;
-    board->pieces[KNIGHT] = 0ull;
-    board->pieces[BISHOP] = 0ull;
-    board->pieces[ROOK]   = 0ull;
-    board->pieces[QUEEN]  = 0ull;
-    board->pieces[KING]   = 0ull;
+static void squareToString(int s, char *str) {
 
-    // Initalize each of the BitBoards
-    for(i = 0; i < 64; i++){
-        board->colours[PieceColour(board->squares[i])] |= (1ull << i);
-        board->pieces[PieceType(board->squares[i])]    |= (1ull << i);
+    assert(-1 <= s && s < SQUARE_NB);
+
+    if (s == -1)
+        *str++ = '-';
+    else {
+        *str++ = fileOf(s) + 'a';
+        *str++ = rankOf(s) + '1';
     }
 
-    // Update the enpass square to reflect a possible enpass
-    if (board->epSquare != -1){
-        enemyPawns  = board->colours[board->turn] & board->pieces[PAWN];
-        enemyPawns &= isolatedPawnMasks(board->epSquare);
-        enemyPawns &= board->turn == BLACK ? RANK_4 : RANK_5;
-        if (enemyPawns == 0ull) board->epSquare = -1;
+    *str++ = '\0';
+}
+
+void boardFromFEN(Board *board, const char *fen) {
+
+    clearBoard(board);
+    char *str = strdup(fen), *strPos = NULL;
+    char *token = strtok_r(str, " ", &strPos);
+
+    // Piece placement
+    char ch;
+    int s = 56;
+
+    while ((ch = *token++)) {
+        if (isdigit(ch))
+            s += ch - '0';
+        else if (ch == '/')
+            s -= 16;
+        else {
+            const bool c = islower(ch);
+            const char *p = strchr(PieceLabel[c], ch);
+
+            if (p)
+                setSquare(board, c, p - PieceLabel[c], s++);
+        }
     }
 
-    // Inititalize Zorbist Hash
-    for(i = 0, board->hash = 0; i < 64; i++)
-        board->hash ^= ZorbistKeys[board->squares[i]][i];
+    // Turn of play
+    token = strtok_r(NULL, " ", &strPos);
 
-    // Factor in the castling rights
+    if (token[0] == 'w')
+        board->turn = WHITE;
+    else {
+        board->turn = BLACK;
+        board->hash ^= ZorbistKeys[TURN][0];
+    }
+
+    // Castling rights
+    token = strtok_r(NULL, " ", &strPos);
+
+    while ((ch = *token++)) {
+        if (ch =='K')
+            board->castleRights |= WHITE_KING_RIGHTS;
+        else if (ch == 'Q')
+            board->castleRights |= WHITE_QUEEN_RIGHTS;
+        else if (ch == 'k')
+            board->castleRights |= BLACK_KING_RIGHTS;
+        else if (ch == 'q')
+            board->castleRights |= BLACK_QUEEN_RIGHTS;
+    }
+
     board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
 
-    // Factor in the enpass square
+    // En passant
+    board->epSquare = stringToSquare(strtok_r(NULL, " ", &strPos));
+
     if (board->epSquare != -1)
         board->hash ^= ZorbistKeys[ENPASS][fileOf(board->epSquare)];
 
-    // Factor in the turn
-    if (board->turn == BLACK)
-        board->hash ^= ZorbistKeys[TURN][0];
+    // 50 move counter
+    board->fiftyMoveRule = atoi(strtok_r(NULL, " ", &strPos));
 
-    // Inititalize PawnKing Hash
-    for (i = 0, board->pkhash = 0; i < 64; i++)
-        board->pkhash ^= PawnKingKeys[board->squares[i]][i];
-
-    // Initalize Piece Square and Material value counters
-    for(i = 0, board->psqtmat = 0; i < 64; i++)
-        board->psqtmat += PSQT[board->squares[i]][i];
-
-    // Number of moves since this (root) position
+    // Move count: ignore and use zero, as we count since root
     board->numMoves = 0;
 
     board->kingAttackers = attackersToKingSquare(board);
+
+    free(str);
+}
+
+void boardToFEN(Board *board, char *fen) {
+
+    // Piece placement
+    for (int r = 7; r >= 0; r--) {
+        int cnt = 0;
+
+        for (int f = 0; f < FILE_NB; f++) {
+            const int s = square(r, f);
+            const int p = board->squares[s];
+
+            if (p != EMPTY) {
+                if (cnt)
+                    *fen++ = cnt + '0';
+
+                *fen++ = PieceLabel[PieceColour(p)][PieceType(p)];
+                cnt = 0;
+            } else
+                cnt++;
+        }
+
+        if (cnt)
+            *fen++ = cnt + '0';
+
+        *fen++ = r == 0 ? ' ' : '/';
+    }
+
+    // Turn of play
+    *fen++ = board->turn == WHITE ? 'w' : 'b';
+    *fen++ = ' ';
+
+    if (board->castleRights & WHITE_KING_RIGHTS)
+        *fen++ = 'K';
+    if (board->castleRights & WHITE_QUEEN_RIGHTS)
+        *fen++ = 'Q';
+    if (board->castleRights & BLACK_KING_RIGHTS)
+        *fen++ = 'k';
+    if (board->castleRights & BLACK_QUEEN_RIGHTS)
+        *fen++ = 'q';
+
+    char str[3];
+    squareToString(board->epSquare, str);
+    sprintf(fen, " %s %d", str, board->fiftyMoveRule);
 }
 
 void printBoard(Board* board) {
 
-    static const char PieceLabel[2][7] = {"PNBRQK", "pnbrqk"};
-    static const char *sep = "  |---|---|---|---|---|---|---|---|";
+    static const char *separator = "  |---|---|---|---|---|---|---|---|";
 
     for (int r = 7; r >= 0; r--) {
         char line[] = "  | . | . | . | . | . | . | . | . |";
         line[0] = r + '1';
-        puts(sep);
+        puts(separator);
 
         for (int f = 0; f < FILE_NB; f++) {
             const int s = square(r, f), v = board->squares[s];
@@ -241,8 +261,29 @@ void printBoard(Board* board) {
         puts(line);
     }
 
-    puts(sep);
+    puts(separator);
     puts("    A   B   C   D   E   F   G   H");
+
+    // Print FEN
+    char fen[256];
+    boardToFEN(board, fen);
+    printf("fen: %s\n", fen);
+
+    // Print checkers, if any
+    uint64_t b = board->kingAttackers;
+
+    if (b) {
+        printf("checkers:");
+        char str[3];
+
+        while (b) {
+            const int s = poplsb(&b);
+            squareToString(s, str);
+            printf(" %s", str);
+        }
+
+        puts("");
+    }
 }
 
 uint64_t perft(Board* board, int depth){
@@ -289,7 +330,7 @@ void runBenchmark(Thread* threads, int depth){
     // Search each benchmark position
     for (i = 0; i < NUM_BENCHMARKS; i++){
         printf("\nPosition [%2d|%2d]\n", i + 1, NUM_BENCHMARKS);
-        initializeBoard(&board, Benchmarks[i]);
+        boardFromFEN(&board, Benchmarks[i]);
 
         limits.start = getRealTime();
         getBestMove(threads, &board, &limits);

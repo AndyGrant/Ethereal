@@ -236,7 +236,7 @@ void initializeTexelEntries(TexelEntry* tes, Thread* thread){
         else    {printf("Unable to Parse Result: %s\n", line); exit(0);}
         
         // Setup the board with the FEN from the FENS file
-        initializeBoard(&thread->board, line);
+        boardFromFEN(&thread->board, line);
         
         // Determine the game phase based on remaining material
         tes[i].phase = 24 - 4 * popcount(thread->board.pieces[QUEEN ])
