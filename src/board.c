@@ -117,6 +117,15 @@ static int stringToSquare(const char *str) {
         return square(str[0] - 'a', str[1] - '1');
 }
 
+static void squareToString(int s, char *str) {
+
+    assert(0 <= s && s < SQUARE_NB);
+
+    str[0] = fileOf(s) + 'a';
+    str[1] = rankOf(s) + '1';
+    str[2] = '\0';
+}
+
 void setBoard(Board *board, const char *fen) {
 
     clearBoard(board);
@@ -205,6 +214,22 @@ void printBoard(Board* board) {
 
     puts(sep);
     puts("    A   B   C   D   E   F   G   H");
+
+    // Print checkers, if any
+    uint64_t b = board->kingAttackers;
+
+    if (b) {
+        puts("checkers:");
+        char str[3];
+
+        while (b) {
+            const int s = poplsb(&b);
+            squareToString(s, str);
+            printf(" %s", str);
+        }
+
+        puts("");
+    }
 }
 
 uint64_t perft(Board* board, int depth){
