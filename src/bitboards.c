@@ -83,7 +83,7 @@ void clearBit(uint64_t *b, int i) {
 }
 
 bool testBit(uint64_t b, int i) {
-    assert(0 <= i && i < 64);
+    assert(0 <= i && i < SQUARE_NB);
     return b & (1ull << i);
 }
 
@@ -92,13 +92,12 @@ void printBitboard(uint64_t b) {
     for (int r = 7; r >= 0; r--) {
         char line[] = ". . . . . . . .";
 
-        for (int f = 0; f < FILE_NB; f++) {
+        for (int f = 0; f < FILE_NB; f++)
             if (testBit(b, square(r, f)))
                 line[2 * f] = 'X';
-        }
 
-        puts(line);
+        printf("%s\n", line);
     }
 
-    puts("");
+    printf("\n");
 }

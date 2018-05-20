@@ -250,10 +250,10 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     Board* const board = &thread->board;
 
     unsigned tbresult;
+    int quiets = 0, played = 0, hist = 0;
     int ttHit, ttValue = 0, ttEval = 0, ttDepth = 0, ttBound = 0;
     int i, reps, R, newDepth, rAlpha, rBeta, oldAlpha = alpha;
     int inCheck, isQuiet, improving, checkExtended, extension;
-    int quiets = 0, played = 0, hist = 0, bestWasQuiet = 0;
     int eval, value = -MATE, best = -MATE, futilityMargin = -MATE;
     uint16_t move, ttMove = NONE_MOVE, bestMove = NONE_MOVE, quietsTried[MAX_MOVES];
 
@@ -568,32 +568,23 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         // Update counter of moves actually played
         played += 1;
 
-        // Step 16. Late Move Reductions. We will search some moves at a
-        // lower depth. If they look poor at a lower depth, then we will
-        // move on. If they look good, we will search with a full depth.
-        if (    played >= 4
-            &&  depth >= 3
-            &&  isQuiet){
+        // Step 16. Late Move Reductions. Compute the reduction,
+        // allow the later steps to perform the reduced searches
+        if (    isQuiet
+            &&  depth > 2
+            &&  played > 3){
 
-            // Baseline R based on number of moves played and current depth
-            R = 2 + (played - 4) / 8 + (depth - 6) / 4;
+            R = 2 + (played - 4) / 8 + (depth - 6) / 4; // LMR Formula
 
-            // Increase R by an additional two ply for non PvNodes
-            R += 2 * !PvNode;
+            R += 2 * !PvNode; // Increase for non PV nodes
 
-            // Decrease R by an additional ply if we have a quiet move as our best
-            // move, or we are looking at an early quiet move in a situation where
-            // we either have no table move, or the table move is not the best so far
-            R -= bestWasQuiet || (ttMove != bestMove && quiets <= 2);
+            R -= quiets <= 3; // Reduce for first few quiets
 
-            // Adjust R based on history score. We will not allow history to increase
-            // R by more than 1. History scores are within [-16384, 16384], so we can
-            // expect an adjustment on the bounds of [+1, -6], with 6 being very rare
+            // Adjust based on the history score, within [+1, -6]
             R -= MAX(-1, ((hist + 8192) / 4096) - (hist <= -8192));
 
-            // Do not allow the reduction to take us directly into a quiescence search
-            // and also ensure that R is at least one, therefore avoiding extensions
-            R  = MIN(depth - 1, MAX(R, 1));
+            // Don't extend the search and don't go into qsearch
+            R = MIN(depth - 1, MAX(R, 1));
 
         } else R = 1;
 
@@ -646,7 +637,6 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
 
             best = value;
             bestMove = move;
-            bestWasQuiet = isQuiet;
 
             if (value > alpha){
                 alpha = value;

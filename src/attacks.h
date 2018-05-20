@@ -18,9 +18,7 @@
 
 #pragma once
 
-#include <stdio.h>
-
-#include "types.h"
+#include <stdint.h>
 
 void initAttacks();
 

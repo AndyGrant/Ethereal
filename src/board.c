@@ -133,14 +133,14 @@ static void squareToString(int s, char *str) {
 
 void boardFromFEN(Board *board, const char *fen) {
 
-    clearBoard(board);
+    int s = 56;
+    char ch;
     char *str = strdup(fen), *strPos = NULL;
     char *token = strtok_r(str, " ", &strPos);
 
-    // Piece placement
-    char ch;
-    int s = 56;
+    clearBoard(board); // Zero out, set squares to EMPTY
 
+    // Piece placement
     while ((ch = *token++)) {
         if (isdigit(ch))
             s += ch - '0';
@@ -157,13 +157,8 @@ void boardFromFEN(Board *board, const char *fen) {
 
     // Turn of play
     token = strtok_r(NULL, " ", &strPos);
-
-    if (token[0] == 'w')
-        board->turn = WHITE;
-    else {
-        board->turn = BLACK;
-        board->hash ^= ZorbistKeys[TURN][0];
-    }
+    board->turn = token[0] == 'w' ? WHITE : BLACK;
+    if (board->turn == BLACK) board->hash ^= ZorbistKeys[TURN][0];
 
     // Castling rights
     token = strtok_r(NULL, " ", &strPos);
@@ -183,7 +178,6 @@ void boardFromFEN(Board *board, const char *fen) {
 
     // En passant
     board->epSquare = stringToSquare(strtok_r(NULL, " ", &strPos));
-
     if (board->epSquare != -1)
         board->hash ^= ZorbistKeys[ENPASS][fileOf(board->epSquare)];
 
@@ -193,6 +187,7 @@ void boardFromFEN(Board *board, const char *fen) {
     // Move count: ignore and use zero, as we count since root
     board->numMoves = 0;
 
+    // Need king attackers for move generation
     board->kingAttackers = attackersToKingSquare(board);
 
     free(str);
@@ -200,8 +195,10 @@ void boardFromFEN(Board *board, const char *fen) {
 
 void boardToFEN(Board *board, char *fen) {
 
+    char str[3];
+
     // Piece placement
-    for (int r = 7; r >= 0; r--) {
+    for (int r = RANK_NB-1; r >= 0; r--) {
         int cnt = 0;
 
         for (int f = 0; f < FILE_NB; f++) {
@@ -228,6 +225,7 @@ void boardToFEN(Board *board, char *fen) {
     *fen++ = board->turn == WHITE ? 'w' : 'b';
     *fen++ = ' ';
 
+    // Castle rights
     if (board->castleRights & WHITE_KING_RIGHTS)
         *fen++ = 'K';
     if (board->castleRights & WHITE_QUEEN_RIGHTS)
@@ -237,19 +235,22 @@ void boardToFEN(Board *board, char *fen) {
     if (board->castleRights & BLACK_QUEEN_RIGHTS)
         *fen++ = 'q';
 
-    char str[3];
+    // En passant and Fifty move
     squareToString(board->epSquare, str);
     sprintf(fen, " %s %d", str, board->fiftyMoveRule);
 }
 
-void printBoard(Board* board) {
+void printBoard(Board *board) {
 
-    static const char *separator = "  |---|---|---|---|---|---|---|---|";
+    static const char *separator = "  |---|---|---|---|---|---|---|---|\n";
+
+    char fen[256], str[3];
+    uint64_t b;
 
     for (int r = 7; r >= 0; r--) {
-        char line[] = "  | . | . | . | . | . | . | . | . |";
+        char line[] = "  | . | . | . | . | . | . | . | . |\n";
         line[0] = r + '1';
-        puts(separator);
+        printf("%s", separator);
 
         for (int f = 0; f < FILE_NB; f++) {
             const int s = square(r, f), v = board->squares[s];
@@ -258,23 +259,19 @@ void printBoard(Board* board) {
                 : s == board->epSquare ? '*' : '.';
         }
 
-        puts(line);
+        printf("%s", line);
     }
 
-    puts(separator);
-    puts("    A   B   C   D   E   F   G   H");
+    printf("%s", separator);
+    printf("    A   B   C   D   E   F   G   H\n");
 
     // Print FEN
-    char fen[256];
     boardToFEN(board, fen);
     printf("fen: %s\n", fen);
 
-    // Print checkers, if any
-    uint64_t b = board->kingAttackers;
-
-    if (b) {
+    // Print any threats to the king
+    if ((b = board->kingAttackers)){
         printf("checkers:");
-        char str[3];
 
         while (b) {
             const int s = poplsb(&b);
@@ -282,11 +279,11 @@ void printBoard(Board* board) {
             printf(" %s", str);
         }
 
-        puts("");
+        printf("\n");
     }
 }
 
-uint64_t perft(Board* board, int depth){
+uint64_t perft(Board *board, int depth){
 
     Undo undo[1];
     int size = 0;
@@ -308,7 +305,7 @@ uint64_t perft(Board* board, int depth){
     return found;
 }
 
-void runBenchmark(Thread* threads, int depth){
+void runBenchmark(Thread *threads, int depth){
 
     int i;
     double start, end;
@@ -344,6 +341,5 @@ void runBenchmark(Thread* threads, int depth){
     printf("\n------------------------\n");
     printf("Time  : %dms\n", (int)(end - start));
     printf("Nodes : %"PRIu64"\n", nodes);
-    printf("NPS   : %d\n", (int)(nodes / ((end - start ) / 1000.0)));
-    fflush(stdout);
+    printf("NPS   : %d\n", (int)(nodes / ((end - start) / 1000.0)));
 }
