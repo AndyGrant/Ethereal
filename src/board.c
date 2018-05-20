@@ -165,11 +165,20 @@ void setBoard(Board *board, const char *fen) {
             board->castleRights |= BLACK_QUEEN_RIGHTS;
     }
 
-    // Parse en passant, and 50 move counter. Ignore move counter.
+    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+
+    // En passant
     board->epSquare = stringToSquare(strtok_r(NULL, " ", &strPos));
+
+    if (board->epSquare != -1)
+        board->hash ^= ZorbistKeys[ENPASS][fileOf(board->epSquare)];
+
+    // 50 move counter
     board->fiftyMoveRule = atoi(strtok_r(NULL, " ", &strPos));
 
+    // Move count: ignore and use zero, as we count since root
     board->numMoves = 0;
+
     board->kingAttackers = attackersToKingSquare(board);
 
     free(str);
