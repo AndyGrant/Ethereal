@@ -92,7 +92,7 @@ static void clearBoard(Board *board) {
     board->epSquare = -1;
 }
 
-void setSquare(Board *board, int c, int p, int s) {
+static void setSquare(Board *board, int c, int p, int s) {
 
     assert(0 <= c && c < COLOUR_NB);
     assert(0 <= p && p < PIECE_NB);
@@ -107,6 +107,14 @@ void setSquare(Board *board, int c, int p, int s) {
 
     if (p == PAWN || p == KING)
         board->pkhash ^= PawnKingKeys[board->squares[s]][s];
+}
+
+static int stringToSquare(const char *str) {
+
+    if (str[0] == '-')
+        return -1;
+    else
+        return square(str[0] - 'a', str[1] - '1');
 }
 
 void setBoard(Board *board, const char *fen) {
@@ -144,7 +152,23 @@ void setBoard(Board *board, const char *fen) {
         board->hash ^= ZorbistKeys[TURN][0];
     }
 
-    // TODO: castling, en passant, 50 move counter
+    // Castling rights
+    token = strtok_r(NULL, " ", &strPos);
+
+    while ((ch = *token++)) {
+        if (ch =='K')
+            board->castleRights |= WHITE_KING_RIGHTS;
+        else if (ch == 'Q')
+            board->castleRights |= WHITE_QUEEN_RIGHTS;
+        else if (ch == 'k')
+            board->castleRights |= BLACK_KING_RIGHTS;
+        else if (ch == 'q')
+            board->castleRights |= BLACK_QUEEN_RIGHTS;
+    }
+
+    // Parse en passant, and 50 move counter. Ignore move counter.
+    board->epSquare = stringToSquare(strtok_r(NULL, " ", &strPos));
+    board->fiftyMoveRule = atoi(strtok_r(NULL, " ", &strPos));
 
     board->numMoves = 0;
     board->kingAttackers = attackersToKingSquare(board);
