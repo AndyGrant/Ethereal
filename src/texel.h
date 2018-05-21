@@ -1,17 +1,17 @@
 /*
   Ethereal is a UCI chess playing engine authored by Andrew Grant.
   <https://github.com/AndyGrant/Ethereal>     <andrew@grantnet.us>
-  
+
   Ethereal is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   Ethereal is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -83,7 +83,6 @@
 #define TuneThreatPawnAttackedByOne     (0 * 1)
 #define TuneThreatMinorAttackedByPawn   (0 * 1)
 #define TuneThreatMinorAttackedByMajor  (0 * 1)
-#define TuneThreatQueenAttackedByMinor  (0 * 1)
 #define TuneThreatQueenAttackedByOne    (0 * 1)
 
 // Compute Number Of Terms (NT) based on what is turned on and off
@@ -99,7 +98,7 @@
     TuneRookOnSeventh              + TuneRookMobility               + TuneQueenMobility              + \
     TuneKingDefenders              + TuneKingShelter                + TunePassedPawn                 + \
     TuneThreatPawnAttackedByOne    + TuneThreatMinorAttackedByPawn  + TuneThreatMinorAttackedByMajor + \
-    TuneThreatQueenAttackedByMinor + TuneThreatQueenAttackedByOne                                      \
+    TuneThreatQueenAttackedByOne                                                                       \
 )
 
 // Try to figure out how much we should allocate for the tuner

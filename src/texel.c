@@ -98,7 +98,6 @@ extern const int PassedPawn[2][2][RANK_NB];
 extern const int ThreatPawnAttackedByOne;
 extern const int ThreatMinorAttackedByPawn;
 extern const int ThreatMinorAttackedByMajor;
-extern const int ThreatQueenAttackedByMinor;
 extern const int ThreatQueenAttackedByOne;
 
 
@@ -471,9 +470,6 @@ void initializeCoefficients(int coeffs[NT]){
     if (TuneThreatMinorAttackedByMajor)
         coeffs[i++] = T.threatMinorAttackedByMajor[WHITE] - T.threatMinorAttackedByMajor[BLACK];
 
-    if (TuneThreatQueenAttackedByMinor)
-        coeffs[i++] = T.threatQueenAttackedByMinor[WHITE] - T.threatQueenAttackedByMinor[BLACK];
-
     if (TuneThreatQueenAttackedByOne)
         coeffs[i++] = T.threatQueenAttackedByOne[WHITE] - T.threatQueenAttackedByOne[BLACK];
 }
@@ -718,11 +714,6 @@ void initializeCurrentParameters(double cparams[NT][PHASE_NB]){
     if (TuneThreatMinorAttackedByMajor){
         cparams[i  ][MG] = ScoreMG(ThreatMinorAttackedByMajor);
         cparams[i++][EG] = ScoreEG(ThreatMinorAttackedByMajor);
-    }
-
-    if (TuneThreatQueenAttackedByMinor){
-        cparams[i  ][MG] = ScoreMG(ThreatQueenAttackedByMinor);
-        cparams[i++][EG] = ScoreEG(ThreatQueenAttackedByMinor);
     }
 
     if (TuneThreatQueenAttackedByOne){
@@ -1041,10 +1032,6 @@ void printParameters(double params[NT][PHASE_NB], double cparams[NT][PHASE_NB]){
 
     if (TuneThreatMinorAttackedByMajor){
         printf("\nconst int ThreatMinorAttackedByMajor = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
-    }
-
-    if (TuneThreatQueenAttackedByMinor){
-        printf("\nconst int ThreatQueenAttackedByMinor = S(%4d,%4d);\n", tparams[i][MG], tparams[i][EG]); i++;
     }
 
     if (TuneThreatQueenAttackedByOne){

@@ -62,7 +62,6 @@ struct EvalTrace {
     int threatPawnAttackedByOne[COLOUR_NB];
     int threatMinorAttackedByPawn[COLOUR_NB];
     int threatMinorAttackedByMajor[COLOUR_NB];
-    int threatQueenAttackedByMinor[COLOUR_NB];
     int threatQueenAttackedByOne[COLOUR_NB];
 
 };
@@ -83,7 +82,6 @@ struct EvalInfo {
     int attackCounts[COLOUR_NB];
     int attackerCounts[COLOUR_NB];
     int pkeval[COLOUR_NB];
-    int positionIsDrawn;
     PawnKingEntry* pkentry;
 
 };
