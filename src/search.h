@@ -93,11 +93,10 @@ static const int FutilityPruningDepth = 8;
 
 static const int LateMovePruningDepth = 8;
 
-static const int LateMovePruningCounts[] = {0, 4, 6, 10, 15, 23, 31, 40, 52};
-
-static const int WeakCaptureTwoAttackersDepth = 5;
-
-static const int WeakCaptureOneAttackersDepth = 3;
+static const int LateMovePruningCounts[2][9] = {
+    {  0,  4,  6, 10, 15, 23, 31, 40, 52},
+    {  0,  6, 10, 15, 23, 31, 40, 52, 64}
+};
 
 static const int SEEPruningDepth = 8;
 

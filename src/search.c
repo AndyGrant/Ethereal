@@ -545,7 +545,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             &&  best > MATED_IN_MAX
             && (hist < 4096 || !improving)
             &&  depth <= LateMovePruningDepth
-            &&  quiets > LateMovePruningCounts[depth])
+            &&  quiets > LateMovePruningCounts[improving][depth])
             break;
 
         // Step 15. Static Exchange Evaluation Pruning. Prune moves which fail
