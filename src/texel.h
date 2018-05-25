@@ -22,10 +22,10 @@
 #include "types.h"
 
 #define NTHREADS   (      4) // # of Threads to use
-#define NTERMS     (    486) // # of Terms to tune
-#define NPOSITIONS (7000000) // # of FENs in book
+#define NTERMS     (    487) // # of Terms to tune
+#define NPOSITIONS (1491000) // # of FENs in book
 
-// Each Eval Term (Total = 486)
+// Each Eval Term (Total = 487)
 #define TunePawnValue                  (1 * 1  )
 #define TuneKnightValue                (1 * 1  )
 #define TuneBishopValue                (1 * 1  )
@@ -60,6 +60,7 @@
 #define TuneThreatMinorAttackedByPawn  (1 * 1  )
 #define TuneThreatMinorAttackedByMajor (1 * 1  )
 #define TuneThreatQueenAttackedByOne   (1 * 1  )
+#define TuneThreatOverloadedPieces     (1 * 1  )
 
 // Size of each allocated chunk
 #define STACKSIZE ((int)((double) NPOSITIONS * NTERMS / 64))

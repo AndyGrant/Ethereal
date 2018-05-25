@@ -196,6 +196,8 @@ const int ThreatMinorAttackedByMajor = S( -43, -41);
 
 const int ThreatQueenAttackedByOne   = S( -84,   3);
 
+const int ThreatOverloadedPieces     = S(  -7, -19);
+
 
 // Definition of evaluation terms related to general properties
 
@@ -729,10 +731,16 @@ int evaluateThreats(EvalInfo* ei, Board* board, int colour){
     uint64_t pawns   = board->colours[colour] & board->pieces[PAWN  ];
     uint64_t knights = board->colours[colour] & board->pieces[KNIGHT];
     uint64_t bishops = board->colours[colour] & board->pieces[BISHOP];
+    uint64_t rooks   = board->colours[colour] & board->pieces[ROOK  ];
     uint64_t queens  = board->colours[colour] & board->pieces[QUEEN ];
 
     uint64_t attacksByPawns  = ei->attackedBy[!colour][PAWN  ];
     uint64_t attacksByMajors = ei->attackedBy[!colour][ROOK  ] | ei->attackedBy[!colour][QUEEN ];
+
+    // A friendly minor / major is overloaded if attacked and defended by exactly one
+    uint64_t overloaded = (knights | bishops | rooks | queens)
+                        & ei->attacked[ colour] & ~ei->attackedBy2[ colour]
+                        & ei->attacked[!colour] & ~ei->attackedBy2[!colour];
 
     // Penalty for each unsupported pawn on the board
     count = popcount(pawns & ~ei->attacked[colour] & ei->attacked[!colour]);
@@ -753,6 +761,11 @@ int evaluateThreats(EvalInfo* ei, Board* board, int colour){
     count = popcount(queens & ei->attacked[!colour]);
     eval += count * ThreatQueenAttackedByOne;
     if (TRACE) T.ThreatQueenAttackedByOne[colour] += count;
+
+    // Penalty for any overloaded minors or majors
+    count = popcount(overloaded);
+    eval += count * ThreatOverloadedPieces;
+    if (TRACE) T.ThreatOverloadedPieces[colour] += count;
 
     return eval;
 }
