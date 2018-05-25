@@ -22,52 +22,43 @@
 #include "types.h"
 
 struct EvalTrace {
-
-    int pawnCounts[COLOUR_NB];
-    int pawnPSQT[COLOUR_NB][SQUARE_NB];
-    int pawnIsolated[COLOUR_NB];
-    int pawnStacked[COLOUR_NB];
-    int pawnBackwards[COLOUR_NB][2];
-    int pawnConnected[COLOUR_NB][SQUARE_NB];
-
-    int knightCounts[COLOUR_NB];
-    int knightPSQT[COLOUR_NB][SQUARE_NB];
-    int knightRammedPawns[COLOUR_NB];
-    int knightOutpost[COLOUR_NB][2];
-    int knightMobility[COLOUR_NB][9];
-
-    int bishopCounts[COLOUR_NB];
-    int bishopPSQT[COLOUR_NB][SQUARE_NB];
-    int bishopRammedPawns[COLOUR_NB];
-    int bishopPair[COLOUR_NB];
-    int bishopOutpost[COLOUR_NB][2];
-    int bishopMobility[COLOUR_NB][14];
-
-    int rookCounts[COLOUR_NB];
-    int rookPSQT[COLOUR_NB][SQUARE_NB];
-    int rookFile[COLOUR_NB][2];
-    int rookOnSeventh[COLOUR_NB];
-    int rookMobility[COLOUR_NB][15];
-
-    int queenCounts[COLOUR_NB];
-    int queenPSQT[COLOUR_NB][SQUARE_NB];
-    int queenMobility[COLOUR_NB][28];
-
-    int kingPSQT[COLOUR_NB][SQUARE_NB];
-    int kingDefenders[COLOUR_NB][12];
-    int kingShelter[COLOUR_NB][2][FILE_NB][RANK_NB];
-
-    int passedPawn[COLOUR_NB][2][2][RANK_NB];
-
-    int threatPawnAttackedByOne[COLOUR_NB];
-    int threatMinorAttackedByPawn[COLOUR_NB];
-    int threatMinorAttackedByMajor[COLOUR_NB];
-    int threatQueenAttackedByOne[COLOUR_NB];
-
+    int PawnValue[COLOUR_NB];
+    int KnightValue[COLOUR_NB];
+    int BishopValue[COLOUR_NB];
+    int RookValue[COLOUR_NB];
+    int QueenValue[COLOUR_NB];
+    int KingValue[COLOUR_NB];
+    int PawnPSQT32[32][COLOUR_NB];
+    int KnightPSQT32[32][COLOUR_NB];
+    int BishopPSQT32[32][COLOUR_NB];
+    int RookPSQT32[32][COLOUR_NB];
+    int QueenPSQT32[32][COLOUR_NB];
+    int KingPSQT32[32][COLOUR_NB];
+    int PawnIsolated[COLOUR_NB];
+    int PawnStacked[COLOUR_NB];
+    int PawnBackwards[2][COLOUR_NB];
+    int PawnConnected32[32][COLOUR_NB];
+    int KnightRammedPawns[COLOUR_NB];
+    int KnightOutpost[2][COLOUR_NB];
+    int KnightMobility[9][COLOUR_NB];
+    int BishopPair[COLOUR_NB];
+    int BishopRammedPawns[COLOUR_NB];
+    int BishopOutpost[2][COLOUR_NB];
+    int BishopMobility[14][COLOUR_NB];
+    int RookFile[2][COLOUR_NB];
+    int RookOnSeventh[COLOUR_NB];
+    int RookMobility[15][COLOUR_NB];
+    int QueenMobility[28][COLOUR_NB];
+    int KingDefenders[12][COLOUR_NB];
+    int KingShelter[2][8][8][COLOUR_NB];
+    int PassedPawn[2][2][8][COLOUR_NB];
+    int ThreatPawnAttackedByOne[COLOUR_NB];
+    int ThreatMinorAttackedByPawn[COLOUR_NB];
+    int ThreatMinorAttackedByMajor[COLOUR_NB];
+    int ThreatQueenAttackedByOne[COLOUR_NB];
 };
 
 struct EvalInfo {
-
     uint64_t pawnAttacks[COLOUR_NB];
     uint64_t rammedPawns[COLOUR_NB];
     uint64_t blockedPawns[COLOUR_NB];
@@ -83,7 +74,6 @@ struct EvalInfo {
     int attackerCounts[COLOUR_NB];
     int pkeval[COLOUR_NB];
     PawnKingEntry* pkentry;
-
 };
 
 int evaluateBoard(Board* board, PawnKingTable* pktable);
