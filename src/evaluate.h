@@ -71,25 +71,25 @@ struct EvalInfo {
     uint64_t occupiedMinusBishops[COLOUR_NB];
     uint64_t occupiedMinusRooks[COLOUR_NB];
     uint64_t passedPawns;
-    int attackCounts[COLOUR_NB];
-    int attackerCounts[COLOUR_NB];
+    int kingAttacksCount[COLOUR_NB];
+    int kingAttackersCount[COLOUR_NB];
+    int kingAttackersWeight[COLOUR_NB];
     int pkeval[COLOUR_NB];
     PawnKingEntry* pkentry;
 };
 
-int evaluateBoard(Board* board, PawnKingTable* pktable);
-int evaluateDraws(Board* board);
-int evaluatePieces(EvalInfo* ei, Board* board);
-int evaluatePawns(EvalInfo* ei, Board* board, int colour);
-int evaluateKnights(EvalInfo* ei, Board* board, int colour);
-int evaluateBishops(EvalInfo* ei, Board* board, int colour);
-int evaluateRooks(EvalInfo* ei, Board* board, int colour);
-int evaluateQueens(EvalInfo* ei, Board* board, int colour);
-int evaluateKings(EvalInfo* ei, Board* board, int colour);
-int evaluatePassedPawns(EvalInfo* ei, Board * board, int colour);
-int evaluateThreats(EvalInfo* ei, Board* board, int colour);
-void initializeEvalInfo(EvalInfo* ei, Board * board, PawnKingTable* pktable);
-void initializeEvaluation();
+int evaluateBoard(Board *board, PawnKingTable *pktable);
+int evaluateDraws(Board *board);
+int evaluatePieces(EvalInfo *ei, Board *board);
+int evaluatePawns(EvalInfo *ei, Board *board, int colour);
+int evaluateKnights(EvalInfo *ei, Board *board, int colour);
+int evaluateBishops(EvalInfo *ei, Board *board, int colour);
+int evaluateRooks(EvalInfo *ei, Board *board, int colour);
+int evaluateQueens(EvalInfo *ei, Board *board, int colour);
+int evaluateKings(EvalInfo *ei, Board *board, int colour);
+int evaluatePassedPawns(EvalInfo *ei, Board *board, int colour);
+int evaluateThreats(EvalInfo *ei, Board *board, int colour);
+void initializeEvalInfo(EvalInfo *ei, Board *board, PawnKingTable *pktable);
 
 #define MakeScore(mg, eg) ((int)((unsigned int)(eg) << 16) + (mg))
 

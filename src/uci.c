@@ -68,9 +68,6 @@ int main(){
     initMasks();
     initializeZorbist();
 
-    // Setup any evaluation tables defined by functions
-    initializeEvaluation();
-
     // Default to 16MB TT
     initTT(megabytes);
 
