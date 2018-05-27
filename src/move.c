@@ -458,25 +458,13 @@ void revertNullMove(Board* board, Undo* undo){
     board->numMoves--;
 }
 
-void printMove(uint16_t move){
-    
-    int from, to;
-    char fromFile, toFile, fromRank, toRank;
-    
-    static char table[5] = {'p', 'n', 'b', 'r', 'q'};
-    
-    from = MoveFrom(move);
-    to = MoveTo(move);
-    
-    fromFile = '1' + (from / 8);
-    toFile = '1' + (to / 8);
-    
-    fromRank = 'a' + (from % 8);
-    toRank = 'a' + (to % 8);
-    
-    if (MoveType(move) == PROMOTION_MOVE)
-        printf("%c%c%c%c%c", fromRank, fromFile, toRank, toFile, table[MovePromoPiece(move)]);
-    
-    else
-        printf("%c%c%c%c", fromRank, fromFile, toRank, toFile);
+void moveToString(uint16_t move, char *str) {
+
+    squareToString(MoveFrom(move), &str[0]);
+    squareToString(MoveTo(move), &str[2]);
+
+    if (MoveType(move) == PROMOTION_MOVE) {
+        str[4] = PieceLabel[BLACK][MovePromoPiece(move)];
+        str[5] = '\0';
+    }
 }

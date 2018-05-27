@@ -56,7 +56,6 @@ void getInput(char* str);
 int stringEquals(char* s1, char* s2);
 int stringStartsWith(char* str, char* key);
 int stringContains(char* str, char* key);
-void moveToString(char* str, uint16_t move);
 
 void* uciGo(void* vthreadgo);
 void uciPosition(char* str, Board* board);

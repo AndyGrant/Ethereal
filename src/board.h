@@ -20,6 +20,8 @@
 
 #include "types.h"
 
+extern const char *PieceLabel[COLOUR_NB];
+
 struct Board {
     uint8_t squares[SQUARE_NB];
     uint64_t pieces[8];
@@ -48,6 +50,8 @@ struct Undo {
     int captureSquare;
     int capturePiece;
 };
+
+void squareToString(int s, char *str);
 
 void boardFromFEN(Board *board, const char *fen);
 void boardToFEN(Board *board, char *fen);

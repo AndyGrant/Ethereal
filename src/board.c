@@ -84,7 +84,7 @@ char Benchmarks[NUM_BENCHMARKS][256] = {
     "r2r1n2/pp2bk2/2p1p2p/3q4/3PN1QP/2P3R1/P4PP1/5RK1 w - - 0 1",
 };
 
-static const char *PieceLabel[COLOUR_NB] = {"PNBRQK", "pnbrqk"};
+const char *PieceLabel[COLOUR_NB] = {"PNBRQK", "pnbrqk"};
 
 static void clearBoard(Board *board) {
     memset(board, 0, sizeof(*board));
@@ -117,7 +117,7 @@ static int stringToSquare(const char *str) {
         return square(str[1] - '1', str[0] - 'a');
 }
 
-static void squareToString(int s, char *str) {
+void squareToString(int s, char *str) {
 
     assert(-1 <= s && s < SQUARE_NB);
 
