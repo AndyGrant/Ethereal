@@ -38,7 +38,7 @@
 #include "types.h"
 #include "move.h"
 #include "movegen.h"
-#include "zorbist.h"
+#include "zobrist.h"
 
 #define NUM_BENCHMARKS (36)
 
@@ -102,7 +102,7 @@ static void setSquare(Board *board, int c, int p, int s) {
     setBit(&board->colours[c], s);
     setBit(&board->pieces[p], s);
 
-    board->hash ^= ZorbistKeys[board->squares[s]][s];
+    board->hash ^= ZobristKeys[board->squares[s]][s];
     board->psqtmat += PSQT[board->squares[s]][s];
 
     if (p == PAWN || p == KING)
@@ -158,7 +158,7 @@ void boardFromFEN(Board *board, const char *fen) {
     // Turn of play
     token = strtok_r(NULL, " ", &strPos);
     board->turn = token[0] == 'w' ? WHITE : BLACK;
-    if (board->turn == BLACK) board->hash ^= ZorbistKeys[TURN][0];
+    if (board->turn == BLACK) board->hash ^= ZobristKeys[TURN][0];
 
     // Castling rights
     token = strtok_r(NULL, " ", &strPos);
@@ -174,12 +174,12 @@ void boardFromFEN(Board *board, const char *fen) {
             board->castleRights |= BLACK_QUEEN_RIGHTS;
     }
 
-    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    board->hash ^= ZobristKeys[CASTLE][board->castleRights];
 
     // En passant
     board->epSquare = stringToSquare(strtok_r(NULL, " ", &strPos));
     if (board->epSquare != -1)
-        board->hash ^= ZorbistKeys[ENPASS][fileOf(board->epSquare)];
+        board->hash ^= ZobristKeys[ENPASS][fileOf(board->epSquare)];
 
     // 50 move counter
     board->fiftyMoveRule = atoi(strtok_r(NULL, " ", &strPos));

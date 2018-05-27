@@ -25,58 +25,58 @@
 #include "castle.h"
 #include "piece.h"
 #include "types.h"
-#include "zorbist.h"
+#include "zobrist.h"
 
-uint64_t ZorbistKeys[32][SQUARE_NB];
+uint64_t ZobristKeys[32][SQUARE_NB];
 uint64_t PawnKingKeys[32][SQUARE_NB];
 
 void initializeZorbist(){
     
     int p, s;
     
-    // Fill ZorbistKeys for each piece type and square
+    // Fill ZobristKeys for each piece type and square
     for (p = 0; p <= 5; p++){
         for(s = 0; s < SQUARE_NB; s++){
-            ZorbistKeys[(p*4) + 0][s] = rand64();
-            ZorbistKeys[(p*4) + 1][s] = rand64();
+            ZobristKeys[(p*4) + 0][s] = rand64();
+            ZobristKeys[(p*4) + 1][s] = rand64();
         }
     }
     
-    // Fill ZorbistKeys for the file of the enpass square
+    // Fill ZobristKeys for the file of the enpass square
     for (p = 0; p < 8; p++)
-        ZorbistKeys[ENPASS][p] = rand64();
+        ZobristKeys[ENPASS][p] = rand64();
     
-    // Fill ZorbistKeys for the state of the castle rights
-    ZorbistKeys[CASTLE][WHITE_KING_RIGHTS ] = rand64();
-    ZorbistKeys[CASTLE][WHITE_QUEEN_RIGHTS] = rand64();
-    ZorbistKeys[CASTLE][BLACK_KING_RIGHTS ] = rand64();
-    ZorbistKeys[CASTLE][BLACK_QUEEN_RIGHTS] = rand64();
+    // Fill ZobristKeys for the state of the castle rights
+    ZobristKeys[CASTLE][WHITE_KING_RIGHTS ] = rand64();
+    ZobristKeys[CASTLE][WHITE_QUEEN_RIGHTS] = rand64();
+    ZobristKeys[CASTLE][BLACK_KING_RIGHTS ] = rand64();
+    ZobristKeys[CASTLE][BLACK_QUEEN_RIGHTS] = rand64();
     
     // Set each location as a combination of the four we just defined
     for (p = 0; p < 16; p++){
         
         if (p & WHITE_KING_RIGHTS)
-            ZorbistKeys[CASTLE][p] ^= ZorbistKeys[CASTLE][WHITE_KING_RIGHTS];
+            ZobristKeys[CASTLE][p] ^= ZobristKeys[CASTLE][WHITE_KING_RIGHTS];
         
         if (p & WHITE_QUEEN_RIGHTS)
-            ZorbistKeys[CASTLE][p] ^= ZorbistKeys[CASTLE][WHITE_QUEEN_RIGHTS];
+            ZobristKeys[CASTLE][p] ^= ZobristKeys[CASTLE][WHITE_QUEEN_RIGHTS];
         
         if (p & BLACK_KING_RIGHTS)
-            ZorbistKeys[CASTLE][p] ^= ZorbistKeys[CASTLE][BLACK_KING_RIGHTS];
+            ZobristKeys[CASTLE][p] ^= ZobristKeys[CASTLE][BLACK_KING_RIGHTS];
         
         if (p & BLACK_QUEEN_RIGHTS)
-            ZorbistKeys[CASTLE][p] ^= ZorbistKeys[CASTLE][BLACK_QUEEN_RIGHTS];
+            ZobristKeys[CASTLE][p] ^= ZobristKeys[CASTLE][BLACK_QUEEN_RIGHTS];
     }
     
     // Fill in the key for side to move
-    ZorbistKeys[TURN][0] = rand64();
+    ZobristKeys[TURN][0] = rand64();
     
     // Fill PawnKingKeys for each Pawn And King colour and square
     for (s = 0; s < SQUARE_NB; s++){
-        PawnKingKeys[WHITE_PAWN][s] = ZorbistKeys[WHITE_PAWN][s];
-        PawnKingKeys[BLACK_PAWN][s] = ZorbistKeys[BLACK_PAWN][s];
-        PawnKingKeys[WHITE_KING][s] = ZorbistKeys[WHITE_KING][s];
-        PawnKingKeys[BLACK_KING][s] = ZorbistKeys[BLACK_KING][s];
+        PawnKingKeys[WHITE_PAWN][s] = ZobristKeys[WHITE_PAWN][s];
+        PawnKingKeys[BLACK_PAWN][s] = ZobristKeys[BLACK_PAWN][s];
+        PawnKingKeys[WHITE_KING][s] = ZobristKeys[WHITE_KING][s];
+        PawnKingKeys[BLACK_KING][s] = ZobristKeys[BLACK_KING][s];
     }
 }
 

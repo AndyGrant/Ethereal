@@ -30,7 +30,7 @@
 #include "movegen.h"
 #include "piece.h"
 #include "psqt.h"
-#include "zorbist.h"
+#include "zobrist.h"
 
 void applyMove(Board* board, uint16_t move, Undo* undo){
     
@@ -54,7 +54,7 @@ void applyMove(Board* board, uint16_t move, Undo* undo){
     board->history[board->numMoves++] = board->hash;
     
     // Update the key to include the turn change
-    board->hash ^= ZorbistKeys[TURN][0];
+    board->hash ^= ZobristKeys[TURN][0];
     
     // Always increment the fifty counter
     // We will reset later if needed
@@ -104,10 +104,10 @@ void applyNormalMove(Board* board, uint16_t move, Undo* undo){
     board->squares[from] = EMPTY;
     
     // Bitwise-and out the castle changes for the hash
-    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    board->hash ^= ZobristKeys[CASTLE][board->castleRights];
     board->castleRights &= CastleMask[from];
     board->castleRights &= CastleMask[to];
-    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    board->hash ^= ZobristKeys[CASTLE][board->castleRights];
     
     // Swap the turn
     board->turn = !board->turn;
@@ -117,20 +117,20 @@ void applyNormalMove(Board* board, uint16_t move, Undo* undo){
                    -  PSQT[fromPiece][from]
                    -  PSQT[toPiece][to];
                     
-    // Update the main zorbist hash
-    board->hash   ^= ZorbistKeys[fromPiece][from]
-                  ^  ZorbistKeys[fromPiece][to]
-                  ^  ZorbistKeys[toPiece][to];
+    // Update the main zobrist hash
+    board->hash   ^= ZobristKeys[fromPiece][from]
+                  ^  ZobristKeys[fromPiece][to]
+                  ^  ZobristKeys[toPiece][to];
                 
-    // Update the pawn zorbist hash
+    // Update the pawn zobrist hash
     board->pkhash ^= PawnKingKeys[fromPiece][from]
                   ^  PawnKingKeys[fromPiece][to]
                   ^  PawnKingKeys[toPiece][to];
                 
     // If there was a possible enpass move, we must
-    // xor the main zorbist key for it before moving on
+    // xor the main zobrist key for it before moving on
     if (board->epSquare != -1)
-        board->hash ^= ZorbistKeys[ENPASS][fileOf(board->epSquare)];
+        board->hash ^= ZobristKeys[ENPASS][fileOf(board->epSquare)];
     
     // Zero out the enpass square for now
     board->epSquare = -1;
@@ -146,7 +146,7 @@ void applyNormalMove(Board* board, uint16_t move, Undo* undo){
         
         if (enemyPawns){
             board->epSquare = from + ((to-from) >> 1);
-            board->hash ^= ZorbistKeys[ENPASS][fileOf(from)];
+            board->hash ^= ZobristKeys[ENPASS][fileOf(from)];
         } 
     }
 }
@@ -184,9 +184,9 @@ void applyCastleMove(Board* board, uint16_t move, Undo* undo){
     board->squares[rFrom] = EMPTY;
     
     // Bitwise-and out the castle changes
-    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    board->hash ^= ZobristKeys[CASTLE][board->castleRights];
     board->castleRights &= CastleMask[from];
-    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    board->hash ^= ZobristKeys[CASTLE][board->castleRights];
     
     // Swap the turn
     board->turn = !board->turn;
@@ -197,20 +197,20 @@ void applyCastleMove(Board* board, uint16_t move, Undo* undo){
                     + PSQT[rFromPiece][rTo]
                     - PSQT[rFromPiece][rFrom];
     
-    // Update the main zorbist hash
-    board->hash   ^= ZorbistKeys[fromPiece][from]
-                  ^  ZorbistKeys[fromPiece][to]
-                  ^  ZorbistKeys[rFromPiece][rFrom]
-                  ^  ZorbistKeys[rFromPiece][rTo];
+    // Update the main zobrist hash
+    board->hash   ^= ZobristKeys[fromPiece][from]
+                  ^  ZobristKeys[fromPiece][to]
+                  ^  ZobristKeys[rFromPiece][rFrom]
+                  ^  ZobristKeys[rFromPiece][rTo];
                 
     // Update PawnKing hash for the King movement
     board->pkhash ^= PawnKingKeys[fromPiece][from]
                   ^  PawnKingKeys[fromPiece][to];
     
     // If there was a possible enpass move, we must
-    // xor the main zorbist key for it before moving on
+    // xor the main zobrist key for it before moving on
     if (board->epSquare != -1){
-        board->hash ^= ZorbistKeys[ENPASS][fileOf(board->epSquare)];
+        board->hash ^= ZobristKeys[ENPASS][fileOf(board->epSquare)];
         board->epSquare = -1;
     }
     
@@ -258,13 +258,13 @@ void applyEnpassMove(Board* board, uint16_t move, Undo* undo){
                     - PSQT[fromPiece][from]
                     - PSQT[enpassPiece][ep];
     
-    // Update the main zorbist key
-    board->hash   ^= ZorbistKeys[fromPiece][from]
-                  ^  ZorbistKeys[fromPiece][to]
-                  ^  ZorbistKeys[enpassPiece][ep]
-                  ^  ZorbistKeys[ENPASS][fileOf(ep)];
+    // Update the main zobrist key
+    board->hash   ^= ZobristKeys[fromPiece][from]
+                  ^  ZobristKeys[fromPiece][to]
+                  ^  ZobristKeys[enpassPiece][ep]
+                  ^  ZobristKeys[ENPASS][fileOf(ep)];
                 
-    // Update the PawnKing zorbist key
+    // Update the PawnKing zobrist key
     board->pkhash ^= PawnKingKeys[fromPiece][from]
                   ^  PawnKingKeys[fromPiece][to]
                   ^  PawnKingKeys[enpassPiece][ep];
@@ -309,9 +309,9 @@ void applyPromotionMove(Board* board, uint16_t move, Undo* undo){
     board->squares[from] = EMPTY;
     
     // Bitwise-and out the castle changes
-    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    board->hash ^= ZobristKeys[CASTLE][board->castleRights];
     board->castleRights &= CastleMask[to];
-    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    board->hash ^= ZobristKeys[CASTLE][board->castleRights];
     
     // Swap the turn
     board->turn = !board->turn;
@@ -321,18 +321,18 @@ void applyPromotionMove(Board* board, uint16_t move, Undo* undo){
                     - PSQT[fromPiece][from] 
                     - PSQT[toPiece][to];
     
-    // Update the main zorbist hash
-    board->hash   ^= ZorbistKeys[fromPiece][from]
-                  ^  ZorbistKeys[promoPiece][to]
-                  ^  ZorbistKeys[toPiece][to];
+    // Update the main zobrist hash
+    board->hash   ^= ZobristKeys[fromPiece][from]
+                  ^  ZobristKeys[promoPiece][to]
+                  ^  ZobristKeys[toPiece][to];
                 
-    // Update the PawnKing zorbist hash
+    // Update the PawnKing zobrist hash
     board->pkhash ^= PawnKingKeys[fromPiece][from];
     
     // If there was a possible enpass move, we must
-    // xor the main zorbist key for it before moving on
+    // xor the main zobrist key for it before moving on
     if (board->epSquare != -1){
-        board->hash ^= ZorbistKeys[ENPASS][fileOf(board->epSquare)];
+        board->hash ^= ZobristKeys[ENPASS][fileOf(board->epSquare)];
         board->epSquare = -1;
     }
 }
@@ -350,11 +350,11 @@ void applyNullMove(Board* board, Undo* undo){
     board->history[board->numMoves++] = NULL_MOVE;
     
     // Update the key to include the turn change
-    board->hash ^= ZorbistKeys[TURN][0];
+    board->hash ^= ZobristKeys[TURN][0];
     
     // Must empty the enpass square and update hash
     if (board->epSquare != -1){
-        board->hash ^= ZorbistKeys[ENPASS][fileOf(board->epSquare)];
+        board->hash ^= ZobristKeys[ENPASS][fileOf(board->epSquare)];
         board->epSquare = -1;
     }
 }
