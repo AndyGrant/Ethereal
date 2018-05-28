@@ -85,27 +85,43 @@ static const char *Benchmarks[] = {
     ""
 };
 
-static void clearBoard(Board *board) {
+void clearBoard(Board *board) {
     memset(board, 0, sizeof(*board));
     memset(&board->squares, EMPTY, sizeof(board->squares));
     board->epSquare = -1;
 }
 
-static void setSquare(Board *board, int c, int p, int s) {
+void clearSquare(Board *board, int s) {
+
+    const int c = PieceColour(board->squares[s]);
+    const int p = PieceType(board->squares[s]);
 
     assert(0 <= c && c < COLOUR_NB);
     assert(0 <= p && p < PIECE_NB);
     assert(0 <= s && s < SQUARE_NB);
 
-    board->squares[s] = MakePiece(p, c);
+    clearBit(&board->colours[c], s);
+    clearBit(&board->pieces[p], s);
+
+    board->hash ^= ZorbistKeys[board->squares[s]][s];
+    board->pkhash ^= PawnKingKeys[board->squares[s]][s];
+    board->psqtmat -= PSQT[board->squares[s]][s];
+    board->squares[s] = EMPTY;
+}
+
+void setSquare(Board *board, int c, int p, int s) {
+
+    assert(0 <= c && c < COLOUR_NB);
+    assert(0 <= p && p < PIECE_NB);
+    assert(0 <= s && s < SQUARE_NB);
+
     setBit(&board->colours[c], s);
     setBit(&board->pieces[p], s);
 
+    board->squares[s] = MakePiece(p, c);
     board->hash ^= ZorbistKeys[board->squares[s]][s];
+    board->pkhash ^= PawnKingKeys[board->squares[s]][s];
     board->psqtmat += PSQT[board->squares[s]][s];
-
-    if (p == PAWN || p == KING)
-        board->pkhash ^= PawnKingKeys[board->squares[s]][s];
 }
 
 static int stringToSquare(const char *str) {

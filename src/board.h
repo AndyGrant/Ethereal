@@ -40,18 +40,20 @@ struct Board {
 
 struct Undo {
     uint64_t hash;
-    uint64_t pkhash;
     uint64_t kingAttackers;
     int turn;
     int castleRights;
     int epSquare;
     int fiftyMoveRule;
-    int psqtmat;
     int captureSquare;
     int capturePiece;
 };
 
 void squareToString(int s, char *str);
+
+void clearBoard(Board *board);
+void clearSquare(Board *board, int s);
+void setSquare(Board *board, int c, int p, int s);
 
 void boardFromFEN(Board *board, const char *fen);
 void boardToFEN(Board *board, char *fen);
