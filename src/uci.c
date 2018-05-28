@@ -194,7 +194,6 @@ void* uciGo(void* vthreadsgo){
 
     Limits limits; limits.start = start;
 
-    char move[6];
     int depth = -1, infinite = -1;
     double wtime = -1, btime = -1, mtg = -1, movetime = -1;
     double winc = 0, binc = 0;
@@ -243,8 +242,9 @@ void* uciGo(void* vthreadsgo){
     limits.inc  = (board->turn == WHITE) ?  winc :  binc;
 
     // Execute the search and report the best move
-    moveToString(move, getBestMove(threads, board, &limits));
-    printf("bestmove %s\n", move);
+    char moveStr[6];
+    moveToString(getBestMove(threads, board, &limits), moveStr);
+    printf("bestmove %s\n", moveStr);
     fflush(stdout);
 
     // Drop the ready lock, as we are prepared to handle a new search
@@ -289,7 +289,7 @@ void uciPosition(char* str, Board* board){
 
         // Find and apply the correct move
         for (size -= 1; size >= 0; size--){
-            moveToString(test, moves[size]);
+            moveToString(moves[size], test);
             if (stringEquals(move, test)){
                 applyMove(board, moves[size], undo);
                 break;
@@ -336,11 +336,12 @@ void uciReport(Thread* threads, int alpha, int beta, int value){
 
     // Iterate over the PV and print each move
     for (int i = 0; i < pv->length; i++){
-        printMove(pv->line[i]);
-        printf(" ");
+        char moveStr[6];
+        moveToString(pv->line[i], moveStr);
+        printf("%s ", moveStr);
     }
 
-    printf("\n");
+    puts("");
     fflush(stdout);
 }
 
@@ -355,8 +356,9 @@ void uciReportTBRoot(uint16_t move, unsigned wdl, unsigned dtz){
            "nodes 0 tbhits 1 nps 0 hashfull %d pv ",
            MAX_PLY - 1, MAX_PLY - 1, score, hashfull);
 
-    printMove(move);
-    printf(" \n");
+    char moveStr[6];
+    moveToString(move, moveStr);
+    puts(moveStr);
     fflush(stdout);
 }
 
@@ -384,16 +386,4 @@ void getInput(char* str){
 
     ptr = strchr(str, '\r');
     if (ptr != NULL) *ptr = '\0';
-}
-
-void moveToString(char* str, uint16_t move){
-
-    static char table[5] = {'p', 'n', 'b', 'r', 'q'};
-
-    str[0] = 'a' + (MoveFrom(move) % 8);
-    str[1] = '1' + (MoveFrom(move) / 8);
-    str[2] = 'a' + (  MoveTo(move) % 8);
-    str[3] = '1' + (  MoveTo(move) / 8);
-    str[4] = MoveType(move) == PROMOTION_MOVE ? table[MovePromoPiece(move)] : '\0';
-    str[5] = '\0';
 }

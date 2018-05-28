@@ -51,7 +51,7 @@ void applyNullMove(Board* board, Undo* undo);
 void revertMove(Board* board, uint16_t move, Undo* undo);
 void revertNullMove(Board* board, Undo* undo);
 
-void printMove(uint16_t move);
+void moveToString(uint16_t move, char *str);
 
 #define MoveFrom(move)         (((move) >> 0) & 63)
 #define MoveTo(move)           (((move) >> 6) & 63)

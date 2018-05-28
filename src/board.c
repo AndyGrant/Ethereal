@@ -40,12 +40,12 @@
 #include "movegen.h"
 #include "zorbist.h"
 
-#define NUM_BENCHMARKS (36)
+const char *PieceLabel[COLOUR_NB] = {"PNBRQK", "pnbrqk"};
 
 // Benchmark positions are taken from stockfish/benchmark.cpp. FRC,
 // and positions including moves after the FEN have been removed, as
 // well as the positions containing stalemate and checkmated boards.
-char Benchmarks[NUM_BENCHMARKS][256] = {
+static const char *Benchmarks[] = {
     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 10",
     "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 11",
@@ -82,9 +82,8 @@ char Benchmarks[NUM_BENCHMARKS][256] = {
     "8/R7/2q5/8/6k1/8/1P5p/K6R w - - 0 124",
     "6k1/3b3r/1p1p4/p1n2p2/1PPNpP1q/P3Q1p1/1R1RB1P1/5K2 b - - 0 1",
     "r2r1n2/pp2bk2/2p1p2p/3q4/3PN1QP/2P3R1/P4PP1/5RK1 w - - 0 1",
+    ""
 };
-
-static const char *PieceLabel[COLOUR_NB] = {"PNBRQK", "pnbrqk"};
 
 static void clearBoard(Board *board) {
     memset(board, 0, sizeof(*board));
@@ -117,7 +116,7 @@ static int stringToSquare(const char *str) {
         return square(str[1] - '1', str[0] - 'a');
 }
 
-static void squareToString(int s, char *str) {
+void squareToString(int s, char *str) {
 
     assert(-1 <= s && s < SQUARE_NB);
 
@@ -305,9 +304,8 @@ uint64_t perft(Board *board, int depth){
     return found;
 }
 
-void runBenchmark(Thread *threads, int depth){
+void runBenchmark(Thread *threads, int depth) {
 
-    int i;
     double start, end;
     Board board;
     Limits limits;
@@ -325,8 +323,8 @@ void runBenchmark(Thread *threads, int depth){
     start = getRealTime();
 
     // Search each benchmark position
-    for (i = 0; i < NUM_BENCHMARKS; i++){
-        printf("\nPosition [%2d|%2d]\n", i + 1, NUM_BENCHMARKS);
+    for (int i = 0; strcmp(Benchmarks[i], ""); i++) {
+        printf("\nPosition #%d: %s\n", i + 1, Benchmarks[i]);
         boardFromFEN(&board, Benchmarks[i]);
 
         limits.start = getRealTime();
