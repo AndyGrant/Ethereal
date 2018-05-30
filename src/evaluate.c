@@ -150,15 +150,16 @@ const int KingShelter[2][FILE_NB][RANK_NB] = {
    {S(   0,   0), S(   8, -28), S(   9, -16), S( -22,   0), S( -27,  -3), S(   7, -17), S(-240, -74), S( -44,  16)}},
 };
 
-const int KingAttackWeight[]      = { 0, 12, 6, 8, 8, 0 };
-
-const int KingSafetyAttackValue   =   42;
-
-const int KingSafetyWeakSquares   =   40;
-
-const int KingSafetyFriendlyPawns =  -24;
-
-const int KingSafetyNoEnemyQueens = -256;
+const int KSAttackWeight[]  = { 0, 16, 6, 10, 8, 0 };
+const int KSAttackValue     =   44;
+const int KSWeakSquares     =   38;
+const int KSFriendlyPawns   =  -22;
+const int KSNoEnemyQueens   = -256;
+const int KSSafeQueenCheck  =   86;
+const int KSSafeRookCheck   =   86;
+const int KSSafeBishopCheck =   46;
+const int KSSafeKnightCheck =  119;
+const int KSAdjustment      =  -36;
 
 const int PassedPawn[2][2][RANK_NB] = {
   {{S(   0,   0), S( -31, -27), S( -25,   7), S( -16,  -3), S(  20,   0), S(  59,  -4), S( 147,  33), S(   0,   0)},
@@ -409,7 +410,7 @@ int evaluateKnights(EvalInfo* ei, Board* board, int colour){
         if (attacks != 0ull){
             ei->kingAttacksCount[colour] += popcount(attacks);
             ei->kingAttackersCount[colour] += 1;
-            ei->kingAttackersWeight[colour] += KingAttackWeight[KNIGHT];
+            ei->kingAttackersWeight[colour] += KSAttackWeight[KNIGHT];
         }
     }
 
@@ -472,7 +473,7 @@ int evaluateBishops(EvalInfo* ei, Board* board, int colour){
         if (attacks != 0ull){
             ei->kingAttacksCount[colour] += popcount(attacks);
             ei->kingAttackersCount[colour] += 1;
-            ei->kingAttackersWeight[colour] += KingAttackWeight[BISHOP];
+            ei->kingAttackersWeight[colour] += KSAttackWeight[BISHOP];
         }
     }
 
@@ -533,7 +534,7 @@ int evaluateRooks(EvalInfo* ei, Board* board, int colour){
         if (attacks != 0ull){
             ei->kingAttacksCount[colour] += popcount(attacks);
             ei->kingAttackersCount[colour] += 1;
-            ei->kingAttackersWeight[colour] += KingAttackWeight[ROOK];
+            ei->kingAttackersWeight[colour] += KSAttackWeight[ROOK];
         }
     }
 
@@ -575,7 +576,7 @@ int evaluateQueens(EvalInfo* ei, Board* board, int colour){
         if (attacks != 0ull){
             ei->kingAttacksCount[colour] += popcount(attacks);
             ei->kingAttackersCount[colour] += 1;
-            ei->kingAttackersWeight[colour] += KingAttackWeight[QUEEN];
+            ei->kingAttackersWeight[colour] += KSAttackWeight[QUEEN];
         }
     }
 
@@ -584,51 +585,76 @@ int evaluateQueens(EvalInfo* ei, Board* board, int colour){
 
 int evaluateKings(EvalInfo* ei, Board* board, int colour){
 
+    const int US = colour, THEM = !colour;
+
     int count, eval = 0, pkeval = 0;
 
-    uint64_t myPawns     = board->pieces[PAWN ] & board->colours[ colour];
-    uint64_t enemyQueens = board->pieces[QUEEN] & board->colours[!colour];
-    uint64_t myKings     = board->pieces[KING ] & board->colours[ colour];
+    uint64_t myPawns     = board->pieces[PAWN ] & board->colours[  US];
+    uint64_t enemyQueens = board->pieces[QUEEN] & board->colours[THEM];
+    uint64_t myKings     = board->pieces[KING ] & board->colours[  US];
 
-    uint64_t myDefenders  = (board->pieces[PAWN  ] & board->colours[colour])
-                          | (board->pieces[KNIGHT] & board->colours[colour])
-                          | (board->pieces[BISHOP] & board->colours[colour]);
+    uint64_t myDefenders  = (board->pieces[PAWN  ] & board->colours[US])
+                          | (board->pieces[KNIGHT] & board->colours[US])
+                          | (board->pieces[BISHOP] & board->colours[US]);
 
     int kingSq = getlsb(myKings);
     int kingFile = fileOf(kingSq);
     int kingRank = rankOf(kingSq);
 
-    if (TRACE) T.KingValue[colour]++;
-    if (TRACE) T.KingPSQT32[relativeSquare32(kingSq, colour)][colour]++;
+    if (TRACE) T.KingValue[US]++;
+    if (TRACE) T.KingPSQT32[relativeSquare32(kingSq, US)][US]++;
 
     // Bonus for our pawns and minors sitting within our king area
-    count = popcount(myDefenders & ei->kingAreas[colour]);
+    count = popcount(myDefenders & ei->kingAreas[US]);
     eval += KingDefenders[count];
-    if (TRACE) T.KingDefenders[count][colour]++;
+    if (TRACE) T.KingDefenders[count][US]++;
 
     // Perform King Safety when we have two attackers, or
     // one attacker with a potential for a Queen attacker
-    if (ei->kingAttackersCount[!colour] > 1 - popcount(enemyQueens)){
+    if (ei->kingAttackersCount[THEM] > 1 - popcount(enemyQueens)){
 
         // Weak squares are attacked by the enemy, defended no more
         // than once and only defended by our Queens or our King
-        uint64_t weak =   ei->attacked[!colour]
-                      &  ~ei->attackedBy2[colour]
-                      & (~ei->attacked[colour] | ei->attackedBy[colour][QUEEN] | ei->attackedBy[colour][KING]);
+        uint64_t weak =   ei->attacked[THEM]
+                      &  ~ei->attackedBy2[US]
+                      & (~ei->attacked[US] | ei->attackedBy[US][QUEEN] | ei->attackedBy[US][KING]);
 
         // Usually the King Area is 9 squares. Scale are attack counts to account for
         // when the king is in an open area and expects more attacks, or the opposite
-        float scaledAttackCounts = 9.0 * ei->kingAttacksCount[!colour] / popcount(ei->kingAreas[colour]);
+        float scaledAttackCounts = 9.0 * ei->kingAttacksCount[THEM] / popcount(ei->kingAreas[US]);
 
-        count  = ei->kingAttackersCount[!colour] * ei->kingAttackersWeight[!colour];
+        // Safe target squares are defended or are weak and attacked by two.
+        // We exclude squares containing pieces which we cannot caputre
+        uint64_t safe =  ~board->colours[THEM]
+                      & (~ei->attacked[US] | (weak & ei->attackedBy2[THEM]));
 
-        count += KingSafetyAttackValue * scaledAttackCounts;
+        // Find square and piece combinations which would check our King
+        uint64_t occupied      = board->colours[WHITE] | board->colours[BLACK];
+        uint64_t knightThreats = knightAttacks(kingSq);
+        uint64_t bishopThreats = bishopAttacks(kingSq, occupied);
+        uint64_t rookThreats   = rookAttacks(kingSq, occupied);
+        uint64_t queenThreats  = bishopThreats | rookThreats;
 
-        count += KingSafetyWeakSquares * popcount(weak & ei->kingAreas[colour]);
+        // Identify if pieces can move to those checking squares safely.
+        // We check if our Queen can attack the square for safe Queen checks.
+        // No attacks of other pieces is implicit in our definition of weak.
+        uint64_t knightChecks = knightThreats & safe &  ei->attackedBy[THEM][KNIGHT];
+        uint64_t bishopChecks = bishopThreats & safe &  ei->attackedBy[THEM][BISHOP];
+        uint64_t rookChecks   = rookThreats   & safe &  ei->attackedBy[THEM][ROOK  ];
+        uint64_t queenChecks  = queenThreats  & safe &  ei->attackedBy[THEM][QUEEN ]
+                                                     & ~ei->attackedBy[  US][QUEEN ];
 
-        count += KingSafetyFriendlyPawns * popcount(myPawns & ei->kingAreas[colour]);
+        count  = ei->kingAttackersCount[THEM] * ei->kingAttackersWeight[THEM];
 
-        count += KingSafetyNoEnemyQueens * !enemyQueens;
+        count += KSAttackValue     * scaledAttackCounts
+               + KSWeakSquares     * popcount(weak & ei->kingAreas[US])
+               + KSFriendlyPawns   * popcount(myPawns & ei->kingAreas[US])
+               + KSNoEnemyQueens   * !enemyQueens
+               + KSSafeQueenCheck  * !!queenChecks
+               + KSSafeRookCheck   * !!rookChecks
+               + KSSafeBishopCheck * !!bishopChecks
+               + KSSafeKnightCheck * !!knightChecks
+               + KSAdjustment;
 
         // Convert safety to an MG and EG score, if we are unsafe
         if (count > 0) eval -= MakeScore(count * count / 800, count / 20);
@@ -644,17 +670,17 @@ int evaluateKings(EvalInfo* ei, Board* board, int colour){
     // configurations which have no such pawn. 7 is not a legal distance normally.
     for (int file = MAX(0, kingFile - 1); file <= MIN(FILE_NB - 1, kingFile + 1); file++){
 
-        uint64_t filePawns = myPawns & Files[file] & ranksAtOrAboveMasks(colour, kingRank);
+        uint64_t filePawns = myPawns & Files[file] & ranksAtOrAboveMasks(US, kingRank);
 
-        int distance = !filePawns ? 7
-                     :  colour == WHITE ? rankOf(getlsb(filePawns)) - kingRank
-                                        : kingRank - rankOf(getmsb(filePawns));
+        int distance = !filePawns   ? 7
+                     :  US == WHITE ? rankOf(getlsb(filePawns)) - kingRank
+                                    : kingRank - rankOf(getmsb(filePawns));
 
         pkeval += KingShelter[file == kingFile][file][distance];
-        if (TRACE) T.KingShelter[file == kingFile][file][distance][colour]++;
+        if (TRACE) T.KingShelter[file == kingFile][file][distance][US]++;
     }
 
-    ei->pkeval[colour] += pkeval;
+    ei->pkeval[US] += pkeval;
 
     return eval + pkeval;
 }
