@@ -35,25 +35,25 @@
 static void applyNormalMove(Board* board, uint16_t move, Undo* undo) {
 
     const int from = MoveFrom(move), to = MoveTo(move);
-    const int toPiece = board->squares[to];
-    const int fromType = PieceType(board->squares[from]);
-
-    // Pawn moves and captures reset the 50 move counter
+    const int fromPiece = board->squares[from], toPiece = board->squares[to];
+    const int fromType = PieceType(fromPiece), toType = PieceType(toPiece);
+    
+    // Pawn moves and captures reset the fifty move rule
     if (fromType == PAWN || toPiece != EMPTY)
         board->fiftyMoveRule = 0;
 
-    // Lift piece on 'from' square
-    clearSquare(board, from);
+    // Update the colour bitboards
+    board->colours[board->turn] ^= (1ull << from) | (1ull << to);
+    board->colours[PieceColour(toPiece)] ^= 1ull << to;
 
-    // Remove captured piece on 'to' square (if any)
-    if (toPiece != EMPTY)
-        clearSquare(board, to);
+    // Update the piece bitboards
+    board->pieces[toType] ^= 1ull << to;
+    board->pieces[fromType] ^= (1ull << from) | (1ull << to);
 
-    // Drop piece on 'to' square
-    setSquare(board, board->turn, fromType, to);
-
-    // Save the captured piece for undo
+    // Save the captured piece and update the board array
     undo->capturePiece = toPiece;
+    board->squares[to] = fromPiece;
+    board->squares[from] = EMPTY;
 
     // Bitwise-and out the castle changes for the hash
     board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
@@ -63,6 +63,21 @@ static void applyNormalMove(Board* board, uint16_t move, Undo* undo) {
 
     // Swap the turn
     board->turn ^= BLACK;
+
+    // Update the PSQT and Material values
+    board->psqtmat += PSQT[fromPiece][to]
+                   -  PSQT[fromPiece][from]
+                   -  PSQT[toPiece][to];
+
+    // Update the main zorbist hash
+    board->hash   ^= ZorbistKeys[fromPiece][from]
+                  ^  ZorbistKeys[fromPiece][to]
+                  ^  ZorbistKeys[toPiece][to];
+
+    // Update the pawn zorbist hash
+    board->pkhash ^= PawnKingKeys[fromPiece][from]
+                  ^  PawnKingKeys[fromPiece][to]
+                  ^  PawnKingKeys[toPiece][to];
 
     // If there was a possible enpass move, we must
     // xor the main zorbist key for it before moving on
@@ -74,20 +89,20 @@ static void applyNormalMove(Board* board, uint16_t move, Undo* undo) {
 
     // Check to see if this move creates an enpass square
     if (fromType == PAWN && (to - from == 16 || from - to == 16)) {
+
         // Determine if there is an enemy pawn that may perform an enpassant.
         // If so, we must factor in the hash for the enpassant square.
-        uint64_t enemyPawns = board->pieces[PAWN] & board->colours[board->turn];
-        enemyPawns &= isolatedPawnMasks(from);
-        enemyPawns &= (board->turn == BLACK) ? RANK_4 : RANK_5;
+        const uint64_t enemyPawns = board->pieces[PAWN] & board->colours[board->turn]
+            & isolatedPawnMasks(from) & (board->turn == BLACK ? RANK_4 : RANK_5);
 
         if (enemyPawns) {
             board->epSquare = from + ((to-from) >> 1);
             board->hash ^= ZorbistKeys[ENPASS][fileOf(from)];
-        }
+        } 
     }
 }
 
-static void applyCastleMove(Board* board, uint16_t move) {
+static void applyCastleMove(Board* board, uint16_t move, Undo* undo) {
 
     const int from = MoveFrom(move);
     const int to = MoveTo(move);
@@ -114,9 +129,11 @@ static void applyCastleMove(Board* board, uint16_t move) {
         board->hash ^= ZorbistKeys[ENPASS][fileOf(board->epSquare)];
         board->epSquare = -1;
     }
+
+    undo->capturePiece = EMPTY;
 }
 
-static void applyEnpassMove(Board* board, uint16_t move) {
+static void applyEnpassMove(Board* board, uint16_t move, Undo* undo) {
 
     const int ep = board->epSquare - 8 + (board->turn << 4);
 
@@ -138,6 +155,8 @@ static void applyEnpassMove(Board* board, uint16_t move) {
 
     // Reset the enpass square
     board->epSquare = -1;
+
+    undo->capturePiece = EMPTY;
 }
 
 static void applyPromotionMove(Board* board, uint16_t move, Undo* undo) {
@@ -187,7 +206,6 @@ void applyMove(Board* board, uint16_t move, Undo* undo) {
     undo->castleRights = board->castleRights;
     undo->epSquare = board->epSquare;
     undo->fiftyMoveRule = board->fiftyMoveRule;
-    undo->capturePiece = EMPTY;
 
     // Update the hash history and the move count
     board->history[board->numMoves++] = board->hash;
@@ -203,12 +221,12 @@ void applyMove(Board* board, uint16_t move, Undo* undo) {
     if (MoveType(move) == NORMAL_MOVE)
         applyNormalMove(board, move, undo);
     else if (MoveType(move) == CASTLE_MOVE)
-        applyCastleMove(board, move);
+        applyCastleMove(board, move, undo);
     else if (MoveType(move) == PROMOTION_MOVE)
         applyPromotionMove(board, move, undo);
     else {
         assert(MoveType(move) == ENPASS_MOVE);
-        applyEnpassMove(board, move);
+        applyEnpassMove(board, move, undo);
     }
 
     // Get attackers to the new side to move's King
