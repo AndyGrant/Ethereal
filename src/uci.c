@@ -52,14 +52,14 @@ extern volatile int ABORT_SIGNAL; // For killing active search
 pthread_mutex_t READYLOCK = PTHREAD_MUTEX_INITIALIZER;
 
 
-int main(){
+int main(int argc, char **argv) {
 
     Board board;
     char str[8192], *ptr;
     ThreadsGo threadsgo;
     pthread_t pthreadsgo;
 
-    int nthreads =  1;
+    int nthreads = argc > 2 ? atoi(argv[2]) : 1;
     int megabytes = 16;
 
     // Initialize the core components of Ethereal
@@ -81,6 +81,11 @@ int main(){
         runTexelTuning(threads);
         exit(0);
     #endif
+
+    if (argc > 1) {
+        runBenchmark(threads, atoi(argv[1]));
+        return 0;
+    }
 
     while (1){
 
@@ -177,7 +182,7 @@ int main(){
         }
     }
 
-    return 1;
+    return 0;
 }
 
 void* uciGo(void* vthreadsgo){
