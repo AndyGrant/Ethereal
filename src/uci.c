@@ -59,8 +59,8 @@ int main(int argc, char **argv) {
     ThreadsGo threadsgo;
     pthread_t pthreadsgo;
 
-    int nthreads = argc > 2 ? atoi(argv[2]) : 1;
-    int megabytes = 16;
+    int nthreads = argc > 3 ? atoi(argv[3]) : 1;
+    int megabytes = argc > 4 ? atoi(argv[4]) : 16;
 
     // Initialize the core components of Ethereal
     initAttacks();
@@ -82,8 +82,8 @@ int main(int argc, char **argv) {
         exit(0);
     #endif
 
-    if (argc > 1) {
-        runBenchmark(threads, atoi(argv[1]));
+    if (argc > 1 && stringEquals(argv[1], "bench")) {
+        runBenchmark(threads, argc > 2 ? atoi(argv[2]) : 0);
         return 0;
     }
 
