@@ -169,13 +169,9 @@ const int PassedPawn[2][2][RANK_NB] = {
 };
 
 const int ThreatPawnAttackedByOne    = S( -17, -27);
-
 const int ThreatMinorAttackedByPawn  = S( -73, -54);
-
 const int ThreatMinorAttackedByMajor = S( -43, -41);
-
 const int ThreatQueenAttackedByOne   = S( -84,   3);
-
 const int ThreatOverloadedPieces     = S(  -7, -19);
 
 const int Tempo[COLOUR_NB] = { S(  25,  12), S( -25, -12) };
@@ -657,7 +653,7 @@ int evaluateKings(EvalInfo* ei, Board* board, int colour){
                + KSAdjustment;
 
         // Convert safety to an MG and EG score, if we are unsafe
-        if (count > 0) eval -= MakeScore(count * count / 800, count / 20);
+        if (count > 0) eval -= MakeScore(count * count / 720, count / 20);
     }
 
     // Shelter eval is already stored in the Pawn King Table. evaluatePawns()
