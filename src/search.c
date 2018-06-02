@@ -795,7 +795,7 @@ int staticExchangeEvaluation(Board* board, uint16_t move, int threshold){
 
     // Next victim is moved piece, or promotion type when promoting
     nextVictim = type != PROMOTION_MOVE
-               ? PieceType(board->squares[from])
+               ? pieceType(board->squares[from])
                : ptype;
 
     // Balance is the value of the move minus threshold. Function
@@ -902,7 +902,7 @@ int valueToTT(int value, int height){
 
 int thisTacticalMoveValue(Board* board, uint16_t move){
 
-    int value = PieceValues[PieceType(board->squares[MoveTo(move)])][MG];
+    int value = PieceValues[pieceType(board->squares[MoveTo(move)])][MG];
 
     if (MoveType(move) == PROMOTION_MOVE)
         value += PieceValues[MovePromoPiece(move)][MG] - PieceValues[PAWN][MG];
