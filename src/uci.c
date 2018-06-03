@@ -171,11 +171,6 @@ int main(int argc, char **argv) {
             fflush(stdout);
         }
 
-        else if (stringStartsWith(str, "bench")){
-            runBenchmark(threads, atoi(str + strlen("bench ")));
-            fflush(stdout);
-        }
-
         else if (stringStartsWith(str, "print")){
             printBoard(&board);
             fflush(stdout);
