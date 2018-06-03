@@ -40,23 +40,14 @@ enum {
     EMPTY        = 26
 };
 
-enum {
-    PAWN_FLAG   =  0,
-    KNIGHT_FLAG =  4,
-    BISHOP_FLAG =  8,
-    ROOK_FLAG   = 12,
-    QUEEN_FLAG  = 16,
-    KING_FLAG   = 20
-};
-
 static inline int pieceType(int p) {
-    assert(0 <= p / 4 && p / 4 < PIECE_NB);
+    assert(0 <= p / 4 && p / 4 <= PIECE_NB);
     assert(p % 4 <= COLOUR_NB);
     return p / 4;
 }
 
 static inline int pieceColour(int p) {
-    assert(0 <= p / 4 && p / 4 < PIECE_NB);
+    assert(0 <= p / 4 && p / 4 <= PIECE_NB);
     assert(p % 4 <= COLOUR_NB);
     return p % 4;
 }
