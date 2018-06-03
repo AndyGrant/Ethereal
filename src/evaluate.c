@@ -29,7 +29,6 @@
 #include "evaluate.h"
 #include "masks.h"
 #include "movegen.h"
-#include "piece.h"
 #include "psqt.h"
 #include "transposition.h"
 #include "types.h"

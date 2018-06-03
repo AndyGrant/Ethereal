@@ -19,8 +19,8 @@
 #include "assert.h"
 #include "bitboards.h"
 #include "evaluate.h"
-#include "piece.h"
 #include "psqt.h"
+#include "types.h"
 
 int PSQT[32][SQUARE_NB];
 

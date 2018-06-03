@@ -24,7 +24,6 @@
 #include "bitboards.h"
 #include "masks.h"
 #include "movegen.h"
-#include "piece.h"
 #include "types.h"
 
 uint64_t BitsBetweenMasks[SQUARE_NB][SQUARE_NB];

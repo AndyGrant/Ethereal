@@ -28,8 +28,8 @@
 #include "masks.h"
 #include "move.h"
 #include "movegen.h"
-#include "piece.h"
 #include "psqt.h"
+#include "types.h"
 #include "zorbist.h"
 
 void applyMove(Board* board, uint16_t move, Undo* undo){

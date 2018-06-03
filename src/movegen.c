@@ -26,7 +26,6 @@
 #include "masks.h"
 #include "move.h"
 #include "movegen.h"
-#include "piece.h"
 #include "types.h"
 
 /* For Generating Attack BitBoards */

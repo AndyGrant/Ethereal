@@ -28,7 +28,6 @@
 #include "move.h"
 #include "movegen.h"
 #include "movepicker.h"
-#include "piece.h"
 #include "psqt.h"
 #include "types.h"
 #include "thread.h"

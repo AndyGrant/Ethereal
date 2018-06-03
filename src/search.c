@@ -32,7 +32,6 @@
 #include "evaluate.h"
 #include "fathom/tbprobe.h"
 #include "history.h"
-#include "piece.h"
 #include "psqt.h"
 #include "search.h"
 #include "syzygy.h"

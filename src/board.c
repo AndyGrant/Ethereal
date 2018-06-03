@@ -28,7 +28,6 @@
 #include "board.h"
 #include "castle.h"
 #include "masks.h"
-#include "piece.h"
 #include "psqt.h"
 #include "search.h"
 #include "time.h"

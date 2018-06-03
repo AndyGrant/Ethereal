@@ -25,7 +25,6 @@
 
 #include "attacks.h"
 #include "bitboards.h"
-#include "piece.h"
 #include "types.h"
 
 static uint64_t PawnAttacks[COLOUR_NB][SQUARE_NB];
