@@ -967,6 +967,9 @@ int moveIsSingular(Thread* thread, uint16_t ttMove, int ttValue, Undo* undo, int
     // Table move was already applied, undo that
     revertMove(board, ttMove, undo);
 
+    // We must use an orthogonal key space in the sub-tree, as we are doing a partial search
+    board->hash ^= ttMove;
+
     // Iterate and check all moves other than the table move
     initializeMovePicker(&movePicker, thread, NONE_MOVE, height, 0);
     while ((move = selectNextMove(&movePicker, board)) != NONE_MOVE){
@@ -990,6 +993,9 @@ int moveIsSingular(Thread* thread, uint16_t ttMove, int ttValue, Undo* undo, int
         // Move failed high, thus ttMove is not singular
         if (value > rBeta) break;
     }
+
+    // Retore key
+    board->hash ^= ttMove;
 
     // Reapply the table move we took off
     applyMove(board, ttMove, undo);
