@@ -31,7 +31,6 @@
 #include "masks.h"
 #include "move.h"
 #include "movegen.h"
-#include "piece.h"
 #include "psqt.h"
 #include "search.h"
 #include "texel.h"

@@ -23,6 +23,13 @@
 
 #include "types.h"
 
+enum {
+    BOUND_NONE  = 0,
+    BOUND_LOWER = 1,
+    BOUND_UPPER = 2,
+    BOUND_EXACT = 3,
+};
+
 struct TTEntry {
     int8_t depth;
     uint8_t generation;

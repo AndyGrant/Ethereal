@@ -23,7 +23,6 @@
 #include <time.h>
 
 #include "castle.h"
-#include "piece.h"
 #include "types.h"
 #include "zorbist.h"
 

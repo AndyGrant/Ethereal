@@ -28,7 +28,6 @@
 #include "move.h"
 #include "movegen.h"
 #include "movepicker.h"
-#include "piece.h"
 #include "psqt.h"
 #include "types.h"
 #include "thread.h"
@@ -192,8 +191,8 @@ void evaluateNoisyMoves(MovePicker* mp, Board* board){
     for (i = 0; i < mp->noisySize; i++){
         
         move     = mp->moves[i];
-        fromType = PieceType(board->squares[ MoveFrom(move)]);
-        toType   = PieceType(board->squares[MoveTo(move)]);
+        fromType = pieceType(board->squares[ MoveFrom(move)]);
+        toType   = pieceType(board->squares[MoveTo(move)]);
         
         // Use the standard MVV-LVA
         value = PieceValues[toType][EG] - fromType;
@@ -226,7 +225,7 @@ int moveIsPsuedoLegal(Board* board, uint16_t move){
     int from   = MoveFrom(move);
     int type   = MoveType(move);
     int ptype  = MovePromoType(move);
-    int ftype  = PieceType(board->squares[from]);
+    int ftype  = pieceType(board->squares[from]);
     
     uint64_t friendly = board->colours[ colour];
     uint64_t enemy    = board->colours[!colour];
@@ -238,7 +237,7 @@ int moveIsPsuedoLegal(Board* board, uint16_t move){
         return 0;
     
     // Verify the moving piece is our own
-    if (PieceColour(board->squares[from]) != colour)
+    if (pieceColour(board->squares[from]) != colour)
         return 0;
     
     // Non promotions should be marked as PROMOTE_TO_KNIGHT

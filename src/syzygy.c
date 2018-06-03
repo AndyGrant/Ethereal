@@ -25,7 +25,6 @@
 #include "fathom/tbprobe.h"
 #include "move.h"
 #include "movegen.h"
-#include "piece.h"
 #include "types.h"
 #include "uci.h"
 

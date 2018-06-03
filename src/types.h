@@ -16,42 +16,76 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _TYPES_H
-#define _TYPES_H
+#pragma once
 
+#include <assert.h>
 #include <stdint.h>
+
+enum {WHITE, BLACK};
+
+enum {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING};
+
+enum {
+    WHITE_PAWN   =  0,
+    BLACK_PAWN   =  1,
+    WHITE_KNIGHT =  4,
+    BLACK_KNIGHT =  5,
+    WHITE_BISHOP =  8,
+    BLACK_BISHOP =  9,
+    WHITE_ROOK   = 12,
+    BLACK_ROOK   = 13,
+    WHITE_QUEEN  = 16,
+    BLACK_QUEEN  = 17,
+    WHITE_KING   = 20,
+    BLACK_KING   = 21,
+    EMPTY        = 26
+};
+
+static inline int pieceType(int p) {
+    assert(0 <= p / 4 && p / 4 <= PIECE_NB);
+    assert(p % 4 <= COLOUR_NB);
+    return p / 4;
+}
+
+static inline int pieceColour(int p) {
+    assert(0 <= p / 4 && p / 4 <= PIECE_NB);
+    assert(p % 4 <= COLOUR_NB);
+    return p % 4;
+}
+
+static inline int makePiece(int pt, int c) {
+    assert(0 <= pt && pt < PIECE_NB);
+    return pt * 4 + c;
+}
 
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
 #define MAX(A, B) ((A) > (B) ? (A) : (B))
 
-#define MAX_PLY    (128)
-#define MAX_MOVES  (256)
-
-#define MATE         (32000)
-#define MATE_IN_MAX  (+MATE - MAX_PLY)
-#define MATED_IN_MAX (-MATE + MAX_PLY)
-#define VALUE_NONE   (32001)
-
-#define SQUARE_NB (64)
-#define COLOUR_NB ( 2)
-#define RANK_NB   ( 8)
-#define FILE_NB   ( 8)
-#define PHASE_NB  ( 2)
-#define PIECE_NB  ( 6)
-
-#define PVNODE  (1)
-#define CUTNODE (2)
-#define ALLNODE (3)
-
 enum {
-    BOUND_NONE  = 0,
-    BOUND_LOWER = 1,
-    BOUND_UPPER = 2,
-    BOUND_EXACT = 3,
+    MAX_PLY = 128,
+    MAX_MOVES = 256
 };
 
-#define MG (0)
-#define EG (1)
+enum {
+    MATE = 32000,
+    MATE_IN_MAX = MATE - MAX_PLY,
+    MATED_IN_MAX = MAX_PLY - MATE,
+    VALUE_NONE = 32001
+};
+
+enum {
+    SQUARE_NB = 64,
+    COLOUR_NB = 2,
+    RANK_NB   = 8,
+    FILE_NB   = 8,
+    PHASE_NB  = 2,
+    PIECE_NB  = 6,
+};
+
+enum {
+    MG = 0,
+    EG = 1,
+};
 
 // Declare each structure in the order in which they appear
 // as you go through each header file one at a time
@@ -78,5 +112,3 @@ typedef struct ThreadsGo ThreadsGo;
 
 typedef uint16_t KillerTable[MAX_PLY][2];
 typedef int16_t HistoryTable[COLOUR_NB][SQUARE_NB][SQUARE_NB];
-
-#endif

@@ -28,7 +28,6 @@
 #include "evaluate.h"
 #include "history.h"
 #include "move.h"
-#include "piece.h"
 #include "psqt.h"
 #include "search.h"
 #include "texel.h"

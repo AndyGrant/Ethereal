@@ -28,8 +28,8 @@
 #include "masks.h"
 #include "move.h"
 #include "movegen.h"
-#include "piece.h"
 #include "psqt.h"
+#include "types.h"
 #include "zorbist.h"
 
 void applyMove(Board* board, uint16_t move, Undo* undo){
@@ -81,8 +81,8 @@ void applyNormalMove(Board* board, uint16_t move, Undo* undo){
     fromPiece = board->squares[from];
     toPiece = board->squares[to];
     
-    fromType = PieceType(fromPiece);
-    toType = PieceType(toPiece);
+    fromType = pieceType(fromPiece);
+    toType = pieceType(toPiece);
     
     // Reset fifty move rule on a pawn move
     if (fromType == PAWN) board->fiftyMoveRule = 0;
@@ -92,7 +92,7 @@ void applyNormalMove(Board* board, uint16_t move, Undo* undo){
     
     // Update the colour bitboards
     board->colours[board->turn] ^= shiftFrom | shiftTo;
-    board->colours[PieceColour(toPiece)] ^= shiftTo;
+    board->colours[pieceColour(toPiece)] ^= shiftTo;
     
     // Update the piece bitboards
     board->pieces[toType] ^= shiftTo;
@@ -162,8 +162,8 @@ void applyCastleMove(Board* board, uint16_t move, Undo* undo){
     rTo = castleGetRookTo(from, to);
     rFrom = castleGetRookFrom(from, to);
     
-    fromPiece = MakePiece(KING, board->turn);
-    rFromPiece = MakePiece(ROOK, board->turn);
+    fromPiece = makePiece(KING, board->turn);
+    rFromPiece = makePiece(ROOK, board->turn);
     
     shiftFrom = 1ull << from;
     shiftTo = 1ull << to;
@@ -227,8 +227,8 @@ void applyEnpassMove(Board* board, uint16_t move, Undo* undo){
     from = MoveFrom(move);
     ep = board->epSquare - 8 + (board->turn << 4);
     
-    fromPiece = MakePiece(PAWN, board->turn);
-    enpassPiece = MakePiece(PAWN, !board->turn);
+    fromPiece = makePiece(PAWN, board->turn);
+    enpassPiece = makePiece(PAWN, !board->turn);
     
     shiftFrom = 1ull << from;
     shiftTo = 1ull << to;
@@ -281,12 +281,12 @@ void applyPromotionMove(Board* board, uint16_t move, Undo* undo){
     to = MoveTo(move);
     from = MoveFrom(move);
     
-    toType = PieceType(board->squares[to]);
+    toType = pieceType(board->squares[to]);
     promotype = MovePromoPiece(move);
     
     fromPiece = board->squares[from];
     toPiece = board->squares[to];
-    promoPiece = MakePiece(promotype, board->turn);
+    promoPiece = makePiece(promotype, board->turn);
     
     shiftFrom = 1ull << from;
     shiftTo = 1ull << to;
@@ -296,7 +296,7 @@ void applyPromotionMove(Board* board, uint16_t move, Undo* undo){
 
     // Update the colour bitboards
     board->colours[board->turn] ^= shiftFrom | shiftTo;
-    board->colours[PieceColour(toPiece)] ^= shiftTo;
+    board->colours[pieceColour(toPiece)] ^= shiftTo;
     
     // Update the piece bitboards
     board->pieces[PAWN] ^= shiftFrom;
@@ -382,11 +382,11 @@ void revertMove(Board* board, uint16_t move, Undo* undo){
     
     if (MoveType(move) == NORMAL_MOVE){
         
-        fromType = PieceType(board->squares[to]);
-        toType = PieceType(undo->capturePiece);
+        fromType = pieceType(board->squares[to]);
+        toType = pieceType(undo->capturePiece);
         
         board->colours[undo->turn] ^= shiftFrom | shiftTo;
-        board->colours[PieceColour(undo->capturePiece)] |= shiftTo;
+        board->colours[pieceColour(undo->capturePiece)] |= shiftTo;
         
         board->pieces[fromType] ^= shiftTo | shiftFrom;
         board->pieces[toType] |= shiftTo;
@@ -417,12 +417,12 @@ void revertMove(Board* board, uint16_t move, Undo* undo){
     
     else if (MoveType(move) == PROMOTION_MOVE){
         
-        fromType = MakePiece(PAWN, undo->turn);
-        toType = PieceType(undo->capturePiece);
+        fromType = makePiece(PAWN, undo->turn);
+        toType = pieceType(undo->capturePiece);
         promotype = MovePromoPiece(move);
         
         board->colours[undo->turn] ^= shiftFrom | shiftTo;
-        board->colours[PieceColour(undo->capturePiece)] ^= shiftTo;
+        board->colours[pieceColour(undo->capturePiece)] ^= shiftTo;
         
         board->pieces[PAWN] ^= shiftFrom;
         board->pieces[promotype] ^= shiftTo;

@@ -28,7 +28,6 @@
 #include "board.h"
 #include "castle.h"
 #include "masks.h"
-#include "piece.h"
 #include "psqt.h"
 #include "search.h"
 #include "time.h"
@@ -60,7 +59,7 @@ static void setSquare(Board *board, int c, int p, int s) {
     assert(0 <= p && p < PIECE_NB);
     assert(0 <= s && s < SQUARE_NB);
 
-    board->squares[s] = MakePiece(p, c);
+    board->squares[s] = makePiece(p, c);
     setBit(&board->colours[c], s);
     setBit(&board->pieces[p], s);
 
@@ -171,7 +170,7 @@ void boardToFEN(Board *board, char *fen) {
                 if (cnt)
                     *fen++ = cnt + '0';
 
-                *fen++ = PieceLabel[PieceColour(p)][PieceType(p)];
+                *fen++ = PieceLabel[pieceColour(p)][pieceType(p)];
                 cnt = 0;
             } else
                 cnt++;
@@ -217,7 +216,7 @@ void printBoard(Board *board) {
         for (int f = 0; f < FILE_NB; f++) {
             const int s = square(r, f), v = board->squares[s];
             line[4 + 4 * f] = v != EMPTY
-                ? PieceLabel[PieceColour(v)][PieceType(v)]
+                ? PieceLabel[pieceColour(v)][pieceType(v)]
                 : s == board->epSquare ? '*' : '.';
         }
 
