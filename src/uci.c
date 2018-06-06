@@ -66,6 +66,7 @@ int main(int argc, char **argv) {
     initializePSQT();
     initMasks();
     initializeZorbist();
+    initSearch();
 
     // Default to 16MB TT
     initTT(megabytes);

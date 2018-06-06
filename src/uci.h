@@ -21,7 +21,7 @@
 
 #include "types.h"
 
-#define VERSION_ID "10.02"
+#define VERSION_ID "10.06"
 
 #if defined(USE_PEXT)
     #define ETHEREAL_VERSION VERSION_ID" (PEXT)"
@@ -32,14 +32,12 @@
 #endif
 
 struct Limits {
-
     int depthLimit;
     double timeLimit;
     int limitedByNone;
     int limitedByTime;
     int limitedByDepth;
     int limitedBySelf;
-
     double start;
     double time;
     double inc;

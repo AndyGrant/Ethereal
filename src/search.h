@@ -44,6 +44,8 @@ struct PVariation {
 };
 
 
+void initSearch();
+
 uint16_t getBestMove(Thread* threads, Board* board, Limits* limits);
 
 void* iterativeDeepening(void* vthread);

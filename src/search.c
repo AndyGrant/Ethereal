@@ -18,6 +18,7 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <math.h>
 #include <pthread.h>
 #include <setjmp.h>
 #include <stdio.h>
@@ -44,11 +45,19 @@
 #include "movepicker.h"
 #include "uci.h"
 
+int LMRTable[64][64]; // Late Move Reductions, LMRTable[depth][played]
 
 volatile int ABORT_SIGNAL; // Global ABORT flag for threads
 
 pthread_mutex_t LOCK = PTHREAD_MUTEX_INITIALIZER; // Global LOCK for threads
 
+void initSearch(){
+
+    // Init Late Move Reductions Table
+    for (int d = 1; d < 64; d++)
+        for (int p = 1; p < 64; p++)
+            LMRTable[d][p] = log(0.8 * d) * log(1.2 * p) / 2.0;
+}
 
 uint16_t getBestMove(Thread* threads, Board* board, Limits* limits){
 
@@ -403,11 +412,8 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
                                      : evaluateBoard(board, &thread->pktable);
     futilityMargin = eval + FutilityMargin * depth;
 
-    // Finally, we define a node to be improving if the last two moves have increased
-    // the static eval. To have two last moves, we must have a height of at least 4.
-    improving =    height >= 4
-               &&  thread->evalStack[height-0] > thread->evalStack[height-2]
-               &&  thread->evalStack[height-2] > thread->evalStack[height-4];
+    // Improving if our static eval increased in the last move
+    improving = height >= 2 && eval > thread->evalStack[height-2];
 
     // Step 7. Razoring. If a Quiescence Search for the current position
     // still falls way below alpha, we will assume that the score from
@@ -569,21 +575,25 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
 
         // Step 16. Late Move Reductions. Compute the reduction,
         // allow the later steps to perform the reduced searches
-        if (    isQuiet
-            &&  depth > 2
-            &&  played > 3){
+        if (isQuiet && depth > 2 && played > 1){
 
-            R = 2 + (played - 4) / 8 + (depth - 6) / 4; // LMR Formula
+            R  = LMRTable[MIN(depth, 63)][MIN(played, 63)];
 
-            R += 2 * !PvNode; // Increase for non PV nodes
+            // Increase for non PV nodes
+            R += !PvNode;
 
-            R -= quiets <= 3; // Reduce for first few quiets
+            // Increase for non improving nodes
+            R += !improving;
 
-            // Adjust based on the history score, within [+1, -6]
-            R -= MAX(-1, ((hist + 8192) / 4096) - (hist <= -8192));
+            // Reduce for Killers
+            R -= move == movePicker.killer1
+              || move == movePicker.killer2;
 
-            // Don't extend the search and don't go into qsearch
-            R = MIN(depth - 1, MAX(R, 1));
+            // Adjust based on history
+            R -= hist / 4096;
+
+            // Don't extend or drop into QS
+            R  = MIN(depth - 1, MAX(R, 1));
 
         } else R = 1;
 
