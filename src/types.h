@@ -41,26 +41,6 @@ enum {
     EMPTY        = 26
 };
 
-static inline int pieceType(int p) {
-    assert(0 <= p / 4 && p / 4 <= PIECE_NB);
-    assert(p % 4 <= COLOUR_NB);
-    return p / 4;
-}
-
-static inline int pieceColour(int p) {
-    assert(0 <= p / 4 && p / 4 <= PIECE_NB);
-    assert(p % 4 <= COLOUR_NB);
-    return p % 4;
-}
-
-static inline int makePiece(int pt, int c) {
-    assert(0 <= pt && pt < PIECE_NB);
-    return pt * 4 + c;
-}
-
-#define MIN(A, B) ((A) < (B) ? (A) : (B))
-#define MAX(A, B) ((A) > (B) ? (A) : (B))
-
 enum {
     MAX_PLY = 128,
     MAX_MOVES = 256
@@ -87,8 +67,27 @@ enum {
     EG = 1,
 };
 
-// Declare each structure in the order in which they appear
-// as you go through each header file one at a time
+static inline int pieceType(int p) {
+    assert(0 <= p / 4 && p / 4 <= PIECE_NB);
+    assert(p % 4 <= COLOUR_NB);
+    return p / 4;
+}
+
+static inline int pieceColour(int p) {
+    assert(0 <= p / 4 && p / 4 <= PIECE_NB);
+    assert(p % 4 <= COLOUR_NB);
+    return p % 4;
+}
+
+static inline int makePiece(int pt, int c) {
+    assert(0 <= pt && pt < PIECE_NB);
+    return pt * 4 + c;
+}
+
+#define MIN(A, B) ((A) < (B) ? (A) : (B))
+#define MAX(A, B) ((A) > (B) ? (A) : (B))
+
+// Structs used in any source file
 
 typedef struct Board Board;
 typedef struct Undo Undo;
