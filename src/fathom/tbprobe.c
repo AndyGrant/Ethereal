@@ -9,10 +9,10 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -117,7 +117,7 @@ unsigned TB_LARGEST = 0;
 #define rook_attacks(s, occ)    TB_ROOK_ATTACKS(s, occ)
 
 #define queen_attacks(s, occ)  (TB_ROOK_ATTACKS((s), (occ)) | TB_BISHOP_ATTACKS((s), (occ)))
-    
+
 #define pawn_attacks(s, c)      TB_PAWN_ATTACKS(s, c)
 
 static void prt_str(const struct pos *pos, char *str, bool mirror)
@@ -667,7 +667,7 @@ static uint16_t *gen_moves(const struct pos *pos, uint16_t *moves)
     uint64_t us = (pos->turn? pos->white: pos->black),
              them = (pos->turn? pos->black: pos->white);
     uint64_t b, att;
-    
+
     {
         unsigned from = lsb(pos->kings & us);
         for (att = king_attacks(from) & ~us; att; att = poplsb(att))
@@ -890,32 +890,32 @@ static bool is_valid(const struct pos *pos)
 
 static bool do_move(struct pos *pos, const struct pos *pos0, uint16_t move)
 {
-    unsigned from = move_from(move); 
-    unsigned to = move_to(move);  
-    unsigned promotes = move_promotes(move);  
+    unsigned from = move_from(move);
+    unsigned to = move_to(move);
+    unsigned promotes = move_promotes(move);
     pos->turn = !pos0->turn;
     pos->white = do_bb_move(pos0->white, from, to);
     pos->black = do_bb_move(pos0->black, from, to);
     pos->kings = do_bb_move(pos0->kings, from, to);
-    pos->queens = do_bb_move(pos0->queens, from, to); 
+    pos->queens = do_bb_move(pos0->queens, from, to);
     pos->rooks = do_bb_move(pos0->rooks, from, to);
-    pos->bishops = do_bb_move(pos0->bishops, from, to);  
-    pos->knights = do_bb_move(pos0->knights, from, to);  
+    pos->bishops = do_bb_move(pos0->bishops, from, to);
+    pos->knights = do_bb_move(pos0->knights, from, to);
     pos->pawns = do_bb_move(pos0->pawns, from, to);
     pos->ep = 0;
-    if (promotes != TB_PROMOTES_NONE) 
-    {  
+    if (promotes != TB_PROMOTES_NONE)
+    {
         pos->pawns &= ~board(to);       // Promotion
         switch (promotes)
-        { 
+        {
             case TB_PROMOTES_QUEEN:
                 pos->queens |= board(to); break;
-            case TB_PROMOTES_ROOK: 
-                pos->rooks |= board(to); break; 
-            case TB_PROMOTES_BISHOP:  
-                pos->bishops |= board(to); break;  
-            case TB_PROMOTES_KNIGHT:  
-                pos->knights |= board(to); break;  
+            case TB_PROMOTES_ROOK:
+                pos->rooks |= board(to); break;
+            case TB_PROMOTES_BISHOP:
+                pos->bishops |= board(to); break;
+            case TB_PROMOTES_KNIGHT:
+                pos->knights |= board(to); break;
         }
         pos->rule50 = 0;
     }
@@ -960,17 +960,17 @@ static int probe_ab(const struct pos *pos, int alpha, int beta, int *success)
         if (!do_move(&pos1, pos, *moves))
             continue;
         v = -probe_ab(&pos1, -beta, -alpha, success);
-        if (*success == 0) 
+        if (*success == 0)
             return 0;
         if (v > alpha)
-        { 
-            if (v >= beta) 
-            { 
+        {
+            if (v >= beta)
+            {
                 *success = 2;
                 return v;
-            } 
+            }
             alpha = v;
-        } 
+        }
     }
 
     v = probe_wdl_table(pos, success);
@@ -1056,7 +1056,7 @@ static int probe_dtz_no_ep(const struct pos *pos, int *success)
 
     uint16_t moves0[TB_MAX_MOVES];
     uint16_t *moves = moves0, *end = NULL;
- 
+
     if (wdl > 0)
     {
         // Generate at least all legal non-capturing pawn moves
@@ -1084,7 +1084,7 @@ static int probe_dtz_no_ep(const struct pos *pos, int *success)
             dtz += 100;
         return (wdl >= 0? dtz: -dtz);
     }
-    
+
     if (wdl > 0)
     {
         int best = BEST_NONE;
@@ -1239,7 +1239,7 @@ static int probe_dtz(const struct pos *pos, int *success)
             }
             if (!found)
                 v = v1;     // Forced to play the losing ep capture.
-        }    
+        }
     }
 
     return v;

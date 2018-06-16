@@ -8,10 +8,10 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -236,7 +236,7 @@ static void init_tb(char *str)
   uint64 key, key2;
   int color;
   char *s;
-  
+
   fd = open_tb(str, WDLSUFFIX);
   if (fd == FD_ERR) return;
   close_tb(fd);
@@ -283,7 +283,7 @@ static void init_tb(char *str)
     }
     entry = (struct TBEntry *)&TB_pawn[TBnum_pawn++];
   }
-  
+
   entry->key = key;
   entry->ready = 0;
   entry->num = 0;
@@ -434,7 +434,7 @@ void init_tablebases(const char *path)
 	  sprintf(str, "K%c%c%c%cvK", pchr[i], pchr[j], pchr[k], pchr[l]);
 	  init_tb(str);
 	}
-    
+
   printf("info string found %d tablebases\n", TBnum_piece + TBnum_pawn);
 }
 
@@ -801,7 +801,7 @@ static uint64 encode_piece(struct TBEntry_piece *ptr, ubyte *norm, int *pos, int
   uint64 idx;
   int i, j, k, m, l, p;
   int n = ptr->num;
-  assert(n>=0 && n<6);
+  // assert(n>=0 && n<6); // EDIT - Andrew Grant
 
   if (pos[0] & 0x04) {
     for (i = 0; i < n; i++)
