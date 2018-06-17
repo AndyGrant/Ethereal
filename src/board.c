@@ -92,6 +92,36 @@ void squareToString(int s, char *str) {
     *str++ = '\0';
 }
 
+bool consistentCastle(const Board *board)
+{
+    uint64_t rooks = board->castleRooks;
+
+    while (rooks) {
+        switch (poplsb(&rooks)) {
+        case 0:
+            if (!(board->castleRights & WHITE_QUEEN_RIGHTS))
+                return false;
+            break;
+        case 7:
+            if (!(board->castleRights & WHITE_KING_RIGHTS))
+                return false;
+            break;
+        case 56:
+            if (!(board->castleRights & BLACK_QUEEN_RIGHTS))
+                return false;
+            break;
+        case 63:
+            if (!(board->castleRights & BLACK_KING_RIGHTS))
+                return false;
+            break;
+        default:
+            return false;
+        }
+    }
+
+    return popcount(board->castleRights) == popcount(board->castleRooks);
+}
+
 void boardFromFEN(Board *board, const char *fen) {
 
     int s = 56;
@@ -125,17 +155,38 @@ void boardFromFEN(Board *board, const char *fen) {
     token = strtok_r(NULL, " ", &strPos);
 
     while ((ch = *token++)) {
-        if (ch =='K')
+        if (ch =='K') {
             board->castleRights |= WHITE_KING_RIGHTS;
-        else if (ch == 'Q')
+            setBit(&board->castleRooks, getmsb(board->colours[WHITE] & board->pieces[ROOK]));
+        } else if (ch == 'Q') {
             board->castleRights |= WHITE_QUEEN_RIGHTS;
-        else if (ch == 'k')
+            setBit(&board->castleRooks, getlsb(board->colours[WHITE] & board->pieces[ROOK]));
+        } else if (ch == 'k') {
             board->castleRights |= BLACK_KING_RIGHTS;
-        else if (ch == 'q')
+            setBit(&board->castleRooks, getmsb(board->colours[BLACK] & board->pieces[ROOK]));
+        } else if (ch == 'q') {
             board->castleRights |= BLACK_QUEEN_RIGHTS;
+            setBit(&board->castleRooks, getlsb(board->colours[BLACK] & board->pieces[ROOK]));
+        }
     }
 
-    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    assert(consistentCastle(board));
+
+    for (s = 0; s < SQUARE_NB; s++) {
+        board->castleRookMasks[s] = (uint64_t)(-1);  // all squares
+
+        // If we land on a castleRook, remove it
+        if (testBit(board->castleRooks, s))
+            clearBit(&board->castleRookMasks[s], s);
+
+        // If we land on a king, remove castleRooks of the color of the king
+        if (testBit(board->pieces[KING], s))
+            board->castleRookMasks[s] &= ~board->colours[pieceColour(board->squares[s])];
+    }
+
+    uint64_t rooks = board->castleRooks;
+    while (rooks)
+        board->hash ^= ZobristCastle[poplsb(&rooks)];
 
     // En passant
     board->epSquare = stringToSquare(strtok_r(NULL, " ", &strPos));
@@ -187,14 +238,18 @@ void boardToFEN(Board *board, char *fen) {
     *fen++ = ' ';
 
     // Castle rights
-    if (board->castleRights & WHITE_KING_RIGHTS)
-        *fen++ = 'K';
-    if (board->castleRights & WHITE_QUEEN_RIGHTS)
-        *fen++ = 'Q';
-    if (board->castleRights & BLACK_KING_RIGHTS)
-        *fen++ = 'k';
-    if (board->castleRights & BLACK_QUEEN_RIGHTS)
-        *fen++ = 'q';
+    static const char *table[COLOUR_NB] = {"KQ", "kq"};
+
+    for (int c = 0; c < COLOUR_NB; c++) {
+        const int king = getlsb(board->colours[c] & board->pieces[KING]);
+        uint64_t rooks = board->castleRooks & board->colours[c];
+
+        while (rooks) {
+            const int rook = getmsb(rooks);
+            rooks ^= 1ULL << rook;
+            *fen++ = table[c][rook < king];
+        }
+    }
 
     // En passant and Fifty move
     squareToString(board->epSquare, str);
@@ -244,7 +299,7 @@ void printBoard(Board *board) {
     }
 }
 
-uint64_t perft(Board *board, int depth){
+uint64_t perft(Board *board, int ply, int depth) {
 
     Undo undo[1];
     int size = 0;
@@ -257,9 +312,15 @@ uint64_t perft(Board *board, int depth){
 
     // Recurse on all valid moves
     for(size -= 1; size >= 0; size--){
+        if (ply == 0) {
+            char str[6];
+            moveToString(moves[size], str);
+            puts(str);
+        }
+
         applyMove(board, moves[size], undo);
         if (isNotInCheck(board, !board->turn))
-            found += perft(board, depth-1);
+            found += perft(board, ply+1, depth-1);
         revertMove(board, moves[size], undo);
     }
 

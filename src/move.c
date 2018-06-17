@@ -43,6 +43,7 @@ void applyMove(Board *board, uint16_t move, Undo *undo) {
     undo->pkhash = board->pkhash;
     undo->kingAttackers = board->kingAttackers;
     undo->castleRights = board->castleRights;
+    undo->castleRooks = board->castleRooks;
     undo->epSquare = board->epSquare;
     undo->fiftyMoveRule = board->fiftyMoveRule;
     undo->psqtmat = board->psqtmat;
@@ -58,8 +59,15 @@ void applyMove(Board *board, uint16_t move, Undo *undo) {
     if (board->epSquare != -1)
         board->hash ^= ZorbistKeys[ENPASS][fileOf(board->epSquare)];
 
+    const uint64_t previousCastleRooks = board->castleRooks;
+
     // Run the correct move function
     table[MoveType(move) >> 12](board, move, undo);
+
+    // Update castling rook zobrist by checking which ones have been changed (ie. lost)
+    uint64_t castleRooksRemoved = board->castleRooks ^ previousCastleRooks;
+    while (castleRooksRemoved)
+        board->hash ^= ZobristCastle[poplsb(&castleRooksRemoved)];
 
     // No function updated epsquare, so we reset
     if (board->epSquare == undo->epSquare) board->epSquare = -1;
@@ -69,6 +77,11 @@ void applyMove(Board *board, uint16_t move, Undo *undo) {
 
     // Need king attackers to verify move legality
     board->kingAttackers = attackersToKingSquare(board);
+
+    if (!consistentCastle(board)) {
+        printBoard(board);
+        assert(false);
+    }
 }
 
 void applyNormalMove(Board *board, uint16_t move, Undo *undo) {
@@ -96,9 +109,8 @@ void applyNormalMove(Board *board, uint16_t move, Undo *undo) {
     board->squares[to]   = fromPiece;
     undo->capturePiece   = toPiece;
 
-    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    board->castleRooks &= board->castleRookMasks[from] & board->castleRookMasks[to];
     board->castleRights &= CastleMask[from] & CastleMask[to];
-    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
 
     board->psqtmat += PSQT[fromPiece][to]
                    -  PSQT[fromPiece][from]
@@ -148,9 +160,8 @@ void applyCastleMove(Board *board, uint16_t move, Undo *undo) {
     board->squares[rFrom] = EMPTY;
     board->squares[rTo]   = rFromPiece;
 
-    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
     board->castleRights &= CastleMask[from];
-    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    board->castleRooks &= board->castleRookMasks[from];
 
     board->psqtmat += PSQT[fromPiece][to]
                     - PSQT[fromPiece][from]
@@ -229,9 +240,8 @@ void applyPromotionMove(Board *board, uint16_t move, Undo *undo) {
     board->squares[to]   = promoPiece;
     undo->capturePiece   = toPiece;
 
-    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
     board->castleRights &= CastleMask[to];
-    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    board->castleRooks &= board->castleRookMasks[to];
 
     board->psqtmat += PSQT[promoPiece][to]
                     - PSQT[fromPiece][from]
@@ -270,6 +280,7 @@ void revertMove(Board *board, uint16_t move, Undo *undo) {
     board->pkhash = undo->pkhash;
     board->kingAttackers = undo->kingAttackers;
     board->castleRights = undo->castleRights;
+    board->castleRooks = undo->castleRooks;
     board->epSquare = undo->epSquare;
     board->fiftyMoveRule = undo->fiftyMoveRule;
     board->psqtmat = undo->psqtmat;

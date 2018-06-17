@@ -28,6 +28,7 @@
 
 uint64_t ZorbistKeys[32][SQUARE_NB];
 uint64_t PawnKingKeys[32][SQUARE_NB];
+uint64_t ZobristCastle[SQUARE_NB];
 
 void initializeZorbist(){
 
@@ -77,6 +78,15 @@ void initializeZorbist(){
         PawnKingKeys[WHITE_KING][s] = ZorbistKeys[WHITE_KING][s];
         PawnKingKeys[BLACK_KING][s] = ZorbistKeys[BLACK_KING][s];
     }
+
+    for (s = 0; s < SQUARE_NB; s++)
+        ZobristCastle[s] = rand64();
+
+    // FIXME: Remove once FRC is merged
+    ZobristCastle[0] = ZorbistKeys[CASTLE][WHITE_QUEEN_RIGHTS];
+    ZobristCastle[7] = ZorbistKeys[CASTLE][WHITE_KING_RIGHTS];
+    ZobristCastle[56] = ZorbistKeys[CASTLE][BLACK_QUEEN_RIGHTS];
+    ZobristCastle[63] = ZorbistKeys[CASTLE][BLACK_KING_RIGHTS];
 }
 
 uint64_t rand64(){

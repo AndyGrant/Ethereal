@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <stdbool.h>
+
 #include "types.h"
 
 extern const char *PieceLabel[COLOUR_NB];
@@ -29,6 +31,8 @@ struct Board {
     uint64_t hash;
     uint64_t pkhash;
     uint64_t kingAttackers;
+    uint64_t castleRooks;
+    uint64_t castleRookMasks[SQUARE_NB];
     int turn;
     int castleRights;
     int epSquare;
@@ -42,6 +46,7 @@ struct Undo {
     uint64_t hash;
     uint64_t pkhash;
     uint64_t kingAttackers;
+    uint64_t castleRooks;
     int castleRights;
     int epSquare;
     int fiftyMoveRule;
@@ -49,11 +54,12 @@ struct Undo {
     int capturePiece;
 };
 
+bool consistentCastle(const Board *board);
 void squareToString(int s, char *str);
 
 void boardFromFEN(Board *board, const char *fen);
 void boardToFEN(Board *board, char *fen);
 
 void printBoard(Board *board);
-uint64_t perft(Board *board, int depth);
+uint64_t perft(Board *board, int ply, int depth);
 void runBenchmark(Thread *threads, int depth);

@@ -35,7 +35,7 @@ void genAllNoisyMoves(Board* board, uint16_t* moves, int* size);
 void genAllQuietMoves(Board* board, uint16_t* moves, int* size);
 
 int isNotInCheck(Board* board, int colour);
-int squareIsAttacked(Board* board, int colour, int sq);
+bool squareIsAttacked(Board* board, int colour, int sq);
 
 uint64_t attackersToSquare(Board* board, int colour, int sq);
 uint64_t allAttackersToSquare(Board* board, uint64_t occupied, int sq);

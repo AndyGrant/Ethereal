@@ -16,8 +16,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdint.h>
 #include <assert.h>
+#include <stdint.h>
 
 #include "attacks.h"
 #include "board.h"
@@ -284,30 +284,35 @@ void genAllQuietMoves(Board* board, uint16_t* moves, int* size){
     buildKingMoves(moves, size, myKings, empty);
 
     // Generate all the castling moves
-    if (board->turn == WHITE && !board->kingAttackers){
+    if (board->kingAttackers)
+        return;
 
-        if (  ((occupied & WHITE_CASTLE_KING_SIDE_MAP) == 0)
-            && (board->castleRights & WHITE_KING_RIGHTS)
-            && !squareIsAttacked(board, WHITE, 5))
-            moves[(*size)++] = MoveMake(4, 6, CASTLE_MOVE);
+    uint64_t rooks = board->castleRooks & friendly;
 
-        if (  ((occupied & WHITE_CASTLE_QUEEN_SIDE_MAP) == 0)
-            && (board->castleRights & WHITE_QUEEN_RIGHTS)
-            && !squareIsAttacked(board, WHITE, 3))
-            moves[(*size)++] = MoveMake(4, 2, CASTLE_MOVE);
-    }
+    while (rooks) {
+        const int rook = poplsb(&rooks);
+        const int king = getlsb(myKings);
+        const int kingTo = square(rankOf(rook), rook > king ? 6 : 2);
+        const int rookTo = rook > king ? kingTo - 1 : kingTo + 1;
 
-    else if (board->turn == BLACK && !board->kingAttackers) {
+        // Check that there are no pieces in the way
+        const uint64_t mask = (bitsBetweenMasks(king, kingTo) | bitsBetweenMasks(rook, rookTo))
+            & ~((1ULL << king) | (1ULL << rook));
 
-        if (  ((occupied & BLACK_CASTLE_KING_SIDE_MAP) == 0)
-            && (board->castleRights & BLACK_KING_RIGHTS)
-            && !squareIsAttacked(board, BLACK, 61))
-            moves[(*size)++] = MoveMake(60, 62, CASTLE_MOVE);
+        if (!(occupied & mask)) {
+            // Check that the king doesn't go through attacked squares on its castling path
+            bool attacked = false;
+            uint64_t b = bitsBetweenMasks(king, kingTo);
 
-        if (  ((occupied & BLACK_CASTLE_QUEEN_SIDE_MAP) == 0)
-            && (board->castleRights & BLACK_QUEEN_RIGHTS)
-            && !squareIsAttacked(board, BLACK, 59))
-            moves[(*size)++] = MoveMake(60, 58, CASTLE_MOVE);
+            while (b)
+                if (squareIsAttacked(board, board->turn, poplsb(&b))) {
+                    attacked = true;
+                    break;
+                }
+
+            if (!attacked)
+                moves[(*size)++] = MoveMake(king, kingTo, CASTLE_MOVE);
+        }
     }
 }
 
@@ -317,7 +322,7 @@ int isNotInCheck(Board* board, int colour){
     return !squareIsAttacked(board, colour, kingsq);
 }
 
-int squareIsAttacked(Board* board, int colour, int sq){
+bool squareIsAttacked(Board* board, int colour, int sq){
 
     uint64_t friendly = board->colours[ colour];
     uint64_t enemy    = board->colours[!colour];

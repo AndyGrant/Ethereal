@@ -167,7 +167,7 @@ int main(int argc, char **argv) {
             break;
 
         else if (stringStartsWith(str, "perft")){
-            printf("%"PRIu64"\n", perft(&board, atoi(str + strlen("perft "))));
+            printf("%"PRIu64"\n", perft(&board, 0, atoi(str + strlen("perft "))));
             fflush(stdout);
         }
 

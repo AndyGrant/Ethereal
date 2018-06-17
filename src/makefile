@@ -26,7 +26,7 @@ RFLAGS = -DNDEBUG -O3 $(WFLAGS) -flto -static
 AFLAGS = -DNDEBUG -O3 $(WFLAGS) -march=armv7 -flto -static
 TFLAGS = -DNDEBUG -O3 $(WFLAGS) -march=native -flto -fopenmp -DTUNE
 PFLAGS = -DNDEBUG -O0 $(WFLAGS) -p -pg
-DFLAGS = -O0 $(WFLAGS)
+DFLAGS = -Og $(WFLAGS)
 
 POPCNTFLAGS = -DUSE_POPCNT -msse3 -mpopcnt
 PEXTFLAGS   = $(POPCNTFLAGS) -DUSE_PEXT -mbmi2
