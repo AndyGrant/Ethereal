@@ -38,8 +38,9 @@ void initializeMovePicker(MovePicker* mp, Thread* thread, uint16_t ttMove, int h
     mp->noisySize  = 0;
     mp->quietSize  = 0;
     mp->tableMove  = ttMove;
-    mp->killer1    = thread->killers[height][0] != ttMove ? thread->killers[height][0] : NONE_MOVE;
-    mp->killer2    = thread->killers[height][1] != ttMove ? thread->killers[height][1] : NONE_MOVE;
+    mp->killer1    = thread->killers[height][0];
+    mp->killer2    = thread->killers[height][1];
+    mp->counter    = getCounterMove(thread, height);
     mp->history    = &thread->history;
 }
 
@@ -52,8 +53,7 @@ uint16_t selectNextMove(MovePicker* mp, Board* board){
 
         case STAGE_TABLE:
 
-            // Play the table move if it is from this
-            // position, also advance to the next stage
+            // Play table move if psuedo legal
             mp->stage = STAGE_GENERATE_NOISY;
             if (moveIsPsuedoLegal(board, mp->tableMove))
                 return mp->tableMove;
@@ -62,9 +62,10 @@ uint16_t selectNextMove(MovePicker* mp, Board* board){
 
         case STAGE_GENERATE_NOISY:
 
-            // Generate all noisy moves and evaluate them. Set up the
-            // split in the array to store quiet and noisy moves. Also,
-            // this stage is only a helper. Advance to the next one.
+            // Generate and evaluate noisy moves. mp->split tracks the
+            // break point between noisy and quiets, which would allow
+            // us to use a BAD_NOISY stage, if we so desired.
+
             genAllNoisyMoves(board, mp->moves, &mp->noisySize);
             evaluateNoisyMoves(mp, board);
             mp->split = mp->noisySize;
@@ -94,16 +95,15 @@ uint16_t selectNextMove(MovePicker* mp, Board* board){
                 if (bestMove == mp->tableMove)
                     return selectNextMove(mp, board);
 
-                // Don't play the killer moves twice
+                // Don't play the special moves twice
                 if (bestMove == mp->killer1) mp->killer1 = NONE_MOVE;
                 if (bestMove == mp->killer2) mp->killer2 = NONE_MOVE;
+                if (bestMove == mp->counter) mp->counter = NONE_MOVE;
 
                 return bestMove;
             }
 
-            // If we are using this move picker for the quiescence
-            // search, we have exhausted all moves already. Otherwise,
-            // we should move onto the quiet moves (+ killers)
+            // Only quiets after this point, done if skipping them
             if (mp->skipQuiets)
                 return mp->stage = STAGE_DONE, NONE_MOVE;
             else
@@ -113,28 +113,39 @@ uint16_t selectNextMove(MovePicker* mp, Board* board){
 
         case STAGE_KILLER_1:
 
-            // Play the killer move if it is from this position.
-            // position, and also advance to the next stage
+            // Play killer move if not yet played, and psuedo legal
             mp->stage = STAGE_KILLER_2;
-            if (moveIsPsuedoLegal(board, mp->killer1))
+            if (   mp->killer1 != mp->tableMove
+                && moveIsPsuedoLegal(board, mp->killer1))
                 return mp->killer1;
 
             /* fallthrough */
 
         case STAGE_KILLER_2:
 
-            // Play the killer move if it is from this position.
-            // position, and also advance to the next stage
-            mp->stage = STAGE_GENERATE_QUIET;
-            if (moveIsPsuedoLegal(board, mp->killer2))
+            // Play killer move if not yet played, and psuedo legal
+            mp->stage = STAGE_COUNTER_MOVE;
+            if (   mp->killer2 != mp->tableMove
+                && moveIsPsuedoLegal(board, mp->killer2))
                 return mp->killer2;
+
+            /* fallthrough */
+
+        case STAGE_COUNTER_MOVE:
+
+            // Play counter move if not yet played, and psuedo legal
+            mp->stage = STAGE_GENERATE_QUIET;
+            if (   mp->counter != mp->tableMove
+                && mp->counter != mp->killer1
+                && mp->counter != mp->killer2
+                && moveIsPsuedoLegal(board, mp->counter))
+                return mp->counter;
 
             /* fallthrough */
 
         case STAGE_GENERATE_QUIET:
 
-            // Generate all quiet moves and evaluate them
-            // and also advance to the final fruitful stage
+            // Generate and evaluate all quiet moves
             genAllQuietMoves(board, mp->moves + mp->split, &mp->quietSize);
             evaluateQuietMoves(mp, board);
             mp->stage = STAGE_QUIET;
@@ -162,13 +173,14 @@ uint16_t selectNextMove(MovePicker* mp, Board* board){
                 // Don't play a move more than once
                 if (   bestMove == mp->tableMove
                     || bestMove == mp->killer1
-                    || bestMove == mp->killer2)
+                    || bestMove == mp->killer2
+                    || bestMove == mp->counter)
                     return selectNextMove(mp, board);
 
                 return bestMove;
             }
 
-            // If no quiet moves left, advance stages
+            // Out of quiet moves, move picker complete
             mp->stage = STAGE_DONE;
 
             /* fallthrough */
@@ -249,19 +261,19 @@ int moveIsPsuedoLegal(Board* board, uint16_t move){
     // move type is NORMAL and the destination is an attacked square
 
     if (ftype == KNIGHT)
-        return    type == NORMAL_MOVE
+        return type == NORMAL_MOVE
             && testBit(knightAttacks(from) & ~friendly, to);
 
     if (ftype == BISHOP)
-        return    type == NORMAL_MOVE
+        return type == NORMAL_MOVE
             && testBit(bishopAttacks(from, occupied) & ~friendly, to);
 
     if (ftype == ROOK)
-        return    type == NORMAL_MOVE
+        return type == NORMAL_MOVE
             && testBit(rookAttacks(from, occupied) & ~friendly, to);
 
     if (ftype == QUEEN)
-        return    type == NORMAL_MOVE
+        return type == NORMAL_MOVE
             && testBit(queenAttacks(from, occupied) & ~friendly, to);
 
     if (ftype == PAWN){

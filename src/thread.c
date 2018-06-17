@@ -29,14 +29,21 @@
 
 Thread* createThreadPool(int nthreads){
 
-    int i;
     Thread* threads = malloc(sizeof(Thread) * nthreads);
 
-    // Provide each thread with a reference to the others,
-    // as well as a counter of how many threads there are
-    for (i = 0; i < nthreads; i++){
+    for (int i = 0; i < nthreads; i++){
+
+        // Threads will know of each other
         threads[i].threads = threads;
         threads[i].nthreads = nthreads;
+
+        // Offset stacks so root position can look backwards
+        threads[i].evalStack = &(threads[i]._evalStack[4]);
+        threads[i].moveStack = &(threads[i]._moveStack[4]);
+
+        // Zero out the stack, most importantly the first four slots
+        memset(&threads[i]._evalStack, 0, sizeof(int) * (MAX_PLY + 4));
+        memset(&threads[i]._moveStack, 0, sizeof(uint16_t) * (MAX_PLY + 4));
     }
 
     resetThreadPool(threads);
@@ -46,36 +53,33 @@ Thread* createThreadPool(int nthreads){
 
 void resetThreadPool(Thread* threads){
 
-    int i;
+    // Reset the per-thread tables, used for move ordering,
+    // and evaluation caching. This is needed for ucinewgame
+    // calls in order to ensure deterministic behaviour
 
-    // Reset each of the tables used by individual Threads. This is only
-    // needed between 'ucinewgame's in order to get deterministic results
-    // between games. Between individual searches the tables aid us
-    for (i = 0; i < threads[0].nthreads; i++){
-        memset(&threads[i].killers, 0, sizeof(KillerTable  ));
-        memset(&threads[i].history, 0, sizeof(HistoryTable ));
-        memset(&threads[i].pktable, 0, sizeof(PawnKingTable));
+    for (int i = 0; i < threads[0].nthreads; i++){
+        memset(&threads[i].killers, 0, sizeof(KillerTable     ));
+        memset(&threads[i].history, 0, sizeof(HistoryTable    ));
+        memset(&threads[i].pktable, 0, sizeof(PawnKingTable   ));
+        memset(&threads[i].cmtable, 0, sizeof(CounterMoveTable));
     }
 }
 
 void newSearchThreadPool(Thread* threads, Board* board, Limits* limits, SearchInfo* info){
 
-    int i;
-
     // Initialize each Thread in the Thread Pool
-    for (i = 0; i < threads[0].nthreads; i++){
+    for (int i = 0; i < threads[0].nthreads; i++){
 
-        // Save a reference to the original search specifications
+        // Original search parameters
         threads[i].limits = limits;
 
-        // Save a reference to our displayed search information,
-        // as well as the time usage variables that are being used
+        // Tap into time information and iterative deepening data
         threads[i].info = info;
 
         // Make our own copy of the original position
         memcpy(&threads[i].board, board, sizeof(Board));
 
-        // Zero our the depth, nodes for the new search
+        // Zero out our depth and stat tracking
         threads[i].depth  = 0;
         threads[i].nodes  = 0ull;
         threads[i].tbhits = 0ull;
@@ -84,9 +88,9 @@ void newSearchThreadPool(Thread* threads, Board* board, Limits* limits, SearchIn
 
 uint64_t nodesSearchedThreadPool(Thread* threads){
 
-    int i; uint64_t nodes;
+    uint64_t nodes = 0ull;
 
-    for (i = 0, nodes = 0ull; i < threads[0].nthreads; i++)
+    for (int i = 0; i < threads[0].nthreads; i++)
         nodes += threads[i].nodes;
 
     return nodes;
@@ -94,9 +98,9 @@ uint64_t nodesSearchedThreadPool(Thread* threads){
 
 uint64_t tbhitsSearchedThreadPool(Thread* threads){
 
-    int i; uint64_t tbhits;
+    uint64_t tbhits = 0ull;
 
-    for (i = 0, tbhits = 0ull; i < threads[0].nthreads; i++)
+    for (int i = 0; i < threads[0].nthreads; i++)
         tbhits += threads[i].tbhits;
 
     return tbhits;

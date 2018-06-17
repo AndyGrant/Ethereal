@@ -24,17 +24,14 @@
 #include "types.h"
 
 struct SearchInfo {
-
     int depth;
     int values[MAX_PLY];
     uint16_t bestMoves[MAX_PLY];
     double timeUsage[MAX_PLY];
-
     double startTime;
     double idealUsage;
     double maxAlloc;
     double maxUsage;
-
     int bestMoveChanges;
 };
 
