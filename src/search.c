@@ -308,7 +308,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         if (rAlpha >= rBeta) return rAlpha;
 
         // Check for the Fifty Move Rule
-        if (board->fiftyMoveRule > 100)
+        if (board->fiftyMoveRule > 99)
             return 0;
 
         // Check for three fold repetition. If the repetition occurs since
