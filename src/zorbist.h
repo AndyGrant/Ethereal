@@ -32,5 +32,6 @@ uint64_t rand64();
 
 extern uint64_t ZorbistKeys[32][SQUARE_NB];
 extern uint64_t PawnKingKeys[32][SQUARE_NB];
+extern uint64_t ZobristCastle[SQUARE_NB];
 
 #endif

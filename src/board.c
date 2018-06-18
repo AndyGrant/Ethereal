@@ -125,17 +125,38 @@ void boardFromFEN(Board *board, const char *fen) {
     token = strtok_r(NULL, " ", &strPos);
 
     while ((ch = *token++)) {
-        if (ch =='K')
+        if (ch =='K') {
             board->castleRights |= WHITE_KING_RIGHTS;
-        else if (ch == 'Q')
+            setBit(&board->castleRooks, getmsb(board->colours[WHITE] & board->pieces[ROOK]));
+        } else if (ch == 'Q') {
             board->castleRights |= WHITE_QUEEN_RIGHTS;
-        else if (ch == 'k')
+            setBit(&board->castleRooks, getlsb(board->colours[WHITE] & board->pieces[ROOK]));
+        } else if (ch == 'k') {
             board->castleRights |= BLACK_KING_RIGHTS;
-        else if (ch == 'q')
+            setBit(&board->castleRooks, getmsb(board->colours[BLACK] & board->pieces[ROOK]));
+        } else if (ch == 'q') {
             board->castleRights |= BLACK_QUEEN_RIGHTS;
+            setBit(&board->castleRooks, getlsb(board->colours[BLACK] & board->pieces[ROOK]));
+        }
     }
 
-    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    // Compute castleMoveMasks[]. This array of bitboard is used when playing moves, to update
+    // castling rights in a branchless manner (see move.c).
+    for (s = 0; s < SQUARE_NB; s++) {
+        board->castleMoveMasks[s] = (uint64_t)(-1);  // all squares
+
+        // If we land on a castleRook, remove it
+        if (testBit(board->castleRooks, s))
+            clearBit(&board->castleMoveMasks[s], s);
+
+        // If we land on a king, remove castleRooks of the color of the king
+        if (testBit(board->pieces[KING], s))
+            board->castleMoveMasks[s] &= ~board->colours[pieceColour(board->squares[s])];
+    }
+
+    uint64_t rooks = board->castleRooks;
+    while (rooks)
+        board->hash ^= ZobristCastle[poplsb(&rooks)];
 
     // En passant
     board->epSquare = stringToSquare(strtok_r(NULL, " ", &strPos));
@@ -187,14 +208,18 @@ void boardToFEN(Board *board, char *fen) {
     *fen++ = ' ';
 
     // Castle rights
-    if (board->castleRights & WHITE_KING_RIGHTS)
-        *fen++ = 'K';
-    if (board->castleRights & WHITE_QUEEN_RIGHTS)
-        *fen++ = 'Q';
-    if (board->castleRights & BLACK_KING_RIGHTS)
-        *fen++ = 'k';
-    if (board->castleRights & BLACK_QUEEN_RIGHTS)
-        *fen++ = 'q';
+    static const char *table[COLOUR_NB] = {"KQ", "kq"};
+
+    for (int c = 0; c < COLOUR_NB; c++) {
+        const int king = getlsb(board->colours[c] & board->pieces[KING]);
+        uint64_t rooks = board->castleRooks & board->colours[c];
+
+        while (rooks) {
+            const int rook = getmsb(rooks);
+            rooks ^= 1ULL << rook;
+            *fen++ = table[c][rook < king];
+        }
+    }
 
     // En passant and Fifty move
     squareToString(board->epSquare, str);

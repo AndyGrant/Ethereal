@@ -29,6 +29,8 @@ struct Board {
     uint64_t hash;
     uint64_t pkhash;
     uint64_t kingAttackers;
+    uint64_t castleRooks;
+    uint64_t castleMoveMasks[SQUARE_NB];
     int turn;
     int castleRights;
     int epSquare;
@@ -42,6 +44,7 @@ struct Undo {
     uint64_t hash;
     uint64_t pkhash;
     uint64_t kingAttackers;
+    uint64_t castleRooks;
     int castleRights;
     int epSquare;
     int fiftyMoveRule;
