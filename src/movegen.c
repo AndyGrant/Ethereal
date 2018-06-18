@@ -322,7 +322,7 @@ int isNotInCheck(Board* board, int colour){
     return !squareIsAttacked(board, colour, kingsq);
 }
 
-bool squareIsAttacked(Board* board, int colour, int sq){
+int squareIsAttacked(Board* board, int colour, int sq){
 
     uint64_t friendly = board->colours[ colour];
     uint64_t enemy    = board->colours[!colour];

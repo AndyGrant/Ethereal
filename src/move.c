@@ -77,11 +77,6 @@ void applyMove(Board *board, uint16_t move, Undo *undo) {
 
     // Need king attackers to verify move legality
     board->kingAttackers = attackersToKingSquare(board);
-
-    if (!consistentCastle(board)) {
-        printBoard(board);
-        assert(false);
-    }
 }
 
 void applyNormalMove(Board *board, uint16_t move, Undo *undo) {
@@ -109,7 +104,7 @@ void applyNormalMove(Board *board, uint16_t move, Undo *undo) {
     board->squares[to]   = fromPiece;
     undo->capturePiece   = toPiece;
 
-    board->castleRooks &= board->castleRookMasks[from] & board->castleRookMasks[to];
+    board->castleRooks &= board->castleMoveMasks[from] & board->castleMoveMasks[to];
     board->castleRights &= CastleMask[from] & CastleMask[to];
 
     board->psqtmat += PSQT[fromPiece][to]
@@ -161,7 +156,7 @@ void applyCastleMove(Board *board, uint16_t move, Undo *undo) {
     board->squares[rTo]   = rFromPiece;
 
     board->castleRights &= CastleMask[from];
-    board->castleRooks &= board->castleRookMasks[from];
+    board->castleRooks &= board->castleMoveMasks[from];
 
     board->psqtmat += PSQT[fromPiece][to]
                     - PSQT[fromPiece][from]
@@ -241,7 +236,7 @@ void applyPromotionMove(Board *board, uint16_t move, Undo *undo) {
     undo->capturePiece   = toPiece;
 
     board->castleRights &= CastleMask[to];
-    board->castleRooks &= board->castleRookMasks[to];
+    board->castleRooks &= board->castleMoveMasks[to];
 
     board->psqtmat += PSQT[promoPiece][to]
                     - PSQT[fromPiece][from]

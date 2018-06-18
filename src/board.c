@@ -92,36 +92,6 @@ void squareToString(int s, char *str) {
     *str++ = '\0';
 }
 
-bool consistentCastle(const Board *board)
-{
-    uint64_t rooks = board->castleRooks;
-
-    while (rooks) {
-        switch (poplsb(&rooks)) {
-        case 0:
-            if (!(board->castleRights & WHITE_QUEEN_RIGHTS))
-                return false;
-            break;
-        case 7:
-            if (!(board->castleRights & WHITE_KING_RIGHTS))
-                return false;
-            break;
-        case 56:
-            if (!(board->castleRights & BLACK_QUEEN_RIGHTS))
-                return false;
-            break;
-        case 63:
-            if (!(board->castleRights & BLACK_KING_RIGHTS))
-                return false;
-            break;
-        default:
-            return false;
-        }
-    }
-
-    return popcount(board->castleRights) == popcount(board->castleRooks);
-}
-
 void boardFromFEN(Board *board, const char *fen) {
 
     int s = 56;
@@ -170,18 +140,18 @@ void boardFromFEN(Board *board, const char *fen) {
         }
     }
 
-    assert(consistentCastle(board));
-
+    // Compute castleMoveMasks[]. This array of bitboard is used when playing moves, to update
+    // castling rights in a branchless manner (see move.c).
     for (s = 0; s < SQUARE_NB; s++) {
-        board->castleRookMasks[s] = (uint64_t)(-1);  // all squares
+        board->castleMoveMasks[s] = (uint64_t)(-1);  // all squares
 
         // If we land on a castleRook, remove it
         if (testBit(board->castleRooks, s))
-            clearBit(&board->castleRookMasks[s], s);
+            clearBit(&board->castleMoveMasks[s], s);
 
         // If we land on a king, remove castleRooks of the color of the king
         if (testBit(board->pieces[KING], s))
-            board->castleRookMasks[s] &= ~board->colours[pieceColour(board->squares[s])];
+            board->castleMoveMasks[s] &= ~board->colours[pieceColour(board->squares[s])];
     }
 
     uint64_t rooks = board->castleRooks;
@@ -299,7 +269,7 @@ void printBoard(Board *board) {
     }
 }
 
-uint64_t perft(Board *board, int ply, int depth) {
+uint64_t perft(Board *board, int depth){
 
     Undo undo[1];
     int size = 0;
@@ -312,15 +282,9 @@ uint64_t perft(Board *board, int ply, int depth) {
 
     // Recurse on all valid moves
     for(size -= 1; size >= 0; size--){
-        if (ply == 0) {
-            char str[6];
-            moveToString(moves[size], str);
-            puts(str);
-        }
-
         applyMove(board, moves[size], undo);
         if (isNotInCheck(board, !board->turn))
-            found += perft(board, ply+1, depth-1);
+            found += perft(board, depth-1);
         revertMove(board, moves[size], undo);
     }
 
