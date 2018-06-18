@@ -16,10 +16,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _HISTORY_H
-#define _HISTORY_H
+#pragma once
+
+#include <stdint.h>
+
+#include "types.h"
 
 void updateHistory(HistoryTable history, uint16_t move, int colour, int delta);
 int getHistoryScore(HistoryTable history, uint16_t move, int colour);
 
-#endif
+void updateCounterMove(Thread *thread, int height, uint16_t move);
+uint16_t getCounterMove(Thread *thread, int height);

@@ -87,7 +87,7 @@ static inline int makePiece(int pt, int c) {
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
 #define MAX(A, B) ((A) > (B) ? (A) : (B))
 
-// Structs used in any source file
+// Forward definition of all structs
 
 typedef struct Board Board;
 typedef struct Undo Undo;
@@ -107,7 +107,8 @@ typedef struct PawnKingTable PawnKingTable;
 typedef struct Limits Limits;
 typedef struct ThreadsGo ThreadsGo;
 
-// We define some simple renamings here
+// Renamings, currently for move ordering
 
 typedef uint16_t KillerTable[MAX_PLY][2];
+typedef uint16_t CounterMoveTable[COLOUR_NB][PIECE_NB][SQUARE_NB];
 typedef int16_t HistoryTable[COLOUR_NB][SQUARE_NB][SQUARE_NB];
