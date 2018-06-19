@@ -33,9 +33,6 @@
 #define BLACK_KING_RIGHTS     (4)
 #define BLACK_QUEEN_RIGHTS    (8)
 
-int castleGetRookFrom(int from, int to);
-int castleGetRookTo(int from, int to);
-
 extern const int CastleMask[SQUARE_NB];
 
 #endif

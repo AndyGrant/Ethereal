@@ -32,6 +32,12 @@
 #include "types.h"
 #include "zorbist.h"
 
+static int castleRookFrom(const Board *board, int from, int to) {
+    static const uint64_t FirstRank[COLOUR_NB] = {RANK_1, RANK_8};
+    const uint64_t rooks = board->castleRooks & FirstRank[board->turn];
+    return to > from ? getmsb(rooks) : getlsb(rooks);
+}
+
 void applyMove(Board *board, uint16_t move, Undo *undo) {
 
     static void (*table[4])(Board*, uint16_t, Undo*) = {
@@ -137,8 +143,8 @@ void applyCastleMove(Board *board, uint16_t move, Undo *undo) {
     const int from = MoveFrom(move);
     const int to = MoveTo(move);
 
-    const int rFrom = castleGetRookFrom(from, to);
-    const int rTo = castleGetRookTo(from, to);
+    const int rFrom = castleRookFrom(board, from, to);
+    const int rTo = to > from ? to - 1 : to + 1;
 
     const int fromPiece = makePiece(KING, board->turn);
     const int rFromPiece = makePiece(ROOK, board->turn);
@@ -298,8 +304,8 @@ void revertMove(Board *board, uint16_t move, Undo *undo) {
 
     else if (MoveType(move) == CASTLE_MOVE){
 
-        const int rFrom = castleGetRookFrom(from, to);
-        const int rTo = castleGetRookTo(from, to);
+        const int rFrom = castleRookFrom(board, from, to);
+        const int rTo = to > from ? to - 1 : to + 1;
 
         board->pieces[KING]         ^= (1ull << from) ^ (1ull << to);
         board->colours[board->turn] ^= (1ull << from) ^ (1ull << to);
