@@ -22,9 +22,9 @@
 #include "attacks.h"
 #include "board.h"
 #include "bitboards.h"
-#include "castle.h"
 #include "evaluate.h"
 #include "history.h"
+#include "masks.h"
 #include "move.h"
 #include "movegen.h"
 #include "movepicker.h"
@@ -323,41 +323,37 @@ int moveIsPsuedoLegal(Board* board, uint16_t move){
         if (board->kingAttackers)
             return 0;
 
-        // Castling is hard to verify directly, so just generate
-        // the possible castling options, and check equality
+        assert(type == CASTLE_MOVE);
 
-        if (colour == WHITE){
+        // Filter-out the easy cases
+        const uint64_t rooks = friendly & board->castleRooks;
 
-            if (  ((occupied & WHITE_CASTLE_KING_SIDE_MAP) == 0ull)
-                && (board->castleRights & WHITE_KING_RIGHTS)
-                &&  MoveMake(4, 6, CASTLE_MOVE) == move
-                && !squareIsAttacked(board, WHITE, 5))
-                return 1;
+        if (!rooks || rankOf(from) != 7 * colour || rankOf(to) != 7 * colour
+            || (fileOf(to) != 2 && fileOf(to) != 6))
+            return false;
 
-            if (  ((occupied & WHITE_CASTLE_QUEEN_SIDE_MAP) == 0ull)
-                && (board->castleRights & WHITE_QUEEN_RIGHTS)
-                &&  MoveMake(4, 2, CASTLE_MOVE) == move
-                && !squareIsAttacked(board, WHITE, 3))
-                return 1;
+        const int rook = to > from ? getmsb(rooks) : getlsb(rooks);
+
+        if ((to > from) != (rook > from))
+            return false;  // left castle with the right rook, or vice-versa
+        else {
+            const int rookTo = to > from ? to - 1 : to + 1;
+            const uint64_t mask = (bitsBetweenMasks(from, to) | bitsBetweenMasks(rook, rookTo))
+                & ~((1ULL << from) | (1ULL << rook));
+
+            if (occupied & mask)
+                return false;  // pieces in the way
+            else  {
+                uint64_t b = bitsBetweenMasks(from, to);
+
+                while (b)
+                    if (squareIsAttacked(board, board->turn, poplsb(&b)))
+                        return false;  // king walks through an attacked square
+            }
         }
 
-        if (colour == BLACK){
-
-            if (  ((occupied & BLACK_CASTLE_KING_SIDE_MAP) == 0ull)
-                && (board->castleRights & BLACK_KING_RIGHTS)
-                &&  MoveMake(60, 62, CASTLE_MOVE) == move
-                && !squareIsAttacked(board, BLACK, 61))
-                return 1;
-
-            if (  ((occupied & BLACK_CASTLE_QUEEN_SIDE_MAP) == 0ull)
-                && (board->castleRights & BLACK_QUEEN_RIGHTS)
-                &&  MoveMake(60, 58, CASTLE_MOVE) == move
-                && !squareIsAttacked(board, BLACK, 59))
-                return 1;
-        }
-
-        // No such castle was found via generation
-        return 0;
+        // No problem found while checking castling rules
+        return true;
     }
 
     // The colour check should (assuming board->squares only contains pieces

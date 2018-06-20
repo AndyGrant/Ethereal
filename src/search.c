@@ -29,7 +29,6 @@
 #include "attacks.h"
 #include "bitboards.h"
 #include "board.h"
-#include "castle.h"
 #include "evaluate.h"
 #include "fathom/tbprobe.h"
 #include "history.h"
