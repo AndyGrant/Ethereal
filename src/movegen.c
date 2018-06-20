@@ -22,7 +22,6 @@
 #include "attacks.h"
 #include "board.h"
 #include "bitboards.h"
-#include "castle.h"
 #include "masks.h"
 #include "move.h"
 #include "movegen.h"

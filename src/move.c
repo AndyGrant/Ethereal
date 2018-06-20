@@ -23,7 +23,6 @@
 
 #include "bitboards.h"
 #include "board.h"
-#include "castle.h"
 #include "types.h"
 #include "masks.h"
 #include "move.h"
@@ -48,7 +47,6 @@ void applyMove(Board *board, uint16_t move, Undo *undo) {
     undo->hash = board->hash;
     undo->pkhash = board->pkhash;
     undo->kingAttackers = board->kingAttackers;
-    undo->castleRights = board->castleRights;
     undo->castleRooks = board->castleRooks;
     undo->epSquare = board->epSquare;
     undo->fiftyMoveRule = board->fiftyMoveRule;
@@ -111,7 +109,6 @@ void applyNormalMove(Board *board, uint16_t move, Undo *undo) {
     undo->capturePiece   = toPiece;
 
     board->castleRooks &= board->castleMoveMasks[from] & board->castleMoveMasks[to];
-    board->castleRights &= CastleMask[from] & CastleMask[to];
 
     board->psqtmat += PSQT[fromPiece][to]
                    -  PSQT[fromPiece][from]
@@ -161,7 +158,6 @@ void applyCastleMove(Board *board, uint16_t move, Undo *undo) {
     board->squares[rFrom] = EMPTY;
     board->squares[rTo]   = rFromPiece;
 
-    board->castleRights &= CastleMask[from];
     board->castleRooks &= board->castleMoveMasks[from];
 
     board->psqtmat += PSQT[fromPiece][to]
@@ -241,7 +237,6 @@ void applyPromotionMove(Board *board, uint16_t move, Undo *undo) {
     board->squares[to]   = promoPiece;
     undo->capturePiece   = toPiece;
 
-    board->castleRights &= CastleMask[to];
     board->castleRooks &= board->castleMoveMasks[to];
 
     board->psqtmat += PSQT[promoPiece][to]
@@ -280,7 +275,6 @@ void revertMove(Board *board, uint16_t move, Undo *undo) {
     board->hash = undo->hash;
     board->pkhash = undo->pkhash;
     board->kingAttackers = undo->kingAttackers;
-    board->castleRights = undo->castleRights;
     board->castleRooks = undo->castleRooks;
     board->epSquare = undo->epSquare;
     board->fiftyMoveRule = undo->fiftyMoveRule;

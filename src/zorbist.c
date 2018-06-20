@@ -22,7 +22,6 @@
 #include <assert.h>
 #include <time.h>
 
-#include "castle.h"
 #include "types.h"
 #include "zorbist.h"
 
@@ -46,28 +45,6 @@ void initializeZorbist(){
     for (p = 0; p < 8; p++)
         ZorbistKeys[ENPASS][p] = rand64();
 
-    // Fill ZorbistKeys for the state of the castle rights
-    ZorbistKeys[CASTLE][WHITE_KING_RIGHTS ] = rand64();
-    ZorbistKeys[CASTLE][WHITE_QUEEN_RIGHTS] = rand64();
-    ZorbistKeys[CASTLE][BLACK_KING_RIGHTS ] = rand64();
-    ZorbistKeys[CASTLE][BLACK_QUEEN_RIGHTS] = rand64();
-
-    // Set each location as a combination of the four we just defined
-    for (p = 0; p < 16; p++){
-
-        if (p & WHITE_KING_RIGHTS)
-            ZorbistKeys[CASTLE][p] ^= ZorbistKeys[CASTLE][WHITE_KING_RIGHTS];
-
-        if (p & WHITE_QUEEN_RIGHTS)
-            ZorbistKeys[CASTLE][p] ^= ZorbistKeys[CASTLE][WHITE_QUEEN_RIGHTS];
-
-        if (p & BLACK_KING_RIGHTS)
-            ZorbistKeys[CASTLE][p] ^= ZorbistKeys[CASTLE][BLACK_KING_RIGHTS];
-
-        if (p & BLACK_QUEEN_RIGHTS)
-            ZorbistKeys[CASTLE][p] ^= ZorbistKeys[CASTLE][BLACK_QUEEN_RIGHTS];
-    }
-
     // Fill in the key for side to move
     ZorbistKeys[TURN][0] = rand64();
 
@@ -79,14 +56,9 @@ void initializeZorbist(){
         PawnKingKeys[BLACK_KING][s] = ZorbistKeys[BLACK_KING][s];
     }
 
+    // Zobrist keys for castle rooks
     for (s = 0; s < SQUARE_NB; s++)
         ZobristCastle[s] = rand64();
-
-    // FIXME: Remove once FRC is merged
-    ZobristCastle[0] = ZorbistKeys[CASTLE][WHITE_QUEEN_RIGHTS];
-    ZobristCastle[7] = ZorbistKeys[CASTLE][WHITE_KING_RIGHTS];
-    ZobristCastle[56] = ZorbistKeys[CASTLE][BLACK_QUEEN_RIGHTS];
-    ZobristCastle[63] = ZorbistKeys[CASTLE][BLACK_KING_RIGHTS];
 }
 
 uint64_t rand64(){

@@ -26,7 +26,6 @@
 #include "attacks.h"
 #include "bitboards.h"
 #include "board.h"
-#include "castle.h"
 #include "masks.h"
 #include "psqt.h"
 #include "search.h"
@@ -125,19 +124,14 @@ void boardFromFEN(Board *board, const char *fen) {
     token = strtok_r(NULL, " ", &strPos);
 
     while ((ch = *token++)) {
-        if (ch =='K') {
-            board->castleRights |= WHITE_KING_RIGHTS;
+        if (ch =='K')
             setBit(&board->castleRooks, getmsb(board->colours[WHITE] & board->pieces[ROOK]));
-        } else if (ch == 'Q') {
-            board->castleRights |= WHITE_QUEEN_RIGHTS;
+        else if (ch == 'Q')
             setBit(&board->castleRooks, getlsb(board->colours[WHITE] & board->pieces[ROOK]));
-        } else if (ch == 'k') {
-            board->castleRights |= BLACK_KING_RIGHTS;
+        else if (ch == 'k')
             setBit(&board->castleRooks, getmsb(board->colours[BLACK] & board->pieces[ROOK]));
-        } else if (ch == 'q') {
-            board->castleRights |= BLACK_QUEEN_RIGHTS;
+        else if (ch == 'q')
             setBit(&board->castleRooks, getlsb(board->colours[BLACK] & board->pieces[ROOK]));
-        }
     }
 
     // Compute castleMoveMasks[]. This array of bitboard is used when playing moves, to update
