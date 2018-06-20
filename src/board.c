@@ -132,6 +132,10 @@ void boardFromFEN(Board *board, const char *fen) {
             setBit(&board->castleRooks, getmsb(board->colours[BLACK] & board->pieces[ROOK]));
         else if (ch == 'q')
             setBit(&board->castleRooks, getlsb(board->colours[BLACK] & board->pieces[ROOK]));
+        else if ('A' <= ch && ch <= 'H')
+            setBit(&board->castleRooks, square(0, ch - 'A'));
+        else if ('a' <= ch && ch <= 'h')
+            setBit(&board->castleRooks, square(7, ch - 'a'));
     }
 
     // Compute castleMoveMasks[]. This array of bitboard is used when playing moves, to update
