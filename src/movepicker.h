@@ -30,18 +30,19 @@ enum {
 };
 
 struct MovePicker {
+    int height;
     int skipQuiets, stage, split;
     int noisySize, quietSize;
     uint16_t tableMove, killer1, killer2, counter;
     uint16_t moves[MAX_MOVES];
     int values[MAX_MOVES];
-    HistoryTable* history;
+    Thread *thread;
 };
 
 void initializeMovePicker(MovePicker* mp, Thread* thread, uint16_t ttMove, int height, int skipQuiets);
 uint16_t selectNextMove(MovePicker* mp, Board* board);
-void evaluateNoisyMoves(MovePicker* mp, Board* board);
-void evaluateQuietMoves(MovePicker* mp, Board* board);
+void evaluateNoisyMoves(MovePicker* mp);
+void evaluateQuietMoves(MovePicker* mp);
 int moveIsPsuedoLegal(Board* board, uint16_t move);
 
 #endif

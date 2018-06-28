@@ -22,8 +22,11 @@
 
 #include "types.h"
 
-void updateHistory(HistoryTable history, uint16_t move, int colour, int delta);
-int getHistoryScore(HistoryTable history, uint16_t move, int colour);
+int getHistoryScore(Thread *thread, uint16_t move);
+void updateHistory(Thread *thread, uint16_t move, int delta);
 
-void updateCounterMove(Thread *thread, int height, uint16_t move);
+int getCMHistoryScore(Thread *thread, int height, uint16_t move);
+void updateCMHistory(Thread *thread, int height, uint16_t move, int delta);
+
 uint16_t getCounterMove(Thread *thread, int height);
+void updateCounterMove(Thread *thread, int height, uint16_t move);

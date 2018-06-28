@@ -33,6 +33,7 @@
 #include "thread.h"
 
 void initializeMovePicker(MovePicker* mp, Thread* thread, uint16_t ttMove, int height, int skipQuiets){
+    mp->height     = height;
     mp->skipQuiets = skipQuiets;
     mp->stage      = STAGE_TABLE;
     mp->noisySize  = 0;
@@ -41,7 +42,7 @@ void initializeMovePicker(MovePicker* mp, Thread* thread, uint16_t ttMove, int h
     mp->killer1    = thread->killers[height][0];
     mp->killer2    = thread->killers[height][1];
     mp->counter    = getCounterMove(thread, height);
-    mp->history    = &thread->history;
+    mp->thread     = thread;
 }
 
 uint16_t selectNextMove(MovePicker* mp, Board* board){
@@ -67,7 +68,7 @@ uint16_t selectNextMove(MovePicker* mp, Board* board){
             // us to use a BAD_NOISY stage, if we so desired.
 
             genAllNoisyMoves(board, mp->moves, &mp->noisySize);
-            evaluateNoisyMoves(mp, board);
+            evaluateNoisyMoves(mp);
             mp->split = mp->noisySize;
             mp->stage = STAGE_NOISY ;
 
@@ -147,7 +148,7 @@ uint16_t selectNextMove(MovePicker* mp, Board* board){
 
             // Generate and evaluate all quiet moves
             genAllQuietMoves(board, mp->moves + mp->split, &mp->quietSize);
-            evaluateQuietMoves(mp, board);
+            evaluateQuietMoves(mp);
             mp->stage = STAGE_QUIET;
 
             /* fallthrough */
@@ -194,40 +195,35 @@ uint16_t selectNextMove(MovePicker* mp, Board* board){
     }
 }
 
-void evaluateNoisyMoves(MovePicker* mp, Board* board){
+void evaluateNoisyMoves(MovePicker* mp){
 
-    uint16_t move;
-    int i, value;
     int fromType, toType;
 
-    for (i = 0; i < mp->noisySize; i++){
+    for (int i = 0; i < mp->noisySize; i++){
 
-        move     = mp->moves[i];
-        fromType = pieceType(board->squares[ MoveFrom(move)]);
-        toType   = pieceType(board->squares[MoveTo(move)]);
+        fromType = pieceType(mp->thread->board.squares[ MoveFrom(mp->moves[i])]);
+        toType   = pieceType(mp->thread->board.squares[MoveTo(mp->moves[i])]);
 
         // Use the standard MVV-LVA
-        value = PieceValues[toType][EG] - fromType;
+        mp->values[i] = PieceValues[toType][EG] - fromType;
 
         // A bonus is in order for queen promotions
-        if ((move & QUEEN_PROMO_MOVE) == QUEEN_PROMO_MOVE)
-            value += PieceValues[QUEEN][EG];
+        if ((mp->moves[i] & QUEEN_PROMO_MOVE) == QUEEN_PROMO_MOVE)
+            mp->values[i] += PieceValues[QUEEN][EG];
 
         // Enpass is a special case of MVV-LVA
-        else if (MoveType(move) == ENPASS_MOVE)
-            value = PieceValues[PAWN][EG] - PAWN;
-
-        mp->values[i] = value;
+        else if (MoveType(mp->moves[i]) == ENPASS_MOVE)
+            mp->values[i] = PieceValues[PAWN][EG] - PAWN;
     }
 }
 
-void evaluateQuietMoves(MovePicker* mp, Board* board){
+void evaluateQuietMoves(MovePicker* mp){
 
-    int i;
-
-    // Use the History score from the Butterfly Bitboards for sorting
-    for (i = mp->split; i < mp->split + mp->quietSize; i++)
-        mp->values[i] = getHistoryScore(*mp->history, mp->moves[i], board->turn);
+    // Use the History score from the Butterfly History,
+    // and the counter move history to sort the quiet moves
+    for (int i = mp->split; i < mp->split + mp->quietSize; i++)
+        mp->values[i] = getHistoryScore(mp->thread, mp->moves[i])
+                      + getCMHistoryScore(mp->thread, mp->height, mp->moves[i]);
 }
 
 int moveIsPsuedoLegal(Board* board, uint16_t move){

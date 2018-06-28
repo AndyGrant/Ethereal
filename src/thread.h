@@ -52,8 +52,9 @@ struct Thread {
 
     KillerTable killers;
     HistoryTable history;
-    PawnKingTable pktable;
+    CMHistoryTable cmhistory;
     CounterMoveTable cmtable;
+    PawnKingTable pktable;
 };
 
 
