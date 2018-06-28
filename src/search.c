@@ -539,16 +539,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             &&  depth <= FutilityPruningDepth)
             break;
 
-        // Step 14. Counter Move Pruning. Moves with poor counter
-        // move history are pruned at near leaf nodes of the search.
-        if (   !PvNode
-            &&  isQuiet
-            &&  best > MATED_IN_MAX
-            &&  depth <= CounterMovePruningDepth
-            &&  getCMHistoryScore(thread, height, move) < -2048)
-            continue;
-
-        // Step 15. Late Move Pruning / Move Count Pruning. If we have
+        // Step 14. Late Move Pruning / Move Count Pruning. If we have
         // tried many quiets in this position already, and we don't expect
         // anything from this move, we can undo it and skip all remaining quiets
         if (   !PvNode
@@ -557,6 +548,15 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             &&  depth <= LateMovePruningDepth
             &&  quiets > LateMovePruningCounts[improving][depth])
             break;
+
+        // Step 15. Counter Move Pruning. Moves with poor counter
+        // move history are pruned at near leaf nodes of the search.
+        if (   !PvNode
+            &&  isQuiet
+            &&  best > MATED_IN_MAX
+            &&  depth <= CounterMovePruningDepth
+            &&  getCMHistoryScore(thread, height, move) < -2048)
+            continue;
 
         // Step 16. Static Exchange Evaluation Pruning. Prune moves which fail
         // to beat a depth dependent SEE threshold. The usual exceptions for
