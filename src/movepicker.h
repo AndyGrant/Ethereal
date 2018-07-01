@@ -23,24 +23,23 @@
 
 enum {
     STAGE_TABLE,
-    STAGE_GENERATE_NOISY, STAGE_NOISY,
+    STAGE_GENERATE_NOISY, STAGE_GOOD_NOISY,
     STAGE_KILLER_1, STAGE_KILLER_2, STAGE_COUNTER_MOVE,
     STAGE_GENERATE_QUIET, STAGE_QUIET,
+    STAGE_BAD_NOISY,
     STAGE_DONE,
 };
 
 struct MovePicker {
-    int height;
-    int skipQuiets, stage, split;
-    int noisySize, quietSize;
+    int stage, split, noisySize, quietSize, height;
     uint16_t tableMove, killer1, killer2, counter;
     uint16_t moves[MAX_MOVES];
     int values[MAX_MOVES];
     Thread *thread;
 };
 
-void initializeMovePicker(MovePicker* mp, Thread* thread, uint16_t ttMove, int height, int skipQuiets);
-uint16_t selectNextMove(MovePicker* mp, Board* board);
+void initializeMovePicker(MovePicker* mp, Thread* thread, uint16_t ttMove, int height);
+uint16_t selectNextMove(MovePicker* mp, Board* board, int skipQuiets);
 void evaluateNoisyMoves(MovePicker* mp);
 void evaluateQuietMoves(MovePicker* mp);
 int moveIsPsuedoLegal(Board* board, uint16_t move);

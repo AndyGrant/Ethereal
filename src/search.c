@@ -257,7 +257,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     int quiets = 0, played = 0, cmhist = 0, hist = 0;
     int ttHit, ttValue = 0, ttEval = 0, ttDepth = 0, ttBound = 0;
     int i, reps, R, newDepth, rAlpha, rBeta, oldAlpha = alpha;
-    int inCheck, isQuiet, improving, extension;
+    int inCheck, isQuiet, improving, extension, skipQuiets = 0;
     int eval, value = -MATE, best = -MATE, futilityMargin = -MATE;
     uint16_t move, ttMove = NONE_MOVE, bestMove = NONE_MOVE, quietsTried[MAX_MOVES];
 
@@ -469,9 +469,9 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
 
         rBeta = MIN(beta + ProbCutMargin, MATE - MAX_PLY - 1);
 
-        initializeMovePicker(&movePicker, thread, NONE_MOVE, height, 1);
+        initializeMovePicker(&movePicker, thread, NONE_MOVE, height);
 
-        while ((move = selectNextMove(&movePicker, board)) != NONE_MOVE){
+        while ((move = selectNextMove(&movePicker, board, 1)) != NONE_MOVE){
 
             // Move should pass an SEE() to be worth at least rBeta
             if (!staticExchangeEvaluation(board, move, rBeta - eval))
@@ -517,8 +517,8 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
 
     // Step 12. Initialize the Move Picker and being searching through each
     // move one at a time, until we run out or a move generates a cutoff
-    initializeMovePicker(&movePicker, thread, ttMove, height, 0);
-    while ((move = selectNextMove(&movePicker, board)) != NONE_MOVE){
+    initializeMovePicker(&movePicker, thread, ttMove, height);
+    while ((move = selectNextMove(&movePicker, board, skipQuiets)) != NONE_MOVE){
 
         // If this move is quiet we will save it to a list of attemped quiets.
         // Also lookup the history score, as we will in most cases need it.
@@ -536,8 +536,10 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             &&  best > MATED_IN_MAX
             && (hist < 6000 || !improving)
             &&  futilityMargin <= alpha
-            &&  depth <= FutilityPruningDepth)
-            break;
+            &&  depth <= FutilityPruningDepth){
+            skipQuiets = 1;
+            continue;
+         }
 
         // Step 14. Late Move Pruning / Move Count Pruning. If we have
         // tried many quiets in this position already, and we don't expect
@@ -546,8 +548,10 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             &&  isQuiet
             &&  best > MATED_IN_MAX
             &&  depth <= LateMovePruningDepth
-            &&  quiets > LateMovePruningCounts[improving][depth])
-            break;
+            &&  quiets > LateMovePruningCounts[improving][depth]){
+            skipQuiets = 1;
+            continue;
+        }
 
         // Step 15. Counter Move Pruning. Moves with poor counter
         // move history are pruned at near leaf nodes of the search.
@@ -756,8 +760,8 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
 
     // Step 5. Move Generation and Looping. Generate all tactical moves for this
     // position (includes Captures, Promotions, and Enpass) and try them
-    initializeMovePicker(&movePicker, thread, NONE_MOVE, height, 1);
-    while ((move = selectNextMove(&movePicker, board)) != NONE_MOVE){
+    initializeMovePicker(&movePicker, thread, NONE_MOVE, height);
+    while ((move = selectNextMove(&movePicker, board, 1)) != NONE_MOVE){
 
         // Step 6. Futility Pruning. Similar to Delta Pruning, if this capture in the
         // best case would still fail to beat alpha minus some margin, we can skip it
@@ -993,8 +997,8 @@ int moveIsSingular(Thread* thread, uint16_t ttMove, int ttValue, Undo* undo, int
     revertMove(board, ttMove, undo);
 
     // Iterate and check all moves other than the table move
-    initializeMovePicker(&movePicker, thread, NONE_MOVE, height, 0);
-    while ((move = selectNextMove(&movePicker, board)) != NONE_MOVE){
+    initializeMovePicker(&movePicker, thread, NONE_MOVE, height);
+    while ((move = selectNextMove(&movePicker, board, 0)) != NONE_MOVE){
 
         // Skip the table move
         if (move == ttMove) continue;
