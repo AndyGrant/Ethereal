@@ -183,6 +183,7 @@ const int PassedPawn[2][2][RANK_NB] = {
 const int ThreatPawnAttackedByOne    = S( -17, -27);
 const int ThreatMinorAttackedByPawn  = S( -73, -54);
 const int ThreatMinorAttackedByMajor = S( -43, -41);
+const int ThreatRookAttackedByOne    = S( -20, -10);
 const int ThreatQueenAttackedByOne   = S( -84,   3);
 const int ThreatOverloadedPieces     = S(  -7, -19);
 const int ThreatByPawnPush           = S(  12,  15);
@@ -767,6 +768,11 @@ int evaluateThreats(EvalInfo *ei, Board *board, int colour) {
     count = popcount((knights | bishops) & ~ei->attacked[US] & attacksByMajors);
     eval += count * ThreatMinorAttackedByMajor;
     if (TRACE) T.ThreatMinorAttackedByMajor[US] += count;
+
+    // Penalty for any threat against our rooks
+    count = popcount(rooks & ei->attacked[THEM]);
+    eval += count * ThreatRookAttackedByOne;
+    if (TRACE) T.ThreatRookAttackedByOne[US] += count;
 
     // Penalty for any threat against our queens
     count = popcount(queens & ei->attacked[THEM]);
