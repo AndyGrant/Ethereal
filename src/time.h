@@ -25,8 +25,6 @@ double getRealTime();
 
 double elapsedTime(SearchInfo* info);
 
-double estimatedUsage(SearchInfo* info);
-
 void initializeTimeManagment(SearchInfo* info, Limits* limits);
 
 #endif

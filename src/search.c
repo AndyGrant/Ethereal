@@ -188,8 +188,7 @@ void* iterativeDeepening(void* vthread){
         if (   (limits->limitedByDepth && depth >= limits->depthLimit)
             || (limits->limitedByTime  && elapsedTime(info) > limits->timeLimit)
             || (limits->limitedBySelf  && elapsedTime(info) > info->idealUsage)
-            || (limits->limitedBySelf  && elapsedTime(info) > info->maxUsage)
-            || (limits->limitedBySelf  && elapsedTime(info) + estimatedUsage(info) > info->maxUsage))
+            || (limits->limitedBySelf  && elapsedTime(info) > info->maxUsage))
             break;
     }
 

@@ -54,16 +54,6 @@ double elapsedTime(SearchInfo* info){
 
 }
 
-double estimatedUsage(SearchInfo* info){
-
-    const int depth = info->depth;
-
-    double timeFactor = info->timeUsage[depth] / MAX(1, info->timeUsage[depth-1]);
-
-    return info->timeUsage[depth] * (timeFactor + .40);
-
-}
-
 void initializeTimeManagment(SearchInfo* info, Limits* limits){
 
     info->startTime = limits->start; // Save off the start time of the search
