@@ -75,6 +75,7 @@ extern const int PassedPawn[2][2][RANK_NB];
 extern const int ThreatPawnAttackedByOne;
 extern const int ThreatMinorAttackedByPawn;
 extern const int ThreatMinorAttackedByMajor;
+extern const int ThreatRookAttackedByLesser;
 extern const int ThreatQueenAttackedByOne;
 extern const int ThreatOverloadedPieces;
 extern const int ThreatByPawnPush;
@@ -332,6 +333,7 @@ void initCoefficients(int coeffs[NTERMS]) {
     if (TuneThreatPawnAttackedByOne     ) INIT_COEFF_0(ThreatPawnAttackedByOne)     ;
     if (TuneThreatMinorAttackedByPawn   ) INIT_COEFF_0(ThreatMinorAttackedByPawn)   ;
     if (TuneThreatMinorAttackedByMajor  ) INIT_COEFF_0(ThreatMinorAttackedByMajor)  ;
+    if (TuneThreatRookAttackedByLesser  ) INIT_COEFF_0(ThreatRookAttackedByLesser)  ;
     if (TuneThreatQueenAttackedByOne    ) INIT_COEFF_0(ThreatQueenAttackedByOne)    ;
     if (TuneThreatOverloadedPieces      ) INIT_COEFF_0(ThreatOverloadedPieces)      ;
     if (TuneThreatByPawnPush            ) INIT_COEFF_0(ThreatByPawnPush)            ;
@@ -378,6 +380,7 @@ void initCurrentParameters(double cparams[NTERMS][PHASE_NB]) {
     if (TuneThreatPawnAttackedByOne     ) INIT_PARAM_0(ThreatPawnAttackedByOne)     ;
     if (TuneThreatMinorAttackedByPawn   ) INIT_PARAM_0(ThreatMinorAttackedByPawn)   ;
     if (TuneThreatMinorAttackedByMajor  ) INIT_PARAM_0(ThreatMinorAttackedByMajor)  ;
+    if (TuneThreatRookAttackedByLesser  ) INIT_COEFF_0(ThreatRookAttackedByLesser)  ;
     if (TuneThreatQueenAttackedByOne    ) INIT_PARAM_0(ThreatQueenAttackedByOne)    ;
     if (TuneThreatOverloadedPieces      ) INIT_PARAM_0(ThreatOverloadedPieces)      ;
     if (TuneThreatByPawnPush            ) INIT_PARAM_0(ThreatByPawnPush)            ;
@@ -432,6 +435,7 @@ void printParameters(double params[NTERMS][PHASE_NB], double cparams[NTERMS][PHA
     if (TuneThreatPawnAttackedByOne     ) PRINT_PARAM_0(ThreatPawnAttackedByOne)    ;
     if (TuneThreatMinorAttackedByPawn   ) PRINT_PARAM_0(ThreatMinorAttackedByPawn)  ;
     if (TuneThreatMinorAttackedByMajor  ) PRINT_PARAM_0(ThreatMinorAttackedByMajor) ;
+    if (TuneThreatRookAttackedByLesser  ) INIT_COEFF_0(ThreatRookAttackedByLesser)  ;
     if (TuneThreatQueenAttackedByOne    ) PRINT_PARAM_0(ThreatQueenAttackedByOne)   ;
     if (TuneThreatOverloadedPieces      ) PRINT_PARAM_0(ThreatOverloadedPieces)     ;
     if (TuneThreatByPawnPush            ) PRINT_PARAM_0(ThreatByPawnPush)           ;

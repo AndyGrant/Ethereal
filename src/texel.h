@@ -58,6 +58,7 @@
 #define TuneThreatPawnAttackedByOne    (0)
 #define TuneThreatMinorAttackedByPawn  (0)
 #define TuneThreatMinorAttackedByMajor (0)
+#define TuneThreatRookAttackedByLesser (0)
 #define TuneThreatQueenAttackedByOne   (0)
 #define TuneThreatOverloadedPieces     (0)
 #define TuneThreatByPawnPush           (0)
