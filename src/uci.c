@@ -18,6 +18,7 @@
 
 #include <inttypes.h>
 #include <pthread.h>
+#include <stdatomic.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +47,7 @@ extern int MoveOverhead; // Defined by Time.c
 
 extern unsigned TB_PROBE_DEPTH; // Defined by Syzygy.c
 
-extern volatile int ABORT_SIGNAL; // For killing active search
+extern atomic_int ABORT_SIGNAL; // For killing active search
 
 pthread_mutex_t READYLOCK = PTHREAD_MUTEX_INITIALIZER;
 
@@ -159,7 +160,7 @@ int main(int argc, char **argv) {
         }
 
         else if (stringEquals(str, "stop")){
-            ABORT_SIGNAL = 1;
+            atomic_store(&ABORT_SIGNAL, 1);
             pthread_join(pthreadsgo, NULL);
         }
 
