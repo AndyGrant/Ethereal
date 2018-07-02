@@ -21,7 +21,6 @@
 #include <math.h>
 #include <pthread.h>
 #include <setjmp.h>
-#include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,7 +47,7 @@
 
 int LMRTable[64][64]; // Late Move Reductions, LMRTable[depth][played]
 
-atomic_int ABORT_SIGNAL; // Global ABORT flag for threads
+volatile int ABORT_SIGNAL; // Global ABORT flag for threads
 
 pthread_mutex_t LOCK = PTHREAD_MUTEX_INITIALIZER; // Global LOCK for threads
 
@@ -62,7 +61,7 @@ void initSearch(){
 
 uint16_t getBestMove(Thread* threads, Board* board, Limits* limits){
 
-    atomic_store(&ABORT_SIGNAL, 0); // Clear the ABORT signal for the new search
+    ABORT_SIGNAL = 0; // Clear the ABORT signal for the new search
 
     updateTT(); // Table is on a new search, thus a new generation
 
@@ -193,8 +192,7 @@ void* iterativeDeepening(void* vthread){
             break;
     }
 
-    // Shutdown all helper threads
-    if (mainThread) atomic_store(&ABORT_SIGNAL, 1);
+    if (mainThread) ABORT_SIGNAL = 1;
 
     return NULL;
 }
@@ -285,8 +283,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         longjmp(thread->jbuffer, 1);
 
     // Step 1B. Check to see if the master thread finished
-    if (atomic_load_explicit(&ABORT_SIGNAL, memory_order_relaxed))
-        longjmp(thread->jbuffer, 1);
+    if (ABORT_SIGNAL) longjmp(thread->jbuffer, 1);
 
     // Step 2. Check for early exit conditions, including the fifty move rule,
     // mate distance pruning, max depth exceeded, or drawn by repitition. We
@@ -741,8 +738,7 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
         longjmp(thread->jbuffer, 1);
 
     // Step 1B. Check to see if the master thread finished
-    if (atomic_load_explicit(&ABORT_SIGNAL, memory_order_relaxed))
-        longjmp(thread->jbuffer, 1);
+    if (ABORT_SIGNAL) longjmp(thread->jbuffer, 1);
 
     // Step 2. Max Draft Cutoff. If we are at the maximum search draft,
     // then end the search here with a static eval of the current board
