@@ -25,7 +25,7 @@
 #define NTERMS     (      0) // # of Terms to tune
 #define NPOSITIONS (1491000) // # of FENs in book
 
-// Each Eval Term (Total = 487)
+// Each Eval Term (Total = 488)
 #define TunePawnValue                  (0)
 #define TuneKnightValue                (0)
 #define TuneBishopValue                (0)
