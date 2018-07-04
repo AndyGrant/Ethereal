@@ -562,12 +562,13 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             continue;
 
         // Step 16. Static Exchange Evaluation Pruning. Prune moves which fail
-        // to beat a depth dependent SEE threshold. The usual exceptions for
-        // positions in check, pvnodes, and MATED positions apply here as well.
+        // to beat a depth dependent SEE threshold. The use of movePicker.stage
+        // is a speedup, which assumes that good noisy moves have a positive SEE
         if (   !RootNode
             && !inCheck
             &&  depth <= SEEPruningDepth
             &&  best > MATED_IN_MAX
+            &&  movePicker.stage > STAGE_GOOD_NOISY
             && !staticExchangeEvaluation(board, move, SEEMargin * depth * depth))
             continue;
 
@@ -768,8 +769,10 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
             continue;
 
         // Step 8. Static Exchance Evaluation Pruning. If the move fails a generous
-        // SEE threadhold, then it is unlikely to be useful in improving our position
-        if (!staticExchangeEvaluation(board, move, QSEEMargin))
+        // SEE threadhold, then it is unlikely to be useful. The use of movePicker.stage
+        // is a speedup, which assumes that good noisy moves have a positive SEE
+        if (    movePicker.stage > STAGE_GOOD_NOISY
+            && !staticExchangeEvaluation(board, move, QSEEMargin))
             continue;
 
         // Apply and validate move before searching
