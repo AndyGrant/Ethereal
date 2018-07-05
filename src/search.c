@@ -406,21 +406,12 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
 
     // Step 7. Razoring. If a Quiescence Search for the current position
     // still falls way below alpha, we will assume that the score from
-    // the Quiescence search was sufficient. For depth 1, we will just
-    // return a Quiescence Search score because it is unlikely a quiet
-    // move would close the massive gap between the evaluation and alpha
+    // the Quiescence search was sufficient.
     if (   !PvNode
         && !inCheck
         &&  depth <= RazorDepth
-        &&  eval + RazorMargins[depth] < alpha){
-
-        if (depth <= 1)
-            return qsearch(thread, pv, alpha, beta, height);
-
-        rAlpha = alpha - RazorMargins[depth];
-        value = qsearch(thread, pv, rAlpha, rAlpha + 1, height);
-        if (value <= rAlpha) return value;
-    }
+        &&  eval + RazorMargin < alpha)
+        return qsearch(thread, pv, alpha, beta, height);
 
     // Step 8. Beta Pruning / Reverse Futility Pruning / Static Null
     // Move Pruning. If the eval is few pawns above beta then exit early
