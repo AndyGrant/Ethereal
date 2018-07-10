@@ -62,11 +62,11 @@ const int PieceValues[8][PHASE_NB] = {
 
 /* Pawn Evaluation Terms */
 
-const int PawnIsolated = S(  -3,  -4);
+const int PawnIsolated = S(  -3,  -1);
 
-const int PawnStacked = S( -10, -32);
+const int PawnStacked = S( -10, -34);
 
-const int PawnBackwards[2] = { S(   7,  -3), S( -11, -11) };
+const int PawnBackwards[2] = { S(   7,  -2), S( -10, -13) };
 
 const int PawnConnected32[32] = {
     S(   0,   0), S(   0,   0), S(   0,   0), S(   0,   0),
@@ -84,16 +84,16 @@ const int PawnConnected32[32] = {
 const int KnightOutpost[2] = { S(  24,   0), S(  36,   0) };
 
 const int KnightMobility[9] = {
-    S( -87, -97), S( -37, -90), S( -19, -42),
-    S(  -6, -14), S(   2, -14), S(   7,  -1),
-    S(  17,  -2), S(  32,  -3), S(  48, -33),
+    S( -91, -86), S( -36, -94), S( -19, -43), S(  -5, -15),
+    S(   3, -16), S(   8,   0), S(  18,  -3), S(  33,  -5),
+    S(  50, -44),
 };
 
 /* Bishop Evaluation Terms */
 
-const int BishopPair = S(  40,  69);
+const int BishopPair = S(  38,  69);
 
-const int BishopRammedPawns = S( -11,  -7);
+const int BishopRammedPawns = S( -11,  -8);
 
 const int BishopOutpost[2] = { S(  26,   0), S(  40,   0) };
 
@@ -121,19 +121,19 @@ const int RookMobility[15] = {
 
 const int QueenMobility[28] = {
     S( -61,-263), S(-217,-390), S( -48,-205), S( -36,-190),
-    S( -15,-126), S( -24, -66), S( -15, -91), S( -17, -83),
-    S( -13, -60), S( -10, -54), S(  -8, -28), S(  -6, -28),
-    S(  -6, -15), S(  -1, -10), S(   0,  -6), S(  -2,   4),
-    S(   3,  17), S(   0,  16), S(  11,  25), S(  -2,  25),
-    S(   4,  26), S(  18,  28), S(  13,   8), S(  39,  13),
-    S(  44,  20), S(  62,   1), S( -33,  -7), S(  14,   3),
+    S( -12,-132), S( -26, -69), S( -14, -91), S( -19, -76),
+    S( -12, -61), S( -10, -52), S(  -6, -29), S(  -5, -27),
+    S(  -7, -16), S(   0,  -9), S(   0,  -4), S(  -3,   3),
+    S(   5,  16), S(   0,  14), S(  12,  22), S(  -1,  19),
+    S(   0,  19), S(  20,  23), S(   5,  -1), S(  32,   5),
+    S(  35,  13), S(  58,  -6), S( -51, -19), S(   0,  -2),
 };
 
 /* King Evaluation Terms */
 
 const int KingDefenders[12] = {
-    S( -37,  -4), S( -18,   6), S(   0,   1), S(  10,   0),
-    S(  24,  -3), S(  35,   2), S(  39,  14), S(  28,-207),
+    S( -32,  -3), S( -15,   7), S(   0,   1), S(   9,  -1),
+    S(  23,  -6), S(  34,   3), S(  32,  12), S(  24,   0),
     S(  12,   6), S(  12,   6), S(  12,   6), S(  12,   6),
 };
 
@@ -185,7 +185,7 @@ const int ThreatMinorAttackedByPawn  = S( -73, -54);
 const int ThreatMinorAttackedByMajor = S( -43, -41);
 const int ThreatRookAttackedByLesser = S( -40, -20);
 const int ThreatQueenAttackedByOne   = S( -84,   3);
-const int ThreatOverloadedPieces     = S(  -7, -19);
+const int ThreatOverloadedPieces     = S(  -7, -23);
 const int ThreatByPawnPush           = S(  12,  15);
 
 /* General Evaluation Terms */
@@ -333,7 +333,7 @@ int evaluatePawns(EvalInfo *ei, Board *board, int colour) {
             setBit(&ei->passedPawns, sq);
 
         // Apply a penalty if the pawn is isolated
-        if (!(isolatedPawnMasks(sq) & tempPawns)) {
+        if (!(isolatedPawnMasks(sq) & myPawns)) {
             eval += PawnIsolated;
             if (TRACE) T.PawnIsolated[US]++;
         }
@@ -649,7 +649,7 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
 
         count += KSAttackValue     * scaledAttackCounts
                + KSWeakSquares     * popcount(weak & ei->kingAreas[US])
-               + KSFriendlyPawns   * popcount(myPawns & ei->kingAreas[US])
+               + KSFriendlyPawns   * popcount(myPawns & ei->kingAreas[US] & ~weak)
                + KSNoEnemyQueens   * !enemyQueens
                + KSSafeQueenCheck  * !!queenChecks
                + KSSafeRookCheck   * !!rookChecks
@@ -725,7 +725,6 @@ int evaluatePassedPawns(EvalInfo* ei, Board* board, int colour){
 int evaluateThreats(EvalInfo *ei, Board *board, int colour) {
 
     const int US = colour, THEM = !colour;
-    const uint64_t Rank3Relative = board->turn == WHITE ? RANK_3 : RANK_6; // BUG!
 
     int count, eval = 0;
 
@@ -748,10 +747,9 @@ int evaluateThreats(EvalInfo *ei, Board *board, int colour) {
                         & ei->attacked[  US] & ~ei->attackedBy2[  US]
                         & ei->attacked[THEM] & ~ei->attackedBy2[THEM];
 
-    // Pawn advances (single or double moves) which threaten an enemy piece.
+    // Pawn advances by a single square which threaten an enemy piece.
     // Exclude pawn moves to squares which are weak, or attacked by enemy pawns
     uint64_t pushThreat  = pawnAdvance(pawns, occupied, US);
-    pushThreat |= pawnAdvance(pushThreat & Rank3Relative, occupied, US);
     pushThreat &= ~attacksByPawns & (ei->attacked[US] | ~ei->attacked[THEM]);
     pushThreat  = pawnAttackSpan(pushThreat, enemy & ~ei->attackedBy[US][PAWN], US);
 
