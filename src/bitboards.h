@@ -64,6 +64,7 @@ int getlsb(uint64_t b);
 int getmsb(uint64_t b);
 int poplsb(uint64_t *b);
 bool several(uint64_t b);
+bool onlyOne(uint64_t b);
 
 void setBit(uint64_t *b, int i);
 void clearBit(uint64_t *b, int i);

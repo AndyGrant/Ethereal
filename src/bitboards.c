@@ -72,6 +72,10 @@ bool several(uint64_t b) {
     return b & (b - 1);
 }
 
+bool onlyOne(uint64_t b) {
+    return b && !several(b);
+}
+
 void setBit(uint64_t *b, int i) {
     assert(!testBit(*b, i));
     *b ^= 1ull << i;
