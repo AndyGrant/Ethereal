@@ -216,14 +216,14 @@ void initTexelEntries(TexelEntry *tes, Thread *thread) {
 
         // Prepare coefficients and get a WHITE POV eval
         T = EmptyTrace;
-        tes[i].eval = evaluateBoard(&thread->board, NULL);
+        tes[i].eval = evaluateBoard(&thread->board, &thread->pktable);
         if (thread->board.turn == BLACK) tes[i].eval *= -1;
 
         // Determine the game phase based on remaining material
         tes[i].phase = 24 - 4 * popcount(thread->board.pieces[QUEEN ])
                           - 2 * popcount(thread->board.pieces[ROOK  ])
-                          - 1 * popcount(thread->board.pieces[KNIGHT])
-                          - 1 * popcount(thread->board.pieces[BISHOP]);
+                          - 1 * popcount(thread->board.pieces[BISHOP])
+                          - 1 * popcount(thread->board.pieces[KNIGHT]);
 
         // Compute phase factors for updating the gradients
         tes[i].factors[MG] = 1 - tes[i].phase / 24.0;
