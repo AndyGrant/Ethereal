@@ -303,3 +303,29 @@ void runBenchmark(Thread *threads, int depth) {
     printf("Nodes : %"PRIu64"\n", nodes);
     printf("NPS   : %d\n", (int)(nodes / ((end - start) / 1000.0)));
 }
+
+int boardIsDrawn(Board *board, int height) {
+
+    int reps = 0;
+
+    // Fifty move rule triggered (BUG: We do not account for the case
+    // when the fifty move rule occurs as checkmate is delivered, which
+    // should not be considered a drawn position, but a checkmated one.
+    if (board->fiftyMoveRule > 99)
+        return 0;
+
+    for (int i = board->numMoves - 2; i >= 0; i -= 2) {
+
+        // No draw can occur before a zeroing move
+        if (i < board->numMoves - board->fiftyMoveRule)
+            break;
+
+        // Check for matching hash with a two fold after the root,
+        // or a three fold which occurs in part before the root move
+        if (    board->history[i] == board->hash
+            && (i > board->numMoves - height || ++reps == 2))
+            return 1;
+    }
+
+    return 0;
+}

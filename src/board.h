@@ -57,3 +57,5 @@ void boardToFEN(Board *board, char *fen);
 void printBoard(Board *board);
 uint64_t perft(Board *board, int depth);
 void runBenchmark(Thread *threads, int depth);
+
+int boardIsDrawn(Board *board, int height);

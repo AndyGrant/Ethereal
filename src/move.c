@@ -248,6 +248,7 @@ void applyNullMove(Board *board, Undo *undo) {
 
     undo->hash = board->hash;
     undo->epSquare = board->epSquare;
+    undo->fiftyMoveRule = board->fiftyMoveRule;
 
     board->turn = !board->turn;
     board->history[board->numMoves++] = NULL_MOVE;
@@ -257,6 +258,7 @@ void applyNullMove(Board *board, Undo *undo) {
         board->hash ^= ZorbistKeys[ENPASS][fileOf(board->epSquare)];
 
     board->epSquare = -1;
+    board->fiftyMoveRule += 1;
 }
 
 void revertMove(Board *board, uint16_t move, Undo *undo) {
@@ -348,6 +350,7 @@ void revertNullMove(Board *board, Undo *undo) {
     board->kingAttackers = 0ull;
     board->turn = !board->turn;
     board->epSquare = undo->epSquare;
+    board->fiftyMoveRule = undo->fiftyMoveRule;
     board->numMoves--;
 }
 
