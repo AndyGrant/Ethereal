@@ -746,16 +746,14 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     initializeMovePicker(&movePicker, thread, NONE_MOVE, height);
     while ((move = selectNextMove(&movePicker, board, 1)) != NONE_MOVE){
 
-        // Step 6. Futility Pruning. Similar to Delta Pruning, if this capture in the
+        // Step 6. Static Exchance Evaluation Pruning. All bad noisy moves
+        // have faild an SEE about zero. We will skip all such moves
+        if (movePicker.stage == STAGE_BAD_NOISY)
+            break;
+
+        // Step 7. Futility Pruning. Similar to Delta Pruning, if this capture in the
         // best case would still fail to beat alpha minus some margin, we can skip it
         if (eval + QFutilityMargin + thisTacticalMoveValue(board, move) < alpha)
-            continue;
-
-        // Step 8. Static Exchance Evaluation Pruning. If the move fails a generous
-        // SEE threadhold, then it is unlikely to be useful. The use of movePicker.stage
-        // is a speedup, which assumes that good noisy moves have a positive SEE
-        if (    movePicker.stage > STAGE_GOOD_NOISY
-            && !staticExchangeEvaluation(board, move, QSEEMargin))
             continue;
 
         // Apply and validate move before searching
@@ -822,7 +820,7 @@ int staticExchangeEvaluation(Board* board, uint16_t move, int threshold){
     if (balance < 0) return 0;
 
     // Worst case is losing the moved piece
-    balance -= PieceValues[nextVictim][MG];
+    balance -= SEEPieceValues[nextVictim];
     if (balance >= 0) return 1;
 
     // Grab sliders for updating revealed attackers
@@ -870,7 +868,7 @@ int staticExchangeEvaluation(Board* board, uint16_t move, int threshold){
         colour = !colour;
 
         // Negamax the balance and add the value of the next victim
-        balance = -balance - 1 - PieceValues[nextVictim][MG];
+        balance = -balance - 1 - SEEPieceValues[nextVictim];
 
         // If the balance is non negative after giving away our piece then we win
         if (balance >= 0){
@@ -916,53 +914,38 @@ int valueToTT(int value, int height){
 
 int thisTacticalMoveValue(Board* board, uint16_t move){
 
-    int value = PieceValues[pieceType(board->squares[MoveTo(move)])][MG];
+    int value = SEEPieceValues[pieceType(board->squares[MoveTo(move)])];
 
     if (MoveType(move) == PROMOTION_MOVE)
-        value += PieceValues[MovePromoPiece(move)][MG] - PieceValues[PAWN][MG];
+        value += SEEPieceValues[MovePromoPiece(move)] - SEEPieceValues[PAWN];
 
     if (MoveType(move) == ENPASS_MOVE)
-        value += PieceValues[PAWN][MG];
+        value += SEEPieceValues[PAWN];
 
     return value;
 }
 
 int bestTacticalMoveValue(Board* board){
 
-    int value = 0;
+    int value = SEEPieceValues[PAWN];
 
     // Look at enemy pieces we might try to capture
     uint64_t targets = board->colours[!board->turn];
 
-    // We may have a queen capture
-    if (targets & board->pieces[QUEEN])
-        value += PieceValues[QUEEN][MG];
-
-    // We may have a rook capture
-    else if (targets & board->pieces[ROOK])
-        value += PieceValues[ROOK][MG];
-
-    // We may have a minor capture
-    else if (targets & (board->pieces[KNIGHT] | board->pieces[BISHOP]))
-        value += MAX(
-            !!(targets & board->pieces[KNIGHT]) * PieceValues[KNIGHT][MG],
-            !!(targets & board->pieces[BISHOP]) * PieceValues[BISHOP][MG]
-        );
-
-    // We may have a pawn capture
-    else if (targets & board->pieces[PAWN])
-        value += PieceValues[PAWN][MG];
-
-    // We may have an enpass capture
-    else if (board->epSquare != -1)
-        value += PieceValues[PAWN][MG];
+    // Look for our strongest possible target on the board
+    for (int piece = QUEEN; piece > PAWN; piece--) {
+        if (targets & board->pieces[piece]) {
+            value = SEEPieceValues[piece];
+            break;
+        }
+    }
 
     // See if we have any pawns on promoting ranks. If so, assume that
     // we can promote one of our pawns to at least a queen
     if (   board->pieces[PAWN]
         &  board->colours[board->turn]
         & (board->turn == WHITE ? RANK_7 : RANK_2))
-        value += PieceValues[QUEEN][MG] - PieceValues[PAWN][MG];
+        value += SEEPieceValues[QUEEN] - SEEPieceValues[PAWN];
 
     return value;
 }
