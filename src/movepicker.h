@@ -40,6 +40,7 @@ struct MovePicker {
 
 void initializeMovePicker(MovePicker* mp, Thread* thread, uint16_t ttMove, int height);
 uint16_t selectNextMove(MovePicker* mp, Board* board, int skipQuiets);
+int getBestMoveIndex(MovePicker *mp, int start, int end);
 void evaluateNoisyMoves(MovePicker* mp);
 void evaluateQuietMoves(MovePicker* mp);
 int moveIsPsuedoLegal(Board* board, uint16_t move);

@@ -52,7 +52,7 @@ void initializeMovePicker(MovePicker* mp, Thread* thread, uint16_t ttMove, int h
 
 uint16_t selectNextMove(MovePicker* mp, Board* board, int skipQuiets){
 
-    int i, best;
+    int best;
     uint16_t bestMove;
 
     switch (mp->stage){
@@ -85,32 +85,38 @@ uint16_t selectNextMove(MovePicker* mp, Board* board, int skipQuiets){
         // Check to see if there are still more noisy moves
         if (mp->noisySize != 0){
 
-            // Find highest scoring move
-            for (best = 0, i = 1; i < mp->noisySize; i++)
-                if (mp->values[i] > mp->values[best])
-                    best = i;
+            best = getBestMoveIndex(mp, 0, mp->noisySize);
 
-            // Only play good capures
+            // Values below zero are flagged as failing an SEE (bad noisy)
             if (mp->values[best] >= 0) {
 
-                // Save the best move before overwriting it
-                bestMove = mp->moves[best];
+                if (staticExchangeEvaluation(board, mp->moves[best], 0)) {
 
-                // Reduce effective move list size
-                mp->noisySize -= 1;
-                mp->moves[best] = mp->moves[mp->noisySize];
-                mp->values[best] = mp->values[mp->noisySize];
+                    // Save best move before overwritting it
+                    bestMove = mp->moves[best];
 
-                // Don't play the table move twice
-                if (bestMove == mp->tableMove)
-                    return selectNextMove(mp, board, skipQuiets);
+                    // Reduce effective move list size
+                    mp->noisySize -= 1;
+                    mp->moves[best] = mp->moves[mp->noisySize];
+                    mp->values[best] = mp->values[mp->noisySize];
 
-                // Don't play the special moves twice
-                if (bestMove == mp->killer1) mp->killer1 = NONE_MOVE;
-                if (bestMove == mp->killer2) mp->killer2 = NONE_MOVE;
-                if (bestMove == mp->counter) mp->counter = NONE_MOVE;
+                    // Don't play the table move twice
+                    if (bestMove == mp->tableMove)
+                        return selectNextMove(mp, board, skipQuiets);
 
-                return bestMove;
+                    // Don't play the special moves twice
+                    if (bestMove == mp->killer1) mp->killer1 = NONE_MOVE;
+                    if (bestMove == mp->killer2) mp->killer2 = NONE_MOVE;
+                    if (bestMove == mp->counter) mp->counter = NONE_MOVE;
+
+                    return bestMove;
+                }
+
+                // Flag for failed use in STAGE_BAD_NOISY
+                mp->values[best] = -1;
+
+                // Try again to find a noisy move passing SEE
+                return selectNextMove(mp, board, skipQuiets);
             }
         }
 
@@ -177,10 +183,7 @@ uint16_t selectNextMove(MovePicker* mp, Board* board, int skipQuiets){
         // Check to see if there are still more quiet moves
         if (mp->quietSize != 0 && !skipQuiets){
 
-            // Find highest scoring move
-            for (i = 1 + mp->split, best = mp->split; i < mp->split + mp->quietSize; i++)
-                if (mp->values[i] > mp->values[best])
-                    best = i;
+            best = getBestMoveIndex(mp, mp->split, mp->split + mp->quietSize);
 
             // Save the best move before overwriting it
             bestMove = mp->moves[best];
@@ -242,32 +245,41 @@ uint16_t selectNextMove(MovePicker* mp, Board* board, int skipQuiets){
     }
 }
 
+int getBestMoveIndex(MovePicker *mp, int start, int end) {
+
+    int best = start;
+
+    for (int i = start + 1; i < end; i++)
+        if (mp->values[i] > mp->values[best])
+            best = i;
+
+    return best;
+}
+
 void evaluateNoisyMoves(MovePicker* mp){
 
     int fromType, toType;
 
+    // Use modified MVV-LVA to evaluate moves
     for (int i = 0; i < mp->noisySize; i++){
 
-        // Use modified MVV-LVA to evaluate moves which pass a simple SEE
-        if (staticExchangeEvaluation(&mp->thread->board, mp->moves[i], 0)) {
+        fromType = pieceType(mp->thread->board.squares[MoveFrom(mp->moves[i])]);
+        toType   = pieceType(mp->thread->board.squares[MoveTo(mp->moves[i])]);
 
-            fromType = pieceType(mp->thread->board.squares[ MoveFrom(mp->moves[i])]);
-            toType   = pieceType(mp->thread->board.squares[MoveTo(mp->moves[i])]);
+        // Use the standard MVV-LVA
+        mp->values[i] = PieceValues[toType][EG] - fromType;
 
-            // Use the standard MVV-LVA
-            mp->values[i] = PieceValues[toType][EG] - fromType;
+        // A bonus is in order for queen promotions
+        if ((mp->moves[i] & QUEEN_PROMO_MOVE) == QUEEN_PROMO_MOVE)
+            mp->values[i] += PieceValues[QUEEN][EG];
 
-            // A bonus is in order for queen promotions
-            if ((mp->moves[i] & QUEEN_PROMO_MOVE) == QUEEN_PROMO_MOVE)
-                mp->values[i] += PieceValues[QUEEN][EG];
+        // Enpass is a special case of MVV-LVA
+        else if (MoveType(mp->moves[i]) == ENPASS_MOVE)
+            mp->values[i] = PieceValues[PAWN][EG] - PAWN;
 
-            // Enpass is a special case of MVV-LVA
-            else if (MoveType(mp->moves[i]) == ENPASS_MOVE)
-                mp->values[i] = PieceValues[PAWN][EG] - PAWN;
-        }
-
-        // Flag those which cannot pass an SEE as bad noisy moves
-        else mp->values[i] = -1;
+        // Later we will flag moves which were passed over in the STAGE_GOOD_NOISY
+        // phase due to failing an SEE(0), by setting the value to -1
+        assert(mp->values[i] >= 0);
     }
 }
 
