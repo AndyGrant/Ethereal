@@ -55,7 +55,7 @@
 #define TuneKingDefenders              (0)
 #define TuneKingShelter                (0)
 #define TunePassedPawn                 (0)
-#define TuneThreatPawnAttackedByOne    (0)
+#define TuneThreatWeakPawn             (0)
 #define TuneThreatMinorAttackedByPawn  (0)
 #define TuneThreatMinorAttackedByMajor (0)
 #define TuneThreatRookAttackedByLesser (0)
