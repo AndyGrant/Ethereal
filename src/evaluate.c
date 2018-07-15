@@ -751,11 +751,10 @@ int evaluateThreats(EvalInfo *ei, Board *board, int colour) {
     pushThreat &= ~attacksByPawns & (ei->attacked[US] | ~ei->attacked[THEM]);
     pushThreat  = pawnAttackSpan(pushThreat, enemy & ~ei->attackedBy[US][PAWN], US);
 
-    // Penalty for each unsupported pawn on the board
+    // Penalty for each of our poorly supported pawns
     count = popcount(pawns & ~attacksByPawns & poorlyDefended);
     eval += count * ThreatWeakPawn;
     if (TRACE) T.ThreatWeakPawn[US] += count;
-}
 
     // Penalty for pawn threats against our minors
     count = popcount((knights | bishops) & attacksByPawns);
