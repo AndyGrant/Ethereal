@@ -622,7 +622,7 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
         float scaledAttackCounts = 9.0 * ei->kingAttacksCount[THEM] / popcount(ei->kingAreas[US]);
 
         // Safe target squares are defended or are weak and attacked by two.
-        // We exclude squares containing pieces which we cannot caputre
+        // We exclude squares containing pieces which we cannot capture.
         uint64_t safe =  ~board->colours[THEM]
                       & (~ei->attacked[US] | (weak & ei->attackedBy2[THEM]));
 
