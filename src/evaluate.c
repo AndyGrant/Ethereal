@@ -178,7 +178,7 @@ const int PassedPawn[2][2][RANK_NB] = {
 
 /* Threat Evaluation Terms */
 
-const int ThreatPawnAttackedByOne    = S( -17, -27);
+const int ThreatWeakPawn             = S( -17, -27);
 const int ThreatMinorAttackedByPawn  = S( -73, -54);
 const int ThreatMinorAttackedByMajor = S( -43, -41);
 const int ThreatRookAttackedByLesser = S( -40, -20);
@@ -748,10 +748,11 @@ int evaluateThreats(EvalInfo *ei, Board *board, int colour) {
     pushThreat  = pawnAttackSpan(pushThreat, enemy & ~ei->attackedBy[US][PAWN], US);
 
     // Penalty for each unsupported pawn on the board
-    count = popcount(pawns & ~ei->attackedBy[THEM][PAWN] & ((~ei->attacked[US] & ei->attacked[THEM])
-                  | (~ei->attackedBy2[US] & ei->attackedBy2[THEM] & ~ei->attackedBy[US][PAWN])));
-    eval += count * ThreatPawnAttackedByOne;
-    if (TRACE) T.ThreatPawnAttackedByOne[US] += count;
+    uint64_t poorlyDefended = (ei->attacked[THEM] & ~ei->attacked[US])
+	                        | (ei->attackedBy2[THEM] & ~ei->attackedBy2[US] & ~ei->attackedBy[US][PAWN]);
+    count = popcount(pawns & ~ei->attackedBy[THEM][PAWN] & poorlyDefended);
+    eval += count * ThreatWeakPawn;
+    if (TRACE) T.ThreatWeakPawn[US] += count;
 
     // Penalty for pawn threats against our minors
     count = popcount((knights | bishops) & attacksByPawns);
