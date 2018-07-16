@@ -347,14 +347,12 @@ void uciReport(Thread* threads, int alpha, int beta, int value){
 
 void uciReportTBRoot(uint16_t move, unsigned wdl, unsigned dtz){
 
-    int hashfull = hashfullTT();
-
     int score = wdl == TB_LOSS ? -MATE + MAX_PLY + dtz + 1
               : wdl == TB_WIN  ?  MATE - MAX_PLY - dtz - 1 : 0;
 
     printf("info depth %d seldepth %d score cp %d time 0 "
            "nodes 0 tbhits 1 nps 0 hashfull %d pv ",
-           MAX_PLY - 1, MAX_PLY - 1, score, hashfull);
+           MAX_PLY - 1, MAX_PLY - 1, score, 0);
 
     char moveStr[6];
     moveToString(move, moveStr);
