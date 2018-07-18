@@ -390,16 +390,18 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         &&  eval - BetaMargin * depth > beta)
         return eval;
 
-    // Step 9. Null Move Pruning. If our position is so good that
-    // giving our opponent back-to-back moves is still not enough
-    // for them to gain control of the game, we can be somewhat safe
-    // in saying that our position is too good to be true
+    // Step 9. Null Move Pruning. If our position is so good that giving
+    // our opponent back-to-back moves is still not enough for them to
+    // gain control of the game, we can be somewhat safe in saying that
+    // our position is too good to be true. We avoid NMP when we have
+    // information from the Transposition Table which suggests it will fail
     if (   !PvNode
         && !inCheck
         &&  depth >= NullMovePruningDepth
         &&  eval >= beta
         &&  hasNonPawnMaterial(board, board->turn)
-        &&  board->history[board->numMoves-1] != NULL_MOVE){
+        &&  thread->moveStack[height-1] != NULL_MOVE
+        && (!ttHit || !(ttBound & BOUND_UPPER) || ttValue >= beta)) {
 
         R = 4 + depth / 6 + MIN(3, (eval - beta) / 200);
 
