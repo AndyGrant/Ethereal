@@ -46,6 +46,9 @@ struct Thread {
     uint16_t *moveStack;
     uint16_t _moveStack[MAX_PLY+4];
 
+    int *pieceStack;
+    int _pieceStack[MAX_PLY+4];
+
     jmp_buf jbuffer;
 
     int nthreads;
@@ -54,6 +57,7 @@ struct Thread {
     KillerTable killers;
     HistoryTable history;
     CMHistoryTable cmhistory;
+    FUHistoryTable fuhistory;
     CounterMoveTable cmtable;
     PawnKingTable pktable;
 };

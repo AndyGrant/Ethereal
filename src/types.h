@@ -113,3 +113,4 @@ typedef uint16_t KillerTable[MAX_PLY][2];
 typedef uint16_t CounterMoveTable[COLOUR_NB][PIECE_NB][SQUARE_NB];
 typedef int16_t HistoryTable[COLOUR_NB][SQUARE_NB][SQUARE_NB];
 typedef int16_t CMHistoryTable[PIECE_NB][SQUARE_NB][PIECE_NB][SQUARE_NB];
+typedef int16_t FUHistoryTable[PIECE_NB][SQUARE_NB][PIECE_NB][SQUARE_NB];

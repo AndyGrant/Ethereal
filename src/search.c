@@ -254,7 +254,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     Board* const board = &thread->board;
 
     unsigned tbresult;
-    int quiets = 0, played = 0, cmhist = 0, hist = 0;
+    int quiets = 0, played = 0, hist = 0, cmhist = 0, fuhist = 0;
     int ttHit, ttValue = 0, ttEval = 0, ttDepth = 0, ttBound = 0;
     int i, R, newDepth, rAlpha, rBeta, oldAlpha = alpha;
     int inCheck, isQuiet, improving, extension, skipQuiets = 0;
@@ -455,6 +455,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             }
 
             thread->moveStack[height] = move;
+            thread->pieceStack[height] = pieceType(board->squares[MoveTo(move)]);
 
             // Verify the move is good with a depth zero search (qsearch, unless in check)
             // and then with a slightly reduced search. If both searches still exceed rBeta,
@@ -495,7 +496,8 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         if ((isQuiet = !moveIsTactical(board, move))){
             quietsTried[quiets++] = move;
             cmhist = getCMHistoryScore(thread, height, move);
-            hist   = getHistoryScore(thread, move) + cmhist;
+            fuhist = getFUHistoryScore(thread, height, move);
+            hist   = getHistoryScore(thread, move) + cmhist + fuhist;
         }
 
         // Step 13. Futility Pruning. If our score is far below alpha,
@@ -551,6 +553,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         }
 
         thread->moveStack[height] = move;
+        thread->pieceStack[height] = pieceType(board->squares[MoveTo(move)]);
 
         // Update counter of moves actually played
         played += 1;
@@ -665,10 +668,12 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
 
         updateHistory(thread, bestMove, depth*depth);
         updateCMHistory(thread, height, bestMove, depth*depth);
+        updateFUHistory(thread, height, bestMove, depth*depth);
 
         for (i = 0; i < quiets - 1; i++) {
             updateHistory(thread, quietsTried[i], -depth*depth);
             updateCMHistory(thread, height, quietsTried[i], -depth*depth);
+            updateFUHistory(thread, height, quietsTried[i], -depth*depth);
         }
     }
 
@@ -752,6 +757,7 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
         }
 
         thread->moveStack[height] = move;
+        thread->pieceStack[height] = pieceType(board->squares[MoveTo(move)]);
 
         // Search next depth
         value = -qsearch(thread, &lpv, -beta, -alpha, height+1);
@@ -967,6 +973,7 @@ int moveIsSingular(Thread* thread, uint16_t ttMove, int ttValue, Undo* undo, int
         }
 
         thread->moveStack[height] = move;
+        thread->pieceStack[height] = pieceType(board->squares[MoveTo(move)]);
 
         // Perform a reduced depth search on a null rbeta window
         value = -search(thread, &lpv, -rBeta-1, -rBeta, depth / 2 - 1, height+1);
@@ -982,6 +989,7 @@ int moveIsSingular(Thread* thread, uint16_t ttMove, int ttValue, Undo* undo, int
     applyMove(board, ttMove, undo);
 
     thread->moveStack[height] = ttMove;
+    thread->pieceStack[height] = pieceType(board->squares[MoveTo(ttMove)]);
 
     // Move is singular if all other moves failed low
     return value <= rBeta;
