@@ -87,7 +87,7 @@ static const int FutilityMargin = 100;
 static const int FutilityPruningDepth = 8;
 
 static const int CounterMovePruningDepth = 2;
-static const int CounterMoveHistoryLimit[] = { 0, -2000 };
+static const int CounterMoveHistoryLimit[] = { 0, -1000 };
 
 static const int LateMovePruningDepth = 8;
 static const int LateMovePruningCounts[2][9] = {
