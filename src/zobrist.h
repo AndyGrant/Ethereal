@@ -16,21 +16,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _ZORBIST_H
-#define _ZORBIST_H
+#pragma once
 
 #include <stdint.h>
 
 #include "types.h"
 
-#define CASTLE (2)
-#define ENPASS (3)
-#define TURN   (6)
+extern uint64_t ZobristKeys[32][SQUARE_NB];
+extern uint64_t ZobristPawnKingKeys[32][SQUARE_NB];
+extern uint64_t ZobristEnpassKeys[FILE_NB];
+extern uint64_t ZobristCastleKeys[0x10];
+extern uint64_t ZobristTurnKey;
 
-void initializeZorbist();
-uint64_t rand64();
-
-extern uint64_t ZorbistKeys[32][SQUARE_NB];
-extern uint64_t PawnKingKeys[32][SQUARE_NB];
-
-#endif
+void initZobrist();

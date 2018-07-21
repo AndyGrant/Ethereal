@@ -30,7 +30,7 @@
 #include "movegen.h"
 #include "psqt.h"
 #include "types.h"
-#include "zorbist.h"
+#include "zobrist.h"
 
 void applyMove(Board *board, uint16_t move, Undo *undo) {
 
@@ -53,10 +53,10 @@ void applyMove(Board *board, uint16_t move, Undo *undo) {
     // Always update fifty move, functions will reset
     board->fiftyMoveRule += 1;
 
-    // Always update for turn and chances to enpass square
-    board->hash ^= ZorbistKeys[TURN][0];
+    // Always update for turn and changes to enpass square
+    board->hash ^= ZobristTurnKey;
     if (board->epSquare != -1)
-        board->hash ^= ZorbistKeys[ENPASS][fileOf(board->epSquare)];
+        board->hash ^= ZobristEnpassKeys[fileOf(board->epSquare)];
 
     // Run the correct move function
     table[MoveType(move) >> 12](board, move, undo);
@@ -96,21 +96,21 @@ void applyNormalMove(Board *board, uint16_t move, Undo *undo) {
     board->squares[to]   = fromPiece;
     undo->capturePiece   = toPiece;
 
-    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    board->hash ^= ZobristCastleKeys[board->castleRights];
     board->castleRights &= CastleMask[from] & CastleMask[to];
-    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    board->hash ^= ZobristCastleKeys[board->castleRights];
 
     board->psqtmat += PSQT[fromPiece][to]
                    -  PSQT[fromPiece][from]
                    -  PSQT[toPiece][to];
 
-    board->hash    ^= ZorbistKeys[fromPiece][from]
-                   ^  ZorbistKeys[fromPiece][to]
-                   ^  ZorbistKeys[toPiece][to];
+    board->hash    ^= ZobristKeys[fromPiece][from]
+                   ^  ZobristKeys[fromPiece][to]
+                   ^  ZobristKeys[toPiece][to];
 
-    board->pkhash  ^= PawnKingKeys[fromPiece][from]
-                   ^  PawnKingKeys[fromPiece][to]
-                   ^  PawnKingKeys[toPiece][to];
+    board->pkhash  ^= ZobristPawnKingKeys[fromPiece][from]
+                   ^  ZobristPawnKingKeys[fromPiece][to]
+                   ^  ZobristPawnKingKeys[toPiece][to];
 
     if (fromType == PAWN && (to ^ from) == 16) {
 
@@ -120,7 +120,7 @@ void applyNormalMove(Board *board, uint16_t move, Undo *undo) {
                                   & (board->turn == WHITE ? RANK_4 : RANK_5);
         if (enemyPawns) {
             board->epSquare = board->turn == WHITE ? from + 8 : from - 8;
-            board->hash ^= ZorbistKeys[ENPASS][fileOf(from)];
+            board->hash ^= ZobristEnpassKeys[fileOf(from)];
         }
     }
 }
@@ -148,22 +148,22 @@ void applyCastleMove(Board *board, uint16_t move, Undo *undo) {
     board->squares[rFrom] = EMPTY;
     board->squares[rTo]   = rFromPiece;
 
-    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    board->hash ^= ZobristCastleKeys[board->castleRights];
     board->castleRights &= CastleMask[from];
-    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    board->hash ^= ZobristCastleKeys[board->castleRights];
 
     board->psqtmat += PSQT[fromPiece][to]
                     - PSQT[fromPiece][from]
                     + PSQT[rFromPiece][rTo]
                     - PSQT[rFromPiece][rFrom];
 
-    board->hash    ^= ZorbistKeys[fromPiece][from]
-                   ^  ZorbistKeys[fromPiece][to]
-                   ^  ZorbistKeys[rFromPiece][rFrom]
-                   ^  ZorbistKeys[rFromPiece][rTo];
+    board->hash    ^= ZobristKeys[fromPiece][from]
+                   ^  ZobristKeys[fromPiece][to]
+                   ^  ZobristKeys[rFromPiece][rFrom]
+                   ^  ZobristKeys[rFromPiece][rTo];
 
-    board->pkhash  ^= PawnKingKeys[fromPiece][from]
-                   ^  PawnKingKeys[fromPiece][to];
+    board->pkhash  ^= ZobristPawnKingKeys[fromPiece][from]
+                   ^  ZobristPawnKingKeys[fromPiece][to];
 
     undo->capturePiece = EMPTY;
 }
@@ -194,13 +194,13 @@ void applyEnpassMove(Board *board, uint16_t move, Undo *undo) {
                     - PSQT[fromPiece][from]
                     - PSQT[enpassPiece][ep];
 
-    board->hash    ^= ZorbistKeys[fromPiece][from]
-                   ^  ZorbistKeys[fromPiece][to]
-                   ^  ZorbistKeys[enpassPiece][ep];
+    board->hash    ^= ZobristKeys[fromPiece][from]
+                   ^  ZobristKeys[fromPiece][to]
+                   ^  ZobristKeys[enpassPiece][ep];
 
-    board->pkhash  ^= PawnKingKeys[fromPiece][from]
-                   ^  PawnKingKeys[fromPiece][to]
-                   ^  PawnKingKeys[enpassPiece][ep];
+    board->pkhash  ^= ZobristPawnKingKeys[fromPiece][from]
+                   ^  ZobristPawnKingKeys[fromPiece][to]
+                   ^  ZobristPawnKingKeys[enpassPiece][ep];
 }
 
 void applyPromotionMove(Board *board, uint16_t move, Undo *undo) {
@@ -229,19 +229,19 @@ void applyPromotionMove(Board *board, uint16_t move, Undo *undo) {
     board->squares[to]   = promoPiece;
     undo->capturePiece   = toPiece;
 
-    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    board->hash ^= ZobristCastleKeys[board->castleRights];
     board->castleRights &= CastleMask[to];
-    board->hash ^= ZorbistKeys[CASTLE][board->castleRights];
+    board->hash ^= ZobristCastleKeys[board->castleRights];
 
     board->psqtmat += PSQT[promoPiece][to]
                     - PSQT[fromPiece][from]
                     - PSQT[toPiece][to];
 
-    board->hash    ^= ZorbistKeys[fromPiece][from]
-                   ^  ZorbistKeys[promoPiece][to]
-                   ^  ZorbistKeys[toPiece][to];
+    board->hash    ^= ZobristKeys[fromPiece][from]
+                   ^  ZobristKeys[promoPiece][to]
+                   ^  ZobristKeys[toPiece][to];
 
-    board->pkhash  ^= PawnKingKeys[fromPiece][from];
+    board->pkhash  ^= ZobristPawnKingKeys[fromPiece][from];
 }
 
 void applyNullMove(Board *board, Undo *undo) {
@@ -253,9 +253,9 @@ void applyNullMove(Board *board, Undo *undo) {
     board->turn = !board->turn;
     board->history[board->numMoves++] = NULL_MOVE;
 
-    board->hash ^= ZorbistKeys[TURN][0];
+    board->hash ^= ZobristTurnKey;
     if (board->epSquare != -1)
-        board->hash ^= ZorbistKeys[ENPASS][fileOf(board->epSquare)];
+        board->hash ^= ZobristEnpassKeys[fileOf(board->epSquare)];
 
     board->epSquare = -1;
     board->fiftyMoveRule += 1;
