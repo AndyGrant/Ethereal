@@ -162,8 +162,10 @@ void applyCastleMove(Board *board, uint16_t move, Undo *undo) {
                    ^  ZobristKeys[rFromPiece][rFrom]
                    ^  ZobristKeys[rFromPiece][rTo];
 
-    board->pkhash  ^= ZobristPawnKingKeys[fromPiece][from]
-                   ^  ZobristPawnKingKeys[fromPiece][to];
+    board->pkhash  ^= ZobristKeys[fromPiece][from]
+                   ^  ZobristKeys[fromPiece][to];
+
+    assert(pieceType(fromPiece) == KING);
 
     undo->capturePiece = EMPTY;
 }
@@ -198,9 +200,12 @@ void applyEnpassMove(Board *board, uint16_t move, Undo *undo) {
                    ^  ZobristKeys[fromPiece][to]
                    ^  ZobristKeys[enpassPiece][ep];
 
-    board->pkhash  ^= ZobristPawnKingKeys[fromPiece][from]
-                   ^  ZobristPawnKingKeys[fromPiece][to]
-                   ^  ZobristPawnKingKeys[enpassPiece][ep];
+    board->pkhash  ^= ZobristKeys[fromPiece][from]
+                   ^  ZobristKeys[fromPiece][to]
+                   ^  ZobristKeys[enpassPiece][ep];
+
+    assert(pieceType(fromPiece) == PAWN);
+    assert(pieceType(enpassPiece) == PAWN);
 }
 
 void applyPromotionMove(Board *board, uint16_t move, Undo *undo) {
@@ -241,7 +246,9 @@ void applyPromotionMove(Board *board, uint16_t move, Undo *undo) {
                    ^  ZobristKeys[promoPiece][to]
                    ^  ZobristKeys[toPiece][to];
 
-    board->pkhash  ^= ZobristPawnKingKeys[fromPiece][from];
+    board->pkhash  ^= ZobristKeys[fromPiece][from];
+
+    assert(pieceType(fromPiece) == PAWN);
 }
 
 void applyNullMove(Board *board, Undo *undo) {
