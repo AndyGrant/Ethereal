@@ -24,7 +24,6 @@
 #include "zobrist.h"
 
 uint64_t ZobristKeys[32][SQUARE_NB];
-uint64_t ZobristPawnKingKeys[32][SQUARE_NB];
 uint64_t ZobristEnpassKeys[FILE_NB];
 uint64_t ZobristCastleKeys[0x10];
 uint64_t ZobristTurnKey;
@@ -50,14 +49,6 @@ void initZobrist() {
             ZobristKeys[makePiece(pt, WHITE)][sq] = rand64();
             ZobristKeys[makePiece(pt, BLACK)][sq] = rand64();
         }
-    }
-
-    // Init the pawn-king Zobrist keys by copying the main ones
-    for (int sq = 0; sq < SQUARE_NB; sq++) {
-        ZobristPawnKingKeys[WHITE_PAWN][sq] = ZobristKeys[WHITE_PAWN][sq];
-        ZobristPawnKingKeys[BLACK_PAWN][sq] = ZobristKeys[BLACK_PAWN][sq];
-        ZobristPawnKingKeys[WHITE_KING][sq] = ZobristKeys[WHITE_KING][sq];
-        ZobristPawnKingKeys[BLACK_KING][sq] = ZobristKeys[BLACK_KING][sq];
     }
 
     // Init the enpass file Zobrist keys

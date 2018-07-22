@@ -23,7 +23,6 @@
 #include "types.h"
 
 extern uint64_t ZobristKeys[32][SQUARE_NB];
-extern uint64_t ZobristPawnKingKeys[32][SQUARE_NB];
 extern uint64_t ZobristEnpassKeys[FILE_NB];
 extern uint64_t ZobristCastleKeys[0x10];
 extern uint64_t ZobristTurnKey;

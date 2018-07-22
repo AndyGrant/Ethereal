@@ -65,7 +65,8 @@ static void setSquare(Board *board, int c, int p, int s) {
 
     board->psqtmat += PSQT[board->squares[s]][s];
     board->hash ^= ZobristKeys[board->squares[s]][s];
-    board->pkhash ^= ZobristPawnKingKeys[board->squares[s]][s];
+    if (p == PAWN || p == KING)
+        board->pkhash ^= ZobristKeys[board->squares[s]][s];
 }
 
 static int stringToSquare(const char *str) {

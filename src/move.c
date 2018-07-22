@@ -108,9 +108,12 @@ void applyNormalMove(Board *board, uint16_t move, Undo *undo) {
                    ^  ZobristKeys[fromPiece][to]
                    ^  ZobristKeys[toPiece][to];
 
-    board->pkhash  ^= ZobristPawnKingKeys[fromPiece][from]
-                   ^  ZobristPawnKingKeys[fromPiece][to]
-                   ^  ZobristPawnKingKeys[toPiece][to];
+    if (fromType == PAWN || fromType == KING)
+        board->pkhash ^= ZobristKeys[fromPiece][from]
+                      ^  ZobristKeys[fromPiece][to];
+
+    if (toType == PAWN || toType == KING)
+        board->pkhash ^= ZobristKeys[toPiece][to];
 
     if (fromType == PAWN && (to ^ from) == 16) {
 
