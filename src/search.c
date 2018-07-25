@@ -315,16 +315,11 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         // when in a PvNode, unless we would otherwise hit a qsearch
         if (ttDepth >= depth && (depth == 0 || !PvNode)){
 
-            if (ttValue >= beta && (ttBound & BOUND_LOWER))
-                return beta;
-
-            if (ttValue <= alpha && (ttBound & BOUND_UPPER))
-                return alpha;
-
-            if (ttBound == BOUND_EXACT){
-                assert(alpha < ttValue && ttValue < beta);
+            // Table is exact or produces a cutoff
+            if (    ttBound == BOUND_EXACT
+                || (ttBound == BOUND_LOWER && ttValue >= beta)
+                || (ttBound == BOUND_UPPER && ttValue <= alpha))
                 return ttValue;
-            }
         }
     }
 
