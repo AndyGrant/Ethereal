@@ -178,12 +178,12 @@ const int PassedPawn[2][2][RANK_NB] = {
 
 /* Threat Evaluation Terms */
 
-const int ThreatWeakPawn             = S( -17, -27);
-const int ThreatMinorAttackedByPawn  = S( -73, -54);
-const int ThreatMinorAttackedByMajor = S( -43, -41);
-const int ThreatRookAttackedByLesser = S( -40, -20);
-const int ThreatQueenAttackedByOne   = S( -84,   3);
-const int ThreatOverloadedPieces     = S(  -7, -23);
+const int ThreatWeakPawn             = S( -37, -39);
+const int ThreatMinorAttackedByPawn  = S( -68, -54);
+const int ThreatMinorAttackedByMajor = S( -47, -44);
+const int ThreatRookAttackedByLesser = S( -55, -25);
+const int ThreatQueenAttackedByOne   = S( -97,   1);
+const int ThreatOverloadedPieces     = S( -10, -26);
 const int ThreatByPawnPush           = S(  12,  15);
 
 /* General Evaluation Terms */
