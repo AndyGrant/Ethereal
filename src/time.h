@@ -22,9 +22,8 @@
 #include "types.h"
 
 double getRealTime();
-
 double elapsedTime(SearchInfo* info);
-
-void initializeTimeManagment(SearchInfo* info, Limits* limits);
+void initTimeManagment(SearchInfo* info, Limits* limits);
+void updateTimeManagment(SearchInfo* info, Limits* limits, int depth, int value);
 
 #endif

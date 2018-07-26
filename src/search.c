@@ -73,7 +73,7 @@ uint16_t getBestMove(Thread* threads, Board* board, Limits* limits){
     // Initialize SearchInfo, used for reporting and time managment logic
     SearchInfo info;
     memset(&info, 0, sizeof(SearchInfo));
-    initializeTimeManagment(&info, limits);
+    initTimeManagment(&info, limits);
 
     // Setup the thread pool for a new search
     newSearchThreadPool(threads, board, limits, &info);
@@ -145,50 +145,8 @@ void* iterativeDeepening(void* vthread){
         // Send information about this search to the interface
         uciReport(thread->threads, -MATE, MATE, value);
 
-        // If Ethereal is managing the clock, determine if we should be spending
-        // more time on this search, based on the score difference between iterations
-        // and any changes in the principle variation since the last iteration
-        if (limits->limitedBySelf && depth >= 4){
-
-            // Increase our time if the score suddenly dropped
-            if (info->values[depth-1] > value + 10)
-                info->idealUsage *= 1.050;
-
-            // Increase our time if the score suddenly dropped
-            if (info->values[depth-1] > value + 20)
-                info->idealUsage *= 1.050;
-
-            // Increase our time if the score suddenly dropped
-            if (info->values[depth-1] > value + 40)
-                info->idealUsage *= 1.050;
-
-
-            if (info->bestMoves[depth] == info->bestMoves[depth-1]){
-
-                // If we still have remaining increments from best move
-                // changes reduce our ideal time usage by a factor, such that
-                // after we deplete bestMoveChanges, we are near the original time
-                info->idealUsage *= info->bestMoveChanges ? 0.935 : 1.000;
-
-                // We have recovered one best move change
-                info->bestMoveChanges = MAX(0, info->bestMoveChanges - 1);
-            }
-
-            else {
-
-                // Increase our time by based on our best move debt. If this is the
-                // first PV change in some time, we increase our time by 48%. If we
-                // have recently changed best moves, we will only adjust our usage
-                // to get back to the initial 48% time allocation by the first change
-                info->idealUsage *= 1.000 + 0.080 * (6 - info->bestMoveChanges);
-
-                // Set out counter back to six as the best move has changed
-                info->bestMoveChanges = 6;
-            }
-
-            // Cap our ideal usage using our maximum allocation
-            info->idealUsage = MIN(info->idealUsage, info->maxAlloc);
-        }
+        // Update time allocation based on score and pv changes
+        updateTimeManagment(info, limits, depth, value);
 
         // Check for termination by any of the possible limits
         if (   (limits->limitedByDepth && depth >= limits->depthLimit)

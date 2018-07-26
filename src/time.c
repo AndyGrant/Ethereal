@@ -54,7 +54,7 @@ double elapsedTime(SearchInfo* info){
 
 }
 
-void initializeTimeManagment(SearchInfo* info, Limits* limits){
+void initTimeManagment(SearchInfo* info, Limits* limits){
 
     info->startTime = limits->start; // Save off the start time of the search
 
@@ -89,4 +89,51 @@ void initializeTimeManagment(SearchInfo* info, Limits* limits){
         info->maxAlloc   = limits->timeLimit;
         info->maxUsage   = limits->timeLimit;
     }
+}
+
+void updateTimeManagment(SearchInfo* info, Limits* limits, int depth, int value){
+
+    // Don't adjust time when we are at low depths, or if
+    // we simply are not in control of our own time usage
+    if (!limits->limitedBySelf || depth < 4)
+        return;
+
+    // Increase our time if the score suddenly dropped
+    if (info->values[depth-1] > value + 10)
+        info->idealUsage *= 1.050;
+
+    // Increase our time if the score suddenly dropped
+    if (info->values[depth-1] > value + 20)
+        info->idealUsage *= 1.050;
+
+    // Increase our time if the score suddenly dropped
+    if (info->values[depth-1] > value + 40)
+        info->idealUsage *= 1.050;
+
+
+    if (info->bestMoves[depth] == info->bestMoves[depth-1]){
+
+        // If we still have remaining increments from best move
+        // changes reduce our ideal time usage by a factor, such that
+        // after we deplete bestMoveChanges, we are near the original time
+        info->idealUsage *= info->bestMoveChanges ? 0.935 : 1.000;
+
+        // We have recovered one best move change
+        info->bestMoveChanges = MAX(0, info->bestMoveChanges - 1);
+    }
+
+    else {
+
+        // Increase our time by based on our best move debt. If this is the
+        // first PV change in some time, we increase our time by 48%. If we
+        // have recently changed best moves, we will only adjust our usage
+        // to get back to the initial 48% time allocation by the first change
+        info->idealUsage *= 1.000 + 0.080 * (6 - info->bestMoveChanges);
+
+        // Set out counter back to six as the best move has changed
+        info->bestMoveChanges = 6;
+    }
+
+    // Cap our ideal usage using our maximum allocation
+    info->idealUsage = MIN(info->idealUsage, info->maxAlloc);
 }
