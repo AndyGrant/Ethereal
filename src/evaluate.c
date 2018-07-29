@@ -79,9 +79,9 @@ const int PawnConnected32[32] = {
 
 /* Knight Evaluation Terms */
 
-const int KnightOutpost[2] = { S(  24,   0), S(  36,   0) };
+const int KnightOutpost[2] = { S(  22,  -7), S(  32,   0) };
 
-const int KnightBehindPawn = S(   5,   9);
+const int KnightBehindPawn = S(   5,  13);
 
 const int KnightMobility[9] = {
     S( -91, -86), S( -36, -94), S( -19, -43), S(  -5, -15),
@@ -95,9 +95,9 @@ const int BishopPair = S(  38,  69);
 
 const int BishopRammedPawns = S( -11,  -8);
 
-const int BishopOutpost[2] = { S(  26,   0), S(  40,   0) };
+const int BishopOutpost[2] = { S(  27,  -1), S(  39,   0) };
 
-const int BishopBehindPawn = S(   4,   8);
+const int BishopBehindPawn = S(   4,  11);
 
 const int BishopMobility[14] = {
     S( -59,-128), S( -48, -67), S( -18, -46), S(  -5, -21),
@@ -225,7 +225,7 @@ int evaluateBoard(Board* board, PawnKingTable* pktable){
          +  ScoreEG(eval) * phase * factor / SCALE_NORMAL) / 256;
 
     // Store a new Pawn King Entry if we did not have one
-    if (ei.pkentry == NULL)
+    if (ei.pkentry == NULL && pktable != NULL)
         storePawnKingEntry(pktable, board->pkhash, ei.passedPawns, pkeval);
 
     // Return the evaluation relative to the side to move
@@ -888,7 +888,7 @@ void initializeEvalInfo(EvalInfo* ei, Board* board, PawnKingTable* pktable){
     ei->kingAttackersCount[WHITE]  = ei->kingAttackersCount[BLACK]  = 0;
     ei->kingAttackersWeight[WHITE] = ei->kingAttackersWeight[BLACK] = 0;
 
-    ei->pkentry       = TRACE ? NULL : getPawnKingEntry(pktable, board->pkhash);
+    ei->pkentry       =     pktable == NULL ? NULL : getPawnKingEntry(pktable, board->pkhash);
     ei->passedPawns   = ei->pkentry == NULL ? 0ull : ei->pkentry->passed;
     ei->pkeval[WHITE] = ei->pkentry == NULL ? 0    : ei->pkentry->eval;
     ei->pkeval[BLACK] = ei->pkentry == NULL ? 0    : 0;

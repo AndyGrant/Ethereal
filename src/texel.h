@@ -16,14 +16,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if defined(TUNE) && !defined(_TEXEL_H)
-#define _TEXEL_H
+#if defined(TUNE)
+
+#pragma once
 
 #include "types.h"
 
-#define NTHREADS   (     32) // # of Threads to use
-#define NTERMS     (      0) // # of Terms to tune
-#define NPOSITIONS (1491000) // # of FENs in book
+#define CLEARING    (      0) // Clear hashes between runs
+#define NDEPTHS     (      0) // # of search iterations
+#define NTERMS      (      0) // # of terms to tune
+#define NPARTITIONS (     64) // # of partitions to use
+#define NPOSITIONS  (1491000) // # of FENs in book
 
 // Each Eval Term (Total = 490)
 #define TunePawnValue                  (0)
@@ -83,7 +86,6 @@ struct TexelEntry {
 
 void runTexelTuning(Thread* thread);
 void initTexelEntries(TexelEntry* tes, Thread* thread);
-void initLearningRates(TexelEntry* tes, double rates[NTERMS][PHASE_NB]);
 
 void initCoefficients(int coeffs[NTERMS]);
 void initCurrentParameters(double cparams[NTERMS][PHASE_NB]);
@@ -124,7 +126,6 @@ void printParameters_3(char *name, int params[NTERMS][PHASE_NB], int i, int A, i
         INIT_PARAM_2(term[_c], length2, length3);                   \
 } while (0)
 
-
 // Initalize Coefficients from an N dimensional Array
 
 #define INIT_COEFF_0(term) do {                                     \
@@ -152,5 +153,23 @@ void printParameters_3(char *name, int params[NTERMS][PHASE_NB], int i, int A, i
 #define PRINT_PARAM_1(term, A) (printParameters_1(#term, tparams, i, A), i+=A)
 #define PRINT_PARAM_2(term, A, B) (printParameters_2(#term, tparams, i, A, B), i+=A*B)
 #define PRINT_PARAM_3(term, A, B, C) (printParameters_3(#term, tparams, i, A, B, C), i+=A*B*C)
+
+// Wrap all of the above to check for the setting being turned on
+
+#define ENABLE_0(fname, term) do {                                  \
+    if (Tune##term) fname##_0(term);                                \
+} while (0)
+
+#define ENABLE_1(fname, term, length1) do {                         \
+    if (Tune##term) fname##_1(term, length1);                       \
+} while (0)
+
+#define ENABLE_2(fname, term, length1, legnth2) do {                \
+    if (Tune##term) fname##_2(term, length1, length2);              \
+} while (0)
+
+#define ENABLE_3(fname, term, length1, length2, length3) do {       \
+    if (Tune##term) fname##_3(term, length1, length2, length3);     \
+} while (0)
 
 #endif
