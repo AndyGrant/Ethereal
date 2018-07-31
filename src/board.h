@@ -59,3 +59,6 @@ uint64_t perft(Board *board, int depth);
 void runBenchmark(Thread *threads, int depth);
 
 int boardIsDrawn(Board *board, int height);
+int drawnByFiftyMoveRule(Board *board);
+int drawnByRepetition(Board *board, int height);
+int drawnByInsufficientMaterial(Board *board);

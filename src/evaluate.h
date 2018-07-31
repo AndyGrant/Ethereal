@@ -93,7 +93,6 @@ struct EvalInfo {
 };
 
 int evaluateBoard(Board *board, PawnKingTable *pktable);
-int evaluateDraws(Board *board);
 int evaluatePieces(EvalInfo *ei, Board *board);
 int evaluatePawns(EvalInfo *ei, Board *board, int colour);
 int evaluateKnights(EvalInfo *ei, Board *board, int colour);

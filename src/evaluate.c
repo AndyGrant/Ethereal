@@ -209,9 +209,6 @@ int evaluateBoard(Board* board, PawnKingTable* pktable){
     EvalInfo ei;
     int phase, factor, eval, pkeval;
 
-    // Check for guaranteed material draws
-    if (evaluateDraws(board)) return 0;
-
     // Setup and perform all evaluations
     initializeEvalInfo(&ei, board, pktable);
     eval   = evaluatePieces(&ei, board);
@@ -238,40 +235,6 @@ int evaluateBoard(Board* board, PawnKingTable* pktable){
 
     // Return the evaluation relative to the side to move
     return board->turn == WHITE ? eval : -eval;
-}
-
-int evaluateDraws(Board* board){
-
-    uint64_t white   = board->colours[WHITE];
-    uint64_t black   = board->colours[BLACK];
-    uint64_t knights = board->pieces[KNIGHT];
-    uint64_t bishops = board->pieces[BISHOP];
-    uint64_t kings   = board->pieces[KING];
-
-    // Unlikely to have a draw if we have pawns, rooks, or queens left
-    if (board->pieces[PAWN] | board->pieces[ROOK] | board->pieces[QUEEN])
-        return 0;
-
-    // Check for King Vs. King
-    if (kings == (white | black)) return 1;
-
-    if ((white & kings) == white){
-        // Check for King Vs King and Knight/Bishop
-        if (popcount(black & (knights | bishops)) <= 1) return 1;
-
-        // Check for King Vs King and two Knights
-        if (popcount(black & knights) == 2 && (black & bishops) == 0ull) return 1;
-    }
-
-    if ((black & kings) == black){
-        // Check for King Vs King and Knight/Bishop
-        if (popcount(white & (knights | bishops)) <= 1) return 1;
-
-        // Check for King Vs King and two Knights
-        if (popcount(white & knights) == 2 && (white & bishops) == 0ull) return 1;
-    }
-
-    return 0;
 }
 
 int evaluatePieces(EvalInfo *ei, Board *board) {

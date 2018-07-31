@@ -248,7 +248,8 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     // the RootNode, since this would prevent us from having a best move
     if (!RootNode){
 
-        // Check for the fifty move rule and for draw by repetition
+        // Check for the fifty move rule, a draw by
+        // repetition, or insufficient mating material
         if (boardIsDrawn(board, height))
             return 0;
 
@@ -678,34 +679,39 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     // Step 1B. Check to see if the master thread finished
     if (ABORT_SIGNAL) longjmp(thread->jbuffer, 1);
 
-    // Step 2. Max Draft Cutoff. If we are at the maximum search draft,
+    // Step 2. Draw Detection. Check for the fifty move rule,
+    // a draw by repetition, or insufficient mating material
+    if (boardIsDrawn(board, height))
+        return 0;
+
+    // Step 3. Max Draft Cutoff. If we are at the maximum search draft,
     // then end the search here with a static eval of the current board
     if (height >= MAX_PLY)
         return evaluateBoard(board, &thread->pktable);
 
-    // Step 3. Eval Pruning. If a static evaluation of the board will
+    // Step 4. Eval Pruning. If a static evaluation of the board will
     // exceed beta, then we can stop the search here. Also, if the static
     // eval exceeds alpha, we can call our static eval the new alpha
     best = value = eval = evaluateBoard(board, &thread->pktable);
     alpha = MAX(alpha, value);
     if (alpha >= beta) return value;
 
-    // Step 4. Delta Pruning. Even the best possible capture and or promotion
+    // Step 5. Delta Pruning. Even the best possible capture and or promotion
     // combo with the additional of the futility margin would still fail
     if (value + QFutilityMargin + bestTacticalMoveValue(board) < alpha)
         return eval;
 
-    // Step 5. Move Generation and Looping. Generate all tactical moves for this
+    // Step 6. Move Generation and Looping. Generate all tactical moves for this
     // position (includes Captures, Promotions, and Enpass) and try them
     initializeMovePicker(&movePicker, thread, NONE_MOVE, height);
     while ((move = selectNextMove(&movePicker, board, 1)) != NONE_MOVE){
 
-        // Step 6. Static Exchance Evaluation Pruning. All bad noisy moves
+        // Step 7. Static Exchance Evaluation Pruning. All bad noisy moves
         // have faild an SEE about zero. We will skip all such moves
         if (movePicker.stage == STAGE_BAD_NOISY)
             break;
 
-        // Step 7. Futility Pruning. Similar to Delta Pruning, if this capture in the
+        // Step 8. Futility Pruning. Similar to Delta Pruning, if this capture in the
         // best case would still fail to beat alpha minus some margin, we can skip it
         if (eval + QFutilityMargin + thisTacticalMoveValue(board, move) < alpha)
             continue;
