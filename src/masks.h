@@ -24,6 +24,7 @@
 
 void initMasks();
 
+int distanceBetween(int s1, int s2);
 uint64_t bitsBetweenMasks(int s1, int s2);
 uint64_t ranksAtOrAboveMasks(int c, int r);
 uint64_t isolatedPawnMasks(int s);

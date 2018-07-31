@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "attacks.h"
 #include "bitboards.h"
@@ -26,6 +27,7 @@
 #include "movegen.h"
 #include "types.h"
 
+int DistanceBetween[SQUARE_NB][SQUARE_NB];
 uint64_t BitsBetweenMasks[SQUARE_NB][SQUARE_NB];
 uint64_t RanksAtOrAboveMasks[COLOUR_NB][RANK_NB];
 uint64_t IsolatedPawnMasks[SQUARE_NB];
@@ -35,6 +37,11 @@ uint64_t OutpostSquareMasks[COLOUR_NB][SQUARE_NB];
 uint64_t OutpostRanks[COLOUR_NB];
 
 void initMasks() {
+
+    // Initalize distance between two squares table
+    for (int s1 = 0; s1 < SQUARE_NB; s1++)
+        for (int s2 = 0; s2 < SQUARE_NB; s2++)
+            DistanceBetween[s1][s2] = MAX(abs(fileOf(s1)-fileOf(s2)), abs(rankOf(s1)-rankOf(s2)));
 
     for (int s1 = 0; s1 < SQUARE_NB; s1++) {
         for (int s2 = 0; s2 < SQUARE_NB; s2++) {
@@ -94,6 +101,12 @@ void initMasks() {
         PawnConnectedMasks[WHITE][s] = pawnAttacks(BLACK, s) | pawnAttacks(BLACK, s + 8);
         PawnConnectedMasks[BLACK][s] = pawnAttacks(WHITE, s) | pawnAttacks(WHITE, s - 8);
     }
+}
+
+int distanceBetween(int s1, int s2) {
+    assert(0 <= s1 && s1 < SQUARE_NB);
+    assert(0 <= s2 && s2 < SQUARE_NB);
+    return DistanceBetween[s1][s2];
 }
 
 uint64_t bitsBetweenMasks(int s1, int s2) {

@@ -174,11 +174,19 @@ const int KSAdjustment      =  -18;
 /* Passed Pawn Evaluation Terms */
 
 const int PassedPawn[2][2][RANK_NB] = {
-  {{S(   0,   0), S( -31, -27), S( -25,   7), S( -16,  -3), S(  20,   0), S(  59,  -4), S( 147,  33), S(   0,   0)},
-   {S(   0,   0), S(  -1,   2), S( -19,  24), S( -12,  37), S(   6,  46), S(  66,  63), S( 191, 133), S(   0,   0)}},
-  {{S(   0,   0), S(  -7,  15), S( -13,   9), S(  -6,  28), S(  29,  34), S(  78,  66), S( 234, 152), S(   0,   0)},
-   {S(   0,   0), S(  -9,   9), S( -12,  18), S( -18,  54), S(  -5, 113), S(  41, 213), S( 126, 378), S(   0,   0)}},
+  {{S(   0,   0), S( -30, -26), S( -24,   6), S( -15,  -2),
+    S(  19,   0), S(  58,  -3), S( 146,  32), S(   0,   0)},
+   {S(   0,   0), S(  -1,   0), S( -20,  21), S( -12,  35),
+    S(   6,  46), S(  66,  64), S( 191, 133), S(   0,   0)}},
+  {{S(   0,   0), S(  -8,  12), S( -14,   7), S(  -7,  26),
+    S(  31,  37), S(  79,  70), S( 235, 154), S(   0,   0)},
+   {S(   0,   0), S( -15,   1), S( -15,  10), S( -19,  48),
+    S(  -3, 112), S(  43, 219), S( 126, 380), S(   0,   0)}},
 };
+
+const int PassedFriendlyDistance = S(   2,  -6);
+
+const int PassedEnemyDistance = S(  -1,   8);
 
 /* Threat Evaluation Terms */
 
@@ -703,32 +711,40 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
 
 int evaluatePassedPawns(EvalInfo* ei, Board* board, int colour){
 
-    int sq, rank, canAdvance, safeAdvance, eval = 0;
-    uint64_t destination;
+    const int US = colour, THEM = !colour;
 
-    uint64_t tempPawns = board->colours[colour] & ei->passedPawns;
-    uint64_t notEmpty  = board->colours[WHITE ] | board->colours[BLACK];
+    int sq, rank, dist, canAdvance, safeAdvance, eval = 0;
+
+    int ourKing   = getlsb(board->colours[US  ] & board->pieces[KING]);
+    int theirKing = getlsb(board->colours[THEM] & board->pieces[KING]);
+
+    uint64_t blocksq;
+    uint64_t tempPawns = board->colours[US] & ei->passedPawns;
+    uint64_t occupied  = board->colours[WHITE] | board->colours[BLACK];
 
     // Evaluate each passed pawn
-    while (tempPawns != 0ull){
+    while (tempPawns){
 
         // Pop off the next passed Pawn
         sq = poplsb(&tempPawns);
+        rank = relativeRankOf(US, sq);
+        blocksq = pawnAdvance(1ull << sq, 0ull, US);
 
-        // Determine the releative rank
-        rank = (colour == BLACK) ? (7 - rankOf(sq)) : rankOf(sq);
-
-        // Determine where the pawn would advance to
-        destination = (colour == BLACK) ? ((1ull << sq) >> 8): ((1ull << sq) << 8);
-
-        // Destination does not have any pieces on it
-        canAdvance = !(destination & notEmpty);
-
-        // Destination is not attacked by the opponent
-        safeAdvance = !(destination & ei->attacked[!colour]);
-
+        // Evaluate based on rank, ability to advance, and safety
+        canAdvance = !(blocksq & occupied);
+        safeAdvance = !(blocksq & ei->attacked[THEM]);
         eval += PassedPawn[canAdvance][safeAdvance][rank];
-        if (TRACE) T.PassedPawn[canAdvance][safeAdvance][rank][colour]++;
+        if (TRACE) T.PassedPawn[canAdvance][safeAdvance][rank][US]++;
+
+        // Evaluate based on distance from our king
+        dist = distanceBetween(sq, ourKing);
+        eval += dist * PassedFriendlyDistance;
+        if (TRACE) T.PassedFriendlyDistance[US] += dist;
+
+        // Evaluate based on distance from their king
+        dist = distanceBetween(sq, theirKing);
+        eval += dist * PassedEnemyDistance;
+        if (TRACE) T.PassedEnemyDistance[US] += dist;
     }
 
     return eval;
