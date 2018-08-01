@@ -23,7 +23,7 @@
 #include "types.h"
 
 #define CLEARING    (      0) // Clear hashes between runs
-#define RESOLVE     (      1) // Resolve with qsearch
+#define RESOLVE     (      0) // Resolve with qsearch
 #define NPARTITIONS (     64) // # of partitions to use
 
 #define NDEPTHS     (      0) // # of search iterations
@@ -64,6 +64,7 @@
 #define TunePassedPawn                  (0)
 #define TunePassedFriendlyDistance      (0)
 #define TunePassedEnemyDistance         (0)
+#define TunePassedSafePromotionPath     (0)
 #define TuneThreatWeakPawn              (0)
 #define TuneThreatMinorAttackedByPawn   (0)
 #define TuneThreatMinorAttackedByMajor  (0)
