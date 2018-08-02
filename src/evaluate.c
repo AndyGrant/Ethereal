@@ -478,7 +478,6 @@ int evaluateRooks(EvalInfo *ei, Board *board, int colour) {
     uint64_t myPawns    = board->pieces[PAWN] & board->colours[  US];
     uint64_t enemyPawns = board->pieces[PAWN] & board->colours[THEM];
     uint64_t tempRooks  = board->pieces[ROOK] & board->colours[  US];
-    uint64_t enemyKings = board->pieces[KING] & board->colours[THEM];
 
     ei->attackedBy[US][ROOK] = 0ull;
 
@@ -507,7 +506,7 @@ int evaluateRooks(EvalInfo *ei, Board *board, int colour) {
         // Rook gains a bonus for being located on seventh rank relative to its
         // colour so long as the enemy king is on the last two ranks of the board
         if (   relativeRankOf(US, sq) == 6
-            && relativeRankOf(US, getlsb(enemyKings)) >= 6) {
+            && relativeRankOf(US, ei->kingSquare[THEM]) >= 6) {
             eval += RookOnSeventh;
             if (TRACE) T.RookOnSeventh[US]++;
         }
@@ -580,13 +579,12 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
 
     uint64_t myPawns     = board->pieces[PAWN ] & board->colours[  US];
     uint64_t enemyQueens = board->pieces[QUEEN] & board->colours[THEM];
-    uint64_t myKings     = board->pieces[KING ] & board->colours[  US];
 
     uint64_t myDefenders  = (board->pieces[PAWN  ] & board->colours[US])
                           | (board->pieces[KNIGHT] & board->colours[US])
                           | (board->pieces[BISHOP] & board->colours[US]);
 
-    int kingSq = getlsb(myKings);
+    int kingSq = ei->kingSquare[US];
     int kingFile = fileOf(kingSq);
     int kingRank = rankOf(kingSq);
 
@@ -680,9 +678,6 @@ int evaluatePassedPawns(EvalInfo* ei, Board* board, int colour){
 
     int sq, rank, dist, flag, canAdvance, safeAdvance, eval = 0;
 
-    int ourKing   = getlsb(board->colours[US  ] & board->pieces[KING]);
-    int theirKing = getlsb(board->colours[THEM] & board->pieces[KING]);
-
     uint64_t bitboard;
     uint64_t tempPawns = board->colours[US] & ei->passedPawns;
     uint64_t occupied  = board->colours[WHITE] | board->colours[BLACK];
@@ -702,12 +697,12 @@ int evaluatePassedPawns(EvalInfo* ei, Board* board, int colour){
         if (TRACE) T.PassedPawn[canAdvance][safeAdvance][rank][US]++;
 
         // Evaluate based on distance from our king
-        dist = distanceBetween(sq, ourKing);
+        dist = distanceBetween(sq, ei->kingSquare[US]);
         eval += dist * PassedFriendlyDistance;
         if (TRACE) T.PassedFriendlyDistance[US] += dist;
 
         // Evaluate based on distance from their king
-        dist = distanceBetween(sq, theirKing);
+        dist = distanceBetween(sq, ei->kingSquare[THEM]);
         eval += dist * PassedEnemyDistance;
         if (TRACE) T.PassedEnemyDistance[US] += dist;
 
@@ -844,8 +839,8 @@ void initializeEvalInfo(EvalInfo* ei, Board* board, PawnKingTable* pktable){
     uint64_t whitePawns = white & pawns;
     uint64_t blackPawns = black & pawns;
 
-    int wKingSq = getlsb((white & kings));
-    int bKingSq = getlsb((black & kings));
+    int wKingSq = ei->kingSquare[WHITE] = getlsb(white & kings);
+    int bKingSq = ei->kingSquare[BLACK] = getlsb(black & kings);
 
     ei->pawnAttacks[WHITE] = pawnAttackSpan(whitePawns, ~0ull, WHITE);
     ei->pawnAttacks[BLACK] = pawnAttackSpan(blackPawns, ~0ull, BLACK);
