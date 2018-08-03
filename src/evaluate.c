@@ -173,7 +173,7 @@ const int KSAdjustment      =  -18;
 
 /* Passed Pawn Evaluation Terms */
 
-const int PassedPawn[2][2][8] = {
+const int PassedPawn[2][2][RANK_NB] = {
   {{S(   0,   0), S( -28, -25), S( -23,   5), S( -15,   0),
     S(  18,   1), S(  57,   0), S( 143,  32), S(   0,   0)},
    {S(   0,   0), S(  -4,  -6), S( -23,  13), S( -14,  29),
