@@ -198,7 +198,7 @@ const int ThreatMinorAttackedByMajor = S( -47, -44);
 const int ThreatRookAttackedByLesser = S( -55, -25);
 const int ThreatQueenAttackedByOne   = S( -97,   1);
 const int ThreatOverloadedPieces     = S( -10, -26);
-const int ThreatByPawnPush           = S(  12,  15);
+const int ThreatByPawnPush           = S(  20,  16);
 
 /* General Evaluation Terms */
 
@@ -719,6 +719,7 @@ int evaluatePassedPawns(EvalInfo* ei, Board* board, int colour){
 int evaluateThreats(EvalInfo *ei, Board *board, int colour) {
 
     const int US = colour, THEM = !colour;
+    const uint64_t Rank3Rel = US == WHITE ? RANK_3 : RANK_6;
 
     int count, eval = 0;
 
@@ -745,9 +746,11 @@ int evaluateThreats(EvalInfo *ei, Board *board, int colour) {
                         & ei->attacked[  US] & ~ei->attackedBy2[  US]
                         & ei->attacked[THEM] & ~ei->attackedBy2[THEM];
 
-    // Pawn advances by a single square which threaten an enemy piece.
-    // Exclude pawn moves to squares which are weak, or attacked by enemy pawns
+    // Look for enemy non-pawn pieces which we may threaten with a pawn advance.
+    // Don't consider pieces we already threaten, pawn moves which would be countered
+    // by a pawn capture, and squares which are completely unprotected by our pieces.
     uint64_t pushThreat  = pawnAdvance(pawns, occupied, US);
+    pushThreat |= pawnAdvance(pushThreat & ~attacksByPawns & Rank3Rel, occupied, US);
     pushThreat &= ~attacksByPawns & (ei->attacked[US] | ~ei->attacked[THEM]);
     pushThreat  = pawnAttackSpan(pushThreat, enemy & ~ei->attackedBy[US][PAWN], US);
 
