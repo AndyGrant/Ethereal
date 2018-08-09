@@ -392,7 +392,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
 
         rBeta = MIN(beta + ProbCutMargin, MATE - MAX_PLY - 1);
 
-        initializeMovePicker(&movePicker, thread, NONE_MOVE, height);
+        initMovePicker(&movePicker, thread, NONE_MOVE, height);
 
         while ((move = selectNextMove(&movePicker, board, 1)) != NONE_MOVE){
 
@@ -441,7 +441,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
 
     // Step 12. Initialize the Move Picker and being searching through each
     // move one at a time, until we run out or a move generates a cutoff
-    initializeMovePicker(&movePicker, thread, ttMove, height);
+    initMovePicker(&movePicker, thread, ttMove, height);
     while ((move = selectNextMove(&movePicker, board, skipQuiets)) != NONE_MOVE){
 
         // If this move is quiet we will save it to a list of attemped quiets.
@@ -701,18 +701,14 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     if (value + QFutilityMargin + bestTacticalMoveValue(board) < alpha)
         return eval;
 
-    // Step 6. Move Generation and Looping. Generate all tactical moves for this
-    // position (includes Captures, Promotions, and Enpass) and try them
-    initializeMovePicker(&movePicker, thread, NONE_MOVE, height);
+    // Step 6. Move Generation and Looping. Generate all tactical,
+    // moves, return and try the ones which pass an SEE(QSEEMargin)
+    initNoisyMovePicker(&movePicker, thread, QSEEMargin);
     while ((move = selectNextMove(&movePicker, board, 1)) != NONE_MOVE){
 
-        // Step 7. Static Exchance Evaluation Pruning. All bad noisy moves
-        // have faild an SEE about zero. We will skip all such moves
-        if (movePicker.stage == STAGE_BAD_NOISY)
-            break;
-
-        // Step 8. Futility Pruning. Similar to Delta Pruning, if this capture in the
-        // best case would still fail to beat alpha minus some margin, we can skip it
+        // Step 7. Futility Pruning. Similar to Delta Pruning, if
+        // this capture in the best case would still fail to beat
+        // alpha minus some margin, we can safely skip it
         if (eval + QFutilityMargin + thisTacticalMoveValue(board, move) < alpha)
             continue;
 
@@ -926,7 +922,7 @@ int moveIsSingular(Thread* thread, uint16_t ttMove, int ttValue, Undo* undo, int
     revertMove(board, ttMove, undo);
 
     // Iterate and check all moves other than the table move
-    initializeMovePicker(&movePicker, thread, NONE_MOVE, height);
+    initMovePicker(&movePicker, thread, NONE_MOVE, height);
     while ((move = selectNextMove(&movePicker, board, 0)) != NONE_MOVE){
 
         // Skip the table move
