@@ -95,20 +95,24 @@ void updateTimeManagment(SearchInfo* info, Limits* limits, int depth, int value)
 
     // Don't adjust time when we are at low depths, or if
     // we simply are not in control of our own time usage
-    if (!limits->limitedBySelf || depth < 4)
+    if (!limits->limitedBySelf || depth < 5)
         return;
 
     // Increase our time if the score suddenly dropped
-    if (info->values[depth-1] > value + 10)
-        info->idealUsage *= 1.050;
+    if (info->values[depth-1] > value + 11)
+        info->idealUsage *= 1.022;
 
     // Increase our time if the score suddenly dropped
-    if (info->values[depth-1] > value + 20)
-        info->idealUsage *= 1.050;
+    if (info->values[depth-1] > value + 22)
+        info->idealUsage *= 1.033;
 
     // Increase our time if the score suddenly dropped
-    if (info->values[depth-1] > value + 40)
-        info->idealUsage *= 1.050;
+    if (info->values[depth-1] > value + 44)
+        info->idealUsage *= 1.055;
+
+    // Increase our time if the score suddenly dropped
+    if (info->values[depth-1] + 33 < value)
+        info->idealUsage *= 1.044;
 
 
     if (info->bestMoves[depth] == info->bestMoves[depth-1]){
