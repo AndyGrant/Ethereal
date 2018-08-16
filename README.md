@@ -2,7 +2,7 @@
 
 Ethereal is a UCI-compliant chess engine. It uses the traditional alpha-beta framework in addition to a variety of pruning, reduction, extension, and other improvements.
 
-To read more about the techniques used in Ethereal, see [Ethereal's Chess Programming Wiki Page](https://chessprogramming.wikispaces.com/Ethereal)
+To read more about the techniques used in Ethereal, see [Ethereal's Chess Programming Wiki Page](https://www.chessprogramming.org/Ethereal)
 
 # Configuration
 
