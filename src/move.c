@@ -261,7 +261,7 @@ void applyNullMove(Board *board, Undo *undo) {
     undo->fiftyMoveRule = board->fiftyMoveRule;
 
     board->turn = !board->turn;
-    board->history[board->numMoves++] = NULL_MOVE;
+    board->history[board->numMoves++] = board->hash;
 
     board->hash ^= ZobristTurnKey;
     if (board->epSquare != -1)
