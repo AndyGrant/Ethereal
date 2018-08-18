@@ -269,7 +269,7 @@ void runBenchmark(Thread *threads, int depth) {
     double start, end;
     Board board;
     Limits limits;
-
+    uint16_t bestMove, ponderMove;
     uint64_t nodes = 0ull;
 
     // Initialize limits for the search
@@ -288,7 +288,7 @@ void runBenchmark(Thread *threads, int depth) {
         boardFromFEN(&board, Benchmarks[i]);
 
         limits.start = getRealTime();
-        getBestMove(threads, &board, &limits);
+        getBestMove(threads, &board, &limits, &bestMove, &ponderMove);
         nodes += nodesSearchedThreadPool(threads);
 
         clearTT(); // Reset TT for new search

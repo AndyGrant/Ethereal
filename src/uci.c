@@ -48,6 +48,8 @@ extern unsigned TB_PROBE_DEPTH; // Defined by Syzygy.c
 
 extern volatile int ABORT_SIGNAL; // For killing active search
 
+extern volatile int IS_PONDERING; // For swapping out of PONDER
+
 pthread_mutex_t READYLOCK = PTHREAD_MUTEX_INITIALIZER;
 
 
@@ -99,6 +101,7 @@ int main(int argc, char **argv) {
             printf("option name MoveOverhead type spin default 100 min 0 max 10000\n");
             printf("option name SyzygyPath type string default <empty>\n");
             printf("option name SyzygyProbeDepth type spin default 0 min 0 max 127\n");
+            printf("option name Ponder type check default false\n");
             printf("uciok\n");
             fflush(stdout);
         }
@@ -158,8 +161,12 @@ int main(int argc, char **argv) {
             pthread_create(&pthreadsgo, NULL, &uciGo, &threadsgo);
         }
 
+        else if (stringEquals(str, "ponderhit"))
+            IS_PONDERING = 0;
+
         else if (stringEquals(str, "stop")){
             ABORT_SIGNAL = 1;
+            IS_PONDERING = 0;
             pthread_join(pthreadsgo, NULL);
         }
 
@@ -194,10 +201,17 @@ void* uciGo(void* vthreadsgo){
 
     Limits limits; limits.start = start;
 
+    uint16_t bestMove, ponderMove;
+    char bestMoveStr[6], ponderMoveStr[6];
+
     int depth = -1, infinite = -1;
     double wtime = -1, btime = -1, mtg = -1, movetime = -1;
     double winc = 0, binc = 0;
 
+    // Reset pondering flag before starting search
+    IS_PONDERING = 0;
+
+    // Init the tokenizer with spaces
     char* ptr = strtok(str, " ");
 
     // Parse time control and search type parameters
@@ -226,6 +240,9 @@ void* uciGo(void* vthreadsgo){
 
         else if (stringEquals(ptr, "infinite"))
             infinite = 1;
+
+        else if (stringEquals(ptr, "ponder"))
+            IS_PONDERING = 1;
     }
 
     // Initialize limits for the search
@@ -241,11 +258,24 @@ void* uciGo(void* vthreadsgo){
     limits.mtg  = (board->turn == WHITE) ?   mtg :   mtg;
     limits.inc  = (board->turn == WHITE) ?  winc :  binc;
 
-    // Execute the search and report the best move
-    char moveStr[6];
-    moveToString(getBestMove(threads, board, &limits), moveStr);
-    printf("bestmove %s\n", moveStr);
-    fflush(stdout);
+    // Execute search, return best and ponder moves
+    getBestMove(threads, board, &limits, &bestMove, &ponderMove);
+
+    // UCI spec does not want reports until out of pondering
+    while (IS_PONDERING);
+
+    // Report best move (we should always have one)
+    moveToString(bestMove, bestMoveStr);
+    printf("bestmove %s ", bestMoveStr);
+
+    // Report ponder move if we have one
+    if (ponderMove != NONE_MOVE) {
+        moveToString(ponderMove, ponderMoveStr);
+        printf("ponder %s", ponderMoveStr);
+    }
+
+    // Make sure this all gets reported
+    printf("\n"); fflush(stdout);
 
     // Drop the ready lock, as we are prepared to handle a new search
     pthread_mutex_unlock(&READYLOCK);

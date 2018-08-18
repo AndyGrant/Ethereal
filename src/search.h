@@ -27,6 +27,7 @@ struct SearchInfo {
     int depth;
     int values[MAX_PLY];
     uint16_t bestMoves[MAX_PLY];
+    uint16_t ponderMoves[MAX_PLY];
     double timeUsage[MAX_PLY];
     double startTime;
     double idealUsage;
@@ -43,7 +44,7 @@ struct PVariation {
 
 void initSearch();
 
-uint16_t getBestMove(Thread* threads, Board* board, Limits* limits);
+void getBestMove(Thread* threads, Board* board, Limits* limits, uint16_t *best, uint16_t *ponder);
 
 void* iterativeDeepening(void* vthread);
 

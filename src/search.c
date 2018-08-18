@@ -49,6 +49,8 @@ int LMRTable[64][64]; // Late Move Reductions, LMRTable[depth][played]
 
 volatile int ABORT_SIGNAL; // Global ABORT flag for threads
 
+volatile int IS_PONDERING; // Global PONDER flag for threads
+
 pthread_mutex_t LOCK = PTHREAD_MUTEX_INITIALIZER; // Global LOCK for threads
 
 void initSearch(){
@@ -59,7 +61,7 @@ void initSearch(){
             LMRTable[d][p] = 0.75 + log(d) * log(p) / 2.25;
 }
 
-uint16_t getBestMove(Thread* threads, Board* board, Limits* limits){
+void getBestMove(Thread* threads, Board* board, Limits* limits, uint16_t *best, uint16_t *ponder){
 
     ABORT_SIGNAL = 0; // Clear the ABORT signal for the new search
 
@@ -68,7 +70,7 @@ uint16_t getBestMove(Thread* threads, Board* board, Limits* limits){
     // Before searching, check to see if we are in the Syzygy Tablebases. If so
     // the probe will return 1, will initialize the best move, and will report
     // a depth MAX_PLY - 1 search to the interface. If found, we are done here.
-    uint16_t move; if (tablebasesProbeDTZ(board, &move)) return move;
+    if (tablebasesProbeDTZ(board, best)) { *ponder = NONE_MOVE; return; }
 
     // Initialize SearchInfo, used for reporting and time managment logic
     SearchInfo info;
@@ -88,8 +90,9 @@ uint16_t getBestMove(Thread* threads, Board* board, Limits* limits){
     for (int i = 1; i < threads[0].nthreads; i++)
         pthread_join(pthreads[i], NULL);
 
-    // Return highest depth best move
-    return info.bestMoves[info.depth];
+    // Save the best move and ponder move
+    *best = info.bestMoves[info.depth];
+    *ponder = info.ponderMoves[info.depth];
 }
 
 void* iterativeDeepening(void* vthread){
@@ -137,16 +140,20 @@ void* iterativeDeepening(void* vthread){
         if (!mainThread) continue;
 
         // Update the Search Info structure for the main thread
-        info->depth = depth;
-        info->values[depth] = value;
-        info->bestMoves[depth] = thread->pv.line[0];
-        info->timeUsage[depth] = elapsedTime(info) - info->timeUsage[depth-1];
+        info->depth              = depth;
+        info->values[depth]      = value;
+        info->bestMoves[depth]   = thread->pv.line[0];
+        info->ponderMoves[depth] = thread->pv.length >= 2 ? thread->pv.line[1] : NONE_MOVE;
+        info->timeUsage[depth]   = elapsedTime(info) - info->timeUsage[depth-1];
 
         // Send information about this search to the interface
         uciReport(thread->threads, -MATE, MATE, value);
 
         // Update time allocation based on score and pv changes
         updateTimeManagment(info, limits, depth, value);
+
+        // Don't want to exit while pondering
+        if (IS_PONDERING) continue;
 
         // Check for termination by any of the possible limits
         if (   (limits->limitedByDepth && depth >= limits->depthLimit)
@@ -238,7 +245,8 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     if (   (thread->limits->limitedBySelf || thread->limits->limitedByTime)
         && (thread->nodes & 1023) == 1023
         &&  elapsedTime(thread->info) >= thread->info->maxUsage
-        &&  thread->depth > 1)
+        &&  thread->depth > 1
+        && !IS_PONDERING)
         longjmp(thread->jbuffer, 1);
 
     // Step 1B. Check to see if the master thread finished
@@ -668,7 +676,8 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     if (   (thread->limits->limitedBySelf || thread->limits->limitedByTime)
         && (thread->nodes & 1023) == 1023
         &&  elapsedTime(thread->info) >= thread->info->maxUsage
-        &&  thread->depth > 1)
+        &&  thread->depth > 1
+        && !IS_PONDERING)
         longjmp(thread->jbuffer, 1);
 
     // Step 1B. Check to see if the master thread finished
