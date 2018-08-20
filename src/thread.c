@@ -20,12 +20,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "transposition.h"
+#include "board.h"
 #include "history.h"
 #include "search.h"
-#include "board.h"
 #include "thread.h"
+#include "transposition.h"
 #include "types.h"
+#include "windows.h"
 
 Thread* createThreadPool(int nthreads){
 
@@ -34,6 +35,7 @@ Thread* createThreadPool(int nthreads){
     for (int i = 0; i < nthreads; i++){
 
         // Threads will know of each other
+        threads[i].index = i;
         threads[i].threads = threads;
         threads[i].nthreads = nthreads;
 

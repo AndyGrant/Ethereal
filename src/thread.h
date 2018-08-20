@@ -21,9 +21,10 @@
 
 #include <setjmp.h>
 
-#include "types.h"
-#include "transposition.h"
+#include "board.h"
 #include "search.h"
+#include "transposition.h"
+#include "types.h"
 
 struct Thread {
 
@@ -51,6 +52,7 @@ struct Thread {
 
     jmp_buf jbuffer;
 
+    int index;
     int nthreads;
     Thread* threads;
 

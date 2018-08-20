@@ -33,17 +33,18 @@
 #include "evaluate.h"
 #include "fathom/tbprobe.h"
 #include "history.h"
+#include "move.h"
+#include "movegen.h"
+#include "movepicker.h"
 #include "psqt.h"
 #include "search.h"
 #include "syzygy.h"
 #include "thread.h"
+#include "time.h"
 #include "transposition.h"
 #include "types.h"
-#include "time.h"
-#include "move.h"
-#include "movegen.h"
-#include "movepicker.h"
 #include "uci.h"
+#include "windows.h"
 
 int LMRTable[64][64]; // Late Move Reductions, LMRTable[depth][played]
 
@@ -103,6 +104,9 @@ void* iterativeDeepening(void* vthread){
     const int mainThread   = thread == &thread->threads[0];
 
     int i, count, value, depth;
+
+    // Bind to optimal group
+    bindThisThread(thread->index);
 
     for (depth = 1; depth < MAX_PLY; depth++){
 
