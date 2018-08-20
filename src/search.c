@@ -156,10 +156,10 @@ void* iterativeDeepening(void* vthread){
         if (IS_PONDERING) continue;
 
         // Check for termination by any of the possible limits
-        if (   (limits->limitedByDepth && depth >= limits->depthLimit)
+        if (   (limits->limitedBySelf  && terminateTimeManagment(info))
+            || (limits->limitedBySelf  && elapsedTime(info) > info->maxUsage)
             || (limits->limitedByTime  && elapsedTime(info) > limits->timeLimit)
-            || (limits->limitedBySelf  && elapsedTime(info) > info->idealUsage)
-            || (limits->limitedBySelf  && elapsedTime(info) > info->maxUsage))
+            || (limits->limitedByDepth && depth >= limits->depthLimit))
             break;
     }
 

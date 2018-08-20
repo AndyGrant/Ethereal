@@ -49,16 +49,14 @@ double getRealTime(){
 }
 
 double elapsedTime(SearchInfo* info){
-
     return getRealTime() - info->startTime;
-
 }
 
 void initTimeManagment(SearchInfo* info, Limits* limits){
 
     info->startTime = limits->start; // Save off the start time of the search
 
-    info->bestMoveChanges = 0; // Clear our stability time usage heuristic
+    info->pvFactor = 0; // Clear our stability time usage heuristic
 
     // Allocate time if Ethereal is handling the clock
     if (limits->limitedBySelf){
@@ -93,55 +91,50 @@ void initTimeManagment(SearchInfo* info, Limits* limits){
 
 void updateTimeManagment(SearchInfo* info, Limits* limits, int depth, int value){
 
+    const uint16_t thisMove = info->bestMoves[depth];
+    const uint16_t lastMove = info->bestMoves[depth-1];
+    const int lastValue     = info->values[depth-1];
+
     // Don't adjust time when we are at low depths, or if
     // we simply are not in control of our own time usage
     if (!limits->limitedBySelf || depth < 4)
         return;
 
     // Increase our time if the score suddenly dropped
-    if (info->values[depth-1] > value + 10)
+    if (lastValue > value + 10)
         info->idealUsage *= 1.050;
 
     // Increase our time if the score suddenly dropped
-    if (info->values[depth-1] > value + 20)
+    if (lastValue > value + 20)
         info->idealUsage *= 1.050;
 
     // Increase our time if the score suddenly dropped
-    if (info->values[depth-1] > value + 40)
+    if (lastValue > value + 40)
         info->idealUsage *= 1.050;
 
     // Increase our time if the score suddenly jumps
-    if (info->values[depth-1] + 15 < value)
+    if (lastValue + 15 < value)
         info->idealUsage *= 1.025;
 
     // Increase our time if the score suddenly jumps
-    if (info->values[depth-1] + 30 < value)
+    if (lastValue + 30 < value)
         info->idealUsage *= 1.050;
 
+    // Always scale back the PV time factor
+    info->pvFactor = MAX(0, info->pvFactor - 1);
 
-    if (info->bestMoves[depth] == info->bestMoves[depth-1]){
+    // Increase time if the PV changed moves
+    if (thisMove != lastMove)
+        info->pvFactor = PVFactorCount;
+}
 
-        // If we still have remaining increments from best move
-        // changes reduce our ideal time usage by a factor, such that
-        // after we deplete bestMoveChanges, we are near the original time
-        info->idealUsage *= info->bestMoveChanges ? 0.935 : 1.000;
+int terminateTimeManagment(SearchInfo* info) {
 
-        // We have recovered one best move change
-        info->bestMoveChanges = MAX(0, info->bestMoveChanges - 1);
-    }
+    double cutoff = info->idealUsage;
 
-    else {
+    // Adjust cutoff based on bestmove fluctuations
+    cutoff *= 1.00 + info->pvFactor * PVFactorWeight;
 
-        // Increase our time by based on our best move debt. If this is the
-        // first PV change in some time, we increase our time by 48%. If we
-        // have recently changed best moves, we will only adjust our usage
-        // to get back to the initial 48% time allocation by the first change
-        info->idealUsage *= 1.000 + 0.080 * (6 - info->bestMoveChanges);
-
-        // Set out counter back to six as the best move has changed
-        info->bestMoveChanges = 6;
-    }
-
-    // Cap our ideal usage using our maximum allocation
-    info->idealUsage = MIN(info->idealUsage, info->maxAlloc);
+    // Terminate search if cutoff is reached
+    return elapsedTime(info) > MIN(cutoff, info->maxAlloc);
 }

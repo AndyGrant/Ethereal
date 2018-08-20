@@ -25,5 +25,9 @@ double getRealTime();
 double elapsedTime(SearchInfo* info);
 void initTimeManagment(SearchInfo* info, Limits* limits);
 void updateTimeManagment(SearchInfo* info, Limits* limits, int depth, int value);
+int terminateTimeManagment(SearchInfo* info);
+
+static const double PVFactorCount  = 8;
+static const double PVFactorWeight = 0.07;
 
 #endif
