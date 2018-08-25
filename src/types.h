@@ -89,6 +89,7 @@ static inline int makePiece(int pt, int c) {
 
 // Forward definition of all structs
 
+typedef struct Magic Magic;
 typedef struct Board Board;
 typedef struct Undo Undo;
 typedef struct EvalTrace EvalTrace;
