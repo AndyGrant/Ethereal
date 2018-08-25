@@ -12,10 +12,10 @@ Additionally, most GUI's should support a method to set each option. If they do 
 ### Hash
 
 The size of the hash table in megabytes. For analysis the more hash given the better. For testing against other classical engines, just be sure to give each engine the same amount of Hash. For testing against non-classical engines, reach out to me and I will make a recommendation.
-  
+
 ### Threads
 
-Number of threads given to Ethereal while moving. Typically the more threads the better. There is some debate about the value of using hyper-threading, but either way should be fine. 
+Number of threads given to Ethereal while moving. Typically the more threads the better. There is some debate about the value of using hyper-threading, but either way should be fine.
 
 ### MoveOverhead
 
@@ -39,4 +39,4 @@ All versions of Ethereal in this repository are considered official releases
 
 # Special Thanks
 
-I would like to thank my previous instructor, Zachary Littrell, for all of his help in my endeavors. He was my Computer Science instructor for two semesters during my senior year of high school. His encouragement, mentoring, and assistance played a vital role in the development of my Computer Science skills. In addition to being a wonderful instructor, he is also a excellent friend. He provided the guidance I needed at such a crucial time in my life, allowing me to pursue Computer Science in a way I never imagined I could.
+I would like to thank my previous instructor, Zachary Littrell, for all of his help in my endeavors. He was my Computer Science instructor for two semesters during my senior year of high school. His encouragement, mentoring, and assistance played a vital role in the development of my Computer Science skills. In addition to being a wonderful instructor, he is also an excellent friend. He provided the guidance I needed at such a crucial time in my life, allowing me to pursue Computer Science in a way I never imagined I could.

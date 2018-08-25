@@ -89,9 +89,9 @@ void runTexelTuning(Thread *thread) {
 
     TexelEntry *tes;
     int i, j, iteration = -1;
-    double K, thisError, bestError = 1e6, baseRate = 10.0;
-    double params[NTERMS][PHASE_NB] = {{0}, {0}};
-    double cparams[NTERMS][PHASE_NB] = {{0}, {0}};
+    double K, thisError, bestError = 1e6;
+    double params[NTERMS][PHASE_NB] = {0};
+    double cparams[NTERMS][PHASE_NB] = {0};
 
     setvbuf(stdout, NULL, _IONBF, 0);
 
@@ -119,9 +119,7 @@ void runTexelTuning(Thread *thread) {
 
     while (1) {
 
-        iteration++;
-
-        if (iteration % 25 == 0) {
+        if (++iteration % REPORTING == 0) {
 
             // Check for a regression in the tuning process
             thisError = completeLinearError(tes, params, K);
@@ -130,14 +128,14 @@ void runTexelTuning(Thread *thread) {
 
             // Update our best and record the current parameters
             bestError = thisError;
-            printParameters(params, cparams);
             printf("\nIteration [%d] Error = %g \n", iteration, bestError);
+            printParameters(params, cparams);
         }
 
-        double gradients[NTERMS][PHASE_NB] = {{0}, {0}};
+        double gradients[NTERMS][PHASE_NB] = {0};
         #pragma omp parallel shared(gradients)
         {
-            double localgradients[NTERMS][PHASE_NB] = {{0}, {0}};
+            double localgradients[NTERMS][PHASE_NB] = {0};
             #pragma omp for schedule(static, NPOSITIONS / NPARTITIONS)
             for (i = 0; i < NPOSITIONS; i++) {
 
@@ -169,15 +167,15 @@ void runTexelTuning(Thread *thread) {
         // each term would be divided by -2 over NPOSITIONS. Instead we avoid those divisions until the
         // final update step. Note that we have also simplified the minus off of the 2.
         for (i = 0; i < NTERMS; i++) {
-            params[i][MG] += (2.0 / NPOSITIONS) * baseRate * gradients[i][MG];
-            params[i][EG] += (2.0 / NPOSITIONS) * baseRate * gradients[i][EG];
+            params[i][MG] += (2.0 / NPOSITIONS) * LEARNING * gradients[i][MG];
+            params[i][EG] += (2.0 / NPOSITIONS) * LEARNING * gradients[i][EG];
         }
     }
 }
 
 void initTexelEntries(TexelEntry *tes, Thread *thread) {
 
-    int i, j, k;
+    int i, j, k, eval;
     Undo undo[1];
     Limits limits;
     int coeffs[NTERMS];
@@ -216,9 +214,8 @@ void initTexelEntries(TexelEntry *tes, Thread *thread) {
         else    {printf("Cannot Parse %s\n", line); exit(EXIT_FAILURE);}
 
         // Clear out all of the hash and history tables. This is extemely slow!
-        // for correctness this must be done, but you can likely get away without
-        // doing it. For high depth this is less of an issue and should be cleared.
-        if (CLEARING) resetThreadPool(thread), clearTT();
+        // For correctness this must be done, but you can likely get away with it.
+        if (CLEARING && NDEPTHS) resetThreadPool(thread), clearTT();
 
         // Setup the board with the FEN from the FENS file
         boardFromFEN(&thread->board, line);
@@ -237,7 +234,7 @@ void initTexelEntries(TexelEntry *tes, Thread *thread) {
         tes[i].phase = (tes[i].phase * 256 + 12) / 24.0;
 
         // Use a iterative deepening to get a predictive evaluation
-        for (int depth = 0; depth <= NDEPTHS; depth++)
+        for (int depth = 1; depth <= NDEPTHS; depth++)
             tes[i].eval = search(thread, &thread->pv, -MATE, MATE, depth, 0);
         if (thread->board.turn == BLACK) tes[i].eval *= -1;
 
@@ -250,8 +247,12 @@ void initTexelEntries(TexelEntry *tes, Thread *thread) {
 
         // Vectorize the evaluation coefficients
         T = EmptyTrace;
-        evaluateBoard(&thread->board, NULL);
+        eval = evaluateBoard(&thread->board, NULL);
         initCoefficients(coeffs);
+
+        // When using NDEPTHS=0, use the proper evaluation
+        if (NDEPTHS == 0)
+            tes[i].eval = thread->board.turn == WHITE ? eval : -eval;
 
         // Count up the non zero evaluation terms
         for (k = 0, j = 0; j < NTERMS; j++)
@@ -285,49 +286,9 @@ void initTexelEntries(TexelEntry *tes, Thread *thread) {
 
 void initCoefficients(int coeffs[NTERMS]) {
 
-    int i = 0; // INIT_COEFF_N will update i accordingly
+    int i = 0; // EXECUTE_ON_TERMS will update i accordingly
 
-    ENABLE_0(INIT_COEFF, PawnValue)                     ;
-    ENABLE_0(INIT_COEFF, KnightValue)                   ;
-    ENABLE_0(INIT_COEFF, BishopValue)                   ;
-    ENABLE_0(INIT_COEFF, RookValue)                     ;
-    ENABLE_0(INIT_COEFF, QueenValue)                    ;
-    ENABLE_0(INIT_COEFF, KingValue)                     ;
-    ENABLE_1(INIT_COEFF, PawnPSQT32, 32)                ;
-    ENABLE_1(INIT_COEFF, KnightPSQT32, 32)              ;
-    ENABLE_1(INIT_COEFF, BishopPSQT32, 32)              ;
-    ENABLE_1(INIT_COEFF, RookPSQT32, 32)                ;
-    ENABLE_1(INIT_COEFF, QueenPSQT32, 32)               ;
-    ENABLE_1(INIT_COEFF, KingPSQT32, 32)                ;
-    ENABLE_0(INIT_COEFF, PawnIsolated)                  ;
-    ENABLE_0(INIT_COEFF, PawnStacked)                   ;
-    ENABLE_1(INIT_COEFF, PawnBackwards, 2)              ;
-    ENABLE_1(INIT_COEFF, PawnConnected32, 32)           ;
-    ENABLE_1(INIT_COEFF, KnightOutpost, 2)              ;
-    ENABLE_0(INIT_COEFF, KnightBehindPawn)              ;
-    ENABLE_1(INIT_COEFF, KnightMobility, 9)             ;
-    ENABLE_0(INIT_COEFF, BishopPair)                    ;
-    ENABLE_0(INIT_COEFF, BishopRammedPawns)             ;
-    ENABLE_1(INIT_COEFF, BishopOutpost, 2)              ;
-    ENABLE_0(INIT_COEFF, BishopBehindPawn)              ;
-    ENABLE_1(INIT_COEFF, BishopMobility, 14)            ;
-    ENABLE_1(INIT_COEFF, RookFile, 2)                   ;
-    ENABLE_0(INIT_COEFF, RookOnSeventh)                 ;
-    ENABLE_1(INIT_COEFF, RookMobility, 15)              ;
-    ENABLE_1(INIT_COEFF, QueenMobility, 28)             ;
-    ENABLE_1(INIT_COEFF, KingDefenders, 12)             ;
-    ENABLE_3(INIT_COEFF, KingShelter, 2, 8, 8)          ;
-    ENABLE_3(INIT_COEFF, PassedPawn, 2, 2, 8)           ;
-    ENABLE_0(INIT_COEFF, PassedFriendlyDistance)        ;
-    ENABLE_0(INIT_COEFF, PassedEnemyDistance)           ;
-    ENABLE_0(INIT_COEFF, PassedSafePromotionPath)       ;
-    ENABLE_0(INIT_COEFF, ThreatWeakPawn)                ;
-    ENABLE_0(INIT_COEFF, ThreatMinorAttackedByPawn)     ;
-    ENABLE_0(INIT_COEFF, ThreatMinorAttackedByMajor)    ;
-    ENABLE_0(INIT_COEFF, ThreatRookAttackedByLesser)    ;
-    ENABLE_0(INIT_COEFF, ThreatQueenAttackedByOne)      ;
-    ENABLE_0(INIT_COEFF, ThreatOverloadedPieces)        ;
-    ENABLE_0(INIT_COEFF, ThreatByPawnPush)              ;
+    EXECUTE_ON_TERMS(INIT_COEFF);
 
     if (i != NTERMS){
         printf("Error in initCoefficients(): i = %d ; NTERMS = %d\n", i, NTERMS);
@@ -337,49 +298,9 @@ void initCoefficients(int coeffs[NTERMS]) {
 
 void initCurrentParameters(double cparams[NTERMS][PHASE_NB]) {
 
-    int i = 0; // INIT_PARAM_N will update i accordingly
+    int i = 0; // EXECUTE_ON_TERMS will update i accordingly
 
-    ENABLE_0(INIT_PARAM, PawnValue)                     ;
-    ENABLE_0(INIT_PARAM, KnightValue)                   ;
-    ENABLE_0(INIT_PARAM, BishopValue)                   ;
-    ENABLE_0(INIT_PARAM, RookValue)                     ;
-    ENABLE_0(INIT_PARAM, QueenValue)                    ;
-    ENABLE_0(INIT_PARAM, KingValue)                     ;
-    ENABLE_1(INIT_PARAM, PawnPSQT32, 32)                ;
-    ENABLE_1(INIT_PARAM, KnightPSQT32, 32)              ;
-    ENABLE_1(INIT_PARAM, BishopPSQT32, 32)              ;
-    ENABLE_1(INIT_PARAM, RookPSQT32, 32)                ;
-    ENABLE_1(INIT_PARAM, QueenPSQT32, 32)               ;
-    ENABLE_1(INIT_PARAM, KingPSQT32, 32)                ;
-    ENABLE_0(INIT_PARAM, PawnIsolated)                  ;
-    ENABLE_0(INIT_PARAM, PawnStacked)                   ;
-    ENABLE_1(INIT_PARAM, PawnBackwards, 2)              ;
-    ENABLE_1(INIT_PARAM, PawnConnected32, 32)           ;
-    ENABLE_1(INIT_PARAM, KnightOutpost, 2)              ;
-    ENABLE_0(INIT_PARAM, KnightBehindPawn)              ;
-    ENABLE_1(INIT_PARAM, KnightMobility, 9)             ;
-    ENABLE_0(INIT_PARAM, BishopPair)                    ;
-    ENABLE_0(INIT_PARAM, BishopRammedPawns)             ;
-    ENABLE_1(INIT_PARAM, BishopOutpost, 2)              ;
-    ENABLE_0(INIT_PARAM, BishopBehindPawn)              ;
-    ENABLE_1(INIT_PARAM, BishopMobility, 14)            ;
-    ENABLE_1(INIT_PARAM, RookFile, 2)                   ;
-    ENABLE_0(INIT_PARAM, RookOnSeventh)                 ;
-    ENABLE_1(INIT_PARAM, RookMobility, 15)              ;
-    ENABLE_1(INIT_PARAM, QueenMobility, 28)             ;
-    ENABLE_1(INIT_PARAM, KingDefenders, 12)             ;
-    ENABLE_3(INIT_PARAM, KingShelter, 2, 8, 8)          ;
-    ENABLE_3(INIT_PARAM, PassedPawn, 2, 2, 8)           ;
-    ENABLE_0(INIT_PARAM, PassedFriendlyDistance)        ;
-    ENABLE_0(INIT_PARAM, PassedEnemyDistance)           ;
-    ENABLE_0(INIT_PARAM, PassedSafePromotionPath)       ;
-    ENABLE_0(INIT_PARAM, ThreatWeakPawn)                ;
-    ENABLE_0(INIT_PARAM, ThreatMinorAttackedByPawn)     ;
-    ENABLE_0(INIT_PARAM, ThreatMinorAttackedByMajor)    ;
-    ENABLE_0(INIT_PARAM, ThreatRookAttackedByLesser)    ;
-    ENABLE_0(INIT_PARAM, ThreatQueenAttackedByOne)      ;
-    ENABLE_0(INIT_PARAM, ThreatOverloadedPieces)        ;
-    ENABLE_0(INIT_PARAM, ThreatByPawnPush)              ;
+    EXECUTE_ON_TERMS(INIT_PARAM);
 
     if (i != NTERMS){
         printf("Error in initCurrentParameters(): i = %d ; NTERMS = %d\n", i, NTERMS);
@@ -389,56 +310,17 @@ void initCurrentParameters(double cparams[NTERMS][PHASE_NB]) {
 
 void printParameters(double params[NTERMS][PHASE_NB], double cparams[NTERMS][PHASE_NB]) {
 
-    int i = 0; // PRINT_PARAM_N will update i accordingly
     int tparams[NTERMS][PHASE_NB];
 
-    // Combine original and updated, scale so PawnValue[MG] = 100
+    // Combine updated and current parameters
     for (int j = 0; j < NTERMS; j++) {
         tparams[j][MG] = params[j][MG] + cparams[j][MG];
         tparams[j][EG] = params[j][EG] + cparams[j][EG];
     }
 
-    ENABLE_0(PRINT_PARAM, PawnValue)                    ;
-    ENABLE_0(PRINT_PARAM, KnightValue)                  ;
-    ENABLE_0(PRINT_PARAM, BishopValue)                  ;
-    ENABLE_0(PRINT_PARAM, RookValue)                    ;
-    ENABLE_0(PRINT_PARAM, QueenValue)                   ;
-    ENABLE_0(PRINT_PARAM, KingValue)                    ;
-    ENABLE_1(PRINT_PARAM, PawnPSQT32, 32)               ;
-    ENABLE_1(PRINT_PARAM, KnightPSQT32, 32)             ;
-    ENABLE_1(PRINT_PARAM, BishopPSQT32, 32)             ;
-    ENABLE_1(PRINT_PARAM, RookPSQT32, 32)               ;
-    ENABLE_1(PRINT_PARAM, QueenPSQT32, 32)              ;
-    ENABLE_1(PRINT_PARAM, KingPSQT32, 32)               ;
-    ENABLE_0(PRINT_PARAM, PawnIsolated)                 ;
-    ENABLE_0(PRINT_PARAM, PawnStacked)                  ;
-    ENABLE_1(PRINT_PARAM, PawnBackwards, 2)             ;
-    ENABLE_1(PRINT_PARAM, PawnConnected32, 32)          ;
-    ENABLE_1(PRINT_PARAM, KnightOutpost, 2)             ;
-    ENABLE_0(PRINT_PARAM, KnightBehindPawn)             ;
-    ENABLE_1(PRINT_PARAM, KnightMobility, 9)            ;
-    ENABLE_0(PRINT_PARAM, BishopPair)                   ;
-    ENABLE_0(PRINT_PARAM, BishopRammedPawns)            ;
-    ENABLE_1(PRINT_PARAM, BishopOutpost, 2)             ;
-    ENABLE_0(PRINT_PARAM, BishopBehindPawn)             ;
-    ENABLE_1(PRINT_PARAM, BishopMobility, 14)           ;
-    ENABLE_1(PRINT_PARAM, RookFile, 2)                  ;
-    ENABLE_0(PRINT_PARAM, RookOnSeventh)                ;
-    ENABLE_1(PRINT_PARAM, RookMobility, 15)             ;
-    ENABLE_1(PRINT_PARAM, QueenMobility, 28)            ;
-    ENABLE_1(PRINT_PARAM, KingDefenders, 12)            ;
-    ENABLE_3(PRINT_PARAM, KingShelter, 2, 8, 8)         ;
-    ENABLE_3(PRINT_PARAM, PassedPawn, 2, 2, 8)          ;
-    ENABLE_0(PRINT_PARAM, PassedFriendlyDistance)       ;
-    ENABLE_0(PRINT_PARAM, PassedEnemyDistance)          ;
-    ENABLE_0(PRINT_PARAM, PassedSafePromotionPath)      ;
-    ENABLE_0(PRINT_PARAM, ThreatWeakPawn)               ;
-    ENABLE_0(PRINT_PARAM, ThreatMinorAttackedByPawn)    ;
-    ENABLE_0(PRINT_PARAM, ThreatMinorAttackedByMajor)   ;
-    ENABLE_0(PRINT_PARAM, ThreatRookAttackedByLesser)   ;
-    ENABLE_0(PRINT_PARAM, ThreatQueenAttackedByOne)     ;
-    ENABLE_0(PRINT_PARAM, ThreatOverloadedPieces)       ;
-    ENABLE_0(PRINT_PARAM, ThreatByPawnPush)             ;
+    int i = 0; // EXECUTE_ON_TERMS will update i accordingly
+
+    EXECUTE_ON_TERMS(PRINT_PARAM);
 
     if (i != NTERMS){
         printf("Error in printParameters(): i = %d ; NTERMS = %d\n", i, NTERMS);
