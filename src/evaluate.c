@@ -860,11 +860,6 @@ int evaluateScaleFactor(Board *board) {
             && onlyOne(black & rooks))
             return SCALE_OCB_ONE_ROOK;
 
-        if (   !(knights | queens)
-            && several(white & rooks)
-            && several(black & rooks))
-            return SCALE_OCB_TWO_ROOKS;
-
         return SCALE_OCB_GENERAL;
     }
 
