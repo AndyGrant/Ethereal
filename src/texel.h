@@ -62,6 +62,7 @@
 #define TuneQueenMobility               (0)
 #define TuneKingDefenders               (0)
 #define TuneKingShelter                 (0)
+#define TuneKingStorm                   (0)
 #define TunePassedPawn                  (0)
 #define TunePassedFriendlyDistance      (0)
 #define TunePassedEnemyDistance         (0)
@@ -214,6 +215,7 @@ void printParameters_3(char *name, int params[NTERMS][PHASE_NB], int i, int A, i
     ENABLE_1(fname, QueenMobility, 28);                         \
     ENABLE_1(fname, KingDefenders, 12);                         \
     ENABLE_3(fname, KingShelter, 2, 8, 8);                      \
+    ENABLE_3(fname, KingStorm, 2, 4, 8);                        \
     ENABLE_3(fname, PassedPawn, 2, 2, 8);                       \
     ENABLE_0(fname, PassedFriendlyDistance);                    \
     ENABLE_0(fname, PassedEnemyDistance);                       \

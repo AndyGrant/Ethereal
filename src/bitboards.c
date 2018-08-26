@@ -31,6 +31,12 @@ int fileOf(int s) {
     return s % FILE_NB;
 }
 
+int mirrorFile(int f) {
+    assert(0 <= f && f < FILE_NB);
+    static const int Mirror[] = {0,1,2,3,3,2,1,0};
+    return Mirror[f];
+}
+
 int rankOf(int s) {
     assert(0 <= s && s < SQUARE_NB);
     return s / FILE_NB;
@@ -46,6 +52,15 @@ int square(int r, int f) {
     assert(0 <= r && r < RANK_NB);
     assert(0 <= f && f < FILE_NB);
     return r * FILE_NB + f;
+}
+
+int frontmost(int c, uint64_t b) {
+    assert(0 <= c && c < COLOUR_NB);
+    return c == WHITE ? getmsb(b) : getlsb(b);
+}
+int backmost(int c, uint64_t b) {
+    assert(0 <= c && c < COLOUR_NB);
+    return c == WHITE ? getlsb(b) : getmsb(b);
 }
 
 int popcount(uint64_t b) {

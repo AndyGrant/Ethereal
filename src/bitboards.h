@@ -55,9 +55,13 @@ extern const uint64_t Files[FILE_NB];
 extern const uint64_t Ranks[RANK_NB];
 
 int fileOf(int s);
+int mirrorFile(int f);
 int rankOf(int s);
 int relativeRankOf(int c, int s);
 int square(int r, int f);
+
+int frontmost(int c, uint64_t b);
+int backmost(int c, uint64_t b);
 
 int popcount(uint64_t b);
 int getlsb(uint64_t b);
