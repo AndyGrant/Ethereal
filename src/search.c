@@ -105,8 +105,9 @@ void* iterativeDeepening(void* vthread){
 
     int i, count, value, depth;
 
-    // Bind to optimal group
-    bindThisThread(thread->index);
+    // Bind when we expect to deal with Numa
+    if (thread->nthreads > 8)
+        bindThisThread(thread->index);
 
     for (depth = 1; depth < MAX_PLY; depth++){
 
