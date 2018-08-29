@@ -859,8 +859,6 @@ int evaluateScaleFactor(Board *board) {
             && onlyOne(white & rooks)
             && onlyOne(black & rooks))
             return SCALE_OCB_ONE_ROOK;
-
-        return SCALE_OCB_GENERAL;
     }
 
     return SCALE_NORMAL;
