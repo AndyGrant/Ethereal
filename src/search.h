@@ -101,7 +101,8 @@ static const int LateMovePruningCounts[2][9] = {
 };
 
 static const int SEEPruningDepth = 8;
-static const int SEEMargin = -20;
+static const int SEEQuietMargin = -85;
+static const int SEENoisyMargin = -20;
 
 static const int QSEEMargin = 1;
 
