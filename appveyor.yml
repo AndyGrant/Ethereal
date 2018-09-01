@@ -1,0 +1,24 @@
+image:
+- Visual Studio 2017
+environment:
+  matrix:
+  - NAME: pext
+  - NAME: popcnt
+  - NAME: nopopcnt
+install:
+- cmd: set PATH=C:\msys64\mingw64\bin;C:\mingw-w64\x86_64-7.2.0-posix-seh-rt_v5-rev1\mingw64\bin;%PATH%
+- cmd: cd C:\projects\Ethereal\src
+build_script:
+- cmd: mingw32-make %NAME%
+- cmd: copy Ethereal.exe Ethereal-%NAME%.exe
+artifacts:
+  - path: src/Ethereal-$(NAME).exe
+    name: Ethereal-$(NAME)
+deploy:
+  - provider: GitHub
+    artifact: Ethereal-$(NAME).exe
+    auth_token:
+      secure: <token>
+    on:
+      appveyor_repo_tag: true
+
