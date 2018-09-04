@@ -194,7 +194,7 @@ void initTexelEntries(TexelEntry *tes, Thread *thread) {
     thread->limits = &limits;
     thread->depth  = 0;
 
-    FILE * fin = fopen("Ethereal.fens", "r");
+    FILE * fin = fopen("FENS", "r");
 
     for (i = 0; i < NPOSITIONS; i++) {
 
