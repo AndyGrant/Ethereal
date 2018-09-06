@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
 
         if (stringEquals(str, "uci")){
             printf("id name Ethereal " ETHEREAL_VERSION "\n");
-            printf("id author Andrew Grant\n");
+            printf("id author Andrew Grant & Laldon\n");
             printf("option name Hash type spin default 16 min 1 max 65536\n");
             printf("option name Threads type spin default 1 min 1 max 2048\n");
             printf("option name MoveOverhead type spin default 100 min 0 max 10000\n");

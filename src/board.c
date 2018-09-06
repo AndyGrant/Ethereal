@@ -52,39 +52,36 @@ static void clearBoard(Board *board) {
     board->epSquare = -1;
 }
 
-static void setSquare(Board *board, int c, int p, int s) {
+static void setSquare(Board *board, int colour, int piece, int sq) {
 
-    assert(0 <= c && c < COLOUR_NB);
-    assert(0 <= p && p < PIECE_NB);
-    assert(0 <= s && s < SQUARE_NB);
+    assert(0 <= colour && colour < COLOUR_NB);
+    assert(0 <= piece && piece < PIECE_NB);
+    assert(0 <= sq && sq < SQUARE_NB);
 
-    board->squares[s] = makePiece(p, c);
-    setBit(&board->colours[c], s);
-    setBit(&board->pieces[p], s);
+    board->squares[sq] = makePiece(piece, colour);
+    setBit(&board->colours[colour], sq);
+    setBit(&board->pieces[piece], sq);
 
-    board->psqtmat += PSQT[board->squares[s]][s];
-    board->hash ^= ZobristKeys[board->squares[s]][s];
-    if (p == PAWN || p == KING)
-        board->pkhash ^= ZobristKeys[board->squares[s]][s];
+    board->psqtmat += PSQT[board->squares[sq]][sq];
+    board->hash ^= ZobristKeys[board->squares[sq]][sq];
+    if (piece == PAWN || piece == KING)
+        board->pkhash ^= ZobristKeys[board->squares[sq]][sq];
 }
 
 static int stringToSquare(const char *str) {
 
-    if (str[0] == '-')
-        return -1;
-    else
-        return square(str[1] - '1', str[0] - 'a');
+    return str[0] == '-' ? -1 : square(str[1] - '1', str[0] - 'a');
 }
 
-void squareToString(int s, char *str) {
+void squareToString(int sq, char *str) {
 
-    assert(-1 <= s && s < SQUARE_NB);
+    assert(-1 <= sq && sq < SQUARE_NB);
 
-    if (s == -1)
+    if (sq == -1)
         *str++ = '-';
     else {
-        *str++ = fileOf(s) + 'a';
-        *str++ = rankOf(s) + '1';
+        *str++ = fileOf(sq) + 'a';
+        *str++ = rankOf(sq) + '1';
     }
 
     *str++ = '\0';
@@ -92,7 +89,7 @@ void squareToString(int s, char *str) {
 
 void boardFromFEN(Board *board, const char *fen) {
 
-    int s = 56;
+    int sq = 56;
     char ch;
     char *str = strdup(fen), *strPos = NULL;
     char *token = strtok_r(str, " ", &strPos);
@@ -102,15 +99,15 @@ void boardFromFEN(Board *board, const char *fen) {
     // Piece placement
     while ((ch = *token++)) {
         if (isdigit(ch))
-            s += ch - '0';
+            sq += ch - '0';
         else if (ch == '/')
-            s -= 16;
+            sq -= 16;
         else {
-            const bool c = islower(ch);
-            const char *p = strchr(PieceLabel[c], ch);
+            const bool colour = islower(ch);
+            const char *piece = strchr(PieceLabel[colour], ch);
 
-            if (p)
-                setSquare(board, c, p - PieceLabel[c], s++);
+            if (piece)
+                setSquare(board, colour, piece - PieceLabel[colour], sq++);
         }
     }
 
@@ -193,6 +190,8 @@ void boardToFEN(Board *board, char *fen) {
         *fen++ = 'k';
     if (board->castleRights & BLACK_QUEEN_RIGHTS)
         *fen++ = 'q';
+    if (!board->castleRights)
+        *fen++ = '-';
 
     // En passant and Fifty move
     squareToString(board->epSquare, str);
@@ -201,45 +200,41 @@ void boardToFEN(Board *board, char *fen) {
 
 void printBoard(Board *board) {
 
-    static const char *separator = "  |---|---|---|---|---|---|---|---|\n";
+    static const char table[COLOUR_NB][PIECE_NB] = {
+        {'P','N','B','R','Q','K'},
+        {'p','n','b','r','q','k'},
+    };
 
-    char fen[256], str[3];
-    uint64_t b;
+    char fen[256];
+    int i, j, file, colour, type;
 
-    for (int r = 7; r >= 0; r--) {
-        char line[] = "  | . | . | . | . | . | . | . | . |\n";
-        line[0] = r + '1';
-        printf("%s", separator);
+    // Print each row of the board, starting from the top
+    for(i = 56, file = 8; i >= 0; i -= 8, file--){
 
-        for (int f = 0; f < FILE_NB; f++) {
-            const int s = square(r, f), v = board->squares[s];
-            line[4 + 4 * f] = v != EMPTY
-                ? PieceLabel[pieceColour(v)][pieceType(v)]
-                : s == board->epSquare ? '*' : '.';
+        printf("\n     |----|----|----|----|----|----|----|----|\n");
+        printf("   %d ", file);
+
+        // Print each square in a row, starting from the left
+        for(j = 0; j < 8; j++){
+            colour = pieceColour(board->squares[i+j]);
+            type = pieceType(board->squares[i+j]);
+
+            switch(colour){
+                case WHITE: printf("| *%c ", table[colour][type]); break;
+                case BLACK: printf("|  %c ", table[colour][type]); break;
+                default   : printf("|    "); break;
+            }
         }
 
-        printf("%s", line);
+        printf("|");
     }
 
-    printf("%s", separator);
-    printf("    A   B   C   D   E   F   G   H\n");
+    printf("\n     |----|----|----|----|----|----|----|----|");
+    printf("\n        A    B    C    D    E    F    G    H\n");
 
     // Print FEN
     boardToFEN(board, fen);
-    printf("fen: %s\n", fen);
-
-    // Print any threats to the king
-    if ((b = board->kingAttackers)){
-        printf("checkers:");
-
-        while (b) {
-            const int s = poplsb(&b);
-            squareToString(s, str);
-            printf(" %s", str);
-        }
-
-        printf("\n");
-    }
+    printf("\n%s\n\n", fen);
 }
 
 uint64_t perft(Board *board, int depth){
