@@ -29,6 +29,7 @@
 
 int DistanceBetween[SQUARE_NB][SQUARE_NB];
 uint64_t BitsBetweenMasks[SQUARE_NB][SQUARE_NB];
+uint64_t KingAreaMasks[COLOUR_NB][SQUARE_NB];
 uint64_t RanksAtOrAboveMasks[COLOUR_NB][RANK_NB];
 uint64_t IsolatedPawnMasks[SQUARE_NB];
 uint64_t PassedPawnMasks[COLOUR_NB][SQUARE_NB];
@@ -53,6 +54,19 @@ void initMasks() {
             if (testBit(rookAttacks(s1, 0ull), s2))
                 BitsBetweenMasks[s1][s2] = rookAttacks(s1, 1ull << s2) & rookAttacks(s2, 1ull << s1);
         }
+    }
+
+    // Initalize bitboards for King areas
+    for (int sq = 0; sq < SQUARE_NB; sq++) {
+
+        KingAreaMasks[WHITE][sq] = kingAttacks(sq) | (1ull << sq) | (kingAttacks(sq) << 8);
+        KingAreaMasks[BLACK][sq] = kingAttacks(sq) | (1ull << sq) | (kingAttacks(sq) >> 8);
+
+        KingAreaMasks[WHITE][sq] |= fileOf(sq) != 0 ? 0ull : KingAreaMasks[WHITE][sq] << 1;
+        KingAreaMasks[BLACK][sq] |= fileOf(sq) != 0 ? 0ull : KingAreaMasks[BLACK][sq] << 1;
+
+        KingAreaMasks[WHITE][sq] |= fileOf(sq) != 7 ? 0ull : KingAreaMasks[WHITE][sq] >> 1;
+        KingAreaMasks[BLACK][sq] |= fileOf(sq) != 7 ? 0ull : KingAreaMasks[BLACK][sq] >> 1;
     }
 
     // Initalize ranks above masks
@@ -113,6 +127,12 @@ uint64_t bitsBetweenMasks(int s1, int s2) {
     assert(0 <= s1 && s1 < SQUARE_NB);
     assert(0 <= s2 && s2 < SQUARE_NB);
     return BitsBetweenMasks[s1][s2];
+}
+
+uint64_t kingAreaMasks(int colour, int sq) {
+    assert(0 <= colour && colour < COLOUR_NB);
+    assert(0 <= sq && sq < SQUARE_NB);
+    return KingAreaMasks[colour][sq];
 }
 
 uint64_t ranksAtOrAboveMasks(int c, int r) {
