@@ -24,13 +24,13 @@
 
 #define CLEARING    (      1) // Clear hashes between runs
 #define RESOLVE     (      1) // Resolve with qsearch
-#define NPARTITIONS (     64) // Total thread partitions
-#define LEARNING    (    0.1) // Learning rate step size
+#define NPARTITIONS (      1) // Total thread partitions
+#define LEARNING    (    2.5) // Learning rate step size
 #define REPORTING   (    100) // How often to report progress
 
 #define NDEPTHS     (      0) // # of search iterations
-#define NTERMS      (      0) // # of terms to tune
-#define NPOSITIONS  (1491723) // # of FENs in book
+#define NTERMS      (      1) // # of terms to tune
+#define NPOSITIONS  (1360000) // # of FENs in book
 
 #define TunePawnValue                   (0)
 #define TuneKnightValue                 (0)
@@ -69,6 +69,7 @@
 #define TunePassedSafePromotionPath     (0)
 #define TuneThreatWeakPawn              (0)
 #define TuneThreatMinorAttackedByPawn   (0)
+#define TuneThreatMinorAttackedByMinor  (1)
 #define TuneThreatMinorAttackedByMajor  (0)
 #define TuneThreatRookAttackedByLesser  (0)
 #define TuneThreatQueenAttackedByOne    (0)
@@ -222,6 +223,7 @@ void printParameters_3(char *name, int params[NTERMS][PHASE_NB], int i, int A, i
     ENABLE_0(fname, PassedSafePromotionPath);                   \
     ENABLE_0(fname, ThreatWeakPawn);                            \
     ENABLE_0(fname, ThreatMinorAttackedByPawn);                 \
+    ENABLE_0(fname, ThreatMinorAttackedByMinor);                \
     ENABLE_0(fname, ThreatMinorAttackedByMajor);                \
     ENABLE_0(fname, ThreatRookAttackedByLesser);                \
     ENABLE_0(fname, ThreatQueenAttackedByOne);                  \

@@ -66,6 +66,7 @@ struct EvalTrace {
     int PassedSafePromotionPath[COLOUR_NB];
     int ThreatWeakPawn[COLOUR_NB];
     int ThreatMinorAttackedByPawn[COLOUR_NB];
+    int ThreatMinorAttackedByMinor[COLOUR_NB];
     int ThreatMinorAttackedByMajor[COLOUR_NB];
     int ThreatRookAttackedByLesser[COLOUR_NB];
     int ThreatQueenAttackedByOne[COLOUR_NB];
