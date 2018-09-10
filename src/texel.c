@@ -55,6 +55,7 @@ extern const int BishopPSQT32[32];
 extern const int RookPSQT32[32];
 extern const int QueenPSQT32[32];
 extern const int KingPSQT32[32];
+extern const int PawnCandidatePasser[8];
 extern const int PawnIsolated;
 extern const int PawnStacked;
 extern const int PawnBackwards[2];

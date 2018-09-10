@@ -60,6 +60,11 @@ const int PieceValues[8][PHASE_NB] = {
 
 /* Pawn Evaluation Terms */
 
+const int PawnCandidatePasser[RANK_NB] = {
+    S(   0,   0), S(  -3,   1), S(  -5,   8), S(   6,  31),
+    S(  12,  41), S(  12,   8), S(   0,   0), S(   0,   0),
+};
+
 const int PawnIsolated = S(  -4,  -6);
 
 const int PawnStacked = S(  -5, -28);
@@ -338,9 +343,21 @@ int evaluatePawns(EvalInfo *ei, Board *board, int colour) {
         if (TRACE) T.PawnValue[US]++;
         if (TRACE) T.PawnPSQT32[relativeSquare32(sq, US)][US]++;
 
+        uint64_t stoppers    = enemyPawns & passedPawnMasks(US, sq);
+        uint64_t threats     = enemyPawns & pawnAttacks(US, sq);
+        uint64_t pushThreats = enemyPawns & pawnAttacks(US, sq + Forward);
+        uint64_t pushSupport = myPawns    & pawnAttacks(THEM, sq + Forward);
+        uint64_t leftovers   = stoppers ^ threats ^ pushThreats;
+
         // Save passed pawn information for later evaluation
-        if (!(passedPawnMasks(US, sq) & enemyPawns))
-            setBit(&ei->passedPawns, sq);
+        if (!stoppers) setBit(&ei->passedPawns, sq);
+
+        // Apply a bonus for pawns which will become passers by advancing a single
+        // square when exchanging our supporters with the remaining passer stoppers
+        else if (!leftovers && popcount(pushSupport) >= popcount(pushThreats)) {
+            pkeval += PawnCandidatePasser[relativeRankOf(US, sq)];
+            if (TRACE) T.PawnCandidatePasser[relativeRankOf(US, sq)][US]++;
+        }
 
         // Apply a penalty if the pawn is isolated
         if (!(isolatedPawnMasks(sq) & myPawns)) {
