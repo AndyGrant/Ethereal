@@ -60,9 +60,11 @@ const int PieceValues[8][PHASE_NB] = {
 
 /* Pawn Evaluation Terms */
 
-const int PawnCandidatePasser[RANK_NB] = {
-    S(   0,   0), S(  -3,   1), S(  -5,   8), S(   6,  31),
-    S(  12,  41), S(  12,   8), S(   0,   0), S(   0,   0),
+const int PawnCandidatePasser[2][RANK_NB] = {
+    {S(   0,   0), S(  -4,   0), S(  -9,   6), S( -10,  27),
+     S(   1,  44), S(  23,  17), S(   0,   0), S(   0,   0)},
+    {S(   0,   0), S(  -4,   6), S(  -5,  19), S(   9,  51),
+     S(  24,  65), S(  14,  10), S(   0,   0), S(   0,   0)},
 };
 
 const int PawnIsolated = S(  -4,  -6);
@@ -316,7 +318,7 @@ int evaluatePawns(EvalInfo *ei, Board *board, int colour) {
     const int US = colour, THEM = !colour;
     const int Forward = (colour == WHITE) ? 8 : -8;
 
-    int sq, semi, eval = 0, pkeval = 0;
+    int sq, flag, eval = 0, pkeval = 0;
     uint64_t pawns, myPawns, tempPawns, enemyPawns, attacks;
 
     // Store off pawn attacks for king safety and threat computations
@@ -345,6 +347,7 @@ int evaluatePawns(EvalInfo *ei, Board *board, int colour) {
 
         uint64_t stoppers    = enemyPawns & passedPawnMasks(US, sq);
         uint64_t threats     = enemyPawns & pawnAttacks(US, sq);
+        uint64_t support     = myPawns    & pawnAttacks(THEM, sq);
         uint64_t pushThreats = enemyPawns & pawnAttacks(US, sq + Forward);
         uint64_t pushSupport = myPawns    & pawnAttacks(THEM, sq + Forward);
         uint64_t leftovers   = stoppers ^ threats ^ pushThreats;
@@ -355,8 +358,9 @@ int evaluatePawns(EvalInfo *ei, Board *board, int colour) {
         // Apply a bonus for pawns which will become passers by advancing a single
         // square when exchanging our supporters with the remaining passer stoppers
         else if (!leftovers && popcount(pushSupport) >= popcount(pushThreats)) {
-            pkeval += PawnCandidatePasser[relativeRankOf(US, sq)];
-            if (TRACE) T.PawnCandidatePasser[relativeRankOf(US, sq)][US]++;
+            flag = popcount(support) >= popcount(threats);
+            pkeval += PawnCandidatePasser[flag][relativeRankOf(US, sq)];
+            if (TRACE) T.PawnCandidatePasser[flag][relativeRankOf(US, sq)][US]++;
         }
 
         // Apply a penalty if the pawn is isolated
@@ -374,9 +378,9 @@ int evaluatePawns(EvalInfo *ei, Board *board, int colour) {
         // Apply a penalty if the pawn is backward
         if (   !(passedPawnMasks(THEM, sq) & myPawns)
             &&  (testBit(ei->pawnAttacks[THEM], sq + Forward))) {
-            semi = !(Files[fileOf(sq)] & enemyPawns);
-            pkeval += PawnBackwards[semi];
-            if (TRACE) T.PawnBackwards[semi][US]++;
+            flag = !(Files[fileOf(sq)] & enemyPawns);
+            pkeval += PawnBackwards[flag];
+            if (TRACE) T.PawnBackwards[flag][US]++;
         }
 
         // Apply a bonus if the pawn is connected and not backward

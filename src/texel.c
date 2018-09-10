@@ -55,7 +55,7 @@ extern const int BishopPSQT32[32];
 extern const int RookPSQT32[32];
 extern const int QueenPSQT32[32];
 extern const int KingPSQT32[32];
-extern const int PawnCandidatePasser[8];
+extern const int PawnCandidatePasser[2][8];
 extern const int PawnIsolated;
 extern const int PawnStacked;
 extern const int PawnBackwards[2];
@@ -428,10 +428,21 @@ void printParameters_1(char *name, int params[NTERMS][PHASE_NB], int i, int A) {
 
 void printParameters_2(char *name, int params[NTERMS][PHASE_NB], int i, int A, int B) {
 
-    (void)name, (void)params, (void)i, (void)A, (void)B;
+    printf("const int %s[%d][%d] = {\n", name, A, B);
 
-    printf("PRINT_PARAM_2 IS NOT ENABLED!\n");
-    exit(EXIT_FAILURE);
+    for (int a = 0; a < A; a++) {
+
+        printf("   {");
+
+        for (int b = 0; b < B; b++, i++) {
+            printf("S(%4d,%4d)", params[i][MG], params[i][EG]);
+            printf("%s", b == B - 1 ? "" : ", ");
+        }
+
+        printf("},\n");
+    }
+
+    printf("};\n");
 
 }
 

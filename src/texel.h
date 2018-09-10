@@ -176,7 +176,7 @@ void printParameters_3(char *name, int params[NTERMS][PHASE_NB], int i, int A, i
     if (Tune##term) fname##_1(term, A);                         \
 } while (0)
 
-#define ENABLE_2(fname, term, A, legnth2) do {                  \
+#define ENABLE_2(fname, term, A, B) do {                        \
     if (Tune##term) fname##_2(term, A, B);                      \
 } while (0)
 
@@ -199,7 +199,7 @@ void printParameters_3(char *name, int params[NTERMS][PHASE_NB], int i, int A, i
     ENABLE_1(fname, RookPSQT32, 32);                            \
     ENABLE_1(fname, QueenPSQT32, 32);                           \
     ENABLE_1(fname, KingPSQT32, 32);                            \
-    ENABLE_1(fname, PawnCandidatePasser, 8);                    \
+    ENABLE_2(fname, PawnCandidatePasser, 2, 8);                 \
     ENABLE_0(fname, PawnIsolated);                              \
     ENABLE_0(fname, PawnStacked);                               \
     ENABLE_1(fname, PawnBackwards, 2);                          \
