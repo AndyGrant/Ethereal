@@ -686,8 +686,7 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
         uint64_t knightChecks = knightThreats & safe &  ei->attackedBy[THEM][KNIGHT];
         uint64_t bishopChecks = bishopThreats & safe &  ei->attackedBy[THEM][BISHOP];
         uint64_t rookChecks   = rookThreats   & safe &  ei->attackedBy[THEM][ROOK  ];
-        uint64_t queenChecks  = queenThreats  & safe &  ei->attackedBy[THEM][QUEEN ]
-                                                     & ~ei->attackedBy[  US][QUEEN ];
+        uint64_t queenChecks  = queenThreats  & safe &  ei->attackedBy[THEM][QUEEN ];
 
         count  = ei->kingAttackersCount[THEM] * ei->kingAttackersWeight[THEM];
 
