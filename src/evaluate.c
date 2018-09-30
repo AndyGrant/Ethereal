@@ -680,14 +680,12 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
         uint64_t rookThreats   = rookAttacks(kingSq, occupied);
         uint64_t queenThreats  = bishopThreats | rookThreats;
 
-        // Identify if pieces can move to those checking squares safely.
-        // We check if our Queen can attack the square for safe Queen checks.
-        // No attacks of other pieces is implicit in our definition of weak.
-        uint64_t knightChecks = knightThreats & safe &  ei->attackedBy[THEM][KNIGHT];
-        uint64_t bishopChecks = bishopThreats & safe &  ei->attackedBy[THEM][BISHOP];
-        uint64_t rookChecks   = rookThreats   & safe &  ei->attackedBy[THEM][ROOK  ];
-        uint64_t queenChecks  = queenThreats  & safe &  ei->attackedBy[THEM][QUEEN ]
-                                                     & ~ei->attackedBy[  US][QUEEN ];
+        // Identify if there are pieces which can move to the checking squares safely.
+        // We consider forking a Queen to be a safe check, even with our own Queen.
+        uint64_t knightChecks = knightThreats & safe & ei->attackedBy[THEM][KNIGHT];
+        uint64_t bishopChecks = bishopThreats & safe & ei->attackedBy[THEM][BISHOP];
+        uint64_t rookChecks   = rookThreats   & safe & ei->attackedBy[THEM][ROOK  ];
+        uint64_t queenChecks  = queenThreats  & safe & ei->attackedBy[THEM][QUEEN ];
 
         count  = ei->kingAttackersCount[THEM] * ei->kingAttackersWeight[THEM];
 
