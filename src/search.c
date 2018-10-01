@@ -554,6 +554,15 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
                   &&  inCheck
                   && !extension;
 
+        // Step 19C. History Extensions. We extend quiet moves with strong
+        // history scores for both counter move and followups. We only apply
+        // this extension to the first quiet moves tried during the search
+        extension += !RootNode
+                  && !extension
+                  &&  quiets <= 4
+                  &&  cmhist >= 10000
+                  &&  fuhist >= 10000;
+
         // New depth is what our search depth would be, assuming that we do no LMR
         newDepth = depth + extension;
 
