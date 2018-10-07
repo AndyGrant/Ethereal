@@ -226,9 +226,9 @@ const int PassedPawn[2][2][8] = {
     S(  -1, 101), S(  44, 223), S( 125, 381), S(   0,   0)}},
 };
 
-const int PassedFriendlyDistance[] = {0, 0, 0, S(0,-3), S(0,-13), S(0,-24), S(0,-33)};
+const int PassedFriendlyDistance[] = {0, 0, 0, S(0,-4), S(0,-8), S(0,-12), S(0,-16)};
 
-const int PassedEnemyDistance[] = {0, 0, 0, S(0,6), S(0,27), S(0,48), S(0,67)};
+const int PassedEnemyDistance[] = {0, 0, 0, S(0,8), S(0,16), S(0,24), S(0,32)};
 
 const int PassedSafePromotionPath = S(   0,  26);
 
