@@ -693,10 +693,10 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
                + KSWeakSquares     * popcount(weak & ei->kingAreas[US])
                + KSFriendlyPawns   * popcount(myPawns & ei->kingAreas[US] & ~weak)
                + KSNoEnemyQueens   * !enemyQueens
-               + KSSafeQueenCheck  * !!queenChecks
-               + KSSafeRookCheck   * !!rookChecks
-               + KSSafeBishopCheck * !!bishopChecks
-               + KSSafeKnightCheck * !!knightChecks
+               + KSSafeQueenCheck  * popcount(queenChecks)
+               + KSSafeRookCheck   * popcount(rookChecks)
+               + KSSafeBishopCheck * popcount(bishopChecks)
+               + KSSafeKnightCheck * popcount(knightChecks)
                + KSAdjustment;
 
         // Convert safety to an MG and EG score, if we are unsafe
