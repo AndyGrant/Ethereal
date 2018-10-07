@@ -220,8 +220,8 @@ void printParameters_3(char *name, int params[NTERMS][PHASE_NB], int i, int A, i
     ENABLE_3(fname, KingShelter, 2, 8, 8);                      \
     ENABLE_3(fname, KingStorm, 2, 4, 8);                        \
     ENABLE_3(fname, PassedPawn, 2, 2, 8);                       \
-    ENABLE_0(fname, PassedFriendlyDistance);                    \
-    ENABLE_0(fname, PassedEnemyDistance);                       \
+    ENABLE_1(fname, PassedFriendlyDistance, 8);                 \
+    ENABLE_1(fname, PassedEnemyDistance, 8);                    \
     ENABLE_0(fname, PassedSafePromotionPath);                   \
     ENABLE_0(fname, ThreatWeakPawn);                            \
     ENABLE_0(fname, ThreatMinorAttackedByPawn);                 \

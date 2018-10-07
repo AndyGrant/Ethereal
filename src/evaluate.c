@@ -226,9 +226,15 @@ const int PassedPawn[2][2][8] = {
     S(  -1, 101), S(  44, 223), S( 125, 381), S(   0,   0)}},
 };
 
-const int PassedFriendlyDistance[] = {0, 0, 0, S(0,-4), S(0,-8), S(0,-12), S(0,-16)};
+const int PassedFriendlyDistance[RANK_NB] = {
+    S(   0,   0), S(   0,   0), S(   0,   0), S(   0,  -4),
+    S(   0,  -8), S(   0, -12), S(   0, -16), S(   0,   0),
+};
 
-const int PassedEnemyDistance[] = {0, 0, 0, S(0,8), S(0,16), S(0,24), S(0,32)};
+const int PassedEnemyDistance[RANK_NB] = {
+    S(   0,   0), S(   0,   0), S(   0,   0), S(   0,   8),
+    S(   0,  16), S(   0,  24), S(   0,  32), S(   0,   0),
+};
 
 const int PassedSafePromotionPath = S(   0,  26);
 
@@ -761,12 +767,12 @@ int evaluatePassedPawns(EvalInfo* ei, Board* board, int colour){
         // Evaluate based on distance from our king
         dist = distanceBetween(sq, ei->kingSquare[US]);
         eval += dist * PassedFriendlyDistance[rank];
-        if (TRACE) T.PassedFriendlyDistance[US] += dist;
+        if (TRACE) T.PassedFriendlyDistance[rank][US] += dist;
 
         // Evaluate based on distance from their king
         dist = distanceBetween(sq, ei->kingSquare[THEM]);
         eval += dist * PassedEnemyDistance[rank];
-        if (TRACE) T.PassedEnemyDistance[US] += dist;
+        if (TRACE) T.PassedEnemyDistance[rank][US] += dist;
 
         // Apply a bonus when the path to promoting is uncontested
         bitboard = ranksAtOrAboveMasks(US, rankOf(sq)) & Files[fileOf(sq)];
