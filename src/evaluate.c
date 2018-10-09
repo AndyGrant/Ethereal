@@ -227,13 +227,13 @@ const int PassedPawn[2][2][8] = {
 };
 
 const int PassedFriendlyDistance[RANK_NB] = {
-    S(   0,   0), S(   0,   0), S(   0,   0), S(   0,  -4),
-    S(   0,  -8), S(   0, -12), S(   0, -16), S(   0,   0),
+    S(   0,   0), S(   2,   1), S(   2,   0), S(   2,  -4),
+    S(   0,  -9), S(   0, -12), S(   0, -16), S(   0,   0),
 };
 
 const int PassedEnemyDistance[RANK_NB] = {
-    S(   0,   0), S(   0,   0), S(   0,   0), S(   0,   8),
-    S(   0,  16), S(   0,  24), S(   0,  32), S(   0,   0),
+    S(   0,   0), S(   0,   1), S(   0,   0), S(   0,   6),
+    S(   1,  13), S(   0,  20), S(   0,  29), S(   0,   0),
 };
 
 const int PassedSafePromotionPath = S(   0,  26);
