@@ -370,7 +370,7 @@ int evaluatePawns(EvalInfo *ei, Board *board, int colour) {
         }
 
         // Apply a penalty if the pawn is isolated
-        if (!(isolatedPawnMasks(sq) & myPawns)) {
+        if (!(adjacentFilesMasks(fileOf(sq)) & myPawns)) {
             pkeval += PawnIsolated;
             if (TRACE) T.PawnIsolated[US]++;
         }
@@ -408,7 +408,6 @@ int evaluateKnights(EvalInfo *ei, Board *board, int colour) {
     int sq, defended, count, eval = 0;
     uint64_t attacks;
 
-    uint64_t myPawns     = board->pieces[PAWN  ] & board->colours[US  ];
     uint64_t enemyPawns  = board->pieces[PAWN  ] & board->colours[THEM];
     uint64_t tempKnights = board->pieces[KNIGHT] & board->colours[US  ];
 
@@ -430,7 +429,7 @@ int evaluateKnights(EvalInfo *ei, Board *board, int colour) {
 
         // Apply a bonus if the knight is on an outpost square, and cannot be attacked
         // by an enemy pawn. Increase the bonus if one of our pawns supports the knight
-        if (     testBit(outpostRanks(US), sq)
+        if (     testBit(outpostRanksMasks(US), sq)
             && !(outpostSquareMasks(US, sq) & enemyPawns)) {
             defended = testBit(ei->pawnAttacks[US], sq);
             eval += KnightOutpost[defended];
@@ -438,7 +437,7 @@ int evaluateKnights(EvalInfo *ei, Board *board, int colour) {
         }
 
         // Apply a bonus if the knight is behind a pawn
-        if (testBit(pawnAdvance((myPawns | enemyPawns), 0ull, THEM), sq)) {
+        if (testBit(pawnAdvance(board->pieces[PAWN], 0ull, THEM), sq)) {
             eval += KnightBehindPawn;
             if (TRACE) T.KnightBehindPawn[US]++;
         }
@@ -501,7 +500,7 @@ int evaluateBishops(EvalInfo *ei, Board *board, int colour) {
 
         // Apply a bonus if the bishop is on an outpost square, and cannot be attacked
         // by an enemy pawn. Increase the bonus if one of our pawns supports the bishop.
-        if (     testBit(outpostRanks(US), sq)
+        if (     testBit(outpostRanksMasks(US), sq)
             && !(outpostSquareMasks(US, sq) & enemyPawns)) {
             defended = testBit(ei->pawnAttacks[US], sq);
             eval += BishopOutpost[defended];
@@ -718,11 +717,11 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
     for (int file = MAX(0, kingFile - 1); file <= MIN(FILE_NB - 1, kingFile + 1); file++) {
 
         // Find closest friendly pawn at or above our King on a given file
-        uint64_t ours = myPawns & Files[file] & ranksAtOrAboveMasks(US, kingRank);
+        uint64_t ours = myPawns & Files[file] & forwardRanksMasks(US, kingRank);
         int ourDist = !ours ? 7 : abs(kingRank - rankOf(backmost(US, ours)));
 
         // Find closest enemy pawn at or above our King on a given file
-        uint64_t theirs = enemyPawns & Files[file] & ranksAtOrAboveMasks(US, kingRank);
+        uint64_t theirs = enemyPawns & Files[file] & forwardRanksMasks(US, kingRank);
         int theirDist = !theirs ? 7 : abs(kingRank - rankOf(backmost(US, theirs)));
 
         // Evaluate King Shelter using pawn distance. Use seperate evaluation
@@ -775,7 +774,7 @@ int evaluatePassedPawns(EvalInfo* ei, Board* board, int colour){
         if (TRACE) T.PassedEnemyDistance[rank][US] += dist;
 
         // Apply a bonus when the path to promoting is uncontested
-        bitboard = ranksAtOrAboveMasks(US, rankOf(sq)) & Files[fileOf(sq)];
+        bitboard = forwardRanksMasks(US, rankOf(sq)) & Files[fileOf(sq)];
         flag = !(bitboard & ei->attacked[THEM]);
         eval += flag * PassedSafePromotionPath;
         if (TRACE) T.PassedSafePromotionPath[US] += flag;

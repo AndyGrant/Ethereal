@@ -119,7 +119,7 @@ void applyNormalMove(Board *board, uint16_t move, Undo *undo) {
 
         const uint64_t enemyPawns =  board->pieces[PAWN]
                                   &  board->colours[!board->turn]
-                                  &  isolatedPawnMasks(from)
+                                  &  adjacentFilesMasks(fileOf(from))
                                   & (board->turn == WHITE ? RANK_4 : RANK_5);
         if (enemyPawns) {
             board->epSquare = board->turn == WHITE ? from + 8 : from - 8;

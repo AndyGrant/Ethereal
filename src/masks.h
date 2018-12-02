@@ -24,12 +24,12 @@
 
 void initMasks();
 
-int distanceBetween(int s1, int s2);
-uint64_t bitsBetweenMasks(int s1, int s2);
+int distanceBetween(int sq1, int sq2);
+uint64_t bitsBetweenMasks(int sq1, int sq2);
 uint64_t kingAreaMasks(int colour, int sq);
-uint64_t ranksAtOrAboveMasks(int c, int r);
-uint64_t isolatedPawnMasks(int s);
-uint64_t passedPawnMasks(int c, int s);
-uint64_t pawnConnectedMasks(int c, int s);
-uint64_t outpostSquareMasks(int c, int s);
-uint64_t outpostRanks(int c);
+uint64_t forwardRanksMasks(int colour, int rank);
+uint64_t adjacentFilesMasks(int file);
+uint64_t passedPawnMasks(int colour, int sq);
+uint64_t pawnConnectedMasks(int colour, int sq);
+uint64_t outpostSquareMasks(int colour, int sq);
+uint64_t outpostRanksMasks(int colour);
