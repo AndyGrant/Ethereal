@@ -255,7 +255,7 @@ void* uciGo(void* vthreadsgo){
 
     // Pick the time values for the colour we are playing as
     limits.time = (board->turn == WHITE) ? wtime : btime;
-    limits.mtg  = (board->turn == WHITE) ?   mtg :   mtg;
+    limits.mtg  = mtg;
     limits.inc  = (board->turn == WHITE) ?  winc :  binc;
 
     // Execute search, return best and ponder moves
