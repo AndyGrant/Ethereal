@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 CC      = gcc
-CCDROID = arm-linux-gnueabi-gcc
 SRC     = *.c fathom/tbprobe.c
 LIBS    = -lpthread -lm
 EXE     = Ethereal
@@ -23,7 +22,6 @@ EXE     = Ethereal
 WFLAGS = -std=gnu11 -Wall -Wextra -Wshadow
 CFLAGS = -DNDEBUG -O3 $(WFLAGS) -march=native -flto
 RFLAGS = -DNDEBUG -O3 $(WFLAGS) -flto -static
-AFLAGS = -DNDEBUG -O3 $(WFLAGS) -march=armv7 -flto -static
 TFLAGS = -DNDEBUG -O3 $(WFLAGS) -march=native -flto -fopenmp -DTUNE
 PFLAGS = -DNDEBUG -O0 $(WFLAGS) -p -pg
 DFLAGS = -O0 $(WFLAGS)
@@ -45,7 +43,6 @@ release:
 	$(CC) $(RFLAGS) $(SRC) $(LIBS) -o ../dist/$(EXE)$(VER)-x64-nopopcnt.exe
 	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(POPCNTFLAGS) -o ../dist/$(EXE)$(VER)-x64-popcnt.exe
 	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(PEXTFLAGS) -o ../dist/$(EXE)$(VER)-x64-pext.exe
-	$(CCDROID) $(AFLAGS) $(SRC) $(LIBS) -o ../dist/$(EXE)$(VER)-android
 
 texel:
 	$(CC) $(TFLAGS) $(SRC) $(LIBS) $(POPCNT) -o $(EXE)
