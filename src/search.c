@@ -439,45 +439,38 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             hist   = getHistoryScore(thread, move) + cmhist + fuhist;
         }
 
-        // Step 12. Futility Pruning. If our score is far below alpha, and we
-        // don't expect anything from this move, we can skip all other quiets
-        if (   !RootNode
-            &&  isQuiet
-            &&  best > MATED_IN_MAX
-            &&  futilityMargin <= alpha
-            &&  depth <= FutilityPruningDepth
-            &&  hist < FutilityPruningHistoryLimit[improving])
-            skipQuiets = 1;
+        // Step 12. Quiet Move Pruning. Prune any quiet move that meets one
+        // of the criteria below, except for mated lines and Root node moves
+        if (!RootNode && isQuiet && best > MATED_IN_MAX) {
 
-        // Step 13. Late Move Pruning / Move Count Pruning. If we have
-        // tried many quiets in this position already, and we don't expect
-        // anything from this move, we can skip all the remaining quiets
-        if (   !RootNode
-            &&  isQuiet
-            &&  best > MATED_IN_MAX
-            &&  depth <= LateMovePruningDepth
-            &&  quiets >= LateMovePruningCounts[improving][depth])
-            skipQuiets = 1;
+            // Step 12A. Futility Pruning. If our score is far below alpha, and we
+            // don't expect anything from this move, we can skip all other quiets
+            if (   futilityMargin <= alpha
+                && depth <= FutilityPruningDepth
+                && hist < FutilityPruningHistoryLimit[improving])
+                skipQuiets = 1;
 
-        // Step 14. Counter Move Pruning. Moves with poor counter
-        // move history are pruned at near leaf nodes of the search.
-        if (   !RootNode
-            &&  isQuiet
-            &&  best > MATED_IN_MAX
-            &&  depth <= CounterMovePruningDepth[improving]
-            &&  cmhist < CounterMoveHistoryLimit[improving])
-            continue;
+            // Step 12B. Late Move Pruning / Move Count Pruning. If we have
+            // tried many quiets in this position already, and we don't expect
+            // anything from this move, we can skip all the remaining quiets
+            if (   depth <= LateMovePruningDepth
+                && quiets >= LateMovePruningCounts[improving][depth])
+                skipQuiets = 1;
 
-        // Step 15. Follow Up Move Pruning. Moves with poor follow up
-        // move history are pruned at near leaf nodes of the search.
-        if (   !RootNode
-            &&  isQuiet
-            &&  best > MATED_IN_MAX
-            &&  depth <= FollowUpMovePruningDepth[improving]
-            &&  fuhist < FollowUpMoveHistoryLimit[improving])
-            continue;
+            // Step 12C. Counter Move Pruning. Moves with poor counter
+            // move history are pruned at near leaf nodes of the search.
+            if (   depth <= CounterMovePruningDepth[improving]
+                && cmhist < CounterMoveHistoryLimit[improving])
+                continue;
 
-        // Step 16. Static Exchange Evaluation Pruning. Prune moves which fail
+            // Step 12D. Follow Up Move Pruning. Moves with poor follow up
+            // move history are pruned at near leaf nodes of the search.
+            if (   depth <= FollowUpMovePruningDepth[improving]
+                && fuhist < FollowUpMoveHistoryLimit[improving])
+                continue;
+        }
+
+        // Step 13. Static Exchange Evaluation Pruning. Prune moves which fail
         // to beat a depth dependent SEE threshold. The use of movePicker.stage
         // is a speedup, which assumes that good noisy moves have a positive SEE
         if (   !RootNode
@@ -500,7 +493,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         // Update counter of moves actually played
         played += 1;
 
-        // Step 17. Late Move Reductions. Compute the reduction,
+        // Step 14. Late Move Reductions. Compute the reduction,
         // allow the later steps to perform the reduced searches
         if (isQuiet && depth > 2 && played > 1){
 
@@ -525,7 +518,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
 
         } else R = 1;
 
-        // Step 18A. Singular Move Extensions. If we are looking at a table move,
+        // Step 15A. Singular Move Extensions. If we are looking at a table move,
         // and it seems that under some conditions, the table move is better than
         // all other possible moves, we will extend the search of the table move
         extension =  !RootNode
@@ -535,13 +528,13 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
                   && (ttBound & BOUND_LOWER)
                   &&  moveIsSingular(thread, ttMove, ttValue, undo, depth, height);
 
-        // Step 18B. Check Extensions. We extend captures and good quiets that
+        // Step 15B. Check Extensions. We extend captures and good quiets that
         // come from in check positions, so long as no other extensions occur
         extension += !RootNode
                   &&  inCheck
                   && !extension;
 
-        // Step 18C. History Extensions. We extend quiet moves with strong
+        // Step 15C. History Extensions. We extend quiet moves with strong
         // history scores for both counter move and followups. We only apply
         // this extension to the first quiet moves tried during the search
         extension += !RootNode
@@ -553,19 +546,19 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         // New depth is what our search depth would be, assuming that we do no LMR
         newDepth = depth + extension;
 
-        // Step 19A. If we triggered the LMR conditions (which we know by the value of R),
+        // Step 16A. If we triggered the LMR conditions (which we know by the value of R),
         // then we will perform a reduced search on the null alpha window, as we have no
         // expectation that this move will be worth looking into deeper
         if (R != 1) value = -search(thread, &lpv, -alpha-1, -alpha, newDepth-R, height+1);
 
-        // Step 19B. There are two situations in which we will search again on a null window,
+        // Step 16B. There are two situations in which we will search again on a null window,
         // but without a depth reduction R. First, if the LMR search happened, and failed
         // high, secondly, if we did not try an LMR search, and this is not the first move
         // we have tried in a PvNode, we will research with the normally reduced depth
         if ((R != 1 && value > alpha) || (R == 1 && !(PvNode && played == 1)))
             value = -search(thread, &lpv, -alpha-1, -alpha, newDepth-1, height+1);
 
-        // Step 19C. Finally, if we are in a PvNode and a move beat alpha while being
+        // Step 16C. Finally, if we are in a PvNode and a move beat alpha while being
         // search on a reduced depth, we will search again on the normal window. Also,
         // if we did not perform Step 18B, we will search for the first time on the
         // normal window. This happens only for the first move in a PvNode
@@ -575,7 +568,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         // Revert the board state
         revertMove(board, move, undo);
 
-        // Step 20. Update search stats for the best move and its value. Update
+        // Step 17. Update search stats for the best move and its value. Update
         // our lower bound (alpha) if exceeded, and also update the PV in that case
         if (value > best){
 
@@ -607,14 +600,14 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         }
     }
 
-    // Step 21. Stalemate and Checkmate detection. If no moves were found to
+    // Step 18. Stalemate and Checkmate detection. If no moves were found to
     // be legal (search makes sure to play at least one legal move, if any),
     // then we are either mated or stalemated, which we can tell by the inCheck
     // flag. For mates, return a score based on the distance from root, so we
     // can differentiate between close mates and far away mates from the root
     if (played == 0) return inCheck ? -MATE + height : 0;
 
-    // Step 22. Update History counters on a fail high for a quiet move
+    // Step 19. Update History counters on a fail high for a quiet move
     if (best >= beta && !moveIsTactical(board, bestMove)){
 
         updateHistory(thread, bestMove, depth*depth);
@@ -628,7 +621,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         }
     }
 
-    // Step 23. Store results of search into the table
+    // Step 20. Store results of search into the table
     ttBound = best >= beta    ? BOUND_LOWER
             : best > oldAlpha ? BOUND_EXACT : BOUND_UPPER;
     storeTTEntry(board->hash, bestMove, valueToTT(best, height), eval, depth, ttBound);
