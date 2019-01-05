@@ -60,7 +60,7 @@ static int bestGroup(int index) {
   }
 
   // Count up all nodes, cores, and threads (assume 2 threads max)
-  while (ptr->Size > 0 && byteOffset + ptr->Size <= returnLength) {
+  while (byteOffset < returnLength) {
 
       if (ptr->Relationship == RelationNumaNode)
           nodes++;
@@ -70,6 +70,7 @@ static int bestGroup(int index) {
           threads += (ptr->Processor.Flags == LTP_PC_SMT) ? 2 : 1;
       }
 
+      assert(ptr->Size);
       byteOffset += ptr->Size;
       ptr = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*)(((char*)ptr) + ptr->Size);
   }
