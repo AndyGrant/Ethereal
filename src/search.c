@@ -210,8 +210,6 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     int inCheck, isQuiet, improving, extension, skipQuiets = 0;
     int eval, value = -MATE, best = -MATE, futilityMargin, seeMargin[2];
     uint16_t move, ttMove = NONE_MOVE, bestMove = NONE_MOVE, quietsTried[MAX_MOVES];
-
-    Undo undo[1];
     MovePicker movePicker;
 
     PVariation lpv;
@@ -368,15 +366,9 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
 
         R = 4 + depth / 6 + MIN(3, (eval - beta) / 200);
 
-        applyNullMove(board, undo);
-
-        thread->moveStack[height] = NULL_MOVE;
-
+        apply(thread, board, NULL_MOVE, height);
         value = -search(thread, &lpv, -beta, -beta+1, depth-R, height+1);
-
-        thread->moveStack[height] = NONE_MOVE;
-
-        revertNullMove(board, undo);
+        revert(thread, board, NULL_MOVE, height);
 
         if (value >= beta) return beta;
     }
@@ -400,15 +392,9 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             if (!staticExchangeEvaluation(board, move, rBeta - eval))
                 continue;
 
-            // Apply and validate move before searching
-            applyMove(board, move, undo);
-            if (!isNotInCheck(board, !board->turn)){
-                revertMove(board, move, undo);
+            // Apply move, skip if move is illegal
+            if (!apply(thread, board, move, height))
                 continue;
-            }
-
-            thread->moveStack[height] = move;
-            thread->pieceStack[height] = pieceType(board->squares[MoveTo(move)]);
 
             // Verify the move has promise using a depth 2 search
             value = -search(thread, &lpv, -rBeta, -rBeta+1, 2, height+1);
@@ -418,7 +404,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
                 value = -search(thread, &lpv, -rBeta, -rBeta+1, depth-4, height+1);
 
             // Revert the board state
-            revertMove(board, move, undo);
+            revert(thread, board, move, height);
 
             // Probcut failed high
             if (value >= rBeta) return value;
@@ -480,15 +466,9 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             && !staticExchangeEvaluation(board, move, seeMargin[isQuiet]))
             continue;
 
-        // Apply the move, and verify legality
-        applyMove(board, move, undo);
-        if (!isNotInCheck(board, !board->turn)){
-            revertMove(board, move, undo);
+        // Apply move, skip if move is illegal
+        if (!apply(thread, board, move, height))
             continue;
-        }
-
-        thread->moveStack[height] = move;
-        thread->pieceStack[height] = pieceType(board->squares[MoveTo(move)]);
 
         // Update counter of moves actually played
         played += 1;
@@ -526,7 +506,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
                   &&  move == ttMove
                   &&  ttDepth >= depth - 2
                   && (ttBound & BOUND_LOWER)
-                  &&  moveIsSingular(thread, ttMove, ttValue, undo, depth, height);
+                  &&  moveIsSingular(thread, ttMove, ttValue, depth, height);
 
         // Step 15B. Check Extensions. We extend captures and good quiets that
         // come from in check positions, so long as no other extensions occur
@@ -566,7 +546,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             value = -search(thread, &lpv, -beta, -alpha, newDepth-1, height+1);
 
         // Revert the board state
-        revertMove(board, move, undo);
+        revert(thread, board, move, height);
 
         // Step 17. Update search stats for the best move and its value. Update
         // our lower bound (alpha) if exceeded, and also update the PV in that case
@@ -636,7 +616,6 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     int eval, value, best;
     uint16_t move;
 
-    Undo undo[1];
     MovePicker movePicker;
 
     PVariation lpv;
@@ -695,21 +674,15 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
         if (eval + QFutilityMargin + thisTacticalMoveValue(board, move) < alpha)
             continue;
 
-        // Apply and validate move before searching
-        applyMove(board, move, undo);
-        if (!isNotInCheck(board, !board->turn)){
-            revertMove(board, move, undo);
+        // Apply move, skip if move is illegal
+        if (!apply(thread, board, move, height))
             continue;
-        }
-
-        thread->moveStack[height] = move;
-        thread->pieceStack[height] = pieceType(board->squares[MoveTo(move)]);
 
         // Search next depth
         value = -qsearch(thread, &lpv, -beta, -alpha, height+1);
 
-        // Revert move from board
-        revertMove(board, move, undo);
+        // Revert the board state
+        revert(thread, board, move, height);
 
         // Improved current value
         if (value > best){
@@ -890,7 +863,7 @@ int bestTacticalMoveValue(Board* board){
     return value;
 }
 
-int moveIsSingular(Thread* thread, uint16_t ttMove, int ttValue, Undo* undo, int depth, int height){
+int moveIsSingular(Thread* thread, uint16_t ttMove, int ttValue, int depth, int height){
 
     Board* const board = &thread->board;
 
@@ -901,8 +874,8 @@ int moveIsSingular(Thread* thread, uint16_t ttMove, int ttValue, Undo* undo, int
     MovePicker movePicker;
     PVariation lpv; lpv.length = 0;
 
-    // Table move was already applied, undo that
-    revertMove(board, ttMove, undo);
+    // Table move was already applied
+    revert(thread, board, ttMove, height);
 
     // Iterate and check all moves other than the table move
     initMovePicker(&movePicker, thread, NONE_MOVE, height);
@@ -911,31 +884,22 @@ int moveIsSingular(Thread* thread, uint16_t ttMove, int ttValue, Undo* undo, int
         // Skip the table move
         if (move == ttMove) continue;
 
-        // Verify legality before searching
-        applyMove(board, move, undo);
-        if (!isNotInCheck(board, !board->turn)){
-            revertMove(board, move, undo);
+        // Apply move, skip if move is illegal
+        if (!apply(thread, board, move, height))
             continue;
-        }
-
-        thread->moveStack[height] = move;
-        thread->pieceStack[height] = pieceType(board->squares[MoveTo(move)]);
 
         // Perform a reduced depth search on a null rbeta window
         value = -search(thread, &lpv, -rBeta-1, -rBeta, depth / 2 - 1, height+1);
 
         // Revert board state
-        revertMove(board, move, undo);
+        revert(thread, board, move, height);
 
         // Move failed high, thus ttMove is not singular
         if (value > rBeta) break;
     }
 
     // Reapply the table move we took off
-    applyMove(board, ttMove, undo);
-
-    thread->moveStack[height] = ttMove;
-    thread->pieceStack[height] = pieceType(board->squares[MoveTo(ttMove)]);
+    apply(thread, board, ttMove, height);
 
     // Move is singular if all other moves failed low
     return value <= rBeta;

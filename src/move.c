@@ -24,13 +24,41 @@
 #include "bitboards.h"
 #include "board.h"
 #include "castle.h"
-#include "types.h"
 #include "masks.h"
 #include "move.h"
 #include "movegen.h"
 #include "psqt.h"
+#include "thread.h"
+#include "types.h"
 #include "types.h"
 #include "zobrist.h"
+
+int apply(Thread *thread, Board *board, uint16_t move, int height) {
+
+    int legal;
+    Undo *undo = &thread->undoStack[height];
+
+    // NULL moves are only tried when legal
+    if (move == NULL_MOVE) {
+        thread->moveStack[height] = NULL_MOVE;
+        applyNullMove(board, undo);
+        return 1;
+    }
+
+    // Apply and reject the move if illegal
+    applyMove(board, move, undo);
+    legal = isNotInCheck(board, !board->turn);
+    if (!legal) revertMove(board, move, undo);
+
+    // Track each move and which piece type made it throughout the tree
+    if (legal) {
+        thread->moveStack[height] = move;
+        thread->pieceStack[height] = pieceType(board->squares[MoveTo(move)]);
+    }
+
+    // Let the search know to skip this move
+    return legal;
+}
 
 void applyMove(Board *board, uint16_t move, Undo *undo) {
 
@@ -269,6 +297,12 @@ void applyNullMove(Board *board, Undo *undo) {
 
     board->epSquare = -1;
     board->fiftyMoveRule += 1;
+}
+
+void revert(Thread *thread, Board *board, uint16_t move, int height) {
+    Undo *undo = &thread->undoStack[height];
+    if (move == NULL_MOVE) revertNullMove(board, undo);
+    else revertMove(board, move, undo);
 }
 
 void revertMove(Board *board, uint16_t move, Undo *undo) {

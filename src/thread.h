@@ -49,6 +49,8 @@ struct Thread {
     int *pieceStack;
     int _pieceStack[MAX_PLY+4];
 
+    Undo undoStack[MAX_PLY];
+
     jmp_buf jbuffer;
 
     int index;

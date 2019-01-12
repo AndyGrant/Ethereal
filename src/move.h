@@ -41,6 +41,7 @@
 #define ROOK_PROMO_MOVE   (PROMOTION_MOVE | PROMOTE_TO_ROOK  )
 #define QUEEN_PROMO_MOVE  (PROMOTION_MOVE | PROMOTE_TO_QUEEN )
 
+int apply(Thread *thread, Board *board, uint16_t move, int height);
 void applyMove(Board* board, uint16_t move, Undo* undo);
 void applyNormalMove(Board* board, uint16_t move, Undo* undo);
 void applyCastleMove(Board* board, uint16_t move, Undo* undo);
@@ -48,6 +49,7 @@ void applyEnpassMove(Board* board, uint16_t move, Undo* undo);
 void applyPromotionMove(Board* board, uint16_t move, Undo* undo);
 void applyNullMove(Board* board, Undo* undo);
 
+void revert(Thread *thread, Board *board, uint16_t move, int height);
 void revertMove(Board* board, uint16_t move, Undo* undo);
 void revertNullMove(Board* board, Undo* undo);
 
