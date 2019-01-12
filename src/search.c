@@ -156,29 +156,22 @@ void* iterativeDeepening(void* vthread){
 int aspirationWindow(Thread* thread, int depth, int lastValue){
 
     const int mainThread = thread->index == 0;
+    int alpha, beta, value, delta = WindowSize;
 
-    int alpha, beta, value, delta = 14;
-
-    // Need a few searches to get a good window
-    if (depth <= 4)
-        return search(thread, &thread->pv, -MATE, MATE, depth, 0);
-
-    // Create the aspiration window
-    alpha = MAX(-MATE, lastValue - delta);
-    beta  = MIN( MATE, lastValue + delta);
+    // Create an aspiration window, unless still below the starting depth
+    alpha = depth >= WindowDepth ? MAX(-MATE, lastValue - delta) : -MATE;
+    beta  = depth >= WindowDepth ? MIN( MATE, lastValue + delta) :  MATE;
 
     // Keep trying larger windows until one works
     while (1) {
 
-        // Perform the search on the modified window
+        // Perform a search on the window, return if inside the window
         value = search(thread, &thread->pv, alpha, beta, depth, 0);
-
-        // Result was within our window
         if (value > alpha && value < beta)
             return value;
 
-        // Report lower and upper bounds after at least 5 seconds
-        if (mainThread && elapsedTime(thread->info) >= 5000)
+        // Report lower and upper bounds after at a certain time
+        if (mainThread && elapsedTime(thread->info) >= WindowTimerMS)
             uciReport(thread->threads, alpha, beta, value);
 
         // Search failed low
