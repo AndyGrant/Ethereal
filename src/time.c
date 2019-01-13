@@ -25,6 +25,7 @@
 #include <stdlib.h>
 
 #include "search.h"
+#include "thread.h"
 #include "time.h"
 #include "types.h"
 #include "uci.h"
@@ -137,4 +138,18 @@ int terminateTimeManagment(SearchInfo* info) {
 
     // Terminate search if cutoff is reached
     return elapsedTime(info) > MIN(cutoff, info->maxAlloc);
+}
+
+int terminateSearchEarly(Thread *thread) {
+
+    // Terminate the search early if the max usage time has passed.
+    // Only check this once for every 1024 nodes examined. Never
+    // take an early exit before a depth one search has finished
+
+    const Limits *limits = thread->limits;
+
+    return  thread->depth > 1
+        && (thread->nodes & 1023) == 1023
+        && (limits->limitedBySelf || limits->limitedByTime)
+        &&  elapsedTime(thread->info) >= thread->info->maxUsage;
 }
