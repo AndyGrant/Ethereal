@@ -601,7 +601,7 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     pv->length = 0;
 
     // Updates for UCI reporting
-    thread->seldepth = RootNode ? 0 : MAX(thread->seldepth, height);
+    thread->seldepth = MAX(thread->seldepth, height);
     thread->nodes++;
 
     // Step 1. Abort Check. Exit the search if signaled by main thread or the
