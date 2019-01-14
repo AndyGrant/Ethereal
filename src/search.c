@@ -193,7 +193,6 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
 
     const int PvNode   = (alpha != beta - 1);
     const int RootNode = (height == 0);
-
     Board* const board = &thread->board;
 
     unsigned tbresult;
@@ -209,18 +208,24 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     lpv.length = 0;
     pv->length = 0;
 
-    // Increment nodes counter for this Thread
+    // Step 1. Quiescence Search. Perform a search using mostly tactical
+    // moves to reach a more stable position for use as a static evaluation
+    if (depth <= 0 && !board->kingAttackers)
+        return qsearch(thread, pv, alpha, beta, height);
+
+    // Ensure positive depth
+    depth = MAX(0, depth);
+
+    // Updates for UCI reporting
+    thread->seldepth = RootNode ? 0 : MAX(thread->seldepth, height);
     thread->nodes++;
 
-    // Update longest searched line for this Thread
-    thread->seldepth = RootNode ? 0 : MAX(thread->seldepth, height);
-
-    // Step 1. Abort Check. Exit the search if signaled by main thread or the
+    // Step 2. Abort Check. Exit the search if signaled by main thread or the
     // UCI thread, or if the search time has expired outside pondering mode
     if (ABORT_SIGNAL || (terminateSearchEarly(thread) && !IS_PONDERING))
         longjmp(thread->jbuffer, 1);
 
-    // Step 2. Check for early exit conditions. Don't take early exits in
+    // Step 3. Check for early exit conditions. Don't take early exits in
     // the RootNode, since this would prevent us from having a best move
     if (!RootNode){
 
@@ -241,7 +246,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         if (rAlpha >= rBeta) return rAlpha;
     }
 
-    // Step 3. Probe the Transposition Table, adjust the value, and consider cutoffs
+    // Step 4. Probe the Transposition Table, adjust the value, and consider cutoffs
     if ((ttHit = getTTEntry(board->hash, &ttMove, &ttValue, &ttEval, &ttDepth, &ttBound))){
 
         ttValue = valueFromTT(ttValue, height); // Adjust any MATE scores
@@ -256,19 +261,6 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
                 || (ttBound == BOUND_UPPER && ttValue <= alpha))
                 return ttValue;
         }
-    }
-
-    // Step 4. Go into the Quiescence Search if we have reached
-    // the search horizon and are not currently in check
-    if (depth <= 0){
-
-        // No king attackers indicates we are not checked. We reduce the
-        // node count here, in order to avoid counting this node twice
-        if (!board->kingAttackers)
-            return thread->nodes--, qsearch(thread, pv, alpha, beta, height);
-
-        // Search expects depth to be greater than or equal to 0
-        depth = 0;
     }
 
     // Step 5. Probe the Syzygy Tablebases. tablebasesProbeWDL() handles all of
@@ -608,11 +600,9 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     lpv.length = 0;
     pv->length = 0;
 
-    // Increment nodes counter for this Thread
+    // Updates for UCI reporting
+    thread->seldepth = RootNode ? 0 : MAX(thread->seldepth, height);
     thread->nodes++;
-
-    // Update longest searched line for this Thread
-    thread->seldepth = MAX(thread->seldepth, height);
 
     // Step 1. Abort Check. Exit the search if signaled by main thread or the
     // UCI thread, or if the search time has expired outside pondering mode
