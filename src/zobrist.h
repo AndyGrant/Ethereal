@@ -27,4 +27,5 @@ extern uint64_t ZobristEnpassKeys[FILE_NB];
 extern uint64_t ZobristCastleKeys[0x10];
 extern uint64_t ZobristTurnKey;
 
+uint64_t rand64();
 void initZobrist();

@@ -28,7 +28,7 @@ uint64_t ZobristEnpassKeys[FILE_NB];
 uint64_t ZobristCastleKeys[0x10];
 uint64_t ZobristTurnKey;
 
-static uint64_t rand64() {
+uint64_t rand64() {
 
     // http://vigna.di.unimi.it/ftp/papers/xorshift.pdf
 
