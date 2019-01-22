@@ -50,7 +50,7 @@ const int PawnValue   = S( 107, 135);
 const int KnightValue = S( 457, 409);
 const int BishopValue = S( 478, 424);
 const int RookValue   = S( 671, 713);
-const int QueenValue  = S(1246,1359);
+const int QueenValue  = S(1248,1359);
 const int KingValue   = S(   0,   0);
 
 const int PieceValues[8][PHASE_NB] = {
