@@ -122,12 +122,15 @@ void runTexelTuning(Thread *thread) {
 
     while (1) {
 
+        // Shuffle the dataset before each epoch
+        shuffleTexelEntries(tes);
+
         // Report every REPORTING iterations
         if (++iteration % REPORTING == 0) {
 
             // Check for a regression in tuning
             error = completeLinearError(tes, params, K);
-            if (error >= best) rate = rate / LRDROPRATE;
+            if (error > best) rate = rate / LRDROPRATE;
 
             // Report current best parameters
             best = error;
@@ -138,7 +141,7 @@ void runTexelTuning(Thread *thread) {
         for (int batch = 0; batch < NPOSITIONS / BATCHSIZE; batch++) {
 
             TexelVector gradient = {0};
-            updateGradient(tes, gradient, params, K);
+            updateGradient(tes, gradient, params, K, batch);
 
             // Update Parameters. Note that in updateGradient() we skip the multiplcation by negative
             // two over BATCHSIZE. This is done only here, just once, for precision and a speed gain
@@ -267,9 +270,9 @@ void updateMemory(TexelEntry *te, int size) {
     TupleStackSize -= size;
 }
 
-void updateGradient(TexelEntry *tes, TexelVector gradient, TexelVector params, double K) {
+void updateGradient(TexelEntry *tes, TexelVector gradient, TexelVector params, double K, int batch) {
 
-    int start = rand64() % (NPOSITIONS - BATCHSIZE);
+    int start = batch * BATCHSIZE;
     int end   = start + BATCHSIZE;
 
     #pragma omp parallel shared(gradient)
@@ -288,6 +291,19 @@ void updateGradient(TexelEntry *tes, TexelVector gradient, TexelVector params, d
         for (int i = 0; i < NTERMS; i++)
             for (int j = MG; j <= EG; j++)
                 gradient[i][j] += local[i][j];
+    }
+}
+
+void shuffleTexelEntries(TexelEntry *tes) {
+
+    for (int i = 0; i < NPOSITIONS; i++) {
+
+        int A = rand64() % NPOSITIONS;
+        int B = rand64() % NPOSITIONS;
+
+        TexelEntry temp = tes[A];
+        tes[A] = tes[B];
+        tes[B] = temp;
     }
 }
 
@@ -345,7 +361,9 @@ double completeLinearError(TexelEntry *tes, TexelVector params, double K) {
 }
 
 double singleLinearError(TexelEntry *te, TexelVector params, double K) {
-    return te->result - sigmoid(K, linearEvaluation(te, params));
+    double sigm = sigmoid(K, linearEvaluation(te, params));
+    double sigmprime = sigm * (1 - sigm);
+    return (te->result - sigm) * sigmprime;
 }
 
 double linearEvaluation(TexelEntry *te, TexelVector params) {
