@@ -202,7 +202,7 @@ uint16_t selectNextMove(MovePicker* mp, Board* board, int skipQuiets){
         if (!skipQuiets){
             mp->quietSize = 0;
             genAllQuietMoves(board, mp->moves + mp->split, &mp->quietSize);
-            evaluateQuietMoves(mp);
+            getHistoryScores(mp->thread, mp->moves, mp->values, mp->split, mp->quietSize, mp->height);
         }
 
         mp->stage = STAGE_QUIET;
@@ -319,16 +319,6 @@ void evaluateNoisyMoves(MovePicker* mp){
         // phase due to failing an SEE(0), by setting the value to -1
         assert(mp->values[i] >= 0);
     }
-}
-
-void evaluateQuietMoves(MovePicker* mp){
-
-    // Sort moves based on Butterfly history, Counter
-    // Move History, as well as Follow Up Move History.
-    for (int i = mp->split; i < mp->split + mp->quietSize; i++)
-        mp->values[i] = getHistoryScore(mp->thread, mp->moves[i])
-                      + getCMHistoryScore(mp->thread, mp->height, mp->moves[i])
-                      + getFUHistoryScore(mp->thread, mp->height, mp->moves[i]);
 }
 
 int moveIsPsuedoLegal(Board* board, uint16_t move){

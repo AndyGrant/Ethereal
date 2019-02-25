@@ -22,14 +22,12 @@
 
 #include "types.h"
 
-int getHistoryScore(Thread *thread, uint16_t move);
-void updateHistory(Thread *thread, uint16_t move, int delta);
+static const int HistoryMax = 400;
+static const int HistoryMultiplier = 32;
+static const int HistoryDivisor = 512;
 
-int getCMHistoryScore(Thread *thread, int height, uint16_t move);
-void updateCMHistory(Thread *thread, int height, uint16_t move, int delta);
-
-int getFUHistoryScore(Thread *thread, int height, uint16_t move);
-void updateFUHistory(Thread *thread, int height, uint16_t move, int delta);
+void updateHistoryHeuristics(Thread *thread, uint16_t *moves, int length, int height, int bonus);
+void getHistoryScores(Thread *thread, uint16_t *moves, int *scores, int start, int length, int height);
+void getHistory(Thread *thread, uint16_t move, int height, int *hist, int *cmhist, int *fmhist);
 
 uint16_t getCounterMove(Thread *thread, int height);
-void updateCounterMove(Thread *thread, int height, uint16_t move);

@@ -49,7 +49,6 @@ void initNoisyMovePicker(MovePicker* mp, Thread* thread, int threshold);
 uint16_t selectNextMove(MovePicker* mp, Board* board, int skipQuiets);
 int getBestMoveIndex(MovePicker *mp, int start, int end);
 void evaluateNoisyMoves(MovePicker* mp);
-void evaluateQuietMoves(MovePicker* mp);
 int moveIsPsuedoLegal(Board* board, uint16_t move);
 
 #endif
