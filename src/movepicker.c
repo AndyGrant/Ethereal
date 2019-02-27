@@ -36,23 +36,16 @@ void initMovePicker(MovePicker* mp, Thread* thread, uint16_t ttMove, int height)
 
     // Start with the table move
     mp->stage = STAGE_TABLE;
-
-    // Save possible special moves
     mp->tableMove = ttMove;
-    mp->killer1   = thread->killers[height][0];
-    mp->killer2   = thread->killers[height][1];
-    mp->counter   = getCounterMove(thread, height);
+
+    // Lookup our refutations (killers and counter moves)
+    getRefutationMoves(thread, height, &mp->killer1, &mp->killer2, &mp->counter);
 
     // Threshold for good noisy
     mp->threshold = 0;
 
-    // Reference to the board
     mp->thread = thread;
-
-    // Reference for getting stats
     mp->height = height;
-
-    // Normal picker returns bad noisy moves
     mp->type = NORMAL_PICKER;
 }
 
@@ -70,13 +63,8 @@ void initNoisyMovePicker(MovePicker* mp, Thread* thread, int threshold){
     // Threshold for good noisy
     mp->threshold = threshold;
 
-    // Reference to the board
     mp->thread = thread;
-
-    // No stats used, set to 0 to be safe
     mp->height = 0;
-
-    // Noisy picker skips bad noisy moves
     mp->type = NOISY_PICKER;
 }
 

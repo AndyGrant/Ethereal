@@ -145,22 +145,16 @@ void getHistory(Thread *thread, uint16_t move, int height, int *hist, int *cmhis
     else *fmhist = thread->continuation[1][fmPiece][fmTo][piece][to];
 }
 
-uint16_t getCounterMove(Thread *thread, int height) {
+void getRefutationMoves(Thread *thread, int height, uint16_t *killer1, uint16_t *killer2, uint16_t *counter) {
 
-    int colour, to, piece;
-    const uint16_t previous = thread->moveStack[height-1];
+    uint16_t previous = thread->moveStack[height-1];
+    int colour = !thread->board.turn;
+    int to = MoveTo(previous);
+    int piece = pieceType(thread->board.squares[to]);
 
-    // Check for root position or null moves
-    if (previous == NULL_MOVE || previous == NONE_MOVE)
-        return NONE_MOVE;
+    *killer1 = thread->killers[height][0];
+    *killer2 = thread->killers[height][1];
 
-    colour = !thread->board.turn;
-    to     = MoveTo(previous);
-    piece  = pieceType(thread->board.squares[to]);
-
-    assert(0 <= colour && colour < COLOUR_NB);
-    assert(0 <= piece && piece < PIECE_NB);
-    assert(0 <= to && to < SQUARE_NB);
-
-    return thread->cmtable[colour][piece][to];
+    if (previous == NONE_MOVE || previous == NULL_MOVE) *counter = NONE_MOVE;
+    else *counter = thread->cmtable[colour][piece][to];
 }
