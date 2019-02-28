@@ -354,35 +354,26 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         if (value >= beta) return beta;
     }
 
-    // Step 10. ProbCut. If we have a good capture that causes a beta cutoff
-    // with a slightly reduced depth search it is likely that this capture is
-    // likely going to be good at a full depth. To save some work we will prune
-    // captures that won't exceed rbeta or captures that fail at a low depth
+    // Step 10. Probcut Pruning. If we have a good capture that causes a cutoff
+    // with an adjusted beta value at a reduced search depth, we expect that it
+    // will cause a similar cutoff at this search depth, with a normal beta value
     if (   !PvNode
-        &&  abs(beta) < MATE_IN_MAX
         &&  depth >= ProbCutDepth
+        &&  abs(beta) < MATE_IN_MAX
         &&  eval + bestTacticalMoveValue(board) >= beta + ProbCutMargin){
 
+        // Try tactical moves which maintain rBeta
         rBeta = MIN(beta + ProbCutMargin, MATE - MAX_PLY - 1);
-
-        initMovePicker(&movePicker, thread, NONE_MOVE, height);
+        initNoisyMovePicker(&movePicker, thread, rBeta - eval);
 
         while ((move = selectNextMove(&movePicker, board, 1)) != NONE_MOVE){
-
-            // Move should pass an SEE() to be worth at least rBeta
-            if (!staticExchangeEvaluation(board, move, rBeta - eval))
-                continue;
 
             // Apply move, skip if move is illegal
             if (!apply(thread, board, move, height))
                 continue;
 
-            // Verify the move has promise using a depth 2 search
-            value = -search(thread, &lpv, -rBeta, -rBeta+1, 2, height+1);
-
-            // Verify the move holds which a slightly reduced depth search
-            if (value >= rBeta && depth > 6)
-                value = -search(thread, &lpv, -rBeta, -rBeta+1, depth-4, height+1);
+            // Perform a reduced depth verification search
+            value = -search(thread, &lpv, -rBeta, -rBeta+1, depth-4, height+1);
 
             // Revert the board state
             revert(thread, board, move, height);
