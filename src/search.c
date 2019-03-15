@@ -396,8 +396,8 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         }
 
         // Step 12. Quiet Move Pruning. Prune any quiet move that meets one
-        // of the criteria below, except for mated lines and Root node moves
-        if (!RootNode && isQuiet && best > MATED_IN_MAX) {
+        // of the criteria below, only after proving a non mated line exists
+        if (isQuiet && best > MATED_IN_MAX) {
 
             // Step 12A. Futility Pruning. If our score is far below alpha, and we
             // don't expect anything from this move, we can skip all other quiets
@@ -429,8 +429,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         // Step 13. Static Exchange Evaluation Pruning. Prune moves which fail
         // to beat a depth dependent SEE threshold. The use of movePicker.stage
         // is a speedup, which assumes that good noisy moves have a positive SEE
-        if (   !RootNode
-            &&  best > MATED_IN_MAX
+        if (    best > MATED_IN_MAX
             &&  depth <= SEEPruningDepth
             &&  movePicker.stage > STAGE_GOOD_NOISY
             && !staticExchangeEvaluation(board, move, seeMargin[isQuiet]))
@@ -478,23 +477,18 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
                   && (ttBound & BOUND_LOWER)
                   &&  moveIsSingular(thread, ttMove, ttValue, depth, height);
 
-        // Step 15B. Check Extensions. We extend captures and good quiets that
-        // come from in check positions, so long as no other extensions occur
-        extension += !RootNode
-                  &&  inCheck
-                  && !extension;
+        // Step 15B. Check Extensions. We extend positions that are in check
+        extension += inCheck;
 
         // Step 15C. History Extensions. We extend quiet moves with strong
         // history scores for both counter move and followups. We only apply
         // this extension to the first quiet moves tried during the search
-        extension += !RootNode
-                  && !extension
-                  &&  quiets <= 4
-                  &&  cmhist >= 10000
-                  &&  fmhist >= 10000;
+        extension += quiets <= 4
+                  && cmhist >= 10000
+                  && fmhist >= 10000;
 
-        // New depth is what our search depth would be, assuming that we do no LMR
-        newDepth = depth + extension;
+        // Factor the extension into the new depth. Do not extend at the root
+        newDepth = depth + (extension && !RootNode);
 
         // Step 16A. If we triggered the LMR conditions (which we know by the value of R),
         // then we will perform a reduced search on the null alpha window, as we have no
