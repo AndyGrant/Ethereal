@@ -199,7 +199,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     int quiets = 0, played = 0, hist = 0, cmhist = 0, fmhist = 0;
     int ttHit, ttValue = 0, ttEval = 0, ttDepth = 0, ttBound = 0;
     int R, newDepth, rAlpha, rBeta, oldAlpha = alpha;
-    int inCheck, isQuiet, improving, extension, skipQuiets = 0;
+    int inCheck, isQuiet, improving, extension, singular, skipQuiets = 0;
     int eval, value = -MATE, best = -MATE, futilityMargin, seeMargin[2];
     uint16_t move, ttMove = NONE_MOVE, bestMove = NONE_MOVE, quietsTried[MAX_MOVES];
     MovePicker movePicker;
@@ -467,25 +467,20 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
 
         } else R = 1;
 
-        // Step 15A. Singular Move Extensions. If we are looking at a table move,
-        // and it seems that under some conditions, the table move is better than
-        // all other possible moves, we will extend the search of the table move
-        extension =  !RootNode
-                  &&  depth >= 8
-                  &&  move == ttMove
-                  &&  ttDepth >= depth - 2
-                  && (ttBound & BOUND_LOWER)
-                  &&  moveIsSingular(thread, ttMove, ttValue, depth, height);
+        // Identify moves which are candidate singular moves
+        singular =  !RootNode
+                 &&  depth >= 8
+                 &&  move == ttMove
+                 &&  ttDepth >= depth - 2
+                 && (ttBound & BOUND_LOWER);
 
-        // Step 15B. Check Extensions. We extend positions that are in check
-        extension += inCheck;
-
-        // Step 15C. History Extensions. We extend quiet moves with strong
-        // history scores for both counter move and followups. We only apply
-        // this extension to the first quiet moves tried during the search
-        extension += quiets <= 4
-                  && cmhist >= 10000
-                  && fmhist >= 10000;
+        // Step 15. Extensions. Search an additional ply when we are in check, when
+        // an early move has excellent continuation history, or when we have a move
+        // from the transposition table which appears to beat all other moves by a
+        // relativly large margin,
+        extension =  (inCheck)
+                  || (isQuiet && quiets <= 4 && cmhist >= 10000 && fmhist >= 10000)
+                  || (singular && moveIsSingular(thread, ttMove, ttValue, depth, height));
 
         // Factor the extension into the new depth. Do not extend at the root
         newDepth = depth + (extension && !RootNode);
