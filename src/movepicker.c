@@ -22,7 +22,6 @@
 #include "attacks.h"
 #include "board.h"
 #include "bitboards.h"
-#include "castle.h"
 #include "evaluate.h"
 #include "history.h"
 #include "move.h"
@@ -407,14 +406,14 @@ int moveIsPsuedoLegal(Board* board, uint16_t move){
 
         if (colour == WHITE){
 
-            if (  ((occupied & WHITE_CASTLE_KING_SIDE_MAP) == 0ull)
-                && (board->castleRights & WHITE_KING_RIGHTS)
+            if (  ((occupied & WHITE_OO_MAP) == 0ull)
+                && (board->castleRights & WHITE_OO_RIGHTS)
                 &&  MoveMake(4, 6, CASTLE_MOVE) == move
                 && !squareIsAttacked(board, WHITE, 5))
                 return 1;
 
-            if (  ((occupied & WHITE_CASTLE_QUEEN_SIDE_MAP) == 0ull)
-                && (board->castleRights & WHITE_QUEEN_RIGHTS)
+            if (  ((occupied & WHITE_OOO_MAP) == 0ull)
+                && (board->castleRights & WHITE_OOO_RIGHTS)
                 &&  MoveMake(4, 2, CASTLE_MOVE) == move
                 && !squareIsAttacked(board, WHITE, 3))
                 return 1;
@@ -422,14 +421,14 @@ int moveIsPsuedoLegal(Board* board, uint16_t move){
 
         if (colour == BLACK){
 
-            if (  ((occupied & BLACK_CASTLE_KING_SIDE_MAP) == 0ull)
-                && (board->castleRights & BLACK_KING_RIGHTS)
+            if (  ((occupied & BLACK_OO_MAP) == 0ull)
+                && (board->castleRights & BLACK_OO_RIGHTS)
                 &&  MoveMake(60, 62, CASTLE_MOVE) == move
                 && !squareIsAttacked(board, BLACK, 61))
                 return 1;
 
-            if (  ((occupied & BLACK_CASTLE_QUEEN_SIDE_MAP) == 0ull)
-                && (board->castleRights & BLACK_QUEEN_RIGHTS)
+            if (  ((occupied & BLACK_OOO_MAP) == 0ull)
+                && (board->castleRights & BLACK_OOO_RIGHTS)
                 &&  MoveMake(60, 58, CASTLE_MOVE) == move
                 && !squareIsAttacked(board, BLACK, 59))
                 return 1;

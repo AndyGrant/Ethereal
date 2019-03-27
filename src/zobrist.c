@@ -19,7 +19,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "castle.h"
 #include "types.h"
 #include "zobrist.h"
 
@@ -56,25 +55,25 @@ void initZobrist() {
         ZobristEnpassKeys[f] = rand64();
 
     // Init the Zobrist castle keys for each castle status
-    ZobristCastleKeys[WHITE_KING_RIGHTS ] = rand64();
-    ZobristCastleKeys[WHITE_QUEEN_RIGHTS] = rand64();
-    ZobristCastleKeys[BLACK_KING_RIGHTS ] = rand64();
-    ZobristCastleKeys[BLACK_QUEEN_RIGHTS] = rand64();
+    ZobristCastleKeys[WHITE_OO_RIGHTS ] = rand64();
+    ZobristCastleKeys[WHITE_OOO_RIGHTS] = rand64();
+    ZobristCastleKeys[BLACK_OO_RIGHTS ] = rand64();
+    ZobristCastleKeys[BLACK_OOO_RIGHTS] = rand64();
 
     // Combine the Zobrist castle keys for all possible castling rights
     for (int cr = 0; cr < 0x10; cr++) {
 
-        if (cr & WHITE_KING_RIGHTS)
-            ZobristCastleKeys[cr] ^= ZobristCastleKeys[WHITE_KING_RIGHTS];
+        if (cr & WHITE_OO_RIGHTS)
+            ZobristCastleKeys[cr] ^= ZobristCastleKeys[WHITE_OO_RIGHTS];
 
-        if (cr & WHITE_QUEEN_RIGHTS)
-            ZobristCastleKeys[cr] ^= ZobristCastleKeys[WHITE_QUEEN_RIGHTS];
+        if (cr & WHITE_OOO_RIGHTS)
+            ZobristCastleKeys[cr] ^= ZobristCastleKeys[WHITE_OOO_RIGHTS];
 
-        if (cr & BLACK_KING_RIGHTS)
-            ZobristCastleKeys[cr] ^= ZobristCastleKeys[BLACK_KING_RIGHTS];
+        if (cr & BLACK_OO_RIGHTS)
+            ZobristCastleKeys[cr] ^= ZobristCastleKeys[BLACK_OO_RIGHTS];
 
-        if (cr & BLACK_QUEEN_RIGHTS)
-            ZobristCastleKeys[cr] ^= ZobristCastleKeys[BLACK_QUEEN_RIGHTS];
+        if (cr & BLACK_OOO_RIGHTS)
+            ZobristCastleKeys[cr] ^= ZobristCastleKeys[BLACK_OOO_RIGHTS];
     }
 
     // Init the Zobrist key for side to move

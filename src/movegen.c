@@ -22,11 +22,69 @@
 #include "attacks.h"
 #include "board.h"
 #include "bitboards.h"
-#include "castle.h"
 #include "masks.h"
 #include "move.h"
 #include "movegen.h"
 #include "types.h"
+
+/* For Building Move Lists For Each Piece Type */
+
+static void buildEnpassMoves(uint16_t* moves, int* size, uint64_t attacks, int epsq){
+    while (attacks){
+        int sq = poplsb(&attacks);
+        moves[(*size)++] = MoveMake(sq, epsq, ENPASS_MOVE);
+    }
+}
+
+static void buildPawnMoves(uint16_t* moves, int* size, uint64_t attacks, int delta){
+    while (attacks){
+        int sq = poplsb(&attacks);
+        moves[(*size)++] = MoveMake(sq + delta, sq, NORMAL_MOVE);
+    }
+}
+
+static void buildPawnPromotions(uint16_t* moves, int* size, uint64_t attacks, int delta){
+    while (attacks){
+        int sq = poplsb(&attacks);
+        moves[(*size)++] = MoveMake(sq + delta, sq,  QUEEN_PROMO_MOVE);
+        moves[(*size)++] = MoveMake(sq + delta, sq,   ROOK_PROMO_MOVE);
+        moves[(*size)++] = MoveMake(sq + delta, sq, BISHOP_PROMO_MOVE);
+        moves[(*size)++] = MoveMake(sq + delta, sq, KNIGHT_PROMO_MOVE);
+    }
+}
+
+static void buildNonPawnMoves(uint16_t* moves, int* size, uint64_t attacks, int sq){
+    while (attacks){
+        int tg = poplsb(&attacks);
+        moves[(*size)++] = MoveMake(sq, tg, NORMAL_MOVE);
+    }
+}
+
+static void buildKnightMoves(uint16_t* moves, int* size, uint64_t pieces, uint64_t targets){
+    while (pieces){
+        int sq = poplsb(&pieces);
+        buildNonPawnMoves(moves, size, knightAttacks(sq) & targets, sq);
+    }
+}
+
+static void buildBishopAndQueenMoves(uint16_t* moves, int* size, uint64_t pieces, uint64_t occupied, uint64_t targets){
+    while (pieces){
+        int sq = poplsb(&pieces);
+        buildNonPawnMoves(moves, size, bishopAttacks(sq, occupied) & targets, sq);
+    }
+}
+
+static void buildRookAndQueenMoves(uint16_t* moves, int* size, uint64_t pieces, uint64_t occupied, uint64_t targets){
+    while (pieces){
+        int sq = poplsb(&pieces);
+        buildNonPawnMoves(moves, size, rookAttacks(sq, occupied) & targets, sq);
+    }
+}
+
+static void buildKingMoves(uint16_t* moves, int* size, uint64_t pieces, uint64_t targets){
+    int sq = getlsb(pieces);
+    buildNonPawnMoves(moves, size, kingAttacks(sq) & targets, sq);
+}
 
 /* For Generating Attack BitBoards */
 
@@ -52,67 +110,6 @@ uint64_t pawnAdvance(uint64_t pawns, uint64_t occupied, int colour){
 uint64_t pawnEnpassCaptures(uint64_t pawns, int epsq, int colour){
     return epsq == -1 ? 0ull : pawnAttacks(!colour, epsq) & pawns;
 }
-
-
-/* For Building Actual Move Lists For Each Piece Type */
-
-void buildEnpassMoves(uint16_t* moves, int* size, uint64_t attacks, int epsq){
-    while (attacks){
-        int sq = poplsb(&attacks);
-        moves[(*size)++] = MoveMake(sq, epsq, ENPASS_MOVE);
-    }
-}
-
-void buildPawnMoves(uint16_t* moves, int* size, uint64_t attacks, int delta){
-    while (attacks){
-        int sq = poplsb(&attacks);
-        moves[(*size)++] = MoveMake(sq + delta, sq, NORMAL_MOVE);
-    }
-}
-
-void buildPawnPromotions(uint16_t* moves, int* size, uint64_t attacks, int delta){
-    while (attacks){
-        int sq = poplsb(&attacks);
-        moves[(*size)++] = MoveMake(sq + delta, sq,  QUEEN_PROMO_MOVE);
-        moves[(*size)++] = MoveMake(sq + delta, sq,   ROOK_PROMO_MOVE);
-        moves[(*size)++] = MoveMake(sq + delta, sq, BISHOP_PROMO_MOVE);
-        moves[(*size)++] = MoveMake(sq + delta, sq, KNIGHT_PROMO_MOVE);
-    }
-}
-
-void buildNonPawnMoves(uint16_t* moves, int* size, uint64_t attacks, int sq){
-    while (attacks){
-        int tg = poplsb(&attacks);
-        moves[(*size)++] = MoveMake(sq, tg, NORMAL_MOVE);
-    }
-}
-
-void buildKnightMoves(uint16_t* moves, int* size, uint64_t pieces, uint64_t targets){
-    while (pieces){
-        int sq = poplsb(&pieces);
-        buildNonPawnMoves(moves, size, knightAttacks(sq) & targets, sq);
-    }
-}
-
-void buildBishopAndQueenMoves(uint16_t* moves, int* size, uint64_t pieces, uint64_t occupied, uint64_t targets){
-    while (pieces){
-        int sq = poplsb(&pieces);
-        buildNonPawnMoves(moves, size, bishopAttacks(sq, occupied) & targets, sq);
-    }
-}
-
-void buildRookAndQueenMoves(uint16_t* moves, int* size, uint64_t pieces, uint64_t occupied, uint64_t targets){
-    while (pieces){
-        int sq = poplsb(&pieces);
-        buildNonPawnMoves(moves, size, rookAttacks(sq, occupied) & targets, sq);
-    }
-}
-
-void buildKingMoves(uint16_t* moves, int* size, uint64_t pieces, uint64_t targets){
-    int sq = getlsb(pieces);
-    buildNonPawnMoves(moves, size, kingAttacks(sq) & targets, sq);
-}
-
 
 /* For Building Full Move Lists */
 
@@ -286,26 +283,26 @@ void genAllQuietMoves(Board* board, uint16_t* moves, int* size){
     // Generate all the castling moves
     if (board->turn == WHITE && !board->kingAttackers){
 
-        if (  ((occupied & WHITE_CASTLE_KING_SIDE_MAP) == 0)
-            && (board->castleRights & WHITE_KING_RIGHTS)
+        if (  ((occupied & WHITE_OO_MAP) == 0)
+            && (board->castleRights & WHITE_OO_RIGHTS)
             && !squareIsAttacked(board, WHITE, 5))
             moves[(*size)++] = MoveMake(4, 6, CASTLE_MOVE);
 
-        if (  ((occupied & WHITE_CASTLE_QUEEN_SIDE_MAP) == 0)
-            && (board->castleRights & WHITE_QUEEN_RIGHTS)
+        if (  ((occupied & WHITE_OOO_MAP) == 0)
+            && (board->castleRights & WHITE_OOO_RIGHTS)
             && !squareIsAttacked(board, WHITE, 3))
             moves[(*size)++] = MoveMake(4, 2, CASTLE_MOVE);
     }
 
     else if (board->turn == BLACK && !board->kingAttackers) {
 
-        if (  ((occupied & BLACK_CASTLE_KING_SIDE_MAP) == 0)
-            && (board->castleRights & BLACK_KING_RIGHTS)
+        if (  ((occupied & BLACK_OO_MAP) == 0)
+            && (board->castleRights & BLACK_OO_RIGHTS)
             && !squareIsAttacked(board, BLACK, 61))
             moves[(*size)++] = MoveMake(60, 62, CASTLE_MOVE);
 
-        if (  ((occupied & BLACK_CASTLE_QUEEN_SIDE_MAP) == 0)
-            && (board->castleRights & BLACK_QUEEN_RIGHTS)
+        if (  ((occupied & BLACK_OOO_MAP) == 0)
+            && (board->castleRights & BLACK_OOO_RIGHTS)
             && !squareIsAttacked(board, BLACK, 59))
             moves[(*size)++] = MoveMake(60, 58, CASTLE_MOVE);
     }

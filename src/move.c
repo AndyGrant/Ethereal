@@ -23,7 +23,6 @@
 
 #include "bitboards.h"
 #include "board.h"
-#include "castle.h"
 #include "masks.h"
 #include "move.h"
 #include "movegen.h"
@@ -32,6 +31,29 @@
 #include "types.h"
 #include "types.h"
 #include "zobrist.h"
+
+
+static const int CastleMask[SQUARE_NB] = {
+   13, 15, 15, 15, 12, 15, 15, 14,
+   15, 15, 15, 15, 15, 15, 15, 15,
+   15, 15, 15, 15, 15, 15, 15, 15,
+   15, 15, 15, 15, 15, 15, 15, 15,
+   15, 15, 15, 15, 15, 15, 15, 15,
+   15, 15, 15, 15, 15, 15, 15, 15,
+   15, 15, 15, 15, 15, 15, 15, 15,
+    7, 15, 15, 15,  3, 15, 15, 11,
+};
+
+static int castleGetRookFrom(int from, int to){
+    static const int table[2] = {-4, 3};
+    return from + table[(to >> 2) & 1];
+}
+
+static int castleGetRookTo(int from, int to){
+    static const int table[2] = {-1, 1};
+    return from + table[(to >> 2) & 1];
+}
+
 
 int apply(Thread *thread, Board *board, uint16_t move, int height) {
 

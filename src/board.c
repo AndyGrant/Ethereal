@@ -26,7 +26,6 @@
 #include "attacks.h"
 #include "bitboards.h"
 #include "board.h"
-#include "castle.h"
 #include "masks.h"
 #include "psqt.h"
 #include "search.h"
@@ -121,13 +120,13 @@ void boardFromFEN(Board *board, const char *fen) {
 
     while ((ch = *token++)) {
         if (ch =='K')
-            board->castleRights |= WHITE_KING_RIGHTS;
+            board->castleRights |= WHITE_OO_RIGHTS;
         else if (ch == 'Q')
-            board->castleRights |= WHITE_QUEEN_RIGHTS;
+            board->castleRights |= WHITE_OOO_RIGHTS;
         else if (ch == 'k')
-            board->castleRights |= BLACK_KING_RIGHTS;
+            board->castleRights |= BLACK_OO_RIGHTS;
         else if (ch == 'q')
-            board->castleRights |= BLACK_QUEEN_RIGHTS;
+            board->castleRights |= BLACK_OOO_RIGHTS;
     }
 
     board->hash ^= ZobristCastleKeys[board->castleRights];
@@ -182,13 +181,13 @@ void boardToFEN(Board *board, char *fen) {
     *fen++ = ' ';
 
     // Castle rights
-    if (board->castleRights & WHITE_KING_RIGHTS)
+    if (board->castleRights & WHITE_OO_RIGHTS)
         *fen++ = 'K';
-    if (board->castleRights & WHITE_QUEEN_RIGHTS)
+    if (board->castleRights & WHITE_OOO_RIGHTS)
         *fen++ = 'Q';
-    if (board->castleRights & BLACK_KING_RIGHTS)
+    if (board->castleRights & BLACK_OO_RIGHTS)
         *fen++ = 'k';
-    if (board->castleRights & BLACK_QUEEN_RIGHTS)
+    if (board->castleRights & BLACK_OOO_RIGHTS)
         *fen++ = 'q';
     if (!board->castleRights)
         *fen++ = '-';
