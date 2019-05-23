@@ -81,13 +81,13 @@ void getBestMove(Thread* threads, Board* board, Limits* limits, uint16_t *best, 
     newSearchThreadPool(threads, board, limits, &info);
 
     // Launch all of the threads
-    pthread_t pthreads[threads[0].nthreads];
-    for (int i = 1; i < threads[0].nthreads; i++)
+    pthread_t pthreads[threads->nthreads];
+    for (int i = 1; i < threads->nthreads; i++)
         pthread_create(&pthreads[i], NULL, &iterativeDeepening, &threads[i]);
     iterativeDeepening((void*) &threads[0]);
 
-    // Wait for all (helper) threads to finish
-    for (int i = 1; i < threads[0].nthreads; i++)
+    // Wait for all helper threads to finish
+    for (int i = 1; i < threads->nthreads; i++)
         pthread_join(pthreads[i], NULL);
 
     // Save the best move and ponder move
@@ -202,10 +202,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     int eval, value = -MATE, best = -MATE, futilityMargin, seeMargin[2];
     uint16_t move, ttMove = NONE_MOVE, bestMove = NONE_MOVE, quietsTried[MAX_MOVES];
     MovePicker movePicker;
-
-    PVariation lpv;
-    lpv.length = 0;
-    pv->length = 0;
+    PVariation lpv; lpv.length = 0;
 
     // Step 1. Quiescence Search. Perform a search using mostly tactical
     // moves to reach a more stable position for use as a static evaluation
@@ -313,9 +310,8 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     thread->killers[height+1][0] = NONE_MOVE;
     thread->killers[height+1][1] = NONE_MOVE;
 
-    // Step 7. Razoring. If a Quiescence Search for the current position
-    // still falls way below alpha, we will assume that the score from
-    // the Quiescence search was sufficient.
+    // Step 7. Razoring. Allow depth one nodes to jump directly into a
+    // Quiescence Search when the eval plus a margin cannot beat alpha
     if (   !PvNode
         && !inCheck
         &&  depth <= RazorDepth
@@ -323,7 +319,8 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
         return qsearch(thread, pv, alpha, beta, height);
 
     // Step 8. Beta Pruning / Reverse Futility Pruning / Static Null
-    // Move Pruning. If the eval is few pawns above beta then exit early
+    // Move Pruning. If the eval is well above beta, defined by a depth
+    // dependent margin, then we assume the eval will hold above beta
     if (   !PvNode
         && !inCheck
         &&  depth <= BetaPruningDepth
@@ -337,8 +334,8 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     // information from the Transposition Table which suggests it will fail
     if (   !PvNode
         && !inCheck
-        &&  depth >= NullMovePruningDepth
         &&  eval >= beta
+        &&  depth >= NullMovePruningDepth
         &&  hasNonPawnMaterial(board, board->turn)
         &&  thread->moveStack[height-1] != NULL_MOVE
         &&  thread->moveStack[height-2] != NULL_MOVE
@@ -359,22 +356,16 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     if (   !PvNode
         &&  depth >= ProbCutDepth
         &&  abs(beta) < MATE_IN_MAX
-        &&  eval + bestTacticalMoveValue(board) >= beta + ProbCutMargin){
+        &&  eval + bestTacticalMoveValue(board) >= beta + ProbCutMargin) {
 
         // Try tactical moves which maintain rBeta
         rBeta = MIN(beta + ProbCutMargin, MATE - MAX_PLY - 1);
         initNoisyMovePicker(&movePicker, thread, rBeta - eval);
-
-        while ((move = selectNextMove(&movePicker, board, 1)) != NONE_MOVE){
-
-            // Apply move, skip if move is illegal
-            if (!apply(thread, board, move, height))
-                continue;
+        while ((move = selectNextMove(&movePicker, board, 1)) != NONE_MOVE) {
 
             // Perform a reduced depth verification search
+            if (!apply(thread, board, move, height)) continue;
             value = -search(thread, &lpv, -rBeta, -rBeta+1, depth-4, height+1);
-
-            // Revert the board state
             revert(thread, board, move, height);
 
             // Probcut failed high
@@ -454,9 +445,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
             R += !improving;
 
             // Reduce for Killers and Counters
-            R -= move == movePicker.killer1
-              || move == movePicker.killer2
-              || move == movePicker.counter;
+            R -= movePicker.stage < STAGE_QUIET;
 
             // Adjust based on history
             R -= MAX(-2, MIN(2, (hist + cmhist + fmhist) / 5000));
@@ -553,12 +542,8 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     int eval, value, best, margin;
     int ttHit, ttValue = 0, ttEval = 0, ttDepth = 0, ttBound = 0;
     uint16_t move, ttMove = NONE_MOVE;
-
     MovePicker movePicker;
-
-    PVariation lpv;
-    lpv.length = 0;
-    pv->length = 0;
+    PVariation lpv; lpv.length = 0;
 
     // Updates for UCI reporting
     thread->seldepth = MAX(thread->seldepth, height);
@@ -607,18 +592,13 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
 
     // Step 7. Move Generation and Looping. Generate all tactical moves
     // and return those which are winning via SEE, and also strong enough
-    // the margin computed in the Delta Pruning step found above to beat
+    // to beat the margin computed in the Delta Pruning step found above
     initNoisyMovePicker(&movePicker, thread, MAX(QSEEMargin, margin));
     while ((move = selectNextMove(&movePicker, board, 1)) != NONE_MOVE) {
 
-        // Apply move, skip if move is illegal
-        if (!apply(thread, board, move, height))
-            continue;
-
-        // Search next depth
+        // Search the next ply if the move is legal
+        if (!apply(thread, board, move, height)) continue;
         value = -qsearch(thread, &lpv, -beta, -alpha, height+1);
-
-        // Revert the board state
         revert(thread, board, move, height);
 
         // Improved current value
@@ -646,19 +626,18 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
 
 int staticExchangeEvaluation(Board* board, uint16_t move, int threshold){
 
-    int from, to, type, ptype, colour, balance, nextVictim;
+    int from, to, type, colour, balance, nextVictim;
     uint64_t bishops, rooks, occupied, attackers, myAttackers;
 
     // Unpack move information
     from  = MoveFrom(move);
     to    = MoveTo(move);
     type  = MoveType(move);
-    ptype = MovePromoPiece(move);
 
     // Next victim is moved piece, or promotion type when promoting
     nextVictim = type != PROMOTION_MOVE
                ? pieceType(board->squares[from])
-               : ptype;
+               : MovePromoPiece(move);
 
     // Balance is the value of the move minus threshold. Function
     // call takes care for Enpass and Promotion moves. Castling is
