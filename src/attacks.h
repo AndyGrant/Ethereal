@@ -38,6 +38,17 @@ uint64_t rookAttacks(int sq, uint64_t occupied);
 uint64_t queenAttacks(int sq, uint64_t occupied);
 uint64_t kingAttacks(int sq);
 
+uint64_t pawnLeftAttacks(uint64_t pawns, uint64_t targets, int colour);
+uint64_t pawnRightAttacks(uint64_t pawns, uint64_t targets, int colour);
+uint64_t pawnAttackSpan(uint64_t pawns, uint64_t targets, int colour);
+uint64_t pawnAdvance(uint64_t pawns, uint64_t occupied, int colour);
+uint64_t pawnEnpassCaptures(uint64_t pawns, int epsq, int colour);
+
+int squareIsAttacked(Board *board, int colour, int sq);
+uint64_t attackersToSquare(Board *board, int colour, int sq);
+uint64_t allAttackersToSquare(Board *board, uint64_t occupied, int sq);
+uint64_t attackersToKingSquare(Board *board);
+
 static const uint64_t RookMagics[SQUARE_NB] = {
     0xA180022080400230ull, 0x0040100040022000ull, 0x0080088020001002ull, 0x0080080280841000ull,
     0x4200042010460008ull, 0x04800A0003040080ull, 0x0400110082041008ull, 0x008000A041000880ull,

@@ -26,93 +26,93 @@
 const uint64_t Files[FILE_NB] = {FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H};
 const uint64_t Ranks[RANK_NB] = {RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8};
 
-int fileOf(int s) {
-    assert(0 <= s && s < SQUARE_NB);
-    return s % FILE_NB;
+int fileOf(int sq) {
+    assert(0 <= sq && sq < SQUARE_NB);
+    return sq % FILE_NB;
 }
 
-int mirrorFile(int f) {
-    assert(0 <= f && f < FILE_NB);
+int mirrorFile(int file) {
+    assert(0 <= file && file < FILE_NB);
     static const int Mirror[] = {0,1,2,3,3,2,1,0};
-    return Mirror[f];
+    return Mirror[file];
 }
 
-int rankOf(int s) {
-    assert(0 <= s && s < SQUARE_NB);
-    return s / FILE_NB;
+int rankOf(int sq) {
+    assert(0 <= sq && sq < SQUARE_NB);
+    return sq / FILE_NB;
 }
 
-int relativeRankOf(int c, int s) {
-    assert(0 <= c && c < COLOUR_NB);
-    assert(0 <= s && s < SQUARE_NB);
-    return c == WHITE ? rankOf(s) : 7 - rankOf(s);
+int relativeRankOf(int colour, int sq) {
+    assert(0 <= colour && colour < COLOUR_NB);
+    assert(0 <= sq && sq < SQUARE_NB);
+    return colour == WHITE ? rankOf(sq) : 7 - rankOf(sq);
 }
 
-int square(int r, int f) {
-    assert(0 <= r && r < RANK_NB);
-    assert(0 <= f && f < FILE_NB);
-    return r * FILE_NB + f;
+int square(int rank, int file) {
+    assert(0 <= rank && rank < RANK_NB);
+    assert(0 <= file && file < FILE_NB);
+    return rank * FILE_NB + file;
 }
 
-int frontmost(int c, uint64_t b) {
-    assert(0 <= c && c < COLOUR_NB);
-    return c == WHITE ? getmsb(b) : getlsb(b);
+int frontmost(int colour, uint64_t b) {
+    assert(0 <= colour && colour < COLOUR_NB);
+    return colour == WHITE ? getmsb(b) : getlsb(b);
 }
-int backmost(int c, uint64_t b) {
-    assert(0 <= c && c < COLOUR_NB);
-    return c == WHITE ? getlsb(b) : getmsb(b);
-}
-
-int popcount(uint64_t b) {
-    return __builtin_popcountll(b);
+int backmost(int colour, uint64_t b) {
+    assert(0 <= colour && colour < COLOUR_NB);
+    return colour == WHITE ? getlsb(b) : getmsb(b);
 }
 
-int getlsb(uint64_t b) {
-    assert(b);  // lsb(0) is undefined
-    return __builtin_ctzll(b);
+int popcount(uint64_t bb) {
+    return __builtin_popcountll(bb);
 }
 
-int getmsb(uint64_t b) {
-    assert(b);  // msb(0) is undefined
-    return __builtin_clzll(b) ^ 63;
+int getlsb(uint64_t bb) {
+    assert(bb);  // lsb(0) is undefined
+    return __builtin_ctzll(bb);
 }
 
-int poplsb(uint64_t *b) {
-    int lsb = getlsb(*b);
-    *b &= *b - 1;
+int getmsb(uint64_t bb) {
+    assert(bb);  // msb(0) is undefined
+    return __builtin_clzll(bb) ^ 63;
+}
+
+int poplsb(uint64_t *bb) {
+    int lsb = getlsb(*bb);
+    *bb &= *bb - 1;
     return lsb;
 }
 
-bool several(uint64_t b) {
-    return b & (b - 1);
+bool several(uint64_t bb) {
+    return bb & (bb - 1);
 }
 
-bool onlyOne(uint64_t b) {
-    return b && !several(b);
+bool onlyOne(uint64_t bb) {
+    return bb && !several(bb);
 }
 
-void setBit(uint64_t *b, int i) {
-    assert(!testBit(*b, i));
-    *b ^= 1ull << i;
+void setBit(uint64_t *bb, int i) {
+    assert(!testBit(*bb, i));
+    *bb ^= 1ull << i;
 }
 
-void clearBit(uint64_t *b, int i) {
-    assert(testBit(*b, i));
-    *b ^= 1ull << i;
+void clearBit(uint64_t *bb, int i) {
+    assert(testBit(*bb, i));
+    *bb ^= 1ull << i;
 }
 
-bool testBit(uint64_t b, int i) {
+bool testBit(uint64_t bb, int i) {
     assert(0 <= i && i < SQUARE_NB);
-    return b & (1ull << i);
+    return bb & (1ull << i);
 }
 
-void printBitboard(uint64_t b) {
+void printBitboard(uint64_t bb) {
 
     for (int r = 7; r >= 0; r--) {
         char line[] = ". . . . . . . .";
 
         for (int f = 0; f < FILE_NB; f++)
-            if (testBit(b, square(r, f)))
+            if (testBit(bb, square(r, f)))
                 line[2 * f] = 'X';
 
         printf("%s\n", line);

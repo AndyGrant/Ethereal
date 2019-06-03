@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include <assert.h>
 
+#include "attacks.h"
 #include "bitboards.h"
 #include "board.h"
 #include "masks.h"

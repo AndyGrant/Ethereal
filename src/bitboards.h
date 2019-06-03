@@ -24,14 +24,14 @@
 #include "types.h"
 
 enum {
-    RANK_8 = 0xFF00000000000000ull,
-    RANK_7 = 0x00FF000000000000ull,
-    RANK_6 = 0x0000FF0000000000ull,
-    RANK_5 = 0x000000FF00000000ull,
-    RANK_4 = 0x00000000FF000000ull,
-    RANK_3 = 0x0000000000FF0000ull,
-    RANK_2 = 0x000000000000FF00ull,
     RANK_1 = 0x00000000000000FFull,
+    RANK_2 = 0x000000000000FF00ull,
+    RANK_3 = 0x0000000000FF0000ull,
+    RANK_4 = 0x00000000FF000000ull,
+    RANK_5 = 0x000000FF00000000ull,
+    RANK_6 = 0x0000FF0000000000ull,
+    RANK_7 = 0x00FF000000000000ull,
+    RANK_8 = 0xFF00000000000000ull,
 
     FILE_A = 0x0101010101010101ull,
     FILE_B = 0x0202020202020202ull,
@@ -42,9 +42,6 @@ enum {
     FILE_G = 0x4040404040404040ull,
     FILE_H = 0x8080808080808080ull,
 
-    LEFT_WING = FILE_A | FILE_B | FILE_C,
-    RIGHT_WING = FILE_F | FILE_G | FILE_H,
-
     WHITE_SQUARES = 0x55AA55AA55AA55AAull,
     BLACK_SQUARES = 0xAA55AA55AA55AA55ull,
 
@@ -54,24 +51,24 @@ enum {
 extern const uint64_t Files[FILE_NB];
 extern const uint64_t Ranks[RANK_NB];
 
-int fileOf(int s);
-int mirrorFile(int f);
-int rankOf(int s);
-int relativeRankOf(int c, int s);
-int square(int r, int f);
+int fileOf(int sq);
+int mirrorFile(int file);
+int rankOf(int sq);
+int relativeRankOf(int colour, int sq);
+int square(int rank, int file);
 
-int frontmost(int c, uint64_t b);
-int backmost(int c, uint64_t b);
+int frontmost(int colour, uint64_t bb);
+int backmost(int colour, uint64_t bb);
 
-int popcount(uint64_t b);
-int getlsb(uint64_t b);
-int getmsb(uint64_t b);
-int poplsb(uint64_t *b);
-bool several(uint64_t b);
-bool onlyOne(uint64_t b);
+int popcount(uint64_t bb);
+int getlsb(uint64_t bb);
+int getmsb(uint64_t bb);
+int poplsb(uint64_t *bb);
+bool several(uint64_t bb);
+bool onlyOne(uint64_t bb);
 
-void setBit(uint64_t *b, int i);
-void clearBit(uint64_t *b, int i);
-bool testBit(uint64_t b, int i);
+void setBit(uint64_t *bb, int i);
+void clearBit(uint64_t *bb, int i);
+bool testBit(uint64_t bb, int i);
 
 void printBitboard(uint64_t b);

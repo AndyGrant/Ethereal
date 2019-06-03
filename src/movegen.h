@@ -23,11 +23,7 @@
 
 #include "types.h"
 
-uint64_t pawnLeftAttacks(uint64_t pawns, uint64_t targets, int colour);
-uint64_t pawnRightAttacks(uint64_t pawns, uint64_t targets, int colour);
-uint64_t pawnAttackSpan(uint64_t pawns, uint64_t targets, int colour);
-uint64_t pawnAdvance(uint64_t pawns, uint64_t occupied, int colour);
-uint64_t pawnEnpassCaptures(uint64_t pawns, int epsq, int colour);
+
 
 void genAllLegalMoves(Board* board, uint16_t* moves, int* size);
 void genAllMoves(Board* board, uint16_t* moves, int* size);
@@ -35,10 +31,6 @@ void genAllNoisyMoves(Board* board, uint16_t* moves, int* size);
 void genAllQuietMoves(Board* board, uint16_t* moves, int* size);
 
 int isNotInCheck(Board* board, int colour);
-int squareIsAttacked(Board* board, int colour, int sq);
 
-uint64_t attackersToSquare(Board* board, int colour, int sq);
-uint64_t allAttackersToSquare(Board* board, uint64_t occupied, int sq);
-uint64_t attackersToKingSquare(Board* board);
 
 #endif
