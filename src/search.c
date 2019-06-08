@@ -359,7 +359,7 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     if (   !PvNode
         &&  depth >= ProbCutDepth
         &&  abs(beta) < MATE_IN_MAX
-        &&  eval + bestTacticalMoveValue(board) >= beta + ProbCutMargin) {
+        &&  eval + moveBestCaseValue(board) >= beta + ProbCutMargin) {
 
         // Try tactical moves which maintain rBeta
         rBeta = MIN(beta + ProbCutMargin, MATE - MAX_PLY - 1);
@@ -594,7 +594,7 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
     // Step 6. Delta Pruning. Even the best possible capture and or promotion
     // combo with the additional boost of the futility margin would still fail
     margin = alpha - eval - QFutilityMargin;
-    if (bestTacticalMoveValue(board) < margin)
+    if (moveBestCaseValue(board) < margin)
         return eval;
 
     // Step 7. Move Generation and Looping. Generate all tactical moves
@@ -650,7 +650,7 @@ int staticExchangeEvaluation(Board* board, uint16_t move, int threshold){
     // call takes care for Enpass and Promotion moves. Castling is
     // handled as a result of a King's value being zero, by trichotomy
     // either the best case or the worst case condition will be hit
-    balance = thisTacticalMoveValue(board, move) - threshold;
+    balance = moveEstimatedValue(board, move) - threshold;
 
     // Best case is we lose nothing for the move
     if (balance < 0) return 0;
@@ -723,12 +723,6 @@ int staticExchangeEvaluation(Board* board, uint16_t move, int threshold){
     return board->turn != colour;
 }
 
-int moveIsTactical(Board* board, uint16_t move){
-    return board->squares[MoveTo(move)] != EMPTY
-        || MoveType(move) == PROMOTION_MOVE
-        || MoveType(move) == ENPASS_MOVE;
-}
-
 int hasNonPawnMaterial(Board* board, int turn){
     uint64_t friendly = board->colours[turn];
     uint64_t kings = board->pieces[KING];
@@ -746,44 +740,6 @@ int valueToTT(int value, int height){
     return value >=  MATE_IN_MAX ? value + height
          : value <= MATED_IN_MAX ? value - height
          : value;
-}
-
-int thisTacticalMoveValue(Board* board, uint16_t move){
-
-    int value = SEEPieceValues[pieceType(board->squares[MoveTo(move)])];
-
-    if (MoveType(move) == PROMOTION_MOVE)
-        value += SEEPieceValues[MovePromoPiece(move)] - SEEPieceValues[PAWN];
-
-    if (MoveType(move) == ENPASS_MOVE)
-        value += SEEPieceValues[PAWN];
-
-    return value;
-}
-
-int bestTacticalMoveValue(Board* board){
-
-    int value = SEEPieceValues[PAWN];
-
-    // Look at enemy pieces we might try to capture
-    uint64_t targets = board->colours[!board->turn];
-
-    // Look for our strongest possible target on the board
-    for (int piece = QUEEN; piece > PAWN; piece--) {
-        if (targets & board->pieces[piece]) {
-            value = SEEPieceValues[piece];
-            break;
-        }
-    }
-
-    // See if we have any pawns on promoting ranks. If so, assume that
-    // we can promote one of our pawns to at least a queen
-    if (   board->pieces[PAWN]
-        &  board->colours[board->turn]
-        & (board->turn == WHITE ? RANK_7 : RANK_2))
-        value += SEEPieceValues[QUEEN] - SEEPieceValues[PAWN];
-
-    return value;
 }
 
 int moveIsSingular(Thread *thread, uint16_t ttMove, int ttValue, int depth, int height) {

@@ -16,21 +16,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _MOVEGEN_H
-#define _MOVEGEN_H
+#pragma once
 
 #include <stdint.h>
 
 #include "types.h"
 
-
-
-void genAllLegalMoves(Board* board, uint16_t* moves, int* size);
-void genAllMoves(Board* board, uint16_t* moves, int* size);
-void genAllNoisyMoves(Board* board, uint16_t* moves, int* size);
-void genAllQuietMoves(Board* board, uint16_t* moves, int* size);
-
-int isNotInCheck(Board* board, int colour);
-
-
-#endif
+void genAllMoves(Board *board, uint16_t *moves, int *size);
+void genAllLegalMoves(Board *board, uint16_t *moves, int *size);
+void genAllNoisyMoves(Board *board, uint16_t *moves, int *size);
+void genAllQuietMoves(Board *board, uint16_t *moves, int *size);

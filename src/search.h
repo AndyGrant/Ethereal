@@ -55,17 +55,11 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height);
 
 int staticExchangeEvaluation(Board* board, uint16_t move, int threshold);
 
-int moveIsTactical(Board* board, uint16_t move);
-
 int hasNonPawnMaterial(Board* board, int turn);
 
 int valueFromTT(int value, int height);
 
 int valueToTT(int value, int height);
-
-int thisTacticalMoveValue(Board* board, uint16_t move);
-
-int bestTacticalMoveValue(Board* board);
 
 int moveIsSingular(Thread* thread, uint16_t ttMove, int ttValue, int depth, int height);
 
