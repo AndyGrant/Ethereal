@@ -16,10 +16,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _MOVEPICKER_H
-#define _MOVEPICKER_H
+#pragma once
 
 #include "types.h"
+
+enum { NORMAL_PICKER, NOISY_PICKER };
 
 enum {
     STAGE_TABLE,
@@ -28,11 +29,6 @@ enum {
     STAGE_GENERATE_QUIET, STAGE_QUIET,
     STAGE_BAD_NOISY,
     STAGE_DONE,
-};
-
-enum {
-    NORMAL_PICKER,
-    NOISY_PICKER,
 };
 
 struct MovePicker {
@@ -44,10 +40,6 @@ struct MovePicker {
     Thread *thread;
 };
 
-void initMovePicker(MovePicker* mp, Thread* thread, uint16_t ttMove, int height);
-void initNoisyMovePicker(MovePicker* mp, Thread* thread, int threshold);
-uint16_t selectNextMove(MovePicker* mp, Board* board, int skipQuiets);
-int getBestMoveIndex(MovePicker *mp, int start, int end);
-void evaluateNoisyMoves(MovePicker* mp);
-
-#endif
+void initMovePicker(MovePicker *mp, Thread *thread, uint16_t ttMove, int height);
+void initNoisyMovePicker(MovePicker *mp, Thread *thread, int threshold);
+uint16_t selectNextMove(MovePicker *mp, Board *board, int skipQuiets);
