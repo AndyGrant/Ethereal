@@ -84,6 +84,35 @@ void updateHistoryHeuristics(Thread *thread, uint16_t *moves, int length, int he
         thread->cmtable[!colour][cmPiece][cmTo] = bestMove;
 }
 
+void getHistory(Thread *thread, uint16_t move, int height, int *hist, int *cmhist, int *fmhist) {
+
+    // Extract information from this move
+    int to = MoveTo(move);
+    int from = MoveFrom(move);
+    int piece = pieceType(thread->board.squares[from]);
+
+    // Extract information from last move
+    uint16_t counter = thread->moveStack[height-1];
+    int cmPiece = thread->pieceStack[height-1];
+    int cmTo = MoveTo(counter);
+
+    // Extract information from two moves ago
+    uint16_t follow = thread->moveStack[height-2];
+    int fmPiece = thread->pieceStack[height-2];
+    int fmTo = MoveTo(follow);
+
+    // Set basic Butterfly history
+    *hist = thread->history[thread->board.turn][from][to];
+
+    // Set Counter Move History if it exists
+    if (counter == NONE_MOVE || counter == NULL_MOVE) *cmhist = 0;
+    else *cmhist = thread->continuation[0][cmPiece][cmTo][piece][to];
+
+    // Set Followup Move History if it exists
+    if (follow == NONE_MOVE || follow == NULL_MOVE) *fmhist = 0;
+    else *fmhist = thread->continuation[1][fmPiece][fmTo][piece][to];
+}
+
 void getHistoryScores(Thread *thread, uint16_t *moves, int *scores, int start, int length, int height) {
 
     // Extract information from last move
@@ -116,45 +145,18 @@ void getHistoryScores(Thread *thread, uint16_t *moves, int *scores, int start, i
     }
 }
 
-void getHistory(Thread *thread, uint16_t move, int height, int *hist, int *cmhist, int *fmhist) {
-
-    // Extract information from this move
-    int to = MoveTo(move);
-    int from = MoveFrom(move);
-    int piece = pieceType(thread->board.squares[from]);
-
-    // Extract information from last move
-    uint16_t counter = thread->moveStack[height-1];
-    int cmPiece = thread->pieceStack[height-1];
-    int cmTo = MoveTo(counter);
-
-    // Extract information from two moves ago
-    uint16_t follow = thread->moveStack[height-2];
-    int fmPiece = thread->pieceStack[height-2];
-    int fmTo = MoveTo(follow);
-
-    // Set basic Butterfly history
-    *hist = thread->history[thread->board.turn][from][to];
-
-    // Set Counter Move History if it exists
-    if (counter == NONE_MOVE || counter == NULL_MOVE) *cmhist = 0;
-    else *cmhist = thread->continuation[0][cmPiece][cmTo][piece][to];
-
-    // Set Followup Move History if it exists
-    if (follow == NONE_MOVE || follow == NULL_MOVE) *fmhist = 0;
-    else *fmhist = thread->continuation[1][fmPiece][fmTo][piece][to];
-}
-
 void getRefutationMoves(Thread *thread, int height, uint16_t *killer1, uint16_t *killer2, uint16_t *counter) {
 
+    // Extract information from last move
     uint16_t previous = thread->moveStack[height-1];
-    int colour = !thread->board.turn;
     int to = MoveTo(previous);
     int piece = pieceType(thread->board.squares[to]);
 
+    // Set Killer Moves by height
     *killer1 = thread->killers[height][0];
     *killer2 = thread->killers[height][1];
 
+    // Set Counter Move if one exists
     if (previous == NONE_MOVE || previous == NULL_MOVE) *counter = NONE_MOVE;
-    else *counter = thread->cmtable[colour][piece][to];
+    else *counter = thread->cmtable[!thread->board.turn][piece][to];
 }

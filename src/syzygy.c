@@ -18,7 +18,7 @@
 
 #include <assert.h>
 #include <stdint.h>
-#include <stdio.h>
+#include <stdlib.h>
 
 #include "bitboards.h"
 #include "board.h"
@@ -28,13 +28,11 @@
 #include "types.h"
 #include "uci.h"
 
-
 unsigned TB_PROBE_DEPTH; // Set by UCI options
 
 extern unsigned TB_LARGEST; // Set by Fathom in tb_init()
 
-
-unsigned tablebasesProbeWDL(Board* board, int depth, int height){
+unsigned tablebasesProbeWDL(Board *board, int depth, int height) {
 
     // Tap into Fathom's API routines. Fathom checks for empty
     // castling rights and no enpassant square, so unlike Stockfish
@@ -55,8 +53,7 @@ unsigned tablebasesProbeWDL(Board* board, int depth, int height){
     // Also, we avoid probing at the Root because the WDL tables do
     // not return a best move for the PV, but only a known score
 
-    int cardinality = popcount(board->colours[WHITE]
-                              |board->colours[BLACK]);
+    int cardinality = popcount(board->colours[WHITE] | board->colours[BLACK]);
 
     if (    height == 0
         ||  board->epSquare != -1
@@ -82,7 +79,7 @@ unsigned tablebasesProbeWDL(Board* board, int depth, int height){
     );
 }
 
-int tablebasesProbeDTZ(Board* board, uint16_t* move){
+int tablebasesProbeDTZ(Board *board, uint16_t *move) {
 
     int i, size = 0;
     uint16_t moves[MAX_MOVES];
@@ -150,8 +147,8 @@ int tablebasesProbeDTZ(Board* board, uint16_t* move){
 
     // Verify the legality of the parsed move as a final safety check
     genAllLegalMoves(board, moves, &size);
-    for (i = 0; i < size; i++){
-        if (moves[i] == *move){
+    for (i = 0; i < size; i++) {
+        if (moves[i] == *move) {
             uciReportTBRoot(*move, wdl, dtz);
             return 1;
         }

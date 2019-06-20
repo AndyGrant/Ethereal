@@ -16,7 +16,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -26,28 +25,27 @@
 #include "thread.h"
 #include "transposition.h"
 #include "types.h"
-#include "windows.h"
 
-Thread* createThreadPool(int nthreads){
+Thread* createThreadPool(int nthreads) {
 
-    Thread* threads = malloc(sizeof(Thread) * nthreads);
+    Thread *threads = malloc(sizeof(Thread) * nthreads);
 
-    for (int i = 0; i < nthreads; i++){
+    for (int i = 0; i < nthreads; i++) {
+
+        // Offset stacks so the root position may look backwards
+        threads[i].evalStack = &(threads[i]._evalStack[STACK_OFFSET]);
+        threads[i].moveStack = &(threads[i]._moveStack[STACK_OFFSET]);
+        threads[i].pieceStack = &(threads[i]._pieceStack[STACK_OFFSET]);
+
+        // Zero out the stacks, most importantly the first four slots
+        memset(&threads[i]._evalStack, 0, sizeof(int) * STACK_SIZE);
+        memset(&threads[i]._moveStack, 0, sizeof(uint16_t) * STACK_SIZE);
+        memset(&threads[i]._pieceStack, 0, sizeof(int) * STACK_SIZE);
 
         // Threads will know of each other
         threads[i].index = i;
         threads[i].threads = threads;
         threads[i].nthreads = nthreads;
-
-        // Offset stacks so root position can look backwards
-        threads[i].evalStack = &(threads[i]._evalStack[4]);
-        threads[i].moveStack = &(threads[i]._moveStack[4]);
-        threads[i].pieceStack = &(threads[i]._pieceStack[4]);
-
-        // Zero out the stack, most importantly the first four slots
-        memset(&threads[i]._evalStack, 0, sizeof(int) * (MAX_PLY + 4));
-        memset(&threads[i]._moveStack, 0, sizeof(uint16_t) * (MAX_PLY + 4));
-        memset(&threads[i]._pieceStack, 0, sizeof(int) * (MAX_PLY + 4));
     }
 
     resetThreadPool(threads);
@@ -55,13 +53,13 @@ Thread* createThreadPool(int nthreads){
     return threads;
 }
 
-void resetThreadPool(Thread* threads){
+void resetThreadPool(Thread *threads) {
 
-    // Reset the per-thread tables, used for move ordering,
+    // Reset the per-thread tables, used for move ordering
     // and evaluation caching. This is needed for ucinewgame
-    // calls in order to ensure deterministic behaviour
+    // calls in order to ensure a deterministic behaviour
 
-    for (int i = 0; i < threads[0].nthreads; i++){
+    for (int i = 0; i < threads->nthreads; i++) {
         memset(&threads[i].pktable, 0, sizeof(PawnKingTable));
         memset(&threads[i].killers, 0, sizeof(KillerTable));
         memset(&threads[i].cmtable, 0, sizeof(CounterMoveTable));
@@ -70,42 +68,42 @@ void resetThreadPool(Thread* threads){
     }
 }
 
-void newSearchThreadPool(Thread* threads, Board* board, Limits* limits, SearchInfo* info){
+void newSearchThreadPool(Thread *threads, Board *board, Limits *limits, SearchInfo *info) {
 
-    // Initialize each Thread in the Thread Pool
-    for (int i = 0; i < threads[0].nthreads; i++){
+    // Initialize each Thread in the Thread Pool. We need a reference
+    // to the UCI seach parameters, access to the timing information,
+    // somewhere to store the results of each iteration by the main, and
+    // our own copy of the board. Also, we reset the seach statistics
 
-        // Original search parameters
+    for (int i = 0; i < threads->nthreads; i++) {
         threads[i].limits = limits;
-
-        // Tap into time information and iterative deepening data
         threads[i].info = info;
-
-        // Make our own copy of the original position
+        threads[i].nodes = threads[i].tbhits = 0ull;
         memcpy(&threads[i].board, board, sizeof(Board));
-
-        // Zero out our depth and stat tracking
-        threads[i].depth  = 0;
-        threads[i].nodes  = 0ull;
-        threads[i].tbhits = 0ull;
     }
 }
 
-uint64_t nodesSearchedThreadPool(Thread* threads){
+uint64_t nodesSearchedThreadPool(Thread *threads) {
+
+    // Sum up the node counters across each Thread. Threads have
+    // their own node counters to avoid true sharing the cache
 
     uint64_t nodes = 0ull;
 
-    for (int i = 0; i < threads[0].nthreads; i++)
+    for (int i = 0; i < threads->nthreads; i++)
         nodes += threads[i].nodes;
 
     return nodes;
 }
 
-uint64_t tbhitsSearchedThreadPool(Thread* threads){
+uint64_t tbhitsThreadPool(Thread *threads) {
+
+    // Sum up the tbhit counters across each Thread. Threads have
+    // their own tbhit counters to avoid true sharing the cache
 
     uint64_t tbhits = 0ull;
 
-    for (int i = 0; i < threads[0].nthreads; i++)
+    for (int i = 0; i < threads->nthreads; i++)
         tbhits += threads[i].tbhits;
 
     return tbhits;

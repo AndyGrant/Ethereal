@@ -16,13 +16,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _SYZYGY_H
-#define _SYZYGY_H
+#pragma once
 
 #include "types.h"
 
-int tablebasesProbeDTZ(Board* board, uint16_t* move);
+#include <stdint.h>
 
-unsigned tablebasesProbeWDL(Board* board, int depth, int height);
-
-#endif
+int tablebasesProbeDTZ(Board *board, uint16_t *move);
+unsigned tablebasesProbeWDL(Board *board, int depth, int height);

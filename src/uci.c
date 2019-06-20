@@ -342,7 +342,7 @@ void uciReport(Thread* threads, int alpha, int beta, int value){
     int seldepth    = threads[0].seldepth;
     int elapsed     = elapsedTime(threads[0].info);
     uint64_t nodes  = nodesSearchedThreadPool(threads);
-    uint64_t tbhits = tbhitsSearchedThreadPool(threads);
+    uint64_t tbhits = tbhitsThreadPool(threads);
     int nps         = (int)(1000 * (nodes / (1 + elapsed)));
 
     value = MAX(alpha, MIN(value, beta));

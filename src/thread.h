@@ -16,46 +16,40 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _THREAD_H
-#define _THREAD_H
+#pragma once
 
 #include <setjmp.h>
+#include <stdint.h>
 
 #include "board.h"
 #include "search.h"
 #include "transposition.h"
 #include "types.h"
 
+enum {
+    STACK_OFFSET = 4,
+    STACK_SIZE = MAX_PLY + STACK_OFFSET
+};
+
 struct Thread {
 
-    Limits* limits;
-    SearchInfo* info;
+    Limits *limits;
+    SearchInfo *info;
 
     Board board;
     PVariation pv;
 
-    int value;
-    int depth;
-    int seldepth;
-    uint64_t nodes;
-    uint64_t tbhits;
+    int value, depth, seldepth;
+    uint64_t nodes, tbhits;
 
-    int *evalStack;
-    int _evalStack[MAX_PLY+4];
+    int *evalStack, _evalStack[STACK_SIZE];
+    uint16_t *moveStack, _moveStack[STACK_SIZE];
+    int *pieceStack, _pieceStack[STACK_SIZE];
+    Undo undoStack[STACK_SIZE];
 
-    uint16_t *moveStack;
-    uint16_t _moveStack[MAX_PLY+4];
-
-    int *pieceStack;
-    int _pieceStack[MAX_PLY+4];
-
-    Undo undoStack[MAX_PLY];
-
+    int index, nthreads;
+    Thread *threads;
     jmp_buf jbuffer;
-
-    int index;
-    int nthreads;
-    Thread* threads;
 
     PawnKingTable pktable;
     KillerTable killers;
@@ -66,10 +60,7 @@ struct Thread {
 
 
 Thread* createThreadPool(int nthreads);
-void resetThreadPool(Thread* threads);
-void newSearchThreadPool(Thread* threads, Board* board, Limits* limits, SearchInfo* info);
-
-uint64_t nodesSearchedThreadPool(Thread* threads);
-uint64_t tbhitsSearchedThreadPool(Thread* threads);
-
-#endif
+void resetThreadPool(Thread *threads);
+void newSearchThreadPool(Thread *threads, Board *board, Limits *limits, SearchInfo *info);
+uint64_t nodesSearchedThreadPool(Thread *threads);
+uint64_t tbhitsThreadPool(Thread *threads);

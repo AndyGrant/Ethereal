@@ -16,19 +16,22 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _MY_TIME_H
-#define _MY_TIME_H
+#pragma once
+
+#if defined(_WIN32) || defined(_WIN64)
+    #include <windows.h>
+#else
+    #include <sys/time.h>
+#endif
 
 #include "types.h"
 
 double getRealTime();
-double elapsedTime(SearchInfo* info);
-void initTimeManagment(SearchInfo* info, Limits* limits);
-void updateTimeManagment(SearchInfo* info, Limits* limits, int depth, int value);
-int terminateTimeManagment(SearchInfo* info);
+double elapsedTime(SearchInfo *info);
+void initTimeManagment(SearchInfo *info, Limits *limits);
+void updateTimeManagment(SearchInfo *info, Limits *limits);
+int terminateTimeManagment(SearchInfo *info);
 int terminateSearchEarly(Thread *thread);
 
 static const double PVFactorCount  = 8;
 static const double PVFactorWeight = 0.085;
-
-#endif
