@@ -60,7 +60,8 @@ int main(int argc, char **argv) {
     ThreadsGo threadsgo;
     pthread_t pthreadsgo;
 
-    int nthreads = argc > 3 ? atoi(argv[3]) : 1;
+    int chess960  = 0;
+    int nthreads  = argc > 3 ? atoi(argv[3]) : 1;
     int megabytes = argc > 4 ? atoi(argv[4]) : 16;
 
     // Initialize the core components of Ethereal
@@ -74,7 +75,7 @@ int main(int argc, char **argv) {
     initTT(megabytes);
 
     // Not required, but always setup the board from the starting position
-    boardFromFEN(&board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    boardFromFEN(&board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", chess960);
 
     // Build our Thread Pool, with default size of 1-thread
     Thread* threads = createThreadPool(nthreads);
@@ -102,6 +103,7 @@ int main(int argc, char **argv) {
             printf("option name SyzygyPath type string default <empty>\n");
             printf("option name SyzygyProbeDepth type spin default 0 min 0 max 127\n");
             printf("option name Ponder type check default false\n");
+            printf("option name UCI_Chess960 type check default false\n");
             printf("uciok\n");
             fflush(stdout);
         }
@@ -143,6 +145,13 @@ int main(int argc, char **argv) {
                 printf("info string set SyzygyProbeDepth to %u\n", TB_PROBE_DEPTH);
             }
 
+            if (stringStartsWith(str, "setoption name UCI_Chess960 value ")){
+                if (stringStartsWith(str, "setoption name UCI_Chess960 value true"))
+                    printf("info string set UCI_Chess960 to true\n"), chess960 = 1;
+                if (stringStartsWith(str, "setoption name UCI_Chess960 value false"))
+                    printf("info string set UCI_Chess960 to false\n"), chess960 = 0;
+            }
+
             fflush(stdout);
         }
 
@@ -152,7 +161,7 @@ int main(int argc, char **argv) {
         }
 
         else if (stringStartsWith(str, "position"))
-            uciPosition(str, &board);
+            uciPosition(str, &board, chess960);
 
         else if (stringStartsWith(str, "go")){
             strncpy(threadsgo.str, str, 512);
@@ -265,12 +274,12 @@ void* uciGo(void* vthreadsgo){
     while (IS_PONDERING);
 
     // Report best move (we should always have one)
-    moveToString(bestMove, bestMoveStr);
+    moveToString(board, bestMove, bestMoveStr);
     printf("bestmove %s ", bestMoveStr);
 
     // Report ponder move if we have one
     if (ponderMove != NONE_MOVE) {
-        moveToString(ponderMove, ponderMoveStr);
+        moveToString(board, ponderMove, ponderMoveStr);
         printf("ponder %s", ponderMoveStr);
     }
 
@@ -283,7 +292,7 @@ void* uciGo(void* vthreadsgo){
     return NULL;
 }
 
-void uciPosition(char* str, Board* board){
+void uciPosition(char* str, Board* board, int chess960){
 
     int size;
     char* ptr;
@@ -294,11 +303,11 @@ void uciPosition(char* str, Board* board){
 
     // Position is defined by a FEN string
     if (stringContains(str, "fen"))
-        boardFromFEN(board, strstr(str, "fen") + strlen("fen "));
+        boardFromFEN(board, strstr(str, "fen") + strlen("fen "), chess960);
 
     // Position just starts at the normal beggining of game
     else if (stringContains(str, "startpos"))
-        boardFromFEN(board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        boardFromFEN(board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", chess960);
 
     // Position command may include a list of moves
     ptr = strstr(str, "moves");
@@ -319,7 +328,7 @@ void uciPosition(char* str, Board* board){
 
         // Find and apply the correct move
         for (size -= 1; size >= 0; size--){
-            moveToString(moves[size], test);
+            moveToString(board, moves[size], test);
             if (stringEquals(move, test)){
                 applyMove(board, moves[size], undo);
                 break;
@@ -367,7 +376,7 @@ void uciReport(Thread* threads, int alpha, int beta, int value){
     // Iterate over the PV and print each move
     for (int i = 0; i < pv->length; i++){
         char moveStr[6];
-        moveToString(pv->line[i], moveStr);
+        moveToString(&threads->board, pv->line[i], moveStr);
         printf("%s ", moveStr);
     }
 
@@ -375,7 +384,7 @@ void uciReport(Thread* threads, int alpha, int beta, int value){
     fflush(stdout);
 }
 
-void uciReportTBRoot(uint16_t move, unsigned wdl, unsigned dtz){
+void uciReportTBRoot(Board *board, uint16_t move, unsigned wdl, unsigned dtz){
 
     int score = wdl == TB_LOSS ? -MATE + MAX_PLY + dtz + 1
               : wdl == TB_WIN  ?  MATE - MAX_PLY - dtz - 1 : 0;
@@ -385,7 +394,7 @@ void uciReportTBRoot(uint16_t move, unsigned wdl, unsigned dtz){
            MAX_PLY - 1, MAX_PLY - 1, score, 0);
 
     char moveStr[6];
-    moveToString(move, moveStr);
+    moveToString(board, move, moveStr);
     puts(moveStr);
     fflush(stdout);
 }

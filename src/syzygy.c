@@ -57,7 +57,7 @@ unsigned tablebasesProbeWDL(Board *board, int depth, int height) {
 
     if (    height == 0
         ||  board->epSquare != -1
-        ||  board->castleRights != 0
+        ||  board->castleRooks != 0
         ||  board->fiftyMoveRule != 0
         ||  cardinality > (int)TB_LARGEST
         || (cardinality == (int)TB_LARGEST && depth < (int)TB_PROBE_DEPTH))
@@ -73,7 +73,7 @@ unsigned tablebasesProbeWDL(Board *board, int depth, int height) {
         board->pieces[KNIGHT],
         board->pieces[PAWN  ],
         board->fiftyMoveRule,
-        board->castleRights,
+        board->castleRooks,
         board->epSquare == -1 ? 0 : board->epSquare,
         board->turn == WHITE ? 1 : 0
     );
@@ -81,12 +81,12 @@ unsigned tablebasesProbeWDL(Board *board, int depth, int height) {
 
 int tablebasesProbeDTZ(Board *board, uint16_t *move) {
 
-    int i, size = 0;
+    int size = 0;
     uint16_t moves[MAX_MOVES];
     unsigned wdl, dtz, to, from, ep, promo;
 
     // Check to make sure we expect to be within the Syzygy tables
-    if (popcount(board->colours[WHITE] | board->colours[BLACK]) > (int)TB_LARGEST)
+    if (board->castleRooks || popcount(board->colours[WHITE] | board->colours[BLACK]) > (int)TB_LARGEST)
         return 0;
 
     // Tap into Fathom's API routines
@@ -100,7 +100,7 @@ int tablebasesProbeDTZ(Board *board, uint16_t *move) {
         board->pieces[KNIGHT],
         board->pieces[PAWN  ],
         board->fiftyMoveRule,
-        board->castleRights,
+        board->castleRooks,
         board->epSquare == -1 ? 0 : board->epSquare,
         board->turn == WHITE ? 1 : 0,
         NULL
@@ -147,14 +147,11 @@ int tablebasesProbeDTZ(Board *board, uint16_t *move) {
 
     // Verify the legality of the parsed move as a final safety check
     genAllLegalMoves(board, moves, &size);
-    for (i = 0; i < size; i++) {
-        if (moves[i] == *move) {
-            uciReportTBRoot(*move, wdl, dtz);
-            return 1;
-        }
-    }
+    for (int i = 0; i < size; i++)
+        if (moves[i] == *move)
+            return uciReportTBRoot(board, *move, wdl, dtz), 1;
 
     // Something went wrong, but as long as we pretend
-    // we failed to probe then nothing is going to break
+    // we failed the probe then nothing is going to break
     assert(0); return 0;
 }

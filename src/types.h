@@ -40,18 +40,6 @@ enum {
 };
 
 enum {
-    WHITE_OO_RIGHTS = 1, WHITE_OOO_RIGHTS = 2,
-    BLACK_OO_RIGHTS = 4, BLACK_OOO_RIGHTS = 8
-};
-
-enum {
-    WHITE_OO_MAP  = ((1ull <<  5) | (1ull <<  6)),
-    WHITE_OOO_MAP = ((1ull <<  1) | (1ull <<  2) | (1ull <<  3)),
-    BLACK_OO_MAP  = ((1ull << 61) | (1ull << 62)),
-    BLACK_OOO_MAP = ((1ull << 57) | (1ull << 58) | (1ull << 59))
-};
-
-enum {
     MATE = 32000,
     MATE_IN_MAX = MATE - MAX_PLY,
     MATED_IN_MAX = MAX_PLY - MATE,

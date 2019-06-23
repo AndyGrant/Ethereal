@@ -23,7 +23,7 @@
 
 uint64_t ZobristKeys[32][SQUARE_NB];
 uint64_t ZobristEnpassKeys[FILE_NB];
-uint64_t ZobristCastleKeys[0x10];
+uint64_t ZobristCastleKeys[SQUARE_NB];
 uint64_t ZobristTurnKey;
 
 uint64_t rand64() {
@@ -42,38 +42,18 @@ uint64_t rand64() {
 void initZobrist() {
 
     // Init the main Zobrist keys for all pieces
-    for (int pt = PAWN; pt <= KING; pt++) {
-        for (int sq = 0; sq < SQUARE_NB; sq++) {
-            ZobristKeys[makePiece(pt, WHITE)][sq] = rand64();
-            ZobristKeys[makePiece(pt, BLACK)][sq] = rand64();
-        }
-    }
+    for (int piece = PAWN; piece <= KING; piece++)
+        for (int sq = 0; sq < SQUARE_NB; sq++)
+            for (int colour = WHITE; colour <= BLACK; colour++)
+                ZobristKeys[makePiece(piece, colour)][sq] = rand64();
 
     // Init the Zobrist keys for each enpass file
-    for (int f = 0; f < FILE_NB; f++)
-        ZobristEnpassKeys[f] = rand64();
+    for (int file = 0; file < FILE_NB; file++)
+        ZobristEnpassKeys[file] = rand64();
 
-    // Init the Zobrist keys for each castle type
-    ZobristCastleKeys[WHITE_OO_RIGHTS ] = rand64();
-    ZobristCastleKeys[WHITE_OOO_RIGHTS] = rand64();
-    ZobristCastleKeys[BLACK_OO_RIGHTS ] = rand64();
-    ZobristCastleKeys[BLACK_OOO_RIGHTS] = rand64();
-
-    // Init the Zobrist keys for each set of castle flags
-    for (int cr = 0; cr < 0x10; cr++) {
-
-        if (cr & WHITE_OO_RIGHTS)
-            ZobristCastleKeys[cr] ^= ZobristCastleKeys[WHITE_OO_RIGHTS];
-
-        if (cr & WHITE_OOO_RIGHTS)
-            ZobristCastleKeys[cr] ^= ZobristCastleKeys[WHITE_OOO_RIGHTS];
-
-        if (cr & BLACK_OO_RIGHTS)
-            ZobristCastleKeys[cr] ^= ZobristCastleKeys[BLACK_OO_RIGHTS];
-
-        if (cr & BLACK_OOO_RIGHTS)
-            ZobristCastleKeys[cr] ^= ZobristCastleKeys[BLACK_OOO_RIGHTS];
-    }
+    // Init the Zobrist keys for each castle rook
+    for (int sq = 0; sq < SQUARE_NB; sq++)
+        ZobristCastleKeys[sq] = rand64();
 
     // Init the Zobrist key for side to move
     ZobristTurnKey = rand64();

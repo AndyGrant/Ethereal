@@ -28,8 +28,13 @@ enum {
     NORMAL_MOVE = 0 << 12, CASTLE_MOVE    = 1 << 12,
     ENPASS_MOVE = 2 << 12, PROMOTION_MOVE = 3 << 12,
 
+    CASTLE_KING_SIDE  = 0 << 14, CASTLE_QUEEN_SIDE = 1 << 14,
+
     PROMOTE_TO_KNIGHT = 0 << 14, PROMOTE_TO_BISHOP = 1 << 14,
     PROMOTE_TO_ROOK   = 2 << 14, PROMOTE_TO_QUEEN  = 3 << 14,
+
+    CASTLE_KING_MOVE  = CASTLE_MOVE | CASTLE_KING_SIDE,
+    CASTLE_QUEEN_MOVE = CASTLE_MOVE | CASTLE_QUEEN_SIDE,
 
     KNIGHT_PROMO_MOVE = PROMOTION_MOVE | PROMOTE_TO_KNIGHT,
     BISHOP_PROMO_MOVE = PROMOTION_MOVE | PROMOTE_TO_BISHOP,
@@ -54,11 +59,12 @@ int moveEstimatedValue(Board *board, uint16_t move);
 int moveBestCaseValue(Board *board);
 int moveIsPsuedoLegal(Board *board, uint16_t move);
 int moveWasLegal(Board *board);
-void moveToString(uint16_t move, char *str);
+void moveToString(Board *board, uint16_t move, char *str);
 
 #define MoveFrom(move)         (((move) >> 0) & 63)
 #define MoveTo(move)           (((move) >> 6) & 63)
 #define MoveType(move)         ((move) & (3 << 12))
+#define MoveCastleSide(move)   ((move) & (1 << 14))
 #define MovePromoType(move)    ((move) & (3 << 14))
 #define MovePromoPiece(move)   (1 + ((move) >> 14))
 #define MoveMake(from,to,flag) ((from) | ((to) << 6) | (flag))

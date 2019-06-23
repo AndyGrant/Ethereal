@@ -83,6 +83,12 @@ int poplsb(uint64_t *bb) {
     return lsb;
 }
 
+int popmsb(uint64_t *bb) {
+    int msb = getmsb(*bb);
+    *bb ^= 1ull << msb;
+    return msb;
+}
+
 bool several(uint64_t bb) {
     return bb & (bb - 1);
 }

@@ -86,12 +86,16 @@ void squareToString(int sq, char *str) {
     *str++ = '\0';
 }
 
-void boardFromFEN(Board *board, const char *fen) {
+void boardFromFEN(Board *board, const char *fen, int chess960) {
+
+    static const uint64_t StandardCastleRooks = (1ull <<  0) | (1ull <<  7)
+                                              | (1ull << 56) | (1ull << 63);
 
     int sq = 56;
     char ch;
     char *str = strdup(fen), *strPos = NULL;
     char *token = strtok_r(str, " ", &strPos);
+    uint64_t rooks, kings, white, black;
 
     clearBoard(board); // Zero out, set squares to EMPTY
 
@@ -118,18 +122,29 @@ void boardFromFEN(Board *board, const char *fen) {
     // Castling rights
     token = strtok_r(NULL, " ", &strPos);
 
+    rooks = board->pieces[ROOK];
+    kings = board->pieces[KING];
+    white = board->colours[WHITE];
+    black = board->colours[BLACK];
+
     while ((ch = *token++)) {
-        if (ch =='K')
-            board->castleRights |= WHITE_OO_RIGHTS;
-        else if (ch == 'Q')
-            board->castleRights |= WHITE_OOO_RIGHTS;
-        else if (ch == 'k')
-            board->castleRights |= BLACK_OO_RIGHTS;
-        else if (ch == 'q')
-            board->castleRights |= BLACK_OOO_RIGHTS;
+        if (ch == 'K') setBit(&board->castleRooks, getmsb(white & rooks & RANK_1));
+        if (ch == 'Q') setBit(&board->castleRooks, getlsb(white & rooks & RANK_1));
+        if (ch == 'k') setBit(&board->castleRooks, getmsb(black & rooks & RANK_8));
+        if (ch == 'q') setBit(&board->castleRooks, getlsb(black & rooks & RANK_8));
+        if ('A' <= ch && ch <= 'H') setBit(&board->castleRooks, square(0, ch - 'A'));
+        if ('a' <= ch && ch <= 'h') setBit(&board->castleRooks, square(7, ch - 'a'));
     }
 
-    board->hash ^= ZobristCastleKeys[board->castleRights];
+    for (sq = 0; sq < SQUARE_NB; sq++) {
+        board->castleMasks[sq] = ~0ull;
+        if (testBit(board->castleRooks, sq)) clearBit(&board->castleMasks[sq], sq);
+        if (testBit(white & kings, sq)) board->castleMasks[sq] &= ~white;
+        if (testBit(black & kings, sq)) board->castleMasks[sq] &= ~black;
+    }
+
+    rooks = board->castleRooks;
+    while (rooks) board->hash ^= ZobristCastleKeys[poplsb(&rooks)];
 
     // En passant
     board->epSquare = stringToSquare(strtok_r(NULL, " ", &strPos));
@@ -145,12 +160,20 @@ void boardFromFEN(Board *board, const char *fen) {
     // Need king attackers for move generation
     board->kingAttackers = attackersToKingSquare(board);
 
+    // We save the game mode in order to comply with the UCI rules for printing
+    // moves. If chess960 is not enabled, but we have detected an unconventional
+    // castle setup, then we set chess960 to be true on our own. Currently, this
+    // is simply a hack so that FRC positions may be added to the bench.csv
+    board->chess960 = chess960 || (board->castleRooks & ~StandardCastleRooks);
+
     free(str);
 }
 
 void boardToFEN(Board *board, char *fen) {
 
+    int sq;
     char str[3];
+    uint64_t castles;
 
     // Piece placement
     for (int r = RANK_NB-1; r >= 0; r--) {
@@ -180,16 +203,26 @@ void boardToFEN(Board *board, char *fen) {
     *fen++ = board->turn == WHITE ? 'w' : 'b';
     *fen++ = ' ';
 
-    // Castle rights
-    if (board->castleRights & WHITE_OO_RIGHTS)
-        *fen++ = 'K';
-    if (board->castleRights & WHITE_OOO_RIGHTS)
-        *fen++ = 'Q';
-    if (board->castleRights & BLACK_OO_RIGHTS)
-        *fen++ = 'k';
-    if (board->castleRights & BLACK_OOO_RIGHTS)
-        *fen++ = 'q';
-    if (!board->castleRights)
+    // Castle rights for White
+    castles = board->colours[WHITE] & board->castleRooks;
+    while (castles) {
+        sq = popmsb(&castles);
+        if (board->chess960) *fen++ = 'A' + fileOf(sq);
+        else if (testBit(FILE_H, sq)) *fen++ = 'K';
+        else if (testBit(FILE_A, sq)) *fen++ = 'Q';
+    }
+
+    // Castle rights for Black
+    castles = board->colours[BLACK] & board->castleRooks;
+    while (castles) {
+        sq = popmsb(&castles);
+        if (board->chess960) *fen++ = 'a' + fileOf(sq);
+        else if (testBit(FILE_H, sq)) *fen++ = 'k';
+        else if (testBit(FILE_A, sq)) *fen++ = 'q';
+    }
+
+    // Check for empty Castle rights
+    if (!board->castleRooks)
         *fen++ = '-';
 
     // En passant and Fifty move
@@ -248,7 +281,7 @@ uint64_t perft(Board *board, int depth){
     genAllMoves(board, moves, &size);
 
     // Recurse on all valid moves
-    for(size -= 1; size >= 0; size--){
+    for(size -= 1; size >= 0; size--) {
         applyMove(board, moves[size], undo);
         if (moveWasLegal(board)) found += perft(board, depth-1);
         revertMove(board, moves[size], undo);
@@ -278,7 +311,7 @@ void runBenchmark(Thread *threads, int depth) {
     // Search each benchmark position
     for (int i = 0; strcmp(Benchmarks[i], ""); i++) {
         printf("\nPosition #%d: %s\n", i + 1, Benchmarks[i]);
-        boardFromFEN(&board, Benchmarks[i]);
+        boardFromFEN(&board, Benchmarks[i], 0);
 
         limits.start = getRealTime();
         getBestMove(threads, &board, &limits, &bestMove, &ponderMove);

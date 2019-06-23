@@ -21,7 +21,7 @@
 
 #include "types.h"
 
-#define VERSION_ID "11.45"
+#define VERSION_ID "11.46"
 
 #if defined(USE_PEXT)
     #define ETHEREAL_VERSION VERSION_ID" (PEXT)"
@@ -56,8 +56,8 @@ int stringStartsWith(char* str, char* key);
 int stringContains(char* str, char* key);
 
 void* uciGo(void* vthreadgo);
-void uciPosition(char* str, Board* board);
+void uciPosition(char* str, Board* board, int chess960);
 void uciReport(Thread* threads, int alpha, int beta, int value);
-void uciReportTBRoot(uint16_t move, unsigned wdl, unsigned dtz);
+void uciReportTBRoot(Board *board, uint16_t move, unsigned wdl, unsigned dtz);
 
 #endif
