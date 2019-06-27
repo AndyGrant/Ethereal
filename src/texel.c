@@ -183,7 +183,7 @@ void initTexelEntries(TexelEntry *tes, Thread *thread) {
         else    {printf("Cannot Parse %s\n", line); exit(EXIT_FAILURE);}
 
         // Resolve FEN to a quiet position
-        boardFromFEN(&thread->board, line);
+        boardFromFEN(&thread->board, line, 0);
         qsearch(thread, &thread->pv, -MATE, MATE, 0);
         for (j = 0; j < thread->pv.length; j++)
             applyMove(&thread->board, thread->pv.line[j], undo);
@@ -388,8 +388,8 @@ void printParameters(TexelVector params, TexelVector cparams) {
 
     // Combine updated and current parameters
     for (int j = 0; j < NTERMS; j++) {
-        tparams[j][MG] = params[j][MG] + cparams[j][MG];
-        tparams[j][EG] = params[j][EG] + cparams[j][EG];
+        tparams[j][MG] = round(params[j][MG] + cparams[j][MG]);
+        tparams[j][EG] = round(params[j][EG] + cparams[j][EG]);
     }
 
     int i = 0; // EXECUTE_ON_TERMS will update i accordingly
