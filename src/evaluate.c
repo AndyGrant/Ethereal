@@ -314,7 +314,7 @@ const int ThreatByPawnPush           = S(  17,  21);
 
 /* General Evaluation Terms */
 
-const int Tempo[COLOUR_NB] = { S(  25,  12), S( -25, -12) };
+const int Tempo = 20;
 
 #undef S
 
@@ -327,7 +327,7 @@ int evaluateBoard(Board* board, PKTable* pktable){
     initEvalInfo(&ei, board, pktable);
     eval   = evaluatePieces(&ei, board);
     pkeval = ei.pkeval[WHITE] - ei.pkeval[BLACK];
-    eval  += pkeval + board->psqtmat + Tempo[board->turn];
+    eval  += pkeval + board->psqtmat;
 
     // Calcuate the game phase based on remaining material (Fruit Method)
     phase = 24 - 4 * popcount(board->pieces[QUEEN ])
@@ -342,6 +342,11 @@ int evaluateBoard(Board* board, PKTable* pktable){
     // Compute the interpolated and scaled evaluation
     eval = (ScoreMG(eval) * (256 - phase)
          +  ScoreEG(eval) * phase * factor / SCALE_NORMAL) / 256;
+
+    // Factor in the Tempo after interpolation and scaling, so that
+    // in the search we can assume that if a null move is made, then
+    // the eval becomes -eval + 2 * Tempo
+    eval += board->turn == WHITE ? Tempo : -Tempo;
 
     // Store a new Pawn King Entry if we did not have one
     if (ei.pkentry == NULL && pktable != NULL)

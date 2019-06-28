@@ -290,9 +290,13 @@ int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int h
     // We can grab in check based on the already computed king attackers bitboard
     inCheck = !!board->kingAttackers;
 
-    // Save off static evaluation history. Reuse TT entry eval if possible
-    eval = thread->evalStack[height] = ttHit && ttEval != VALUE_NONE ? ttEval
-                                     : evaluateBoard(board, &thread->pktable);
+    // Save a history of the static evaluations. We can reuse a TT entry if the given
+    // evaluation has been set. Also, if we made a NULL move on the previous ply, we
+    // can recompute the eval as `eval = -last_eval + 2 * Tempo`
+    eval = thread->evalStack[height] =
+           ttHit && ttEval != VALUE_NONE            ?  ttEval
+         : thread->moveStack[height-1] != NULL_MOVE ?  evaluateBoard(board, &thread->pktable)
+                                                    : -thread->evalStack[height-1] + 2 * Tempo;
 
     // Futility Pruning Margin
     futilityMargin = eval + FutilityMargin * depth;
@@ -578,11 +582,18 @@ int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height){
             return ttValue;
     }
 
+    // Save a history of the static evaluations. We can reuse a TT entry if the given
+    // evaluation has been set. Also, if we made a NULL move on the previous ply, we
+    // can recompute the eval as `eval = -last_eval + 2 * Tempo`
+    eval = thread->evalStack[height] =
+           ttHit && ttEval != VALUE_NONE            ?  ttEval
+         : thread->moveStack[height-1] != NULL_MOVE ?  evaluateBoard(board, &thread->pktable)
+                                                    : -thread->evalStack[height-1] + 2 * Tempo;
+
     // Step 5. Eval Pruning. If a static evaluation of the board will
     // exceed beta, then we can stop the search here. Also, if the static
     // eval exceeds alpha, we can call our static eval the new alpha
-    best = eval = ttHit && ttEval != VALUE_NONE ? ttEval
-                : evaluateBoard(board, &thread->pktable);
+    best = eval;
     alpha = MAX(alpha, eval);
     if (alpha >= beta) return eval;
 
