@@ -16,12 +16,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _UCI_H
-#define _UCI_H
+#pragma once
+
+#include <stdint.h>
 
 #include "types.h"
 
-#define VERSION_ID "11.47"
+#define VERSION_ID "11.48"
 
 #if defined(USE_PEXT)
     #define ETHEREAL_VERSION VERSION_ID" (PEXT)"
@@ -32,32 +33,24 @@
 #endif
 
 struct Limits {
-    int depthLimit;
-    double timeLimit;
-    int limitedByNone;
-    int limitedByTime;
-    int limitedByDepth;
-    int limitedBySelf;
-    double start;
-    double time;
-    double inc;
-    double mtg;
+    double start, time, inc, mtg, timeLimit;
+    int limitedByNone, limitedByTime, limitedBySelf;
+    int limitedByDepth, depthLimit;
 };
 
 struct ThreadsGo {
     char str[512];
-    Thread* threads;
-    Board* board;
+    Thread *threads;
+    Board *board;
 };
 
-void getInput(char* str);
-int stringEquals(char* s1, char* s2);
-int stringStartsWith(char* str, char* key);
-int stringContains(char* str, char* key);
-
-void* uciGo(void* vthreadgo);
-void uciPosition(char* str, Board* board, int chess960);
-void uciReport(Thread* threads, int alpha, int beta, int value);
+void* uciGo(void *vthreadgo);
+void uciSetOption(char *str, int *megabytes, int *chess960, int *nthreads, Thread **threads);
+void uciPosition(char *str, Board *board, int chess960);
+void uciReport(Thread *threads, int alpha, int beta, int value);
 void uciReportTBRoot(Board *board, uint16_t move, unsigned wdl, unsigned dtz);
 
-#endif
+int stringEquals(char *str1, char *str2);
+int stringStartsWith(char *str, char *key);
+int stringContains(char *str, char *key);
+int getInput(char *str);

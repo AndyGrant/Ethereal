@@ -51,7 +51,7 @@ struct Thread {
     Thread *threads;
     jmp_buf jbuffer;
 
-    PawnKingTable pktable;
+    PKTable pktable;
     KillerTable killers;
     CounterMoveTable cmtable;
     HistoryTable history;

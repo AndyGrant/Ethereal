@@ -24,9 +24,9 @@
 #include "attacks.h"
 #include "bitboards.h"
 #include "board.h"
+#include "evaluate.h"
 #include "masks.h"
 #include "move.h"
-#include "psqt.h"
 #include "search.h"
 #include "thread.h"
 #include "types.h"
@@ -75,16 +75,17 @@ void applyMove(Board *board, uint16_t move, Undo *undo) {
     };
 
     // Save information which is hard to recompute
-    undo->hash          = board->hash;
-    undo->pkhash        = board->pkhash;
-    undo->kingAttackers = board->kingAttackers;
-    undo->castleRooks   = board->castleRooks;
-    undo->epSquare      = board->epSquare;
-    undo->fiftyMoveRule = board->fiftyMoveRule;
-    undo->psqtmat       = board->psqtmat;
+    undo->hash            = board->hash;
+    undo->pkhash          = board->pkhash;
+    undo->kingAttackers   = board->kingAttackers;
+    undo->castleRooks     = board->castleRooks;
+    undo->epSquare        = board->epSquare;
+    undo->halfMoveCounter = board->halfMoveCounter;
+    undo->psqtmat         = board->psqtmat;
 
     // Store hash history for repetition checking
     board->history[board->numMoves++] = board->hash;
+    board->fullMoveCounter++;
 
     // Update the hash for before changing the enpass square
     if (board->epSquare != -1)
@@ -117,9 +118,9 @@ void applyNormalMove(Board *board, uint16_t move, Undo *undo) {
     const int toColour = pieceColour(toPiece);
 
     if (fromType == PAWN || toPiece != EMPTY)
-        board->fiftyMoveRule = 0;
+        board->halfMoveCounter = 0;
     else
-        board->fiftyMoveRule += 1;
+        board->halfMoveCounter += 1;
 
     board->pieces[fromType]     ^= (1ull << from) ^ (1ull << to);
     board->colours[board->turn] ^= (1ull << from) ^ (1ull << to);
@@ -175,7 +176,7 @@ void applyCastleMove(Board *board, uint16_t move, Undo *undo) {
     const int fromPiece = makePiece(KING, board->turn);
     const int rFromPiece = makePiece(ROOK, board->turn);
 
-    board->fiftyMoveRule += 1;
+    board->halfMoveCounter += 1;
 
     board->pieces[KING]         ^= (1ull << from) ^ (1ull << to);
     board->colours[board->turn] ^= (1ull << from) ^ (1ull << to);
@@ -220,7 +221,7 @@ void applyEnpassMove(Board *board, uint16_t move, Undo *undo) {
     const int fromPiece = makePiece(PAWN, board->turn);
     const int enpassPiece = makePiece(PAWN, !board->turn);
 
-    board->fiftyMoveRule = 0;
+    board->halfMoveCounter = 0;
 
     board->pieces[PAWN]         ^= (1ull << from) ^ (1ull << to);
     board->colours[board->turn] ^= (1ull << from) ^ (1ull << to);
@@ -263,7 +264,7 @@ void applyPromotionMove(Board *board, uint16_t move, Undo *undo) {
     const int toColour = pieceColour(toPiece);
     const int promotype = MovePromoPiece(move);
 
-    board->fiftyMoveRule = 0;
+    board->halfMoveCounter = 0;
 
     board->pieces[PAWN]         ^= (1ull << from);
     board->pieces[promotype]    ^= (1ull << to);
@@ -299,13 +300,14 @@ void applyNullMove(Board *board, Undo *undo) {
 
     // Save information which is hard to recompute
     // Some information is certain to stay the same
-    undo->hash          = board->hash;
-    undo->epSquare      = board->epSquare;
-    undo->fiftyMoveRule = board->fiftyMoveRule++;
+    undo->hash            = board->hash;
+    undo->epSquare        = board->epSquare;
+    undo->halfMoveCounter = board->halfMoveCounter++;
 
     // NULL moves simply swap the turn only
     board->turn = !board->turn;
     board->history[board->numMoves++] = board->hash;
+    board->fullMoveCounter++;
 
     // Update the hash for turn and changes to enpass square
     board->hash ^= ZobristTurnKey;
@@ -326,17 +328,18 @@ void revertMove(Board *board, uint16_t move, Undo *undo) {
     const int from = MoveFrom(move);
 
     // Revert information which is hard to recompute
-    board->hash          = undo->hash;
-    board->pkhash        = undo->pkhash;
-    board->kingAttackers = undo->kingAttackers;
-    board->castleRooks   = undo->castleRooks;
-    board->epSquare      = undo->epSquare;
-    board->fiftyMoveRule = undo->fiftyMoveRule;
-    board->psqtmat       = undo->psqtmat;
+    board->hash            = undo->hash;
+    board->pkhash          = undo->pkhash;
+    board->kingAttackers   = undo->kingAttackers;
+    board->castleRooks     = undo->castleRooks;
+    board->epSquare        = undo->epSquare;
+    board->halfMoveCounter = undo->halfMoveCounter;
+    board->psqtmat         = undo->psqtmat;
 
     // Swap turns and update the history index
     board->turn = !board->turn;
     board->numMoves--;
+    board->fullMoveCounter--;
 
     if (MoveType(move) == NORMAL_MOVE) {
 
@@ -411,10 +414,10 @@ void revertNullMove(Board *board, Undo *undo) {
 
     // Revert information which is hard to recompute
     // We may, and have to, zero out the king attacks
-    board->hash          = undo->hash;
-    board->kingAttackers = 0ull;
-    board->epSquare      = undo->epSquare;
-    board->fiftyMoveRule = undo->fiftyMoveRule;
+    board->hash            = undo->hash;
+    board->kingAttackers   = 0ull;
+    board->epSquare        = undo->epSquare;
+    board->halfMoveCounter = undo->halfMoveCounter;
 
     // NULL moves simply swap the turn only
     board->turn = !board->turn;
@@ -445,8 +448,13 @@ int moveEstimatedValue(Board *board, uint16_t move) {
         value += SEEPieceValues[MovePromoPiece(move)] - SEEPieceValues[PAWN];
 
     // Target square is encoded as empty for enpass moves
-    if (MoveType(move) == ENPASS_MOVE)
+    else if (MoveType(move) == ENPASS_MOVE)
         value = SEEPieceValues[PAWN];
+
+    // During FRC, we may encode a castle move as KxR, in which case the
+    // value set during the initial step in this function would be wrong
+    else if (MoveType(move) == CASTLE_MOVE)
+        value = 0;
 
     return value;
 }

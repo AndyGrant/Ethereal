@@ -147,13 +147,13 @@ void storeTTEntry(uint64_t hash, uint16_t move, int value, int eval, int depth, 
     replace->hash16     = (uint16_t)hash16;
 }
 
-PawnKingEntry* getPawnKingEntry(PawnKingTable *pktable, uint64_t pkhash) {
-    PawnKingEntry *pkentry = &pktable->entries[pkhash >> 48];
+PKEntry* getPKEntry(PKTable *pktable, uint64_t pkhash) {
+    PKEntry *pkentry = &pktable->entries[pkhash >> 48];
     return pkentry->pkhash == pkhash ? pkentry : NULL;
 }
 
-void storePawnKingEntry(PawnKingTable *pktable, uint64_t pkhash, uint64_t passed, int eval) {
-    PawnKingEntry *pkentry = &pktable->entries[pkhash >> 48];
+void storePKEntry(PKTable *pktable, uint64_t pkhash, uint64_t passed, int eval) {
+    PKEntry *pkentry = &pktable->entries[pkhash >> 48];
     pkentry->pkhash = pkhash;
     pkentry->passed = passed;
     pkentry->eval   = eval;

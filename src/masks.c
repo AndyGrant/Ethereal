@@ -102,9 +102,9 @@ void initMasks() {
     OutpostRanksMasks[BLACK] = RANK_3 | RANK_4 | RANK_5;
 
     // Init a table of bitmasks to check for supports for a given pawn
-    for (int s = 8 ; s < 56; s++) {
-        PawnConnectedMasks[WHITE][s] = pawnAttacks(BLACK, s) | pawnAttacks(BLACK, s + 8);
-        PawnConnectedMasks[BLACK][s] = pawnAttacks(WHITE, s) | pawnAttacks(WHITE, s - 8);
+    for (int sq = 8 ; sq < 56; sq++) {
+        PawnConnectedMasks[WHITE][sq] = pawnAttacks(BLACK, sq) | pawnAttacks(BLACK, sq + 8);
+        PawnConnectedMasks[BLACK][sq] = pawnAttacks(WHITE, sq) | pawnAttacks(WHITE, sq - 8);
     }
 }
 

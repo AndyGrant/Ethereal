@@ -38,11 +38,11 @@ Magic BishopTable[SQUARE_NB];
 Magic RookTable[SQUARE_NB];
 
 static int validCoordinate(int rank, int file) {
-    return 0 <= rank && rank < 8
-        && 0 <= file && file < 8;
+    return 0 <= rank && rank < RANK_NB
+        && 0 <= file && file < FILE_NB;
 }
 
-static void setSquare(uint64_t *bb, int rank, int file){
+static void setSquare(uint64_t *bb, int rank, int file) {
     if (validCoordinate(rank, file))
         *bb |= 1ull << square(rank, file);
 }
@@ -64,10 +64,7 @@ static uint64_t sliderAttacks(int sq, uint64_t occupied, const int delta[4][2]) 
 
         dr = delta[i][0], df = delta[i][1];
 
-        for (rank = rankOf(sq) + dr, file = fileOf(sq) + df;
-             validCoordinate(rank, file);
-             rank += dr, file += df) {
-
+        for (rank = rankOf(sq) + dr, file = fileOf(sq) + df; validCoordinate(rank, file); rank += dr, file += df) {
             setBit(&result, square(rank, file));
             if (testBit(occupied, square(rank, file)))
                 break;
@@ -79,8 +76,8 @@ static uint64_t sliderAttacks(int sq, uint64_t occupied, const int delta[4][2]) 
 
 static void initSliderAttacks(int sq, Magic *table, uint64_t magic, const int delta[4][2]) {
 
-    const uint64_t edges = ((RANK_1 | RANK_8) & ~Ranks[rankOf(sq)])
-                         | ((FILE_A | FILE_H) & ~Files[fileOf(sq)]);
+    uint64_t edges = ((RANK_1 | RANK_8) & ~Ranks[rankOf(sq)])
+                   | ((FILE_A | FILE_H) & ~Files[fileOf(sq)]);
 
     uint64_t occupied = 0ull;
 
@@ -104,9 +101,9 @@ void initAttacks() {
 
     const int PawnDelta[2][2]   = {{ 1,-1}, { 1, 1}};
     const int KnightDelta[8][2] = {{-2,-1}, {-2, 1}, {-1,-2}, {-1, 2},{ 1,-2}, { 1, 2}, { 2,-1}, { 2, 1}};
+    const int KingDelta[8][2]   = {{-1,-1}, {-1, 0}, {-1, 1}, { 0,-1},{ 0, 1}, { 1,-1}, { 1, 0}, { 1, 1}};
     const int BishopDelta[4][2] = {{-1,-1}, {-1, 1}, { 1,-1}, { 1, 1}};
     const int RookDelta[4][2]   = {{-1, 0}, { 0,-1}, { 0, 1}, { 1, 0}};
-    const int KingDelta[8][2]   = {{-1,-1}, {-1, 0}, {-1, 1}, { 0,-1},{ 0, 1}, { 1,-1}, { 1, 0}, { 1, 1}};
 
     // First square has initial offset
     BishopTable[0].offset = BishopAttacks;

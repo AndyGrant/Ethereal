@@ -17,6 +17,7 @@
 */
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -32,8 +33,8 @@ int fileOf(int sq) {
 }
 
 int mirrorFile(int file) {
-    assert(0 <= file && file < FILE_NB);
     static const int Mirror[] = {0,1,2,3,3,2,1,0};
+    assert(0 <= file && file < FILE_NB);
     return Mirror[file];
 }
 
@@ -52,6 +53,12 @@ int square(int rank, int file) {
     assert(0 <= rank && rank < RANK_NB);
     assert(0 <= file && file < FILE_NB);
     return rank * FILE_NB + file;
+}
+
+int relativeSquare32(int colour, int sq) {
+    assert(0 <= colour && colour < COLOUR_NB);
+    assert(0 <= sq && sq < SQUARE_NB);
+    return 4 * relativeRankOf(colour, sq) + mirrorFile(fileOf(sq));
 }
 
 int frontmost(int colour, uint64_t b) {
@@ -114,12 +121,12 @@ bool testBit(uint64_t bb, int i) {
 
 void printBitboard(uint64_t bb) {
 
-    for (int r = 7; r >= 0; r--) {
+    for (int rank = 7; rank >= 0; rank--) {
         char line[] = ". . . . . . . .";
 
-        for (int f = 0; f < FILE_NB; f++)
-            if (testBit(bb, square(r, f)))
-                line[2 * f] = 'X';
+        for (int file = 0; file < FILE_NB; file++)
+            if (testBit(bb, square(rank, file)))
+                line[2 * file] = 'X';
 
         printf("%s\n", line);
     }

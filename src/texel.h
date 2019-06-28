@@ -79,30 +79,28 @@
 #define TuneThreatOverloadedPieces      (1)
 #define TuneThreatByPawnPush            (1)
 
-struct TexelTuple {
+typedef struct TexelTuple {
     int index;
     int coeff;
-};
+} TexelTuple;
 
-struct TexelEntry {
+typedef struct TexelEntry {
     int ntuples;
     double result;
     double eval, phase;
     double factors[PHASE_NB];
-    TexelTuple* tuples;
-};
+    TexelTuple *tuples;
+} TexelEntry;
 
 typedef double TexelVector[NTERMS][PHASE_NB];
 
-void runTexelTuning(Thread* thread);
-
+void runTexelTuning(Thread *thread);
 void initTexelEntries(TexelEntry *tes, Thread *thread);
 void initCoefficients(int coeffs[NTERMS]);
 void initCurrentParameters(TexelVector cparams);
 
 void updateMemory(TexelEntry *te, int size);
 void updateGradient(TexelEntry *tes, TexelVector gradient, TexelVector params, double K, int batch);
-
 void shuffleTexelEntries(TexelEntry *tes);
 
 double computeOptimalK(TexelEntry *tes);

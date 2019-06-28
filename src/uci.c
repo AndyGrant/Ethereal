@@ -31,7 +31,6 @@
 #include "masks.h"
 #include "move.h"
 #include "movegen.h"
-#include "psqt.h"
 #include "search.h"
 #include "texel.h"
 #include "thread.h"
@@ -41,60 +40,50 @@
 #include "uci.h"
 #include "zobrist.h"
 
-
-extern int MoveOverhead; // Defined by Time.c
-
-extern unsigned TB_PROBE_DEPTH; // Defined by Syzygy.c
-
-extern volatile int ABORT_SIGNAL; // For killing active search
-
-extern volatile int IS_PONDERING; // For swapping out of PONDER
+extern int MoveOverhead;          // Defined by Time.c
+extern unsigned TB_PROBE_DEPTH;   // Defined by Syzygy.c
+extern volatile int ABORT_SIGNAL; // Defined by Search.c
+extern volatile int IS_PONDERING; // Defined by Search.c
 
 pthread_mutex_t READYLOCK = PTHREAD_MUTEX_INITIALIZER;
-
+const char *StartPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 int main(int argc, char **argv) {
 
     Board board;
-    char str[8192], *ptr;
+    char str[8192];
+    Thread *threads;
     ThreadsGo threadsgo;
     pthread_t pthreadsgo;
 
-    int chess960  = 0;
+    // By default use 1 thread, 16MB hash, and Standard chess.
+    // Usage ./Ethereal bench <depth=13> <threads=1> <hash=16>
+    int depth     = argc > 2 ? atoi(argv[2]) : 13;
     int nthreads  = argc > 3 ? atoi(argv[3]) : 1;
     int megabytes = argc > 4 ? atoi(argv[4]) : 16;
+    int chess960  = 0;
 
     // Initialize the core components of Ethereal
-    initAttacks();
-    initializePSQT();
-    initMasks();
-    initZobrist();
-    initSearch();
+    initAttacks(); initMasks(); initEval();
+    initSearch(); initZobrist(); initTT(megabytes);
+    threads = createThreadPool(nthreads);
+    boardFromFEN(&board, StartPosition, chess960);
 
-    // Default to 16MB TT
-    initTT(megabytes);
-
-    // Not required, but always setup the board from the starting position
-    boardFromFEN(&board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", chess960);
-
-    // Build our Thread Pool, with default size of 1-thread
-    Thread* threads = createThreadPool(nthreads);
-
-    #ifdef TUNE
-        runTexelTuning(threads);
-        exit(0);
-    #endif
-
+    // Allow the bench to be run from the command line
     if (argc > 1 && stringEquals(argv[1], "bench")) {
-        runBenchmark(threads, argc > 2 ? atoi(argv[2]) : 0);
+        runBenchmark(threads, depth);
         return 0;
     }
 
-    while (1){
+    // Allow the tuner to be run when compiled
+    #ifdef TUNE
+        runTexelTuning(threads);
+        return 0;
+    #endif
 
-        getInput(str);
+    while (getInput(str)) {
 
-        if (stringEquals(str, "uci")){
+        if (stringEquals(str, "uci")) {
             printf("id name Ethereal " ETHEREAL_VERSION "\n");
             printf("id author Andrew Grant & Laldon\n");
             printf("option name Hash type spin default 16 min 1 max 65536\n");
@@ -104,66 +93,25 @@ int main(int argc, char **argv) {
             printf("option name SyzygyProbeDepth type spin default 0 min 0 max 127\n");
             printf("option name Ponder type check default false\n");
             printf("option name UCI_Chess960 type check default false\n");
-            printf("uciok\n");
-            fflush(stdout);
+            printf("uciok\n"), fflush(stdout);
         }
 
-        else if (stringEquals(str, "isready")){
+        else if (stringEquals(str, "isready")) {
             pthread_mutex_lock(&READYLOCK);
-            printf("readyok\n");
-            fflush(stdout);
+            printf("readyok\n"), fflush(stdout);
             pthread_mutex_unlock(&READYLOCK);
         }
 
-        else if (stringStartsWith(str, "setoption")){
+        else if (stringEquals(str, "ucinewgame"))
+            resetThreadPool(threads), clearTT();
 
-            if (stringStartsWith(str, "setoption name Hash value ")){
-                megabytes = atoi(str + strlen("setoption name Hash value "));
-                initTT(megabytes);
-                printf("info string set Hash to %dMB\n", megabytes);
-            }
-
-            if (stringStartsWith(str, "setoption name Threads value ")){
-                free(threads);
-                nthreads = atoi(str + strlen("setoption name Threads value "));
-                threads = createThreadPool(nthreads);
-                printf("info string set Threads to %d\n", nthreads);
-            }
-
-            if (stringStartsWith(str, "setoption name MoveOverhead value ")){
-                MoveOverhead = atoi(str + strlen("setoption name MoveOverhead value "));
-                printf("info string set MoveOverhead to %d\n", MoveOverhead);
-            }
-
-            if (stringStartsWith(str, "setoption name SyzygyPath value ")){
-                ptr = str + strlen("setoption name SyzygyPath value ");
-                tb_init(ptr); printf("info string set SyzygyPath to %s\n", ptr);
-            }
-
-            if (stringStartsWith(str, "setoption name SyzygyProbeDepth value ")){
-                TB_PROBE_DEPTH = atoi(str + strlen("setoption name SyzygyProbeDepth value "));
-                printf("info string set SyzygyProbeDepth to %u\n", TB_PROBE_DEPTH);
-            }
-
-            if (stringStartsWith(str, "setoption name UCI_Chess960 value ")){
-                if (stringStartsWith(str, "setoption name UCI_Chess960 value true"))
-                    printf("info string set UCI_Chess960 to true\n"), chess960 = 1;
-                if (stringStartsWith(str, "setoption name UCI_Chess960 value false"))
-                    printf("info string set UCI_Chess960 to false\n"), chess960 = 0;
-            }
-
-            fflush(stdout);
-        }
-
-        else if (stringEquals(str, "ucinewgame")){
-            resetThreadPool(threads);
-            clearTT();
-        }
+        else if (stringStartsWith(str, "setoption"))
+            uciSetOption(str, &megabytes, &chess960, &nthreads, &threads);
 
         else if (stringStartsWith(str, "position"))
             uciPosition(str, &board, chess960);
 
-        else if (stringStartsWith(str, "go")){
+        else if (stringStartsWith(str, "go")) {
             strncpy(threadsgo.str, str, 512);
             threadsgo.threads = threads;
             threadsgo.board = &board;
@@ -173,58 +121,53 @@ int main(int argc, char **argv) {
         else if (stringEquals(str, "ponderhit"))
             IS_PONDERING = 0;
 
-        else if (stringEquals(str, "stop")){
-            ABORT_SIGNAL = 1;
-            IS_PONDERING = 0;
+        else if (stringEquals(str, "stop")) {
+            ABORT_SIGNAL = 1, IS_PONDERING = 0;
             pthread_join(pthreadsgo, NULL);
         }
 
         else if (stringEquals(str, "quit"))
             break;
 
-        else if (stringStartsWith(str, "perft")){
-            printf("%"PRIu64"\n", perft(&board, atoi(str + strlen("perft "))));
-            fflush(stdout);
-        }
+        else if (stringStartsWith(str, "perft"))
+            printf("%"PRIu64"\n", perft(&board, atoi(str + strlen("perft ")))), fflush(stdout);
 
-        else if (stringStartsWith(str, "print")){
-            printBoard(&board);
-            fflush(stdout);
-        }
+        else if (stringStartsWith(str, "print"))
+            printBoard(&board), fflush(stdout);
     }
 
     return 0;
 }
 
-void* uciGo(void* vthreadsgo){
+void *uciGo(void *vthreadsgo) {
 
     // Get our starting time as soon as possible
     double start = getRealTime();
 
+    Limits limits;
+
+    uint16_t bestMove, ponderMove;
+    char moveStr[6];
+
+    int depth = 0, infinite = 0;
+    double wtime = 0, btime = 0, movetime = 0;
+    double winc = 0, binc = 0, mtg = -1;
+
+    char *str       = ((ThreadsGo*)vthreadsgo)->str;
+    Board *board    = ((ThreadsGo*)vthreadsgo)->board;
+    Thread *threads = ((ThreadsGo*)vthreadsgo)->threads;
+
     // Grab the ready lock, as we cannot be ready until we finish this search
     pthread_mutex_lock(&READYLOCK);
 
-    char* str       = ((ThreadsGo*)vthreadsgo)->str;
-    Board* board    = ((ThreadsGo*)vthreadsgo)->board;
-    Thread* threads = ((ThreadsGo*)vthreadsgo)->threads;
-
-    Limits limits; limits.start = start;
-
-    uint16_t bestMove, ponderMove;
-    char bestMoveStr[6], ponderMoveStr[6];
-
-    int depth = -1, infinite = -1;
-    double wtime = -1, btime = -1, mtg = -1, movetime = -1;
-    double winc = 0, binc = 0;
-
-    // Reset pondering flag before starting search
+    // Reset global signals
     IS_PONDERING = 0;
 
     // Init the tokenizer with spaces
     char* ptr = strtok(str, " ");
 
-    // Parse time control and search type parameters
-    for (ptr = strtok(NULL, " "); ptr != NULL; ptr = strtok(NULL, " ")){
+    // Parse any time control and search method information that was sent
+    for (ptr = strtok(NULL, " "); ptr != NULL; ptr = strtok(NULL, " ")) {
 
         if (stringEquals(ptr, "wtime"))
             wtime = (double)(atoi(strtok(NULL, " ")));
@@ -255,17 +198,18 @@ void* uciGo(void* vthreadsgo){
     }
 
     // Initialize limits for the search
-    limits.limitedByNone  = infinite != -1;
-    limits.limitedByTime  = movetime != -1;
-    limits.limitedByDepth = depth    != -1;
-    limits.limitedBySelf  = depth == -1 && movetime == -1 && infinite == -1;
+    limits.limitedByNone  = infinite != 0;
+    limits.limitedByTime  = movetime != 0;
+    limits.limitedByDepth = depth    != 0;
+    limits.limitedBySelf  = !depth && !movetime && !infinite;
     limits.timeLimit      = movetime;
     limits.depthLimit     = depth;
 
     // Pick the time values for the colour we are playing as
-    limits.time = (board->turn == WHITE) ? wtime : btime;
-    limits.mtg  = (board->turn == WHITE) ?   mtg :   mtg;
-    limits.inc  = (board->turn == WHITE) ?  winc :  binc;
+    limits.start = (board->turn == WHITE) ? start : start;
+    limits.time  = (board->turn == WHITE) ? wtime : btime;
+    limits.inc   = (board->turn == WHITE) ?  winc :  binc;
+    limits.mtg   = (board->turn == WHITE) ?   mtg :   mtg;
 
     // Execute search, return best and ponder moves
     getBestMove(threads, board, &limits, &bestMove, &ponderMove);
@@ -273,14 +217,14 @@ void* uciGo(void* vthreadsgo){
     // UCI spec does not want reports until out of pondering
     while (IS_PONDERING);
 
-    // Report best move (we should always have one)
-    moveToString(board, bestMove, bestMoveStr);
-    printf("bestmove %s ", bestMoveStr);
+    // Report best move ( we should always have one )
+    moveToString(board, bestMove, moveStr);
+    printf("bestmove %s ", moveStr);
 
-    // Report ponder move if we have one
+    // Report ponder move ( if we have one )
     if (ponderMove != NONE_MOVE) {
-        moveToString(board, ponderMove, ponderMoveStr);
-        printf("ponder %s", ponderMoveStr);
+        moveToString(board, ponderMove, moveStr);
+        printf("ponder %s", moveStr);
     }
 
     // Make sure this all gets reported
@@ -292,100 +236,153 @@ void* uciGo(void* vthreadsgo){
     return NULL;
 }
 
-void uciPosition(char* str, Board* board, int chess960){
+void uciSetOption(char *str, int *megabytes, int *chess960, int *nthreads, Thread **threads) {
+
+    // Handle setting UCI options in Ethereal. Options include:
+    //   Hash             : Size of the Transposition Table in Megabyes
+    //   Threads          : Number of search threads to use
+    //   MoveOverhead     : Overhead on time allocation to avoid time losses
+    //   SyzygyPath       : Path to Syzygy Tablebases
+    //   SyzygyProbeDepth : Minimal Depth to probe the highest cardinality Tablebase
+    //   UCI_Chess960     : Set when playing FRC, but not required in order to work
+
+    if (stringStartsWith(str, "setoption name Hash value ")) {
+        *megabytes = atoi(str + strlen("setoption name Hash value "));
+        initTT(*megabytes); printf("info string set Hash to %dMB\n", *megabytes);
+    }
+
+    if (stringStartsWith(str, "setoption name Threads value ")) {
+        free(*threads);
+        *nthreads = atoi(str + strlen("setoption name Threads value "));
+        *threads = createThreadPool(*nthreads);
+        printf("info string set Threads to %d\n", *nthreads);
+    }
+
+    if (stringStartsWith(str, "setoption name MoveOverhead value ")) {
+        MoveOverhead = atoi(str + strlen("setoption name MoveOverhead value "));
+        printf("info string set MoveOverhead to %d\n", MoveOverhead);
+    }
+
+    if (stringStartsWith(str, "setoption name SyzygyPath value ")) {
+        char *ptr = str + strlen("setoption name SyzygyPath value ");
+        tb_init(ptr); printf("info string set SyzygyPath to %s\n", ptr);
+    }
+
+    if (stringStartsWith(str, "setoption name SyzygyProbeDepth value ")) {
+        TB_PROBE_DEPTH = atoi(str + strlen("setoption name SyzygyProbeDepth value "));
+        printf("info string set SyzygyProbeDepth to %u\n", TB_PROBE_DEPTH);
+    }
+
+    if (stringStartsWith(str, "setoption name UCI_Chess960 value ")) {
+        if (stringStartsWith(str, "setoption name UCI_Chess960 value true"))
+            printf("info string set UCI_Chess960 to true\n"), *chess960 = 1;
+        if (stringStartsWith(str, "setoption name UCI_Chess960 value false"))
+            printf("info string set UCI_Chess960 to false\n"), *chess960 = 0;
+    }
+
+    fflush(stdout);
+}
+
+void uciPosition(char *str, Board *board, int chess960) {
 
     int size;
-    char* ptr;
-    char move[6];
-    char test[6];
-    Undo undo[1];
     uint16_t moves[MAX_MOVES];
+    char *ptr, moveStr[6],testStr[6];
+    Undo undo[1];
 
-    // Position is defined by a FEN string
+    // Position is defined by a FEN, X-FEN or Shredder-FEN
     if (stringContains(str, "fen"))
         boardFromFEN(board, strstr(str, "fen") + strlen("fen "), chess960);
 
-    // Position just starts at the normal beggining of game
+    // Position is simply the usual starting position
     else if (stringContains(str, "startpos"))
-        boardFromFEN(board, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", chess960);
+        boardFromFEN(board, StartPosition, chess960);
 
     // Position command may include a list of moves
     ptr = strstr(str, "moves");
-    if (ptr != NULL) ptr += strlen("moves ");
+    if (ptr != NULL)
+        ptr += strlen("moves ");
 
     // Apply each move in the move list
-    while (ptr != NULL && *ptr != '\0'){
+    while (ptr != NULL && *ptr != '\0') {
+
+        // UCI sends moves in long algebraic notation
+        for (int i = 0; i < 4; i++) moveStr[i] = *ptr++;
+        moveStr[4] = *ptr == '\0' || *ptr == ' ' ? '\0' : *ptr++;
+        moveStr[5] = '\0';
 
         // Generate moves for this position
-        size = 0;
-        genAllMoves(board, moves, &size);
+        size = 0; genAllLegalMoves(board, moves, &size);
 
-        // Move is in long algebraic notation
-        move[0] = *ptr++; move[1] = *ptr++;
-        move[2] = *ptr++; move[3] = *ptr++;
-        move[4] = *ptr == '\0' || *ptr == ' ' ? '\0' : *ptr++;
-        move[5] = '\0';
-
-        // Find and apply the correct move
-        for (size -= 1; size >= 0; size--){
-            moveToString(board, moves[size], test);
-            if (stringEquals(move, test)){
-                applyMove(board, moves[size], undo);
+        // Find and apply the given move
+        for (int i = 0; i < size; i++) {
+            moveToString(board, moves[i], testStr);
+            if (stringEquals(moveStr, testStr)) {
+                applyMove(board, moves[i], undo);
                 break;
             }
         }
 
+        // Reset move history whenever we reset the fifty move rule. This way
+        // we can track all positions that are candidates for repetitions, and
+        // are still able to use a fixed size for the history array (512)
+        if (board->halfMoveCounter == 0)
+            board->numMoves = 0;
+
         // Skip over all white space
         while (*ptr == ' ') ptr++;
-
-        // Reset move history whenever we reset the fifty move rule
-        if (board->fiftyMoveRule == 0) board->numMoves = 0;
     }
 }
 
-void uciReport(Thread* threads, int alpha, int beta, int value){
+void uciReport(Thread *threads, int alpha, int beta, int value) {
 
-    PVariation* pv  = &threads[0].pv;
+    // Gather all of the statistics that the UCI protocol would be
+    // interested in. Also, bound the value passed by alpha and
+    // beta, since Ethereal uses a mix of fail-hard and fail-soft
+
     int hashfull    = hashfullTT();
-    int depth       = threads[0].depth;
-    int seldepth    = threads[0].seldepth;
-    int elapsed     = elapsedTime(threads[0].info);
+    int depth       = threads->depth;
+    int seldepth    = threads->seldepth;
+    int elapsed     = elapsedTime(threads->info);
+    int bounded     = value = MAX(alpha, MIN(value, beta));
     uint64_t nodes  = nodesSearchedThreadPool(threads);
     uint64_t tbhits = tbhitsThreadPool(threads);
     int nps         = (int)(1000 * (nodes / (1 + elapsed)));
 
-    value = MAX(alpha, MIN(value, beta));
-
     // If the score is MATE or MATED in X, convert to X
-    int score   = value >=  MATE_IN_MAX ?  (MATE - value + 1) / 2
-                : value <= MATED_IN_MAX ? -(value + MATE)     / 2 : value;
+    int score   = bounded >=  MATE_IN_MAX ?  (MATE - bounded + 1) / 2
+                : bounded <= MATED_IN_MAX ? -(bounded + MATE)     / 2 : bounded;
 
     // Two possible score types, mate and cp = centipawns
-    char* type  = value >=  MATE_IN_MAX ? "mate"
-                : value <= MATED_IN_MAX ? "mate" : "cp";
+    char *type  = bounded >=  MATE_IN_MAX ? "mate"
+                : bounded <= MATED_IN_MAX ? "mate" : "cp";
 
-    // Partial results from a window'ed search have bounds
-    char* bound = value >=  beta ? " lowerbound "
-                : value <= alpha ? " upperbound " : " ";
+    // Partial results from a windowed search have bounds
+    char *bound = bounded >=  beta ? " lowerbound "
+                : bounded <= alpha ? " upperbound " : " ";
 
-    // Main chunk of interface reporting
     printf("info depth %d seldepth %d score %s %d%stime %d "
            "nodes %"PRIu64" nps %d tbhits %"PRIu64" hashfull %d pv ",
            depth, seldepth, type, score, bound, elapsed, nodes, nps, tbhits, hashfull);
 
     // Iterate over the PV and print each move
-    for (int i = 0; i < pv->length; i++){
+    for (int i = 0; i < threads->pv.length; i++) {
         char moveStr[6];
-        moveToString(&threads->board, pv->line[i], moveStr);
+        moveToString(&threads->board, threads->pv.line[i], moveStr);
         printf("%s ", moveStr);
     }
 
-    puts("");
-    fflush(stdout);
+    // Send out a newline and flush
+    puts(""); fflush(stdout);
 }
 
-void uciReportTBRoot(Board *board, uint16_t move, unsigned wdl, unsigned dtz){
+void uciReportTBRoot(Board *board, uint16_t move, unsigned wdl, unsigned dtz) {
 
+    char moveStr[6];
+
+    // Convert result to a score. We place wins and losses just outside
+    // the range of possible mate scores, and move further from them
+    // as the depth to zero increases. Draws are of course, zero.
     int score = wdl == TB_LOSS ? -MATE + MAX_PLY + dtz + 1
               : wdl == TB_WIN  ?  MATE - MAX_PLY - dtz - 1 : 0;
 
@@ -393,34 +390,36 @@ void uciReportTBRoot(Board *board, uint16_t move, unsigned wdl, unsigned dtz){
            "nodes 0 tbhits 1 nps 0 hashfull %d pv ",
            MAX_PLY - 1, MAX_PLY - 1, score, 0);
 
-    char moveStr[6];
+    // Print out the given move
     moveToString(board, move, moveStr);
     puts(moveStr);
     fflush(stdout);
 }
 
-int stringEquals(char* s1, char* s2){
-    return strcmp(s1, s2) == 0;
+int stringEquals(char *str1, char *str2) {
+    return strcmp(str1, str2) == 0;
 }
 
-int stringStartsWith(char* str, char* key){
+int stringStartsWith(char *str, char *key) {
     return strstr(str, key) == str;
 }
 
-int stringContains(char* str, char* key){
+int stringContains(char *str, char *key) {
     return strstr(str, key) != NULL;
 }
 
-void getInput(char* str){
+int getInput(char *str) {
 
-    char* ptr;
+    char *ptr;
 
     if (fgets(str, 8192, stdin) == NULL)
-        exit(EXIT_FAILURE);
+        return 0;
 
     ptr = strchr(str, '\n');
     if (ptr != NULL) *ptr = '\0';
 
     ptr = strchr(str, '\r');
     if (ptr != NULL) *ptr = '\0';
+
+    return 1;
 }

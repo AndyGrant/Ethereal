@@ -26,16 +26,16 @@
 #include "attacks.h"
 #include "bitboards.h"
 #include "board.h"
+#include "evaluate.h"
 #include "masks.h"
-#include "psqt.h"
-#include "search.h"
-#include "time.h"
-#include "thread.h"
-#include "uci.h"
-#include "transposition.h"
-#include "types.h"
 #include "move.h"
 #include "movegen.h"
+#include "search.h"
+#include "thread.h"
+#include "time.h"
+#include "transposition.h"
+#include "types.h"
+#include "uci.h"
 #include "zobrist.h"
 
 const char *PieceLabel[COLOUR_NB] = {"PNBRQK", "pnbrqk"};
@@ -46,12 +46,20 @@ static const char *Benchmarks[] = {
 };
 
 static void clearBoard(Board *board) {
-    memset(board, 0, sizeof(*board));
+
+    // Wipe the entire board structure, and also set all of
+    // the pieces on the board to be EMPTY. Ideally, before
+    // this board is used again we will call boardFromFEN()
+
+    memset(board, 0, sizeof(Board));
     memset(&board->squares, EMPTY, sizeof(board->squares));
-    board->epSquare = -1;
 }
 
 static void setSquare(Board *board, int colour, int piece, int sq) {
+
+    // Generate a piece on the given square. This serves as an aid
+    // to setting up the board from a FEN. We make sure update any
+    // related hash values, as well as the PSQT + material values
 
     assert(0 <= colour && colour < COLOUR_NB);
     assert(0 <= piece && piece < PIECE_NB);
@@ -67,12 +75,19 @@ static void setSquare(Board *board, int colour, int piece, int sq) {
         board->pkhash ^= ZobristKeys[board->squares[sq]][sq];
 }
 
-static int stringToSquare(const char *str) {
+static int stringToSquare(char *str) {
+
+    // Helper for reading the enpass square from a FEN. If no square
+    // is provided, Ethereal will use -1 to represent this internally
 
     return str[0] == '-' ? -1 : square(str[1] - '1', str[0] - 'a');
 }
 
 void squareToString(int sq, char *str) {
+
+    // Helper for writing the enpass square, as well as for converting
+    // a move into long algabraic notation. When there is not an enpass
+    // square we will output a "-" as expected for a FEN
 
     assert(-1 <= sq && sq < SQUARE_NB);
 
@@ -88,8 +103,8 @@ void squareToString(int sq, char *str) {
 
 void boardFromFEN(Board *board, const char *fen, int chess960) {
 
-    static const uint64_t StandardCastleRooks = (1ull <<  0) | (1ull <<  7)
-                                              | (1ull << 56) | (1ull << 63);
+    static const uint64_t StandardCastles = (1ull <<  0) | (1ull <<  7)
+                                          | (1ull << 56) | (1ull << 63);
 
     int sq = 56;
     char ch;
@@ -146,13 +161,14 @@ void boardFromFEN(Board *board, const char *fen, int chess960) {
     rooks = board->castleRooks;
     while (rooks) board->hash ^= ZobristCastleKeys[poplsb(&rooks)];
 
-    // En passant
+    // En passant square
     board->epSquare = stringToSquare(strtok_r(NULL, " ", &strPos));
     if (board->epSquare != -1)
         board->hash ^= ZobristEnpassKeys[fileOf(board->epSquare)];
 
-    // 50 move counter
-    board->fiftyMoveRule = atoi(strtok_r(NULL, " ", &strPos));
+    // Half & Full Move Counters
+    board->halfMoveCounter = atoi(strtok_r(NULL, " ", &strPos));
+    board->fullMoveCounter = atoi(strtok_r(NULL, " ", &strPos));
 
     // Move count: ignore and use zero, as we count since root
     board->numMoves = 0;
@@ -164,7 +180,7 @@ void boardFromFEN(Board *board, const char *fen, int chess960) {
     // moves. If chess960 is not enabled, but we have detected an unconventional
     // castle setup, then we set chess960 to be true on our own. Currently, this
     // is simply a hack so that FRC positions may be added to the bench.csv
-    board->chess960 = chess960 || (board->castleRooks & ~StandardCastleRooks);
+    board->chess960 = chess960 || (board->castleRooks & ~StandardCastles);
 
     free(str);
 }
@@ -225,35 +241,30 @@ void boardToFEN(Board *board, char *fen) {
     if (!board->castleRooks)
         *fen++ = '-';
 
-    // En passant and Fifty move
+    // En passant square, Half Move Counter, and Full Move Counter
     squareToString(board->epSquare, str);
-    sprintf(fen, " %s %d", str, board->fiftyMoveRule);
+    sprintf(fen, " %s %d %d", str, board->halfMoveCounter, board->fullMoveCounter);
 }
 
 void printBoard(Board *board) {
 
-    static const char table[COLOUR_NB][PIECE_NB] = {
-        {'P','N','B','R','Q','K'},
-        {'p','n','b','r','q','k'},
-    };
-
     char fen[256];
-    int i, j, file, colour, type;
 
     // Print each row of the board, starting from the top
-    for(i = 56, file = 8; i >= 0; i -= 8, file--){
+    for(int sq = square(RANK_NB-1, 0); sq >= 0; sq -= FILE_NB) {
 
         printf("\n     |----|----|----|----|----|----|----|----|\n");
-        printf("   %d ", file);
+        printf("   %d ", 1 + sq / 8);
 
         // Print each square in a row, starting from the left
-        for(j = 0; j < 8; j++){
-            colour = pieceColour(board->squares[i+j]);
-            type = pieceType(board->squares[i+j]);
+        for(int i = 0; i < 8; i++) {
+
+            int colour = pieceColour(board->squares[sq+i]);
+            int type = pieceType(board->squares[sq+i]);
 
             switch(colour){
-                case WHITE: printf("| *%c ", table[colour][type]); break;
-                case BLACK: printf("|  %c ", table[colour][type]); break;
+                case WHITE: printf("| *%c ", PieceLabel[colour][type]); break;
+                case BLACK: printf("|  %c ", PieceLabel[colour][type]); break;
                 default   : printf("|    "); break;
             }
         }
@@ -269,16 +280,18 @@ void printBoard(Board *board) {
     printf("\n%s\n\n", fen);
 }
 
-uint64_t perft(Board *board, int depth){
+uint64_t perft(Board *board, int depth) {
 
     Undo undo[1];
     int size = 0;
     uint64_t found = 0ull;
     uint16_t moves[MAX_MOVES];
 
-    if (depth == 0) return 1ull;
+    if (depth == 0)
+        return 1ull;
 
-    genAllMoves(board, moves, &size);
+    genAllNoisyMoves(board, moves, &size);
+    genAllQuietMoves(board, moves, &size);
 
     // Recurse on all valid moves
     for(size -= 1; size >= 0; size--) {
@@ -292,37 +305,33 @@ uint64_t perft(Board *board, int depth){
 
 void runBenchmark(Thread *threads, int depth) {
 
-    double start, end;
     Board board;
     Limits limits;
+    double start, end;
     uint16_t bestMove, ponderMove;
     uint64_t nodes = 0ull;
 
-    // Initialize limits for the search
+    // Initialize a "go depth <x>" search
     limits.limitedByNone  = 0;
     limits.limitedByTime  = 0;
     limits.limitedByDepth = 1;
     limits.limitedBySelf  = 0;
     limits.timeLimit      = 0;
-    limits.depthLimit     = depth == 0 ? 13 : depth;
+    limits.depthLimit     = depth;
 
     start = getRealTime();
 
-    // Search each benchmark position
     for (int i = 0; strcmp(Benchmarks[i], ""); i++) {
         printf("\nPosition #%d: %s\n", i + 1, Benchmarks[i]);
         boardFromFEN(&board, Benchmarks[i], 0);
-
         limits.start = getRealTime();
         getBestMove(threads, &board, &limits, &bestMove, &ponderMove);
         nodes += nodesSearchedThreadPool(threads);
-
         clearTT(); // Reset TT for new search
     }
 
     end = getRealTime();
 
-    printf("\n------------------------\n");
     printf("Time  : %dms\n", (int)(end - start));
     printf("Nodes : %"PRIu64"\n", nodes);
     printf("NPS   : %d\n", (int)(nodes / ((end - start) / 1000.0)));
@@ -341,7 +350,7 @@ int drawnByFiftyMoveRule(Board *board) {
     // Fifty move rule triggered. BUG: We do not account for the case
     // when the fifty move rule occurs as checkmate is delivered, which
     // should not be considered a drawn position, but a checkmated one.
-    return board->fiftyMoveRule > 99;
+    return board->halfMoveCounter > 99;
 }
 
 int drawnByRepetition(Board *board, int height) {
@@ -352,7 +361,7 @@ int drawnByRepetition(Board *board, int height) {
     for (int i = board->numMoves - 2; i >= 0; i -= 2) {
 
         // No draw can occur before a zeroing move
-        if (i < board->numMoves - board->fiftyMoveRule)
+        if (i < board->numMoves - board->halfMoveCounter)
             break;
 
         // Check for matching hash with a two fold after the root,
@@ -371,29 +380,17 @@ int drawnByInsufficientMaterial(Board *board) {
     if (board->pieces[PAWN] | board->pieces[ROOK] | board->pieces[QUEEN])
         return 0;
 
-    // Check for KvK
-    if (board->pieces[KING] == (board->colours[WHITE] | board->colours[BLACK]))
-        return 1;
-
-    if ((board->colours[WHITE] & board->pieces[KING]) == board->colours[WHITE]){
-
-        // Check for K v KN or K v KB
-        if (!several(board->pieces[KNIGHT] | board->pieces[BISHOP]))
-            return 1;
-
-        // Check for K v KNN
-        if (!board->pieces[BISHOP] && popcount(board->pieces[KNIGHT]) <= 2)
+    // Check for KvK, KvN, KvB, and KvKNN (White is K)
+    if (!several(board->colours[WHITE])) {
+        if (   !several(board->pieces[KNIGHT] | board->pieces[BISHOP])
+            ||(!board->pieces[BISHOP] && popcount(board->pieces[KNIGHT]) <= 2))
             return 1;
     }
 
-    if ((board->colours[BLACK] & board->pieces[KING]) == board->colours[BLACK]){
-
-        // Check for K v KN or K v KB
-        if (!several(board->pieces[KNIGHT] | board->pieces[BISHOP]))
-            return 1;
-
-        // Check for K v KNN
-        if (!board->pieces[BISHOP] && popcount(board->pieces[KNIGHT]) <= 2)
+    // Check for KvK, KvN, KvB, and KvKNN (Black is K)
+    else if (!several(board->colours[BLACK])) {
+        if (   !several(board->pieces[KNIGHT] | board->pieces[BISHOP])
+            ||(!board->pieces[BISHOP] && popcount(board->pieces[KNIGHT]) <= 2))
             return 1;
     }
 

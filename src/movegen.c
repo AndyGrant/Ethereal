@@ -83,17 +83,6 @@ static void buildKingMoves(uint16_t *moves, int *size, uint64_t pieces, uint64_t
     buildNonPawnMoves(moves, size, kingAttacks(sq) & targets, sq);
 }
 
-void genAllMoves(Board *board, uint16_t *moves, int *size) {
-
-    int noisy = 0, quiet = 0;
-
-    genAllNoisyMoves(board, moves, &noisy);
-
-    genAllQuietMoves(board, moves + noisy, &quiet);
-
-    *size = noisy + quiet;
-}
-
 void genAllLegalMoves(Board *board, uint16_t *moves, int *size) {
 
     Undo undo[1];
@@ -101,7 +90,8 @@ void genAllLegalMoves(Board *board, uint16_t *moves, int *size) {
     uint16_t psuedoMoves[MAX_MOVES];
 
     // Call genAllNoisyMoves() & genAllNoisyMoves()
-    genAllMoves(board, psuedoMoves, &psuedoSize);
+    genAllNoisyMoves(board, psuedoMoves, &psuedoSize);
+    genAllQuietMoves(board, psuedoMoves, &psuedoSize);
 
     // Check each move for legality before copying
     for (int i = 0; i < psuedoSize; i++) {
@@ -137,7 +127,7 @@ void genAllNoisyMoves(Board *board, uint16_t *moves, int *size) {
         return;
     }
 
-    // If we are attacked we will only consider normal moves which would
+    // If we are attacked we will only consider the normal moves which would
     // capture the checking piece, since we are only generating noisy moves
     // in this function. Otherwise, we consider all enemy pieces as targets
     destinations = board->kingAttackers ? board->kingAttackers : enemy;

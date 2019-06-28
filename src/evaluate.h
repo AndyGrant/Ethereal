@@ -92,10 +92,10 @@ struct EvalInfo {
     int kingAttackersCount[COLOUR_NB];
     int kingAttackersWeight[COLOUR_NB];
     int pkeval[COLOUR_NB];
-    PawnKingEntry* pkentry;
+    PKEntry *pkentry;
 };
 
-int evaluateBoard(Board *board, PawnKingTable *pktable);
+int evaluateBoard(Board *board, PKTable *pktable);
 int evaluatePieces(EvalInfo *ei, Board *board);
 int evaluatePawns(EvalInfo *ei, Board *board, int colour);
 int evaluateKnights(EvalInfo *ei, Board *board, int colour);
@@ -103,16 +103,17 @@ int evaluateBishops(EvalInfo *ei, Board *board, int colour);
 int evaluateRooks(EvalInfo *ei, Board *board, int colour);
 int evaluateQueens(EvalInfo *ei, Board *board, int colour);
 int evaluateKings(EvalInfo *ei, Board *board, int colour);
-int evaluatePassedPawns(EvalInfo *ei, Board *board, int colour);
+int evaluatePassed(EvalInfo *ei, Board *board, int colour);
 int evaluateThreats(EvalInfo *ei, Board *board, int colour);
 int evaluateScaleFactor(Board *board);
-void initializeEvalInfo(EvalInfo *ei, Board *board, PawnKingTable *pktable);
+void initEvalInfo(EvalInfo *ei, Board *board, PKTable *pktable);
+void initEval();
 
 #define MakeScore(mg, eg) ((int)((unsigned int)(eg) << 16) + (mg))
 
 #define ScoreMG(s) ((int16_t)((uint16_t)((unsigned)((s)))))
 #define ScoreEG(s) ((int16_t)((uint16_t)((unsigned)((s) + 0x8000) >> 16)))
 
-extern const int PieceValues[8][PHASE_NB];
+extern int PSQT[32][SQUARE_NB];
 
 #endif

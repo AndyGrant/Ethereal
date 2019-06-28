@@ -47,30 +47,28 @@ enum {
 };
 
 enum {
-    SQUARE_NB = 64,
-    COLOUR_NB = 2,
-    RANK_NB   = 8,
-    FILE_NB   = 8,
-    PHASE_NB  = 2,
-    PIECE_NB  = 6,
-    CONT_NB   = 2
+    SQUARE_NB = 64, COLOUR_NB = 2,
+    RANK_NB   =  8, FILE_NB   = 8,
+    PHASE_NB  =  2, PIECE_NB  = 6,
+    CONT_NB   =  2
 };
 
-static inline int pieceType(int p) {
-    assert(0 <= p / 4 && p / 4 <= PIECE_NB);
-    assert(p % 4 <= COLOUR_NB);
-    return p / 4;
+static inline int pieceType(int piece) {
+    assert(0 <= piece / 4 && piece / 4 <= PIECE_NB);
+    assert(piece % 4 <= COLOUR_NB);
+    return piece / 4;
 }
 
-static inline int pieceColour(int p) {
-    assert(0 <= p / 4 && p / 4 <= PIECE_NB);
-    assert(p % 4 <= COLOUR_NB);
-    return p % 4;
+static inline int pieceColour(int piece) {
+    assert(0 <= piece / 4 && piece / 4 <= PIECE_NB);
+    assert(piece % 4 <= COLOUR_NB);
+    return piece % 4;
 }
 
-static inline int makePiece(int pt, int c) {
-    assert(0 <= pt && pt < PIECE_NB);
-    return pt * 4 + c;
+static inline int makePiece(int type, int colour) {
+    assert(0 <= type && type < PIECE_NB);
+    assert(0 <= colour && colour <= COLOUR_NB);
+    return type * 4 + colour;
 }
 
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
@@ -86,14 +84,12 @@ typedef struct EvalInfo EvalInfo;
 typedef struct MovePicker MovePicker;
 typedef struct SearchInfo SearchInfo;
 typedef struct PVariation PVariation;
-typedef struct TexelTuple TexelTuple;
-typedef struct TexelEntry TexelEntry;
 typedef struct Thread Thread;
 typedef struct TTEntry TTEntry;
 typedef struct TTBucket TTBucket;
 typedef struct TTable TTable;
-typedef struct PawnKingEntry PawnKingEntry;
-typedef struct PawnKingTable PawnKingTable;
+typedef struct PKEntry PKEntry;
+typedef struct PKTable PKTable;
 typedef struct Limits Limits;
 typedef struct ThreadsGo ThreadsGo;
 

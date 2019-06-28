@@ -50,14 +50,14 @@ struct TTable {
     uint64_t hashMask;
 };
 
-struct PawnKingEntry {
+struct PKEntry {
     uint64_t pkhash;
     uint64_t passed;
     int eval;
 };
 
-struct PawnKingTable {
-    PawnKingEntry entries[0x10000];
+struct PKTable {
+    PKEntry entries[0x10000];
 };
 
 void initTT(uint64_t megabytes);
@@ -67,7 +67,7 @@ int hashfullTT();
 int getTTEntry(uint64_t hash, uint16_t *move, int *value, int *eval, int *depth, int *bound);
 void storeTTEntry(uint64_t hash, uint16_t move, int value, int eval, int depth, int bound);
 
-PawnKingEntry* getPawnKingEntry(PawnKingTable *pktable, uint64_t pkhash);
-void storePawnKingEntry(PawnKingTable *pktable, uint64_t pkhash, uint64_t passed, int eval);
+PKEntry* getPKEntry(PKTable *pktable, uint64_t pkhash);
+void storePKEntry(PKTable *pktable, uint64_t pkhash, uint64_t passed, int eval);
 
 #endif

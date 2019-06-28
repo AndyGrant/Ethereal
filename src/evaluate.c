@@ -28,7 +28,6 @@
 #include "evaluate.h"
 #include "masks.h"
 #include "movegen.h"
-#include "psqt.h"
 #include "transposition.h"
 #include "types.h"
 
@@ -52,10 +51,75 @@ const int RookValue   = S( 695, 732);
 const int QueenValue  = S(1316,1415);
 const int KingValue   = S(   0,   0);
 
-const int PieceValues[8][PHASE_NB] = {
-    { 112, 131}, { 472, 421}, { 494, 441}, { 695, 732},
-    {1316,1415}, {   0,   0}, {   0,   0}, {   0,   0},
+/* Piece Square Evaluation Terms */
+
+const int PawnPSQT32[32] = {
+    S(   0,   0), S(   0,   0), S(   0,   0), S(   0,   0),
+    S( -21,  11), S(   6,   3), S( -15,   8), S(  -9,  -2),
+    S( -22,   3), S( -14,   3), S(  -9,  -7), S(  -5, -15),
+    S( -17,  13), S( -10,  12), S(  16, -15), S(  15, -28),
+    S(  -2,  19), S(   6,  13), S(   3,  -1), S(  18, -22),
+    S(  -1,  35), S(   3,  34), S(  14,  23), S(  43,  -4),
+    S( -17, -40), S( -65,  -7), S(   3, -21), S(  40, -34),
+    S(   0,   0), S(   0,   0), S(   0,   0), S(   0,   0),
 };
+
+const int KnightPSQT32[32] = {
+    S( -50, -26), S(  -9, -43), S( -19, -30), S(  -3, -20),
+    S(  -8, -22), S(   4, -13), S(  -1, -31), S(  11, -20),
+    S(   2, -24), S(  21, -25), S(  13, -19), S(  25,  -3),
+    S(  19,   4), S(  25,   7), S(  32,  17), S(  31,  22),
+    S(  28,  18), S(  28,  13), S(  42,  26), S(  32,  40),
+    S( -13,  16), S(   8,  14), S(  33,  28), S(  35,  31),
+    S(   8, -10), S(  -3,   5), S(  40, -17), S(  44,   3),
+    S(-166, -16), S( -81,  -2), S(-110,  20), S( -30,   3),
+};
+
+const int BishopPSQT32[32] = {
+    S(  18, -17), S(  17, -19), S( -11,  -8), S(   9, -13),
+    S(  34, -32), S(  27, -33), S(  25, -22), S(  11, -11),
+    S(  18, -14), S(  32, -14), S(  18,  -5), S(  20,  -3),
+    S(  19, -10), S(  18,  -2), S(  18,   6), S(  19,  11),
+    S( -10,   9), S(  19,   4), S(   7,  13), S(  12,  22),
+    S(   2,   5), S(   0,  15), S(  18,  12), S(  22,  10),
+    S( -47,  14), S( -35,  12), S(  -2,   6), S( -19,   9),
+    S( -39,   3), S( -48,   9), S( -87,  17), S( -91,  25),
+};
+
+const int RookPSQT32[32] = {
+    S(  -6, -30), S( -12, -20), S(   1, -24), S(   9, -30),
+    S( -54, -13), S( -14, -30), S(  -9, -30), S(  -1, -33),
+    S( -27, -13), S(  -6, -12), S( -16, -15), S(  -3, -23),
+    S( -14,   1), S(  -5,   8), S(  -6,   4), S(   6,  -3),
+    S(   2,  13), S(  17,  10), S(  27,   5), S(  38,   0),
+    S(  -6,  23), S(  30,  11), S(   6,  21), S(  37,   5),
+    S(   4,  12), S( -16,  20), S(   9,  10), S(  21,   9),
+    S(  37,  24), S(  26,  27), S(   6,  32), S(  16,  27),
+};
+
+const int QueenPSQT32[32] = {
+    S(  16, -53), S(  -3, -39), S(   6, -49), S(  20, -44),
+    S(  15, -38), S(  29, -56), S(  31, -71), S(  22, -24),
+    S(  14, -20), S(  30, -17), S(  11,   8), S(  12,   4),
+    S(  15,   0), S(  18,  20), S(   3,  25), S( -13,  70),
+    S(  -2,  21), S(  -2,  45), S( -10,  26), S( -27,  77),
+    S( -19,  30), S( -10,  22), S( -18,  27), S(  -7,  31),
+    S(  -4,  28), S( -59,  67), S(  -6,  20), S( -38,  57),
+    S(  -4,  20), S(  20,  11), S(  11,  12), S(  -5,  22),
+};
+
+const int KingPSQT32[32] = {
+    S(  41, -85), S(  41, -55), S( -11, -17), S( -26, -26),
+    S(  30, -36), S(  -4, -25), S( -38,   2), S( -51,   4),
+    S(   8, -35), S(  18, -32), S(  16,  -8), S( -10,   7),
+    S(   2, -36), S(  82, -40), S(  40,  -1), S(  -6,  19),
+    S(   4, -18), S(  95, -28), S(  46,  12), S(   2,  21),
+    S(  47, -16), S( 120, -13), S(  95,  13), S(  39,  12),
+    S(   7, -36), S(  48,   0), S(  33,  15), S(  10,   8),
+    S(  10, -95), S(  76, -48), S( -18,  -8), S( -17,  -8),
+};
+
+int PSQT[32][SQUARE_NB];
 
 /* Pawn Evaluation Terms */
 
@@ -254,13 +318,13 @@ const int Tempo[COLOUR_NB] = { S(  25,  12), S( -25, -12) };
 
 #undef S
 
-int evaluateBoard(Board* board, PawnKingTable* pktable){
+int evaluateBoard(Board* board, PKTable* pktable){
 
     EvalInfo ei;
     int phase, factor, eval, pkeval;
 
     // Setup and perform all evaluations
-    initializeEvalInfo(&ei, board, pktable);
+    initEvalInfo(&ei, board, pktable);
     eval   = evaluatePieces(&ei, board);
     pkeval = ei.pkeval[WHITE] - ei.pkeval[BLACK];
     eval  += pkeval + board->psqtmat + Tempo[board->turn];
@@ -281,7 +345,7 @@ int evaluateBoard(Board* board, PawnKingTable* pktable){
 
     // Store a new Pawn King Entry if we did not have one
     if (ei.pkentry == NULL && pktable != NULL)
-        storePawnKingEntry(pktable, board->pkhash, ei.passedPawns, pkeval);
+        storePKEntry(pktable, board->pkhash, ei.passedPawns, pkeval);
 
     // Return the evaluation relative to the side to move
     return board->turn == WHITE ? eval : -eval;
@@ -289,31 +353,16 @@ int evaluateBoard(Board* board, PawnKingTable* pktable){
 
 int evaluatePieces(EvalInfo *ei, Board *board) {
 
-    int eval = 0;
+    int eval;
 
-    eval += evaluatePawns(ei, board, WHITE)
-          - evaluatePawns(ei, board, BLACK);
-
-    eval += evaluateKnights(ei, board, WHITE)
-          - evaluateKnights(ei, board, BLACK);
-
-    eval += evaluateBishops(ei, board, WHITE)
-          - evaluateBishops(ei, board, BLACK);
-
-    eval += evaluateRooks(ei, board, WHITE)
-          - evaluateRooks(ei, board, BLACK);
-
-    eval += evaluateQueens(ei, board, WHITE)
-          - evaluateQueens(ei, board, BLACK);
-
-    eval += evaluateKings(ei, board, WHITE)
-          - evaluateKings(ei, board, BLACK);
-
-    eval += evaluatePassedPawns(ei, board, WHITE)
-          - evaluatePassedPawns(ei, board, BLACK);
-
-    eval += evaluateThreats(ei, board, WHITE)
-          - evaluateThreats(ei, board, BLACK);
+    eval  =   evaluatePawns(ei, board, WHITE)   - evaluatePawns(ei, board, BLACK);
+    eval += evaluateKnights(ei, board, WHITE) - evaluateKnights(ei, board, BLACK);
+    eval += evaluateBishops(ei, board, WHITE) - evaluateBishops(ei, board, BLACK);
+    eval +=   evaluateRooks(ei, board, WHITE)   - evaluateRooks(ei, board, BLACK);
+    eval +=  evaluateQueens(ei, board, WHITE)  - evaluateQueens(ei, board, BLACK);
+    eval +=   evaluateKings(ei, board, WHITE)   - evaluateKings(ei, board, BLACK);
+    eval +=  evaluatePassed(ei, board, WHITE)  - evaluatePassed(ei, board, BLACK);
+    eval += evaluateThreats(ei, board, WHITE) - evaluateThreats(ei, board, BLACK);
 
     return eval;
 }
@@ -348,7 +397,7 @@ int evaluatePawns(EvalInfo *ei, Board *board, int colour) {
         // Pop off the next pawn
         sq = poplsb(&tempPawns);
         if (TRACE) T.PawnValue[US]++;
-        if (TRACE) T.PawnPSQT32[relativeSquare32(sq, US)][US]++;
+        if (TRACE) T.PawnPSQT32[relativeSquare32(US, sq)][US]++;
 
         uint64_t stoppers    = enemyPawns & passedPawnMasks(US, sq);
         uint64_t threats     = enemyPawns & pawnAttacks(US, sq);
@@ -390,8 +439,8 @@ int evaluatePawns(EvalInfo *ei, Board *board, int colour) {
 
         // Apply a bonus if the pawn is connected and not backward
         else if (pawnConnectedMasks(US, sq) & myPawns) {
-            pkeval += PawnConnected32[relativeSquare32(sq, US)];
-            if (TRACE) T.PawnConnected32[relativeSquare32(sq, US)][US]++;
+            pkeval += PawnConnected32[relativeSquare32(US, sq)];
+            if (TRACE) T.PawnConnected32[relativeSquare32(US, sq)][US]++;
         }
     }
 
@@ -418,7 +467,7 @@ int evaluateKnights(EvalInfo *ei, Board *board, int colour) {
         // Pop off the next knight
         sq = poplsb(&tempKnights);
         if (TRACE) T.KnightValue[US]++;
-        if (TRACE) T.KnightPSQT32[relativeSquare32(sq, US)][US]++;
+        if (TRACE) T.KnightPSQT32[relativeSquare32(US, sq)][US]++;
 
         // Compute possible attacks and store off information for king safety
         attacks = knightAttacks(sq);
@@ -483,7 +532,7 @@ int evaluateBishops(EvalInfo *ei, Board *board, int colour) {
         // Pop off the next Bishop
         sq = poplsb(&tempBishops);
         if (TRACE) T.BishopValue[US]++;
-        if (TRACE) T.BishopPSQT32[relativeSquare32(sq, US)][US]++;
+        if (TRACE) T.BishopPSQT32[relativeSquare32(US, sq)][US]++;
 
         // Compute possible attacks and store off information for king safety
         attacks = bishopAttacks(sq, ei->occupiedMinusBishops[US]);
@@ -548,7 +597,7 @@ int evaluateRooks(EvalInfo *ei, Board *board, int colour) {
         // Pop off the next rook
         sq = poplsb(&tempRooks);
         if (TRACE) T.RookValue[US]++;
-        if (TRACE) T.RookPSQT32[relativeSquare32(sq, US)][US]++;
+        if (TRACE) T.RookPSQT32[relativeSquare32(US, sq)][US]++;
 
         // Compute possible attacks and store off information for king safety
         attacks = rookAttacks(sq, ei->occupiedMinusRooks[US]);
@@ -606,7 +655,7 @@ int evaluateQueens(EvalInfo *ei, Board *board, int colour) {
         // Pop off the next queen
         sq = poplsb(&tempQueens);
         if (TRACE) T.QueenValue[US]++;
-        if (TRACE) T.QueenPSQT32[relativeSquare32(sq, US)][US]++;
+        if (TRACE) T.QueenPSQT32[relativeSquare32(US, sq)][US]++;
 
         // Compute possible attacks and store off information for king safety
         attacks = rookAttacks(sq, ei->occupiedMinusRooks[US])
@@ -651,7 +700,7 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
     int kingRank = rankOf(kingSq);
 
     if (TRACE) T.KingValue[US]++;
-    if (TRACE) T.KingPSQT32[relativeSquare32(kingSq, US)][US]++;
+    if (TRACE) T.KingPSQT32[relativeSquare32(US, kingSq)][US]++;
 
     // Bonus for our pawns and minors sitting within our king area
     count = popcount(myDefenders & ei->kingAreas[US]);
@@ -738,7 +787,7 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
     return eval;
 }
 
-int evaluatePassedPawns(EvalInfo* ei, Board* board, int colour){
+int evaluatePassed(EvalInfo* ei, Board* board, int colour){
 
     const int US = colour, THEM = !colour;
 
@@ -893,7 +942,7 @@ int evaluateScaleFactor(Board *board) {
     return SCALE_NORMAL;
 }
 
-void initializeEvalInfo(EvalInfo* ei, Board* board, PawnKingTable* pktable){
+void initEvalInfo(EvalInfo* ei, Board* board, PKTable* pktable) {
 
     uint64_t white   = board->colours[WHITE];
     uint64_t black   = board->colours[BLACK];
@@ -937,8 +986,34 @@ void initializeEvalInfo(EvalInfo* ei, Board* board, PawnKingTable* pktable){
     ei->kingAttackersCount[WHITE]  = ei->kingAttackersCount[BLACK]  = 0;
     ei->kingAttackersWeight[WHITE] = ei->kingAttackersWeight[BLACK] = 0;
 
-    ei->pkentry       =     pktable == NULL ? NULL : getPawnKingEntry(pktable, board->pkhash);
+    ei->pkentry       =     pktable == NULL ? NULL : getPKEntry(pktable, board->pkhash);
     ei->passedPawns   = ei->pkentry == NULL ? 0ull : ei->pkentry->passed;
     ei->pkeval[WHITE] = ei->pkentry == NULL ? 0    : ei->pkentry->eval;
     ei->pkeval[BLACK] = ei->pkentry == NULL ? 0    : 0;
+}
+
+void initEval() {
+
+    // Init a normalized 64-length PSQT for the evaluation which
+    // combines the Piece Values with the original PSQT Values
+
+    for (int sq = 0; sq < SQUARE_NB; sq++) {
+
+        const int w32 = relativeSquare32(WHITE, sq);
+        const int b32 = relativeSquare32(BLACK, sq);
+
+        PSQT[WHITE_PAWN  ][sq] = +PawnValue   +   PawnPSQT32[w32];
+        PSQT[WHITE_KNIGHT][sq] = +KnightValue + KnightPSQT32[w32];
+        PSQT[WHITE_BISHOP][sq] = +BishopValue + BishopPSQT32[w32];
+        PSQT[WHITE_ROOK  ][sq] = +RookValue   +   RookPSQT32[w32];
+        PSQT[WHITE_QUEEN ][sq] = +QueenValue  +  QueenPSQT32[w32];
+        PSQT[WHITE_KING  ][sq] = +KingValue   +   KingPSQT32[w32];
+
+        PSQT[BLACK_PAWN  ][sq] = -PawnValue   -   PawnPSQT32[b32];
+        PSQT[BLACK_KNIGHT][sq] = -KnightValue - KnightPSQT32[b32];
+        PSQT[BLACK_BISHOP][sq] = -BishopValue - BishopPSQT32[b32];
+        PSQT[BLACK_ROOK  ][sq] = -RookValue   -   RookPSQT32[b32];
+        PSQT[BLACK_QUEEN ][sq] = -QueenValue  -  QueenPSQT32[b32];
+        PSQT[BLACK_KING  ][sq] = -KingValue   -   KingPSQT32[b32];
+    }
 }

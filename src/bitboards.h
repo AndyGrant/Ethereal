@@ -56,6 +56,7 @@ int mirrorFile(int file);
 int rankOf(int sq);
 int relativeRankOf(int colour, int sq);
 int square(int rank, int file);
+int relativeSquare32(int colour, int sq);
 
 int frontmost(int colour, uint64_t bb);
 int backmost(int colour, uint64_t bb);

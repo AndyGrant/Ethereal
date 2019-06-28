@@ -58,7 +58,7 @@ unsigned tablebasesProbeWDL(Board *board, int depth, int height) {
     if (    height == 0
         ||  board->epSquare != -1
         ||  board->castleRooks != 0
-        ||  board->fiftyMoveRule != 0
+        ||  board->halfMoveCounter != 0
         ||  cardinality > (int)TB_LARGEST
         || (cardinality == (int)TB_LARGEST && depth < (int)TB_PROBE_DEPTH))
         return TB_RESULT_FAILED;
@@ -72,7 +72,7 @@ unsigned tablebasesProbeWDL(Board *board, int depth, int height) {
         board->pieces[BISHOP],
         board->pieces[KNIGHT],
         board->pieces[PAWN  ],
-        board->fiftyMoveRule,
+        board->halfMoveCounter,
         board->castleRooks,
         board->epSquare == -1 ? 0 : board->epSquare,
         board->turn == WHITE ? 1 : 0
@@ -99,7 +99,7 @@ int tablebasesProbeDTZ(Board *board, uint16_t *move) {
         board->pieces[BISHOP],
         board->pieces[KNIGHT],
         board->pieces[PAWN  ],
-        board->fiftyMoveRule,
+        board->halfMoveCounter,
         board->castleRooks,
         board->epSquare == -1 ? 0 : board->epSquare,
         board->turn == WHITE ? 1 : 0,
