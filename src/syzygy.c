@@ -79,7 +79,7 @@ unsigned tablebasesProbeWDL(Board *board, int depth, int height) {
     );
 }
 
-int tablebasesProbeDTZ(Board *board, uint16_t *move) {
+int tablebasesProbeDTZ(Board *board, uint16_t *best, uint16_t *ponder) {
 
     int size = 0;
     uint16_t moves[MAX_MOVES];
@@ -126,30 +126,34 @@ int tablebasesProbeDTZ(Board *board, uint16_t *move) {
 
     // Normal Moves ( Syzygy does not support castling )
     if (ep == 0u && promo == 0u)
-        *move = MoveMake(from, to, NORMAL_MOVE);
+        *best = MoveMake(from, to, NORMAL_MOVE);
 
     // Enpass Moves. Fathom returns a to square, but in Ethereal board->epSquare
     // is not the square of the captured pawn, but the square that the capturing
     // pawn will be moving to. Thus, we ignore Fathom's to value to be safe
     else if (ep != 0u)
-        *move = MoveMake(from, board->epSquare, ENPASS_MOVE);
+        *best = MoveMake(from, board->epSquare, ENPASS_MOVE);
 
     // Promotion Moves. Fathom has the inverted order of our promotion
     // flags. Thus, four minus the flag converts to our representation.
     // Also, we shift by 14 to actually match the flags we use in Ethereal
     else if (promo != 0u)
-        *move = MoveMake(from, to, PROMOTION_MOVE | ((4 - promo) << 14));
+        *best = MoveMake(from, to, PROMOTION_MOVE | ((4 - promo) << 14));
 
     // Unable to read back the move type. Setting the move to NONE_MOVE
     // ensures that we will not illegally return the move to the interface
     else
-        *move = NONE_MOVE, assert(0);
+        *best = NONE_MOVE, assert(0);
 
     // Verify the legality of the parsed move as a final safety check
     genAllLegalMoves(board, moves, &size);
-    for (int i = 0; i < size; i++)
-        if (moves[i] == *move)
-            return uciReportTBRoot(board, *move, wdl, dtz), 1;
+    for (int i = 0; i < size; i++) {
+        if (moves[i] == *best) {
+            uciReportTBRoot(board, *best, wdl, dtz);
+            *ponder = NONE_MOVE;
+            return 1;
+        }
+    }
 
     // Something went wrong, but as long as we pretend
     // we failed the probe then nothing is going to break

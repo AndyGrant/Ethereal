@@ -280,6 +280,60 @@ void printBoard(Board *board) {
     printf("\n%s\n\n", fen);
 }
 
+int boardHasNonPawnMaterial(Board *board, int turn) {
+    uint64_t friendly = board->colours[turn];
+    uint64_t kings = board->pieces[KING];
+    uint64_t pawns = board->pieces[PAWN];
+    return (friendly & (kings | pawns)) != friendly;
+}
+
+int boardIsDrawn(Board *board, int height) {
+
+    // Drawn if any of the three possible cases
+    return boardDrawnByFiftyMoveRule(board)
+        || boardDrawnByRepetition(board, height)
+        || boardDrawnByInsufficientMaterial(board);
+}
+
+int boardDrawnByFiftyMoveRule(Board *board) {
+
+    // Fifty move rule triggered. BUG: We do not account for the case
+    // when the fifty move rule occurs as checkmate is delivered, which
+    // should not be considered a drawn position, but a checkmated one.
+    return board->halfMoveCounter > 99;
+}
+
+int boardDrawnByRepetition(Board *board, int height) {
+
+    int reps = 0;
+
+    // Look through hash histories for our moves
+    for (int i = board->numMoves - 2; i >= 0; i -= 2) {
+
+        // No draw can occur before a zeroing move
+        if (i < board->numMoves - board->halfMoveCounter)
+            break;
+
+        // Check for matching hash with a two fold after the root,
+        // or a three fold which occurs in part before the root move
+        if (    board->history[i] == board->hash
+            && (i > board->numMoves - height || ++reps == 2))
+            return 1;
+    }
+
+    return 0;
+}
+
+int boardDrawnByInsufficientMaterial(Board *board) {
+
+    // Check for KvK, KvN, KvB, and KvNN.
+
+    return !(board->pieces[PAWN] | board->pieces[ROOK] | board->pieces[QUEEN])
+        && (!several(board->colours[WHITE]) || !several(board->colours[BLACK]))
+        && (    !several(board->pieces[KNIGHT] | board->pieces[BISHOP])
+            || (!board->pieces[BISHOP] && popcount(board->pieces[KNIGHT]) <= 2));
+}
+
 uint64_t perft(Board *board, int depth) {
 
     Undo undo[1];
@@ -335,64 +389,4 @@ void runBenchmark(Thread *threads, int depth) {
     printf("Time  : %dms\n", (int)(end - start));
     printf("Nodes : %"PRIu64"\n", nodes);
     printf("NPS   : %d\n", (int)(nodes / ((end - start) / 1000.0)));
-}
-
-int boardIsDrawn(Board *board, int height) {
-
-    // Drawn if any of the three possible cases
-    return drawnByFiftyMoveRule(board)
-        || drawnByRepetition(board, height)
-        || drawnByInsufficientMaterial(board);
-}
-
-int drawnByFiftyMoveRule(Board *board) {
-
-    // Fifty move rule triggered. BUG: We do not account for the case
-    // when the fifty move rule occurs as checkmate is delivered, which
-    // should not be considered a drawn position, but a checkmated one.
-    return board->halfMoveCounter > 99;
-}
-
-int drawnByRepetition(Board *board, int height) {
-
-    int reps = 0;
-
-    // Look through hash histories for our moves
-    for (int i = board->numMoves - 2; i >= 0; i -= 2) {
-
-        // No draw can occur before a zeroing move
-        if (i < board->numMoves - board->halfMoveCounter)
-            break;
-
-        // Check for matching hash with a two fold after the root,
-        // or a three fold which occurs in part before the root move
-        if (    board->history[i] == board->hash
-            && (i > board->numMoves - height || ++reps == 2))
-            return 1;
-    }
-
-    return 0;
-}
-
-int drawnByInsufficientMaterial(Board *board) {
-
-    // No draw by insufficient material with pawns, rooks, or queens
-    if (board->pieces[PAWN] | board->pieces[ROOK] | board->pieces[QUEEN])
-        return 0;
-
-    // Check for KvK, KvN, KvB, and KvKNN (White is K)
-    if (!several(board->colours[WHITE])) {
-        if (   !several(board->pieces[KNIGHT] | board->pieces[BISHOP])
-            ||(!board->pieces[BISHOP] && popcount(board->pieces[KNIGHT]) <= 2))
-            return 1;
-    }
-
-    // Check for KvK, KvN, KvB, and KvKNN (Black is K)
-    else if (!several(board->colours[BLACK])) {
-        if (   !several(board->pieces[KNIGHT] | board->pieces[BISHOP])
-            ||(!board->pieces[BISHOP] && popcount(board->pieces[KNIGHT]) <= 2))
-            return 1;
-    }
-
-    return 0;
 }

@@ -16,8 +16,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _TRANSPOSITON_H
-#define _TRANSPOSITON_H
+#pragma once
 
 #include <stdint.h>
 
@@ -30,24 +29,34 @@ enum {
     BOUND_EXACT = 3,
 };
 
+enum {
+    TT_MASK_BOUND = 0x03,
+    TT_MASK_AGE   = 0xFC,
+    TT_BUCKET_NB  = 3,
+};
+
+enum {
+    PKT_KEY_SIZE   = 16,
+    PKT_SIZE       = 1 << PKT_KEY_SIZE,
+    PKT_HASH_SHIFT = 64 - PKT_KEY_SIZE
+};
+
 struct TTEntry {
     int8_t depth;
     uint8_t generation;
-    int16_t eval;
-    int16_t value;
-    uint16_t move;
-    uint16_t hash16;
+    int16_t eval, value;
+    uint16_t move, hash16;
 };
 
 struct TTBucket {
-    TTEntry slots[3];
+    TTEntry slots[TT_BUCKET_NB];
     uint16_t padding;
 };
 
 struct TTable {
     TTBucket *buckets;
-    uint8_t generation;
     uint64_t hashMask;
+    uint8_t generation;
 };
 
 struct PKEntry {
@@ -57,17 +66,17 @@ struct PKEntry {
 };
 
 struct PKTable {
-    PKEntry entries[0x10000];
+    PKEntry entries[PKT_SIZE];
 };
 
 void initTT(uint64_t megabytes);
 void updateTT();
 void clearTT();
 int hashfullTT();
+int valueFromTT(int value, int height);
+int valueToTT(int value, int height);
 int getTTEntry(uint64_t hash, uint16_t *move, int *value, int *eval, int *depth, int *bound);
 void storeTTEntry(uint64_t hash, uint16_t move, int value, int eval, int depth, int bound);
 
 PKEntry* getPKEntry(PKTable *pktable, uint64_t pkhash);
 void storePKEntry(PKTable *pktable, uint64_t pkhash, uint64_t passed, int eval);
-
-#endif

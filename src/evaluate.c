@@ -16,29 +16,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <math.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "attacks.h"
-#include "board.h"
 #include "bitboards.h"
+#include "board.h"
 #include "evaluate.h"
 #include "masks.h"
-#include "movegen.h"
 #include "transposition.h"
 #include "types.h"
 
-#ifdef TUNE
-    const int TRACE = 1;
-    const EvalTrace EmptyTrace;
-    EvalTrace T;
-#else
-    const int TRACE = 0;
-    EvalTrace T;
-#endif
+EvalTrace T, EmptyTrace;
+int PSQT[32][SQUARE_NB];
 
 #define S(mg, eg) (MakeScore((mg), (eg)))
 
@@ -118,8 +108,6 @@ const int KingPSQT32[32] = {
     S(   7, -36), S(  48,   0), S(  33,  15), S(  10,   8),
     S(  10, -95), S(  76, -48), S( -18,  -8), S( -17,  -8),
 };
-
-int PSQT[32][SQUARE_NB];
 
 /* Pawn Evaluation Terms */
 
@@ -318,7 +306,7 @@ const int Tempo = 20;
 
 #undef S
 
-int evaluateBoard(Board* board, PKTable* pktable){
+int evaluateBoard(Board *board, PKTable *pktable) {
 
     EvalInfo ei;
     int phase, factor, eval, pkeval;
@@ -345,7 +333,7 @@ int evaluateBoard(Board* board, PKTable* pktable){
 
     // Factor in the Tempo after interpolation and scaling, so that
     // in the search we can assume that if a null move is made, then
-    // the eval becomes -eval + 2 * Tempo
+    // then `eval = last_eval + 2 * Tempo`
     eval += board->turn == WHITE ? Tempo : -Tempo;
 
     // Store a new Pawn King Entry if we did not have one
@@ -385,7 +373,7 @@ int evaluatePawns(EvalInfo *ei, Board *board, int colour) {
     ei->attacked[US]        |= ei->pawnAttacks[US];
     ei->attackedBy[US][PAWN] = ei->pawnAttacks[US];
 
-    // Update attacker counts for King Safety computation
+    // Update King Safety calculations
     attacks = ei->pawnAttacks[US] & ei->kingAreas[THEM];
     ei->kingAttacksCount[US] += popcount(attacks);
 
@@ -500,9 +488,8 @@ int evaluateKnights(EvalInfo *ei, Board *board, int colour) {
         eval += KnightMobility[count];
         if (TRACE) T.KnightMobility[count][US]++;
 
-        // Update for King Safety calculation
-        attacks = attacks & ei->kingAreas[THEM];
-        if (attacks) {
+        // Update King Safety calculations
+        if ((attacks &= ei->kingAreas[THEM])) {
             ei->kingAttacksCount[US] += popcount(attacks);
             ei->kingAttackersCount[US] += 1;
             ei->kingAttackersWeight[US] += KSAttackWeight[KNIGHT];
@@ -519,7 +506,6 @@ int evaluateBishops(EvalInfo *ei, Board *board, int colour) {
     int sq, defended, count, eval = 0;
     uint64_t attacks;
 
-    uint64_t myPawns     = board->pieces[PAWN  ] & board->colours[US  ];
     uint64_t enemyPawns  = board->pieces[PAWN  ] & board->colours[THEM];
     uint64_t tempBishops = board->pieces[BISHOP] & board->colours[US  ];
 
@@ -547,7 +533,7 @@ int evaluateBishops(EvalInfo *ei, Board *board, int colour) {
 
         // Apply a penalty for the bishop based on number of rammed pawns
         // of our own colour, which reside on the same shade of square as the bishop
-        count = popcount(ei->rammedPawns[US] & (testBit(WHITE_SQUARES, sq) ? WHITE_SQUARES : BLACK_SQUARES));
+        count = popcount(ei->rammedPawns[US] & squaresOfMatchingColour(sq));
         eval += count * BishopRammedPawns;
         if (TRACE) T.BishopRammedPawns[US] += count;
 
@@ -561,7 +547,7 @@ int evaluateBishops(EvalInfo *ei, Board *board, int colour) {
         }
 
         // Apply a bonus if the bishop is behind a pawn
-        if (testBit(pawnAdvance((myPawns | enemyPawns), 0ull, THEM), sq)) {
+        if (testBit(pawnAdvance(board->pieces[PAWN], 0ull, THEM), sq)) {
             eval += BishopBehindPawn;
             if (TRACE) T.BishopBehindPawn[US]++;
         }
@@ -571,9 +557,8 @@ int evaluateBishops(EvalInfo *ei, Board *board, int colour) {
         eval += BishopMobility[count];
         if (TRACE) T.BishopMobility[count][US]++;
 
-        // Update for King Safety calculation
-        attacks = attacks & ei->kingAreas[THEM];
-        if (attacks) {
+        // Update King Safety calculations
+        if ((attacks &= ei->kingAreas[THEM])) {
             ei->kingAttacksCount[US] += popcount(attacks);
             ei->kingAttackersCount[US] += 1;
             ei->kingAttackersWeight[US] += KSAttackWeight[BISHOP];
@@ -631,9 +616,8 @@ int evaluateRooks(EvalInfo *ei, Board *board, int colour) {
         eval += RookMobility[count];
         if (TRACE) T.RookMobility[count][US]++;
 
-        // Update for King Safety calculation
-        attacks = attacks & ei->kingAreas[THEM];
-        if (attacks) {
+        // Update King Safety calculations
+        if ((attacks &= ei->kingAreas[THEM])) {
             ei->kingAttacksCount[US] += popcount(attacks);
             ei->kingAttackersCount[US] += 1;
             ei->kingAttackersWeight[US] += KSAttackWeight[ROOK];
@@ -674,9 +658,8 @@ int evaluateQueens(EvalInfo *ei, Board *board, int colour) {
         eval += QueenMobility[count];
         if (TRACE) T.QueenMobility[count][US]++;
 
-        // Update for King Safety calculation
-        attacks = attacks & ei->kingAreas[THEM];
-        if (attacks) {
+        // Update King Safety calculations
+        if ((attacks &= ei->kingAreas[THEM])) {
             ei->kingAttacksCount[US] += popcount(attacks);
             ei->kingAttackersCount[US] += 1;
             ei->kingAttackersWeight[US] += KSAttackWeight[QUEEN];
@@ -696,19 +679,16 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
     uint64_t enemyPawns  = board->pieces[PAWN ] & board->colours[THEM];
     uint64_t enemyQueens = board->pieces[QUEEN] & board->colours[THEM];
 
-    uint64_t myDefenders  = (board->pieces[PAWN  ] & board->colours[US])
-                          | (board->pieces[KNIGHT] & board->colours[US])
-                          | (board->pieces[BISHOP] & board->colours[US]);
+    uint64_t defenders  = (board->pieces[PAWN  ] & board->colours[US])
+                        | (board->pieces[KNIGHT] & board->colours[US])
+                        | (board->pieces[BISHOP] & board->colours[US]);
 
     int kingSq = ei->kingSquare[US];
-    int kingFile = fileOf(kingSq);
-    int kingRank = rankOf(kingSq);
-
     if (TRACE) T.KingValue[US]++;
     if (TRACE) T.KingPSQT32[relativeSquare32(US, kingSq)][US]++;
 
     // Bonus for our pawns and minors sitting within our king area
-    count = popcount(myDefenders & ei->kingAreas[US]);
+    count = popcount(defenders & ei->kingAreas[US]);
     eval += KingDefenders[count];
     if (TRACE) T.KingDefenders[count][US]++;
 
@@ -767,20 +747,20 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
     // Evaluate King Shelter & King Storm threat by looking at the file of our King,
     // as well as the adjacent files. When looking at pawn distances, we will use a
     // distance of 7 to denote a missing pawn, since distance 7 is not possible otherwise.
-    for (int file = MAX(0, kingFile - 1); file <= MIN(FILE_NB - 1, kingFile + 1); file++) {
+    for (int file = MAX(0, fileOf(kingSq) - 1); file <= MIN(FILE_NB - 1, fileOf(kingSq) + 1); file++) {
 
         // Find closest friendly pawn at or above our King on a given file
-        uint64_t ours = myPawns & Files[file] & forwardRanksMasks(US, kingRank);
-        int ourDist = !ours ? 7 : abs(kingRank - rankOf(backmost(US, ours)));
+        uint64_t ours = myPawns & Files[file] & forwardRanksMasks(US, rankOf(kingSq));
+        int ourDist = !ours ? 7 : abs(rankOf(kingSq) - rankOf(backmost(US, ours)));
 
         // Find closest enemy pawn at or above our King on a given file
-        uint64_t theirs = enemyPawns & Files[file] & forwardRanksMasks(US, kingRank);
-        int theirDist = !theirs ? 7 : abs(kingRank - rankOf(backmost(US, theirs)));
+        uint64_t theirs = enemyPawns & Files[file] & forwardRanksMasks(US, rankOf(kingSq));
+        int theirDist = !theirs ? 7 : abs(rankOf(kingSq) - rankOf(backmost(US, theirs)));
 
         // Evaluate King Shelter using pawn distance. Use seperate evaluation
         // depending on the file, and if we are looking at the King's file
-        ei->pkeval[US] += KingShelter[file == kingFile][file][ourDist];
-        if (TRACE) T.KingShelter[file == kingFile][file][ourDist][US]++;
+        ei->pkeval[US] += KingShelter[file == fileOf(kingSq)][file][ourDist];
+        if (TRACE) T.KingShelter[file == fileOf(kingSq)][file][ourDist][US]++;
 
         // Evaluate King Storm using enemy pawn distance. Use a seperate evaluation
         // depending on the file, and if the opponent's pawn is blocked by our own
@@ -792,7 +772,7 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
     return eval;
 }
 
-int evaluatePassed(EvalInfo* ei, Board* board, int colour){
+int evaluatePassed(EvalInfo *ei, Board *board, int colour) {
 
     const int US = colour, THEM = !colour;
 
@@ -803,7 +783,7 @@ int evaluatePassed(EvalInfo* ei, Board* board, int colour){
     uint64_t occupied  = board->colours[WHITE] | board->colours[BLACK];
 
     // Evaluate each passed pawn
-    while (tempPawns){
+    while (tempPawns) {
 
         // Pop off the next passed Pawn
         sq = poplsb(&tempPawns);
@@ -861,7 +841,7 @@ int evaluateThreats(EvalInfo *ei, Board *board, int colour) {
     uint64_t poorlyDefended = (ei->attacked[THEM] & ~ei->attacked[US])
                             | (ei->attackedBy2[THEM] & ~ei->attackedBy2[US] & ~ei->attackedBy[US][PAWN]);
 
-    // A friendly minor / major is overloaded if attacked and defended by exactly one
+    // A friendly minor or major is overloaded if attacked and defended by exactly one
     uint64_t overloaded = (knights | bishops | rooks | queens)
                         & ei->attacked[  US] & ~ei->attackedBy2[  US]
                         & ei->attacked[THEM] & ~ei->attackedBy2[THEM];
@@ -919,6 +899,9 @@ int evaluateThreats(EvalInfo *ei, Board *board, int colour) {
 
 int evaluateScaleFactor(Board *board) {
 
+    // Scale endgames based on remaining material. Currently, we only
+    // look for OCB endgames that include only one Knight or one Rook
+
     uint64_t white   = board->colours[WHITE];
     uint64_t black   = board->colours[BLACK];
     uint64_t knights = board->pieces[KNIGHT];
@@ -926,9 +909,9 @@ int evaluateScaleFactor(Board *board) {
     uint64_t rooks   = board->pieces[ROOK  ];
     uint64_t queens  = board->pieces[QUEEN ];
 
-    if (    onlyOne(white & bishops)
-        &&  onlyOne(black & bishops)
-        &&  onlyOne(bishops & WHITE_SQUARES)) {
+    if (   onlyOne(white & bishops)
+        && onlyOne(black & bishops)
+        && onlyOne(bishops & WHITE_SQUARES)) {
 
         if (!(knights | rooks | queens))
             return SCALE_OCB_BISHOPS_ONLY;
@@ -947,50 +930,54 @@ int evaluateScaleFactor(Board *board) {
     return SCALE_NORMAL;
 }
 
-void initEvalInfo(EvalInfo* ei, Board* board, PKTable* pktable) {
+void initEvalInfo(EvalInfo *ei, Board *board, PKTable *pktable) {
 
     uint64_t white   = board->colours[WHITE];
     uint64_t black   = board->colours[BLACK];
-    uint64_t pawns   = board->pieces[PAWN];
-    uint64_t bishops = board->pieces[BISHOP];
-    uint64_t rooks   = board->pieces[ROOK];
-    uint64_t queens  = board->pieces[QUEEN];
-    uint64_t kings   = board->pieces[KING];
 
-    uint64_t whitePawns = white & pawns;
-    uint64_t blackPawns = black & pawns;
+    uint64_t pawns   = board->pieces[PAWN  ];
+    uint64_t bishops = board->pieces[BISHOP] | board->pieces[QUEEN];
+    uint64_t rooks   = board->pieces[ROOK  ] | board->pieces[QUEEN];
+    uint64_t kings   = board->pieces[KING  ];
 
-    int wKingSq = ei->kingSquare[WHITE] = getlsb(white & kings);
-    int bKingSq = ei->kingSquare[BLACK] = getlsb(black & kings);
+    // Save some general information about the pawn structure for later
+    ei->pawnAttacks[WHITE]  = pawnAttackSpan(white & pawns, ~0ull, WHITE);
+    ei->pawnAttacks[BLACK]  = pawnAttackSpan(black & pawns, ~0ull, BLACK);
+    ei->rammedPawns[WHITE]  = pawnAdvance(black & pawns, ~(white & pawns), BLACK);
+    ei->rammedPawns[BLACK]  = pawnAdvance(white & pawns, ~(black & pawns), WHITE);
+    ei->blockedPawns[WHITE] = pawnAdvance(white | black, ~(white & pawns), BLACK);
+    ei->blockedPawns[BLACK] = pawnAdvance(white | black, ~(black & pawns), WHITE);
 
-    ei->pawnAttacks[WHITE] = pawnAttackSpan(whitePawns, ~0ull, WHITE);
-    ei->pawnAttacks[BLACK] = pawnAttackSpan(blackPawns, ~0ull, BLACK);
+    // Compute an area for evaluating our King's safety.
+    // The definition of the King Area can be found in masks.c
+    ei->kingSquare[WHITE] = getlsb(white & kings);
+    ei->kingSquare[BLACK] = getlsb(black & kings);
+    ei->kingAreas[WHITE] = kingAreaMasks(WHITE, ei->kingSquare[WHITE]);
+    ei->kingAreas[BLACK] = kingAreaMasks(BLACK, ei->kingSquare[BLACK]);
 
-    ei->rammedPawns[WHITE] = pawnAdvance(blackPawns, ~whitePawns, BLACK);
-    ei->rammedPawns[BLACK] = pawnAdvance(whitePawns, ~blackPawns, WHITE);
-
-    ei->blockedPawns[WHITE] = pawnAdvance(white | black, ~whitePawns, BLACK);
-    ei->blockedPawns[BLACK] = pawnAdvance(white | black, ~blackPawns, WHITE);
-
-    ei->kingAreas[WHITE] = kingAreaMasks(WHITE, wKingSq);
-    ei->kingAreas[BLACK] = kingAreaMasks(BLACK, bKingSq);
-
+    // Exclude squares attacked by our opponents, our blocked pawns, and our own King
     ei->mobilityAreas[WHITE] = ~(ei->pawnAttacks[BLACK] | (white & kings) | ei->blockedPawns[WHITE]);
     ei->mobilityAreas[BLACK] = ~(ei->pawnAttacks[WHITE] | (black & kings) | ei->blockedPawns[BLACK]);
 
-    ei->attacked[WHITE] = ei->attackedBy[WHITE][KING] = kingAttacks(wKingSq);
-    ei->attacked[BLACK] = ei->attackedBy[BLACK][KING] = kingAttacks(bKingSq);
+    // Init part of the attack tables. By doing this step here, evaluatePawns()
+    // can start by setting up the attackedBy2 table, since King attacks are resolved
+    ei->attacked[WHITE] = ei->attackedBy[WHITE][KING] = kingAttacks(ei->kingSquare[WHITE]);
+    ei->attacked[BLACK] = ei->attackedBy[BLACK][KING] = kingAttacks(ei->kingSquare[BLACK]);
 
-    ei->occupiedMinusBishops[WHITE] = (white | black) ^ (white & (bishops | queens));
-    ei->occupiedMinusBishops[BLACK] = (white | black) ^ (black & (bishops | queens));
+    // For mobility, we allow bishops and queens to attack through eachother
+    ei->occupiedMinusBishops[WHITE] = (white | black) ^ (white & bishops);
+    ei->occupiedMinusBishops[BLACK] = (white | black) ^ (black & bishops);
 
-    ei->occupiedMinusRooks[WHITE] = (white | black) ^ (white & (rooks | queens));
-    ei->occupiedMinusRooks[BLACK] = (white | black) ^ (black & (rooks | queens));
+    // For mobility, we allow rooks and queens to attack through eachother
+    ei->occupiedMinusRooks[WHITE] = (white | black) ^ (white & rooks);
+    ei->occupiedMinusRooks[BLACK] = (white | black) ^ (black & rooks);
 
+    // Init all of the King Safety information
     ei->kingAttacksCount[WHITE]    = ei->kingAttacksCount[BLACK]    = 0;
     ei->kingAttackersCount[WHITE]  = ei->kingAttackersCount[BLACK]  = 0;
     ei->kingAttackersWeight[WHITE] = ei->kingAttackersWeight[BLACK] = 0;
 
+    // Try to read a hashed Pawn King Eval. Otherwise, start from scratch
     ei->pkentry       =     pktable == NULL ? NULL : getPKEntry(pktable, board->pkhash);
     ei->passedPawns   = ei->pkentry == NULL ? 0ull : ei->pkentry->passed;
     ei->pkeval[WHITE] = ei->pkentry == NULL ? 0    : ei->pkentry->eval;
@@ -1007,18 +994,18 @@ void initEval() {
         const int w32 = relativeSquare32(WHITE, sq);
         const int b32 = relativeSquare32(BLACK, sq);
 
-        PSQT[WHITE_PAWN  ][sq] = +PawnValue   +   PawnPSQT32[w32];
-        PSQT[WHITE_KNIGHT][sq] = +KnightValue + KnightPSQT32[w32];
-        PSQT[WHITE_BISHOP][sq] = +BishopValue + BishopPSQT32[w32];
-        PSQT[WHITE_ROOK  ][sq] = +RookValue   +   RookPSQT32[w32];
-        PSQT[WHITE_QUEEN ][sq] = +QueenValue  +  QueenPSQT32[w32];
-        PSQT[WHITE_KING  ][sq] = +KingValue   +   KingPSQT32[w32];
+        PSQT[WHITE_PAWN  ][sq] = + PawnValue   +   PawnPSQT32[w32];
+        PSQT[WHITE_KNIGHT][sq] = + KnightValue + KnightPSQT32[w32];
+        PSQT[WHITE_BISHOP][sq] = + BishopValue + BishopPSQT32[w32];
+        PSQT[WHITE_ROOK  ][sq] = + RookValue   +   RookPSQT32[w32];
+        PSQT[WHITE_QUEEN ][sq] = + QueenValue  +  QueenPSQT32[w32];
+        PSQT[WHITE_KING  ][sq] = + KingValue   +   KingPSQT32[w32];
 
-        PSQT[BLACK_PAWN  ][sq] = -PawnValue   -   PawnPSQT32[b32];
-        PSQT[BLACK_KNIGHT][sq] = -KnightValue - KnightPSQT32[b32];
-        PSQT[BLACK_BISHOP][sq] = -BishopValue - BishopPSQT32[b32];
-        PSQT[BLACK_ROOK  ][sq] = -RookValue   -   RookPSQT32[b32];
-        PSQT[BLACK_QUEEN ][sq] = -QueenValue  -  QueenPSQT32[b32];
-        PSQT[BLACK_KING  ][sq] = -KingValue   -   KingPSQT32[b32];
+        PSQT[BLACK_PAWN  ][sq] = - PawnValue   -   PawnPSQT32[b32];
+        PSQT[BLACK_KNIGHT][sq] = - KnightValue - KnightPSQT32[b32];
+        PSQT[BLACK_BISHOP][sq] = - BishopValue - BishopPSQT32[b32];
+        PSQT[BLACK_ROOK  ][sq] = - RookValue   -   RookPSQT32[b32];
+        PSQT[BLACK_QUEEN ][sq] = - QueenValue  -  QueenPSQT32[b32];
+        PSQT[BLACK_KING  ][sq] = - KingValue   -   KingPSQT32[b32];
     }
 }

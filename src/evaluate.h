@@ -16,10 +16,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _EVALUATE_H
-#define _EVALUATE_H
+#pragma once
+
+#include <stdint.h>
 
 #include "types.h"
+
+#ifdef TUNE
+    #define TRACE (1)
+#else
+    #define TRACE (0)
+#endif
 
 enum {
     SCALE_OCB_BISHOPS_ONLY =  64,
@@ -110,11 +117,8 @@ void initEvalInfo(EvalInfo *ei, Board *board, PKTable *pktable);
 void initEval();
 
 #define MakeScore(mg, eg) ((int)((unsigned int)(eg) << 16) + (mg))
-
 #define ScoreMG(s) ((int16_t)((uint16_t)((unsigned)((s)))))
 #define ScoreEG(s) ((int16_t)((uint16_t)((unsigned)((s) + 0x8000) >> 16)))
 
 extern int PSQT[32][SQUARE_NB];
 extern const int Tempo;
-
-#endif

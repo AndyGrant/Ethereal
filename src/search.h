@@ -16,22 +16,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _SEARCH_H
-#define _SEARCH_H
+#pragma once
 
 #include <stdint.h>
 
 #include "types.h"
 
 struct SearchInfo {
-    int depth;
-    int values[MAX_PLY];
-    uint16_t bestMoves[MAX_PLY];
-    uint16_t ponderMoves[MAX_PLY];
-    double startTime;
-    double idealUsage;
-    double maxAlloc;
-    double maxUsage;
+    int depth, values[MAX_PLY];
+    uint16_t bestMoves[MAX_PLY], ponderMoves[MAX_PLY];
+    double startTime, idealUsage, maxAlloc, maxUsage;
     int pvFactor;
 };
 
@@ -40,28 +34,14 @@ struct PVariation {
     int length;
 };
 
-
 void initSearch();
-
-void getBestMove(Thread* threads, Board* board, Limits* limits, uint16_t *best, uint16_t *ponder);
-
-void* iterativeDeepening(void* vthread);
-
-int aspirationWindow(Thread* thread, int depth, int lastValue);
-
-int search(Thread* thread, PVariation* pv, int alpha, int beta, int depth, int height);
-
-int qsearch(Thread* thread, PVariation* pv, int alpha, int beta, int height);
-
-int staticExchangeEvaluation(Board* board, uint16_t move, int threshold);
-
-int hasNonPawnMaterial(Board* board, int turn);
-
-int valueFromTT(int value, int height);
-
-int valueToTT(int value, int height);
-
-int moveIsSingular(Thread* thread, uint16_t ttMove, int ttValue, int depth, int height);
+void getBestMove(Thread *threads, Board *board, Limits *limits, uint16_t *best, uint16_t *ponder);
+void* iterativeDeepening(void *vthread);
+int aspirationWindow(Thread *thread, int depth, int lastValue);
+int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int height);
+int qsearch(Thread *thread, PVariation *pv, int alpha, int beta, int height);
+int staticExchangeEvaluation(Board *board, uint16_t move, int threshold);
+int moveIsSingular(Thread *thread, uint16_t ttMove, int ttValue, int depth, int height);
 
 static const int SMPCycles      = 16;
 static const int SkipSize[16]   = { 1, 1, 1, 2, 2, 2, 1, 3, 2, 2, 1, 3, 3, 2, 2, 1 };
@@ -110,5 +90,3 @@ static const int QSEEMargin = 1;
 static const int QFutilityMargin = 100;
 
 static const int SingularQuietLimit = 6;
-
-#endif
