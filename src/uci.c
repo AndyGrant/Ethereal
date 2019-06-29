@@ -218,12 +218,12 @@ void *uciGo(void *vthreadsgo) {
     while (IS_PONDERING);
 
     // Report best move ( we should always have one )
-    moveToString(board, bestMove, moveStr);
+    moveToString(bestMove, moveStr, board->chess960);
     printf("bestmove %s ", moveStr);
 
     // Report ponder move ( if we have one )
     if (ponderMove != NONE_MOVE) {
-        moveToString(board, ponderMove, moveStr);
+        moveToString(ponderMove, moveStr, board->chess960);
         printf("ponder %s", moveStr);
     }
 
@@ -316,7 +316,7 @@ void uciPosition(char *str, Board *board, int chess960) {
 
         // Find and apply the given move
         for (int i = 0; i < size; i++) {
-            moveToString(board, moves[i], testStr);
+            moveToString(moves[i], testStr, board->chess960);
             if (stringEquals(moveStr, testStr)) {
                 applyMove(board, moves[i], undo);
                 break;
@@ -368,7 +368,7 @@ void uciReport(Thread *threads, int alpha, int beta, int value) {
     // Iterate over the PV and print each move
     for (int i = 0; i < threads->pv.length; i++) {
         char moveStr[6];
-        moveToString(&threads->board, threads->pv.line[i], moveStr);
+        moveToString(threads->pv.line[i], moveStr, threads->board.chess960);
         printf("%s ", moveStr);
     }
 
@@ -391,9 +391,18 @@ void uciReportTBRoot(Board *board, uint16_t move, unsigned wdl, unsigned dtz) {
            MAX_PLY - 1, MAX_PLY - 1, score, 0);
 
     // Print out the given move
-    moveToString(board, move, moveStr);
+    moveToString(move, moveStr, board->chess960);
     puts(moveStr);
     fflush(stdout);
+}
+
+void uciReportCurrentMove(Board *board, uint16_t move, int currmove, int depth) {
+
+    char moveStr[6];
+    moveToString(move, moveStr, board->chess960);
+    printf("info depth %d currmove %s currmovenumber %d\n", depth, moveStr, currmove);
+    fflush(stdout);
+
 }
 
 int stringEquals(char *str1, char *str2) {

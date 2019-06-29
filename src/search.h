@@ -51,6 +51,8 @@ static const int WindowDepth   = 5;
 static const int WindowSize    = 14;
 static const int WindowTimerMS = 5000;
 
+static const int CurrmoveTimerMS = 10000;
+
 static const int RazorDepth = 1;
 static const int RazorMargin = 325;
 

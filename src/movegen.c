@@ -213,8 +213,8 @@ void genAllQuietMoves(Board *board, uint16_t *moves, int *size) {
 
         // Figure out which pieces are moving to which squares
         rook = poplsb(&castles), king = getlsb(myKings);
-        kingTo = square(rankOf(rook), rook > king ? 6 : 2);
-        rookTo = rook > king ? kingTo - 1 : kingTo + 1;
+        rookTo = castleRookTo(king, rook);
+        kingTo = castleKingTo(king, rook);
         attacked = 0;
 
         // Castle is illegal if we would go over a piece
@@ -231,7 +231,6 @@ void genAllQuietMoves(Board *board, uint16_t *moves, int *size) {
         if (attacked) continue;
 
         // All conditions have been met. Identify which side we are castling to
-        if (rook > king) moves[(*size)++] = MoveMake(king, kingTo, CASTLE_KING_MOVE);
-        if (rook < king) moves[(*size)++] = MoveMake(king, kingTo, CASTLE_QUEEN_MOVE);
+        moves[(*size)++] = MoveMake(king, rook, CASTLE_MOVE);
     }
 }

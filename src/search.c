@@ -425,9 +425,13 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
         // Apply move, skip if move is illegal
         if (!apply(thread, board, move, height))
             continue;
-
-        // Update counter of moves actually played
         played += 1;
+
+        // The UCI spec allows us to output information about the current move
+        // that we are going to search. We only do this from the main thread,
+        // and we wait a few seconds in order to avoid floiding the output
+        if (RootNode && !thread->index && elapsedTime(thread->info) > CurrmoveTimerMS)
+            uciReportCurrentMove(board, move, played, depth);
 
         // Step 14. Late Move Reductions. Compute the reduction,
         // allow the later steps to perform the reduced searches

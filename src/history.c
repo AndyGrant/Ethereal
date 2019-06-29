@@ -149,8 +149,8 @@ void getRefutationMoves(Thread *thread, int height, uint16_t *killer1, uint16_t 
 
     // Extract information from last move
     uint16_t previous = thread->moveStack[height-1];
-    int to = MoveTo(previous);
-    int piece = pieceType(thread->board.squares[to]);
+    int cmPiece = thread->pieceStack[height-1];
+    int cmTo = MoveTo(previous);
 
     // Set Killer Moves by height
     *killer1 = thread->killers[height][0];
@@ -158,5 +158,5 @@ void getRefutationMoves(Thread *thread, int height, uint16_t *killer1, uint16_t 
 
     // Set Counter Move if one exists
     if (previous == NONE_MOVE || previous == NULL_MOVE) *counter = NONE_MOVE;
-    else *counter = thread->cmtable[!thread->board.turn][piece][to];
+    else *counter = thread->cmtable[!thread->board.turn][cmPiece][cmTo];
 }

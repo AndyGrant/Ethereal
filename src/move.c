@@ -32,19 +32,18 @@
 #include "types.h"
 #include "zobrist.h"
 
-static int castleRookFrom(Board *board, uint16_t move) {
-    const uint64_t rooks = board->castleRooks & Ranks[rankOf(MoveFrom(move))];
-    return MoveCastleSide(move) == CASTLE_KING_SIDE ? getmsb(rooks) : getlsb(rooks);
-}
-
-static int castleRookTo(uint16_t move, int kingTo) {
-    return MoveCastleSide(move) == CASTLE_KING_SIDE ? kingTo - 1 : kingTo + 1;
-}
-
 static void updateCastleZobrist(Board *board, uint64_t oldRooks, uint64_t newRooks) {
     uint64_t diff = oldRooks ^ newRooks;
     while (diff)
         board->hash ^= ZobristCastleKeys[poplsb(&diff)];
+}
+
+int castleKingTo(int king, int rook) {
+    return square(rankOf(king), (rook > king) ? 6 : 2);
+}
+
+int castleRookTo(int king, int rook) {
+    return square(rankOf(king), (rook > king) ? 5 : 3);
 }
 
 int apply(Thread *thread, Board *board, uint16_t move, int height) {
@@ -56,27 +55,27 @@ int apply(Thread *thread, Board *board, uint16_t move, int height) {
         return 1;
     }
 
+    // Track some move information for history lookups
+    thread->moveStack[height] = move;
+    thread->pieceStack[height] = pieceType(board->squares[MoveFrom(move)]);
+
     // Apply the move and reject if illegal
     applyMove(board, move, &thread->undoStack[height]);
     if (!moveWasLegal(board))
         return revertMove(board, move, &thread->undoStack[height]), 0;
 
-    // Keep history on legal moves
-    thread->moveStack[height] = move;
-    thread->pieceStack[height] = pieceType(board->squares[MoveTo(move)]);
     return 1;
 }
 
 void applyLegal(Thread *thread, Board *board, uint16_t move, int height) {
 
+    // Track some move information for history lookups
+    thread->moveStack[height] = move;
+    thread->pieceStack[height] = pieceType(board->squares[MoveFrom(move)]);
+
     // Assumed that this move is legal
     applyMove(board, move, &thread->undoStack[height]);
     assert(moveWasLegal(board));
-
-    // Keep history on legal moves
-    thread->moveStack[height] = move;
-    thread->pieceStack[height] = pieceType(board->squares[MoveTo(move)]);
-
 }
 
 void applyMove(Board *board, uint16_t move, Undo *undo) {
@@ -180,10 +179,10 @@ void applyNormalMove(Board *board, uint16_t move, Undo *undo) {
 void applyCastleMove(Board *board, uint16_t move, Undo *undo) {
 
     const int from = MoveFrom(move);
-    const int to = MoveTo(move);
+    const int rFrom = MoveTo(move);
 
-    const int rFrom = castleRookFrom(board, move);
-    const int rTo = castleRookTo(move, to);
+    const int to = castleKingTo(from, rFrom);
+    const int rTo = castleRookTo(from, rFrom);
 
     const int fromPiece = makePiece(KING, board->turn);
     const int rFromPiece = makePiece(ROOK, board->turn);
@@ -371,16 +370,17 @@ void revertMove(Board *board, uint16_t move, Undo *undo) {
 
     else if (MoveType(move) == CASTLE_MOVE) {
 
-        const int rFrom = castleRookFrom(board, move);
-        const int rTo = castleRookTo(move, to);
+        const int rFrom = to;
+        const int rTo = castleRookTo(from, rFrom);
+        const int _to = castleKingTo(from, rFrom);
 
-        board->pieces[KING]         ^= (1ull << from) ^ (1ull << to);
-        board->colours[board->turn] ^= (1ull << from) ^ (1ull << to);
+        board->pieces[KING]         ^= (1ull << from) ^ (1ull << _to);
+        board->colours[board->turn] ^= (1ull << from) ^ (1ull << _to);
 
         board->pieces[ROOK]         ^= (1ull << rFrom) ^ (1ull << rTo);
         board->colours[board->turn] ^= (1ull << rFrom) ^ (1ull << rTo);
 
-        board->squares[to] = EMPTY;
+        board->squares[_to] = EMPTY;
         board->squares[rTo] = EMPTY;
 
         board->squares[from] = makePiece(KING, board->turn);
@@ -463,8 +463,7 @@ int moveEstimatedValue(Board *board, uint16_t move) {
     else if (MoveType(move) == ENPASS_MOVE)
         value = SEEPieceValues[PAWN];
 
-    // During FRC, we may encode a castle move as KxR, in which case the
-    // value set during the initial step in this function would be wrong
+    // We encode Castle moves as KxR, so the initial step is wrong
     else if (MoveType(move) == CASTLE_MOVE)
         value = 0;
 
@@ -590,12 +589,11 @@ int moveIsPsuedoLegal(Board *board, uint16_t move) {
 
         // Figure out which pieces are moving to which squares
         rook = poplsb(&castles), king = from;
-        kingTo = square(rankOf(rook), rook > king ? 6 : 2);
-        rookTo = rook > king ? kingTo - 1 : kingTo + 1;
+        rookTo = castleRookTo(king, rook);
+        kingTo = castleKingTo(king, rook);
 
-        // Make sure the move and castle side bits are matching
-        if (rook > king && move != MoveMake(king, kingTo, CASTLE_KING_MOVE)) continue;
-        if (rook < king && move != MoveMake(king, kingTo, CASTLE_QUEEN_MOVE)) continue;
+        // Make sure the move actually matches what we have
+        if (move != MoveMake(king, rook, CASTLE_MOVE)) continue;
 
         // Castle is illegal if we would go over a piece
         mask  = bitsBetweenMasks(king, kingTo) | (1ull << kingTo);
@@ -615,13 +613,13 @@ int moveIsPsuedoLegal(Board *board, uint16_t move) {
     return 0;
 }
 
-void moveToString(Board *board, uint16_t move, char *str) {
+void moveToString(uint16_t move, char *str, int chess960) {
 
     int from = MoveFrom(move), to = MoveTo(move);
 
-    // FRC reports using KxR notation
-    if (board->chess960 && MoveType(move) == CASTLE_MOVE)
-        to = castleRookFrom(board, move);
+    // FRC reports using KxR notation, but standard does not
+    if (MoveType(move) == CASTLE_MOVE && !chess960)
+        to = castleKingTo(from, to);
 
     // Encode squares (Long Algebraic Notation)
     squareToString(from, &str[0]);
