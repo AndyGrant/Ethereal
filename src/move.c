@@ -67,6 +67,18 @@ int apply(Thread *thread, Board *board, uint16_t move, int height) {
     return 1;
 }
 
+void applyLegal(Thread *thread, Board *board, uint16_t move, int height) {
+
+    // Assumed that this move is legal
+    applyMove(board, move, &thread->undoStack[height]);
+    assert(moveWasLegal(board));
+
+    // Keep history on legal moves
+    thread->moveStack[height] = move;
+    thread->pieceStack[height] = pieceType(board->squares[MoveTo(move)]);
+
+}
+
 void applyMove(Board *board, uint16_t move, Undo *undo) {
 
     static void (*table[4])(Board*, uint16_t, Undo*) = {

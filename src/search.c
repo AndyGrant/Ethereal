@@ -738,11 +738,10 @@ int moveIsSingular(Thread *thread, uint16_t ttMove, int ttValue, int depth, int 
     revert(thread, board, ttMove, height);
 
     // Iterate over each move, except for the table move
-    initMovePicker(&movePicker, thread, NONE_MOVE, height);
+    initSingularMovePicker(&movePicker, thread, ttMove, height);
     while ((move = selectNextMove(&movePicker, board, skipQuiets)) != NONE_MOVE) {
 
-        // Skip the table move
-        if (move == ttMove) continue;
+        assert(move != ttMove); // Skip the table move
 
         // Perform a reduced depth search on a null rbeta window
         if (!apply(thread, board, move, height)) continue;
@@ -758,7 +757,7 @@ int moveIsSingular(Thread *thread, uint16_t ttMove, int ttValue, int depth, int 
     }
 
     // Reapply the table move we took off
-    apply(thread, board, ttMove, height);
+    applyLegal(thread, board, ttMove, height);
 
     // Move is singular if all other moves failed low
     return value <= rBeta;

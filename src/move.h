@@ -43,6 +43,7 @@ enum {
 };
 
 int apply(Thread *thread, Board *board, uint16_t move, int height);
+void applyLegal(Thread *thread, Board *board, uint16_t move, int height);
 void applyMove(Board *board, uint16_t move, Undo *undo);
 void applyNormalMove(Board *board, uint16_t move, Undo *undo);
 void applyCastleMove(Board *board, uint16_t move, Undo *undo);

@@ -90,6 +90,14 @@ void initMovePicker(MovePicker *mp, Thread *thread, uint16_t ttMove, int height)
     mp->type = NORMAL_PICKER;
 }
 
+void initSingularMovePicker(MovePicker *mp, Thread *thread, uint16_t ttMove, int height) {
+
+    // Simply skip over the TT move
+    initMovePicker(mp, thread, ttMove, height);
+    mp->stage = STAGE_GENERATE_NOISY;
+
+}
+
 void initNoisyMovePicker(MovePicker *mp, Thread *thread, int threshold) {
 
     // Start with just the noisy moves
