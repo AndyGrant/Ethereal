@@ -49,9 +49,9 @@ static const int SkipDepths[16] = { 1, 2, 2, 4, 4, 3, 2, 5, 4, 3, 2, 6, 5, 4, 3,
 
 static const int WindowDepth   = 5;
 static const int WindowSize    = 14;
-static const int WindowTimerMS = 5000;
+static const int WindowTimerMS = 2500;
 
-static const int CurrmoveTimerMS = 10000;
+static const int CurrmoveTimerMS = 2500;
 
 static const int RazorDepth = 1;
 static const int RazorMargin = 325;
@@ -92,3 +92,4 @@ static const int QSEEMargin = 1;
 static const int QFutilityMargin = 100;
 
 static const int SingularQuietLimit = 6;
+static const int SingularTacticalLimit = 3;

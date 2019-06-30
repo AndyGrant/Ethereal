@@ -733,7 +733,7 @@ int moveIsSingular(Thread *thread, uint16_t ttMove, int ttValue, int depth, int 
     Board *const board = &thread->board;
 
     uint16_t move;
-    int skipQuiets = 0, quiets = 0;
+    int skipQuiets = 0, quiets = 0, tacticals = 0;
     int value = -MATE, rBeta = MAX(ttValue - depth, -MATE);
     MovePicker movePicker;
     PVariation lpv; lpv.length = 0;
@@ -755,9 +755,15 @@ int moveIsSingular(Thread *thread, uint16_t ttMove, int ttValue, int depth, int 
         // Move failed high, thus ttMove is not singular
         if (value > rBeta) break;
 
-        // Start skipping quiets at a certain point
-        quiets += !moveIsTactical(board, move);
+        // Start skipping quiets after a few have been attempted
+        moveIsTactical(board, move) ? tacticals++ : quiets++;
         skipQuiets = quiets >= SingularQuietLimit;
+
+        // Once we have decided to skip quiets, we will consider skipping
+        // any remaining tactical moves. In essence, we will skip some of
+        // the bad captures, if we have already skipped the quiet moves
+        if (skipQuiets && tacticals >= SingularTacticalLimit)
+            break;
     }
 
     // Reapply the table move we took off
