@@ -647,8 +647,7 @@ int evaluateQueens(EvalInfo *ei, Board *board, int colour) {
         if (TRACE) T.QueenPSQT32[relativeSquare32(US, sq)][US]++;
 
         // Compute possible attacks and store off information for king safety
-        attacks = rookAttacks(sq, ei->occupiedMinusRooks[US])
-                | bishopAttacks(sq, ei->occupiedMinusBishops[US]);
+        attacks = queenAttacks(sq, board->colours[WHITE] | board->colours[BLACK]);
         ei->attackedBy2[US]       |= attacks & ei->attacked[US];
         ei->attacked[US]          |= attacks;
         ei->attackedBy[US][QUEEN] |= attacks;
@@ -964,11 +963,11 @@ void initEvalInfo(EvalInfo *ei, Board *board, PKTable *pktable) {
     ei->attacked[WHITE] = ei->attackedBy[WHITE][KING] = kingAttacks(ei->kingSquare[WHITE]);
     ei->attacked[BLACK] = ei->attackedBy[BLACK][KING] = kingAttacks(ei->kingSquare[BLACK]);
 
-    // For mobility, we allow bishops and queens to attack through eachother
+    // For mobility, we allow bishops to attack through eachother
     ei->occupiedMinusBishops[WHITE] = (white | black) ^ (white & bishops);
     ei->occupiedMinusBishops[BLACK] = (white | black) ^ (black & bishops);
 
-    // For mobility, we allow rooks and queens to attack through eachother
+    // For mobility, we allow rooks to attack through eachother
     ei->occupiedMinusRooks[WHITE] = (white | black) ^ (white & rooks);
     ei->occupiedMinusRooks[BLACK] = (white | black) ^ (black & rooks);
 
