@@ -156,7 +156,7 @@ void initTexelEntries(TexelEntry *tes, Thread *thread) {
     Undo undo[1];
     Limits limits;
     char line[128];
-    int i, j, k, coeffs[NTERMS];
+    int i, j, k, eval, coeffs[NTERMS];
     FILE *fin = fopen("FENS", "r");
 
     // Initialize the thread for the search
@@ -175,10 +175,14 @@ void initTexelEntries(TexelEntry *tes, Thread *thread) {
         if ((i + 1) % 10000 == 0 || i == NPOSITIONS - 1)
             printf("\rInitializing Texel Entries from FENS...  [%7d of %7d]", i + 1, NPOSITIONS);
 
+        // Fetch and cap a white POV search
+        eval = atoi(strstr(line, "] ") + 2);
+        if (strstr(line, " b ")) eval *= -1;
+
         // Determine the result of the game
-        if      (strstr(line, "1-0")) tes[i].result = 1.0;
-        else if (strstr(line, "0-1")) tes[i].result = 0.0;
-        else if (strstr(line, "1/2")) tes[i].result = 0.5;
+        if      (strstr(line, "[1.0]")) tes[i].result = 1.0;
+        else if (strstr(line, "[0.0]")) tes[i].result = 0.0;
+        else if (strstr(line, "[0.5]")) tes[i].result = 0.5;
         else    {printf("Cannot Parse %s\n", line); exit(EXIT_FAILURE);}
 
         // Resolve FEN to a quiet position
@@ -206,6 +210,9 @@ void initTexelEntries(TexelEntry *tes, Thread *thread) {
         tes[i].eval = evaluateBoard(&thread->board, NULL);
         if (thread->board.turn == BLACK) tes[i].eval *= -1;
         initCoefficients(coeffs);
+
+        // Use 50% eval, 50% search score
+        tes[i].eval = (tes[i].eval + eval) / 2;
 
         // Count up the non zero coefficients
         for (k = 0, j = 0; j < NTERMS; j++)

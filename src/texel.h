@@ -30,7 +30,7 @@
 #define LEARNING    (    1.0) // Learning rate
 #define LRDROPRATE  (   1.25) // Cut LR by this each failure
 #define BATCHSIZE   (   8192) // FENs per mini-batch
-#define NPOSITIONS  (7500000) // Total FENS in the book
+#define NPOSITIONS  (7400000) // Total FENS in the book
 
 #define STACKSIZE ((int)((double) NPOSITIONS * NTERMS / 32))
 
