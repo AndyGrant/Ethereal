@@ -11,7 +11,7 @@
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-
+  
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -28,54 +28,43 @@
 #include "types.h"
 #include "uci.h"
 
-unsigned TB_PROBE_DEPTH; // Set by UCI options
-
+unsigned TB_PROBE_DEPTH;    // Set by UCI options
 extern unsigned TB_LARGEST; // Set by Fathom in tb_init()
 
 unsigned tablebasesProbeWDL(Board *board, int depth, int height) {
 
-    // Tap into Fathom's API routines. Fathom checks for empty
-    // castling rights and no enpassant square, so unlike Stockfish
-    // we do not have to check those conditions in the main search.
-    // But because we trust no one, we will do it here anyway
+    // The basic rules for Syzygy assume that the last move was a zero'ing move,
+    // there are no potential castling moves, and there is not an enpass square.
+    if (board->halfMoveCounter || board->castleRooks || board->epSquare != -1)
+        return TB_RESULT_FAILED;
 
-    // Also, worth noting, that Fathom expects a position without
-    // an enpassant square to be passed 0, but Ethereal encodes this
-    // with -1. Also, Fathom uses true for WHITE, and false for BLACK,
-    // where as Ethereal uses false for WHITE, and true for BLACK
+    // Root Nodes cannot take early exits, as we need a best move
+    if (height == 0) return TB_RESULT_FAILED;
 
-    // Check for an enpass free position, a position with no castling
-    // we have just zeroed on the last move, and we have few enough
-    // pieces to be in the table. Finally, if our cardinality is the
-    // largest possible for our tables, then only probe if our depth
-    // is less than TB_PROBE_DEPTH, to reduce throughput on the HDD
-
-    // Also, we avoid probing at the Root because the WDL tables do
-    // not return a best move for the PV, but only a known score
-
+    // Count the remaining pieces to see if we fall into the scope of the Tables
     int cardinality = popcount(board->colours[WHITE] | board->colours[BLACK]);
 
-    if (    height == 0
-        ||  board->epSquare != -1
-        ||  board->castleRooks != 0
-        ||  board->halfMoveCounter != 0
-        ||  cardinality > (int)TB_LARGEST
+    // Check to see if we are within the scope of the Tables. Also check the UCI
+    // option TB_PROBE_DEPTH. We only probe when below TB_PROBE_DEPTH or when
+    // the cardinality is below TB_LARGEST. The purpose here is that we may set
+    // TB_PROBE_DEPTH to reduce hardware latency, however if the cardinality is
+    // even lower than TB_LARGEST, we assume the table has already been cached.
+    if (    cardinality > (int)TB_LARGEST
         || (cardinality == (int)TB_LARGEST && depth < (int)TB_PROBE_DEPTH))
         return TB_RESULT_FAILED;
 
+    // Tap into Fathom's API, which takes in the board representation, followed
+    // by the half-move counter, the castling rights, the enpass square, and the
+    // side to move. We verify that the half-move and the castle rights are zero
+    // before calling. Additionally, a position with no potential enpass is set
+    // as 0 in Fathom but -1 in Ethereal. Fathom sets WHITE=1 and BLACK=0.
+
     return tb_probe_wdl(
-        board->colours[WHITE],
-        board->colours[BLACK],
-        board->pieces[KING  ],
-        board->pieces[QUEEN ],
-        board->pieces[ROOK  ],
-        board->pieces[BISHOP],
-        board->pieces[KNIGHT],
-        board->pieces[PAWN  ],
-        board->halfMoveCounter,
-        board->castleRooks,
-        board->epSquare == -1 ? 0 : board->epSquare,
-        board->turn == WHITE ? 1 : 0
+        board->colours[WHITE], board->colours[BLACK],
+        board->pieces[KING  ], board->pieces[QUEEN ],
+        board->pieces[ROOK  ], board->pieces[BISHOP],
+        board->pieces[KNIGHT], board->pieces[PAWN  ],
+        0, 0, 0, board->turn == WHITE ? 1 : 0
     );
 }
 
