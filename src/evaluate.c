@@ -300,6 +300,14 @@ const int ThreatQueenAttackedByOne   = S( -39, -29);
 const int ThreatOverloadedPieces     = S(  -8, -13);
 const int ThreatByPawnPush           = S(  15,  21);
 
+/* Complexity Evaluation Terms */
+
+const int ComplexityPassedPawns = S(   0,   2);
+const int ComplexityTotalPawns  = S(   0,   7);
+const int ComplexityPawnFlanks  = S(   0,  49);
+const int ComplexityPawnEndgame = S(   0,  34);
+const int ComplexityAdjustment  = S(   0,-110);
+
 /* General Evaluation Terms */
 
 const int Tempo = 20;
@@ -316,7 +324,7 @@ int evaluateBoard(Board *board, PKTable *pktable) {
     eval   = evaluatePieces(&ei, board);
     pkeval = ei.pkeval[WHITE] - ei.pkeval[BLACK];
     eval  += pkeval + board->psqtmat;
-    eval  += complexity(&ei, board, eval);
+    eval  += evaluateComplexity(&ei, board, eval);
 
     // Calcuate the game phase based on remaining material (Fruit Method)
     phase = 24 - 4 * popcount(board->pieces[QUEEN ])
@@ -931,32 +939,39 @@ int evaluateScaleFactor(Board *board) {
     return SCALE_NORMAL;
 }
 
-int complexity(EvalInfo *ei, Board *board, int eval) {
+int evaluateComplexity(EvalInfo *ei, Board *board, int eval) {
 
     // Adjust endgame evaluation based on features related to how
     // likely the stronger side is to convert the position.
     // More often than not, this is a penalty for drawish positions.
 
+    int complexity;
     int eg = ScoreEG(eval);
+    int sign = (eg > 0) - (eg < 0);
 
-    bool pawnsOnBothFlanks =   (board->pieces[PAWN] & (FILE_A | FILE_B | FILE_C | FILE_D))
-                            && (board->pieces[PAWN] & (FILE_E | FILE_F | FILE_G | FILE_H));
+    int pawnsOnBothFlanks = (board->pieces[PAWN] & LEFT_FLANK )
+                         && (board->pieces[PAWN] & RIGHT_FLANK);
 
     uint64_t knights = board->pieces[KNIGHT];
     uint64_t bishops = board->pieces[BISHOP];
     uint64_t rooks   = board->pieces[ROOK  ];
     uint64_t queens  = board->pieces[QUEEN ];
 
-    // Compute the complexity bonus/penalty for the attacking side
-    int complexity =   4 * popcount(ei->passedPawns)
-                    +  4 * popcount(board->pieces[PAWN])
-                    +  8 * pawnsOnBothFlanks
-                    + 24 * (!knights && !bishops && !rooks && !queens)
-                    - 35 ;
+    // Compute the initiative bonus or malus for the attacking side
+    complexity =  ComplexityPassedPawns * popcount(ei->passedPawns)
+               +  ComplexityTotalPawns  * popcount(board->pieces[PAWN])
+               +  ComplexityPawnFlanks  * pawnsOnBothFlanks
+               +  ComplexityPawnEndgame * !(knights | bishops | rooks | queens)
+               +  ComplexityAdjustment;
 
-    // Apply the complexity bonus/penalty to the side with the advantage.
-    // The max ensures this doesn't change which side has the advantage,
-    int v = ((eg > 0) - (eg < 0)) * MAX(complexity, -abs(eg));
+    if (TRACE) T.ComplexityPassedPawns[WHITE] += sign * popcount(ei->passedPawns);
+    if (TRACE) T.ComplexityTotalPawns[WHITE]  += sign * popcount(board->pieces[PAWN]);
+    if (TRACE) T.ComplexityPawnFlanks[WHITE]  += sign * pawnsOnBothFlanks;
+    if (TRACE) T.ComplexityPawnEndgame[WHITE] += sign * !(knights | bishops | rooks | queens);
+    if (TRACE) T.ComplexityAdjustment[WHITE]  += sign;
+
+    // Avoid changing which side has the advantage
+    int v = sign * MAX(ScoreEG(complexity), -abs(eg));
 
     return MakeScore(0, v);
 }

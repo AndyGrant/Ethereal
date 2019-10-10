@@ -80,6 +80,11 @@ struct EvalTrace {
     int ThreatQueenAttackedByOne[COLOUR_NB];
     int ThreatOverloadedPieces[COLOUR_NB];
     int ThreatByPawnPush[COLOUR_NB];
+    int ComplexityPassedPawns[COLOUR_NB];
+    int ComplexityTotalPawns[COLOUR_NB];
+    int ComplexityPawnFlanks[COLOUR_NB];
+    int ComplexityPawnEndgame[COLOUR_NB];
+    int ComplexityAdjustment[COLOUR_NB];
 };
 
 struct EvalInfo {
@@ -113,7 +118,7 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour);
 int evaluatePassed(EvalInfo *ei, Board *board, int colour);
 int evaluateThreats(EvalInfo *ei, Board *board, int colour);
 int evaluateScaleFactor(Board *board);
-int complexity(EvalInfo *ei, Board *board, int eval);
+int evaluateComplexity(EvalInfo *ei, Board *board, int eval);
 void initEvalInfo(EvalInfo *ei, Board *board, PKTable *pktable);
 void initEval();
 
