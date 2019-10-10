@@ -316,6 +316,7 @@ int evaluateBoard(Board *board, PKTable *pktable) {
     eval   = evaluatePieces(&ei, board);
     pkeval = ei.pkeval[WHITE] - ei.pkeval[BLACK];
     eval  += pkeval + board->psqtmat;
+    eval  += complexity(&ei, board, eval);
 
     // Calcuate the game phase based on remaining material (Fruit Method)
     phase = 24 - 4 * popcount(board->pieces[QUEEN ])
@@ -928,6 +929,36 @@ int evaluateScaleFactor(Board *board) {
     }
 
     return SCALE_NORMAL;
+}
+
+int complexity(EvalInfo *ei, Board *board, int eval) {
+
+    // Adjust endgame evaluation based on features related to how
+    // likely the stronger side is to convert the position.
+    // More often than not, this is a penalty for drawish positions.
+
+    int eg = ScoreEG(eval);
+
+    bool pawnsOnBothFlanks =   (board->pieces[PAWN] & (FILE_A | FILE_B | FILE_C | FILE_D))
+                            && (board->pieces[PAWN] & (FILE_E | FILE_F | FILE_G | FILE_H));
+
+    uint64_t knights = board->pieces[KNIGHT];
+    uint64_t bishops = board->pieces[BISHOP];
+    uint64_t rooks   = board->pieces[ROOK  ];
+    uint64_t queens  = board->pieces[QUEEN ];
+
+    // Compute the complexity bonus/penalty for the attacking side
+    int complexity =   4 * popcount(ei->passedPawns)
+                    +  4 * popcount(board->pieces[PAWN])
+                    +  8 * pawnsOnBothFlanks
+                    + 24 * (!knights && !bishops && !rooks && !queens)
+                    - 35 ;
+
+    // Apply the complexity bonus/penalty to the side with the advantage.
+    // The max ensures this doesn't change which side has the advantage,
+    int v = ((eg > 0) - (eg < 0)) * MAX(complexity, -abs(eg));
+
+    return MakeScore(0, v);
 }
 
 void initEvalInfo(EvalInfo *ei, Board *board, PKTable *pktable) {
