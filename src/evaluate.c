@@ -191,6 +191,11 @@ const int QueenMobility[28] = {
 
 /* King Evaluation Terms */
 
+const int KingPawnFileProximity[FILE_NB]  = {
+    S(   0,   0), S(   0,   0), S(  -1,  -6), S(  -2, -15),
+    S(  -4, -26), S(  -6, -38), S(  -8, -52), S( -10, -70),
+};
+
 const int KingDefenders[12] = {
     S( -26,   0), S(  -7,  -3), S(   1,   2), S(   8,   5),
     S(  17,   6), S(  27,   4), S(  31,  -2), S(  13,   0),
@@ -682,7 +687,7 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
 
     const int US = colour, THEM = !colour;
 
-    int count, eval = 0;
+    int count, dist, blocked, eval = 0;
 
     uint64_t myPawns     = board->pieces[PAWN ] & board->colours[  US];
     uint64_t enemyPawns  = board->pieces[PAWN ] & board->colours[THEM];
@@ -753,6 +758,13 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
     // King Shelter & King Storm are stored in the Pawn King Table
     if (ei->pkentry != NULL) return eval;
 
+    // Evaluate based on the number of files between our King and the nearest
+    // file-wise pawn. If there is no pawn, kingPawnFileDistance() returns the
+    // same distance for both sides causing this evaluation term to be neutral
+    dist = kingPawnFileDistance(board->pieces[PAWN], kingSq);
+    ei->pkeval[US] += KingPawnFileProximity[dist];
+    if (TRACE) T.KingPawnFileProximity[dist][US]++;
+
     // Evaluate King Shelter & King Storm threat by looking at the file of our King,
     // as well as the adjacent files. When looking at pawn distances, we will use a
     // distance of 7 to denote a missing pawn, since distance 7 is not possible otherwise.
@@ -773,7 +785,7 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
 
         // Evaluate King Storm using enemy pawn distance. Use a seperate evaluation
         // depending on the file, and if the opponent's pawn is blocked by our own
-        int blocked = (ourDist != 7 && (ourDist == theirDist - 1));
+        blocked = (ourDist != 7 && (ourDist == theirDist - 1));
         ei->pkeval[US] += KingStorm[blocked][mirrorFile(file)][theirDist];
         if (TRACE) T.KingStorm[blocked][mirrorFile(file)][theirDist][US]++;
     }

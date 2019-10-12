@@ -72,6 +72,7 @@ extern const int RookFile[2];
 extern const int RookOnSeventh;
 extern const int RookMobility[15];
 extern const int QueenMobility[28];
+extern const int KingPawnFileProximity[8];
 extern const int KingDefenders[12];
 extern const int KingShelter[2][8][8];
 extern const int KingStorm[2][4][8];
