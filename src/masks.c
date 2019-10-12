@@ -26,6 +26,7 @@
 #include "types.h"
 
 int DistanceBetween[SQUARE_NB][SQUARE_NB];
+int KingPawnFileDistance[FILE_NB][1 << FILE_NB];
 uint64_t BitsBetweenMasks[SQUARE_NB][SQUARE_NB];
 uint64_t KingAreaMasks[COLOUR_NB][SQUARE_NB];
 uint64_t ForwardRanksMasks[COLOUR_NB][RANK_NB];
@@ -41,6 +42,27 @@ void initMasks() {
     for (int sq1 = 0; sq1 < SQUARE_NB; sq1++)
         for (int sq2 = 0; sq2 < SQUARE_NB; sq2++)
             DistanceBetween[sq1][sq2] = MAX(abs(fileOf(sq1)-fileOf(sq2)), abs(rankOf(sq1)-rankOf(sq2)));
+
+    // Init a table to compute the distance between Pawns and Kings file-wise
+    for (uint64_t mask = 0ull; mask <= 0xFF; mask++) {
+        for (int file = 0; file < FILE_NB; file++) {
+
+            int ldist, rdist, dist;
+            uint64_t left, right;
+
+            // Look at only one side at a time by shifting off the other pawns
+            left  = (0xFFull & (mask << (FILE_NB - file - 1))) >> (FILE_NB - file - 1);
+            right = (mask >> file) << file;
+
+            // Find closest Pawn on each side. If no pawn, use "max" distance
+            ldist = left  ? file - getmsb(left)  : FILE_NB-1;
+            rdist = right ? getlsb(right) - file : FILE_NB-1;
+
+            // Take the min distance, unless there are no pawns, then use 0
+            dist = (left | right) ? MIN(ldist, rdist) : 0;
+            KingPawnFileDistance[file][mask] = dist;
+        }
+    }
 
     // Init a table of bitmasks for the squares between two given ones (aligned on diagonal)
     for (int sq1 = 0; sq1 < SQUARE_NB; sq1++)
@@ -112,6 +134,13 @@ int distanceBetween(int s1, int s2) {
     assert(0 <= s1 && s1 < SQUARE_NB);
     assert(0 <= s2 && s2 < SQUARE_NB);
     return DistanceBetween[s1][s2];
+}
+
+int kingPawnFileDistance(uint64_t pawns, int ksq) {
+    pawns |= pawns >> 8; pawns |= pawns >> 16; pawns |= pawns >> 32;
+    assert(0 <= fileOf(ksq) && fileOf(ksq) < FILE_NB);
+    assert((pawns & 0xFF) < (1ull << FILE_NB));
+    return KingPawnFileDistance[fileOf(ksq)][pawns & 0xFF];
 }
 
 uint64_t bitsBetweenMasks(int s1, int s2) {
