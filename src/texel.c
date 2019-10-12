@@ -98,7 +98,7 @@ void runTexelTuning(Thread *thread) {
     TexelEntry *tes;
     int iteration = -1;
     double K, error, best = 1e6, rate = LEARNING;
-    TexelVector params = {0}, cparams = {0};
+    TexelVector params = {0}, cparams = {0}, phases = {0};
 
     setvbuf(stdout, NULL, _IONBF, 0);
 
@@ -120,6 +120,9 @@ void runTexelTuning(Thread *thread) {
 
     printf("\n\nFetching Current Evaluation Terms as a Starting Point...");
     initCurrentParameters(cparams);
+
+    printf("\nSetting Term Phases ( MG, EG, or Both ) ...");
+    initPhaseManager(phases);
 
     printf("\n\nComputing Optimal K Value...\n");
     K = computeOptimalK(tes);
@@ -145,7 +148,7 @@ void runTexelTuning(Thread *thread) {
         for (int batch = 0; batch < NPOSITIONS / BATCHSIZE; batch++) {
 
             TexelVector gradient = {0};
-            updateGradient(tes, gradient, params, K, batch);
+            updateGradient(tes, gradient, params, phases, K, batch);
 
             // Update Parameters. Note that in updateGradient() we skip the multiplcation by negative
             // two over BATCHSIZE. This is done only here, just once, for precision and a speed gain
@@ -262,6 +265,18 @@ void initCurrentParameters(TexelVector cparams) {
     }
 }
 
+void initPhaseManager(TexelVector phases) {
+
+    int i = 0; // EXECUTE_ON_TERMS will update i accordingly
+
+    EXECUTE_ON_TERMS(INIT_PHASE);
+
+    if (i != NTERMS){
+        printf("Error in initPhaseManager(): i = %d ; NTERMS = %d\n", i, NTERMS);
+        exit(EXIT_FAILURE);
+    }
+}
+
 void updateMemory(TexelEntry *te, int size) {
 
     // First ensure we have enough Tuples left for this TexelEntry
@@ -281,7 +296,7 @@ void updateMemory(TexelEntry *te, int size) {
     TupleStackSize -= size;
 }
 
-void updateGradient(TexelEntry *tes, TexelVector gradient, TexelVector params, double K, int batch) {
+void updateGradient(TexelEntry *tes, TexelVector gradient, TexelVector params, TexelVector phases, double K, int batch) {
 
     int start = batch * BATCHSIZE;
     int end   = start + BATCHSIZE;
@@ -301,7 +316,8 @@ void updateGradient(TexelEntry *tes, TexelVector gradient, TexelVector params, d
 
         for (int i = 0; i < NTERMS; i++)
             for (int j = MG; j <= EG; j++)
-                gradient[i][j] += local[i][j];
+                if (phases[i][j])
+                    gradient[i][j] += local[i][j];
     }
 }
 
