@@ -63,8 +63,8 @@
 #define TuneRookOnSeventh               (0)
 #define TuneRookMobility                (0)
 #define TuneQueenMobility               (0)
-#define TuneKingPawnFileProximity       (0)
 #define TuneKingDefenders               (0)
+#define TuneKingPawnFileProximity       (0)
 #define TuneKingShelter                 (0)
 #define TuneKingStorm                   (0)
 #define TunePassedPawn                  (0)
@@ -252,8 +252,8 @@ void printParameters_3(char *name, int params[NTERMS][PHASE_NB], int i, int A, i
     ENABLE_0(fname, RookOnSeventh, NORMAL);                     \
     ENABLE_1(fname, RookMobility, 15, NORMAL);                  \
     ENABLE_1(fname, QueenMobility, 28, NORMAL);                 \
-    ENABLE_1(fname, KingPawnFileProximity, 8, NORMAL);          \
     ENABLE_1(fname, KingDefenders, 12, NORMAL);                 \
+    ENABLE_1(fname, KingPawnFileProximity, 8, NORMAL);          \
     ENABLE_3(fname, KingShelter, 2, 8, 8, NORMAL);              \
     ENABLE_3(fname, KingStorm, 2, 4, 8, NORMAL);                \
     ENABLE_3(fname, PassedPawn, 2, 2, 8, NORMAL);               \
