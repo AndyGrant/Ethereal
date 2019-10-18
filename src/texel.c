@@ -102,35 +102,36 @@ void runTexelTuning(Thread *thread) {
 
     setvbuf(stdout, NULL, _IONBF, 0);
 
-    printf("\nTuner Will Be Tuning %d Terms...", NTERMS);
+    printf("\nTUNER WILL BE TUNING %d TERMS...", NTERMS);
 
-    printf("\n\nSetting Table size to 1MB for speed...");
+    printf("\n\nSETTING TABLE SIZE TO 1MB FOR SPEED...");
     initTT(1);
 
-    printf("\n\nAllocating Memory for Texel Entries [%dKB]...",
-           (int)(NPOSITIONS * sizeof(TexelEntry) / 1024));
+    printf("\n\nALLOCATING MEMORY FOR TEXEL ENTRIES [%dMB]...",
+           (int)(NPOSITIONS * sizeof(TexelEntry) / (1024 * 1024)));
     tes = calloc(NPOSITIONS, sizeof(TexelEntry));
 
-    printf("\n\nAllocating Memory for Texel Tuple Stack [%dKB]...",
-           (int)(STACKSIZE * sizeof(TexelTuple) / 1024));
+    printf("\n\nALLOCATING MEMORY FOR TEXEL TUPLE STACK [%dMB]...",
+           (int)(STACKSIZE * sizeof(TexelTuple) / (1024 * 1024)));
     TupleStack = calloc(STACKSIZE, sizeof(TexelTuple));
 
-    printf("\n\nInitializing Texel Entries from FENS...");
+    printf("\n\nINITIALIZING TEXEL ENTRIES FROM FENS...");
     initTexelEntries(tes, thread);
 
-    printf("\n\nFetching Current Evaluation Terms as a Starting Point...");
+    printf("\n\nFETCHING CURRENT EVALUATION TERMS AS A STARTING POINT...");
     initCurrentParameters(cparams);
 
-    printf("\nSetting Term Phases ( MG, EG, or Both ) ...");
+    printf("\n\nSETTING TERM PHASES, MG, EG, OR BOTH...");
     initPhaseManager(phases);
 
-    printf("\n\nComputing Optimal K Value...\n");
+    printf("\n\nCOMPUTING OPTIMAL K VALUE...\n");
     K = computeOptimalK(tes);
 
     while (1) {
 
         // Shuffle the dataset before each epoch
-        shuffleTexelEntries(tes);
+        if (NPOSITIONS != BATCHSIZE)
+            shuffleTexelEntries(tes);
 
         // Report every REPORTING iterations
         if (++iteration % REPORTING == 0) {
@@ -164,7 +165,7 @@ void initTexelEntries(TexelEntry *tes, Thread *thread) {
     Undo undo[1];
     Limits limits;
     char line[128];
-    int i, j, k, eval, coeffs[NTERMS];
+    int i, j, k, searchEval, coeffs[NTERMS];
     FILE *fin = fopen("FENS", "r");
 
     // Initialize the thread for the search
@@ -181,11 +182,11 @@ void initTexelEntries(TexelEntry *tes, Thread *thread) {
 
         // Occasional reporting for total completion
         if ((i + 1) % 10000 == 0 || i == NPOSITIONS - 1)
-            printf("\rInitializing Texel Entries from FENS...  [%7d of %7d]", i + 1, NPOSITIONS);
+            printf("\rINITIALIZING TEXEL ENTRIES FROM FENS...  [%7d OF %7d]", i + 1, NPOSITIONS);
 
         // Fetch and cap a white POV search
-        eval = atoi(strstr(line, "] ") + 2);
-        if (strstr(line, " b ")) eval *= -1;
+        searchEval = atoi(strstr(line, "] ") + 2);
+        if (strstr(line, " b ")) searchEval *= -1;
 
         // Determine the result of the game
         if      (strstr(line, "[1.0]")) tes[i].result = 1.0;
@@ -219,8 +220,9 @@ void initTexelEntries(TexelEntry *tes, Thread *thread) {
         if (thread->board.turn == BLACK) tes[i].eval *= -1;
         initCoefficients(coeffs);
 
-        // Use 50% eval, 50% search score
-        tes[i].eval = (tes[i].eval + eval) / 2;
+        // Weight the Static and Search evals
+        tes[i].eval = tes[i].eval * STATICWEIGHT
+                    +  searchEval * SEARCHWEIGHT;
 
         // Count up the non zero coefficients
         for (k = 0, j = 0; j < NTERMS; j++)
@@ -281,8 +283,8 @@ void updateMemory(TexelEntry *te, int size) {
 
     // First ensure we have enough Tuples left for this TexelEntry
     if (size > TupleStackSize) {
-        printf("\n\nAllocating Memory for Texel Tuple Stack [%dKB]...\n\n",
-                (int)(STACKSIZE * sizeof(TexelTuple) / 1024));
+        printf("\n\nALLOCATING MEMORY FOR TEXEL TUPLE STACK [%dMB]...\n\n",
+                (int)(STACKSIZE * sizeof(TexelTuple) / (1024 * 1024)));
         TupleStackSize = STACKSIZE;
         TupleStack = calloc(STACKSIZE, sizeof(TexelTuple));
     }
@@ -298,14 +300,11 @@ void updateMemory(TexelEntry *te, int size) {
 
 void updateGradient(TexelEntry *tes, TexelVector gradient, TexelVector params, TexelVector phases, double K, int batch) {
 
-    int start = batch * BATCHSIZE;
-    int end   = start + BATCHSIZE;
-
     #pragma omp parallel shared(gradient)
     {
         TexelVector local = {0};
         #pragma omp for schedule(static, BATCHSIZE / NPARTITIONS)
-        for (int i = start; i < end; i++) {
+        for (int i = batch * BATCHSIZE; i < (batch + 1) * BATCHSIZE; i++) {
 
             double error = singleLinearError(&tes[i], params, K);
 
@@ -316,8 +315,7 @@ void updateGradient(TexelEntry *tes, TexelVector gradient, TexelVector params, T
 
         for (int i = 0; i < NTERMS; i++)
             for (int j = MG; j <= EG; j++)
-                if (phases[i][j])
-                    gradient[i][j] += local[i][j];
+                if (phases[i][j]) gradient[i][j] += local[i][j];
     }
 }
 
@@ -349,7 +347,7 @@ double computeOptimalK(TexelEntry *tes) {
                 best = error, start = curr;
         }
 
-        printf("Computing K Iteration [%d] K = %f E = %f\n", i, start, best);
+        printf("COMPUTING K ITERATION [%d] K = %f E = %f\n", i, start, best);
 
         end = start + delta;
         start = start - delta;
@@ -423,7 +421,7 @@ void printParameters(TexelVector params, TexelVector cparams) {
 
     EXECUTE_ON_TERMS(PRINT_PARAM);
 
-    if (i != NTERMS){
+    if (i != NTERMS) {
         printf("Error in printParameters(): i = %d ; NTERMS = %d\n", i, NTERMS);
         exit(EXIT_FAILURE);
     }

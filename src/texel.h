@@ -22,17 +22,20 @@
 
 #include "types.h"
 
-#define KPRECISION  (     10) // Iterations for computing K
-#define NPARTITIONS (     64) // Total thread partitions
-#define REPORTING   (     25) // How often to report progress
-#define NTERMS      (      0) // Total terms in the Tuner (601)
+#define NPARTITIONS  (     64) // Total thread partitions
+#define KPRECISION   (     10) // Iterations for computing K
+#define REPORTING    (     25) // How often to report progress
+#define NTERMS       (      0) // Total terms in the Tuner (601)
 
-#define LEARNING    (    1.0) // Learning rate
-#define LRDROPRATE  (   1.25) // Cut LR by this each failure
-#define BATCHSIZE   (  16384) // FENs per mini-batch
-#define NPOSITIONS  (7400000) // Total FENS in the book
+#define LEARNING     (    5.0) // Learning rate
+#define LRDROPRATE   (   1.25) // Cut LR by this each failure
+#define BATCHSIZE    (7400000) // FENs per mini-batch
+#define NPOSITIONS   (7400000) // Total FENS in the book
 
-#define STACKSIZE ((int)((double) NPOSITIONS * NTERMS / 32))
+#define STATICWEIGHT (   0.50) // Weight of the Static Evaluation
+#define SEARCHWEIGHT (   0.50) // Weight of the Depth 10 Search
+
+#define STACKSIZE ((int)((double) NPOSITIONS * NTERMS / 8))
 
 #define TunePawnValue                   (0)
 #define TuneKnightValue                 (0)
