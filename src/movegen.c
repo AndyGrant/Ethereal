@@ -86,18 +86,18 @@ static void buildKingMoves(uint16_t *moves, int *size, uint64_t pieces, uint64_t
 void genAllLegalMoves(Board *board, uint16_t *moves, int *size) {
 
     Undo undo[1];
-    int psuedoSize = 0;
-    uint16_t psuedoMoves[MAX_MOVES];
+    int pseudoSize = 0;
+    uint16_t pseudoMoves[MAX_MOVES];
 
     // Call genAllNoisyMoves() & genAllNoisyMoves()
-    genAllNoisyMoves(board, psuedoMoves, &psuedoSize);
-    genAllQuietMoves(board, psuedoMoves, &psuedoSize);
+    genAllNoisyMoves(board, pseudoMoves, &pseudoSize);
+    genAllQuietMoves(board, pseudoMoves, &pseudoSize);
 
     // Check each move for legality before copying
-    for (int i = 0; i < psuedoSize; i++) {
-        applyMove(board, psuedoMoves[i], undo);
-        if (moveWasLegal(board)) moves[(*size)++] = psuedoMoves[i];
-        revertMove(board, psuedoMoves[i], undo);
+    for (int i = 0; i < pseudoSize; i++) {
+        applyMove(board, pseudoMoves[i], undo);
+        if (moveWasLegal(board)) moves[(*size)++] = pseudoMoves[i];
+        revertMove(board, pseudoMoves[i], undo);
     }
 }
 

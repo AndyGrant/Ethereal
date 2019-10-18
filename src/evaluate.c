@@ -120,7 +120,7 @@ const int PawnCandidatePasser[2][RANK_NB] = {
 
 const int PawnIsolated = S(  -7, -11);
 
-const int PawnStacked = S( -18, -23);
+const int PawnStacked[2] = { S( -17, -27), S( -18, -19) };
 
 const int PawnBackwards[2] = { S(   7,   0), S(  -7, -19) };
 
@@ -330,7 +330,7 @@ int evaluateBoard(Board *board, PKTable *pktable) {
     eval  += pkeval + board->psqtmat;
     eval  += evaluateComplexity(&ei, board, eval);
 
-    // Calcuate the game phase based on remaining material (Fruit Method)
+    // Calculate the game phase based on remaining material (Fruit Method)
     phase = 24 - 4 * popcount(board->pieces[QUEEN ])
                - 2 * popcount(board->pieces[ROOK  ])
                - 1 * popcount(board->pieces[KNIGHT]
@@ -405,6 +405,7 @@ int evaluatePawns(EvalInfo *ei, Board *board, int colour) {
         if (TRACE) T.PawnValue[US]++;
         if (TRACE) T.PawnPSQT32[relativeSquare32(US, sq)][US]++;
 
+        uint64_t neighbors   = myPawns    & adjacentFilesMasks(fileOf(sq));
         uint64_t stoppers    = enemyPawns & passedPawnMasks(US, sq);
         uint64_t threats     = enemyPawns & pawnAttacks(US, sq);
         uint64_t support     = myPawns    & pawnAttacks(THEM, sq);
@@ -425,15 +426,17 @@ int evaluatePawns(EvalInfo *ei, Board *board, int colour) {
 
         // Apply a penalty if the pawn is isolated, and there is not an
         // immediate pawn capture to potentially remedy the isolation
-        if (!threats && !(adjacentFilesMasks(fileOf(sq)) & myPawns)) {
+        if (!threats && !neighbors) {
             pkeval += PawnIsolated;
             if (TRACE) T.PawnIsolated[US]++;
         }
 
         // Apply a penalty if the pawn is stacked
         if (Files[fileOf(sq)] & tempPawns) {
-            pkeval += PawnStacked;
-            if (TRACE) T.PawnStacked[US]++;
+            flag = (stoppers && (threats || neighbors))
+                || (stoppers &  !forwardFileMasks(US, sq));
+            pkeval += PawnStacked[flag];
+            if (TRACE) T.PawnStacked[flag][US]++;
         }
 
         // Apply a penalty if the pawn is backward
@@ -777,12 +780,12 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
         uint64_t theirs = enemyPawns & Files[file] & forwardRanksMasks(US, rankOf(kingSq));
         int theirDist = !theirs ? 7 : abs(rankOf(kingSq) - rankOf(backmost(US, theirs)));
 
-        // Evaluate King Shelter using pawn distance. Use seperate evaluation
+        // Evaluate King Shelter using pawn distance. Use separate evaluation
         // depending on the file, and if we are looking at the King's file
         ei->pkeval[US] += KingShelter[file == fileOf(kingSq)][file][ourDist];
         if (TRACE) T.KingShelter[file == fileOf(kingSq)][file][ourDist][US]++;
 
-        // Evaluate King Storm using enemy pawn distance. Use a seperate evaluation
+        // Evaluate King Storm using enemy pawn distance. Use a separate evaluation
         // depending on the file, and if the opponent's pawn is blocked by our own
         blocked = (ourDist != 7 && (ourDist == theirDist - 1));
         ei->pkeval[US] += KingStorm[blocked][mirrorFile(file)][theirDist];
@@ -1019,11 +1022,11 @@ void initEvalInfo(EvalInfo *ei, Board *board, PKTable *pktable) {
     ei->attacked[WHITE] = ei->attackedBy[WHITE][KING] = kingAttacks(ei->kingSquare[WHITE]);
     ei->attacked[BLACK] = ei->attackedBy[BLACK][KING] = kingAttacks(ei->kingSquare[BLACK]);
 
-    // For mobility, we allow bishops to attack through eachother
+    // For mobility, we allow bishops to attack through each other
     ei->occupiedMinusBishops[WHITE] = (white | black) ^ (white & bishops);
     ei->occupiedMinusBishops[BLACK] = (white | black) ^ (black & bishops);
 
-    // For mobility, we allow rooks to attack through eachother
+    // For mobility, we allow rooks to attack through each other
     ei->occupiedMinusRooks[WHITE] = (white | black) ^ (white & rooks);
     ei->occupiedMinusRooks[BLACK] = (white | black) ^ (black & rooks);
 

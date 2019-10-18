@@ -121,9 +121,9 @@ uint16_t selectNextMove(MovePicker *mp, Board *board, int skipQuiets) {
 
         case STAGE_TABLE:
 
-            // Play table move if it is psuedo legal
+            // Play table move if it is pseudo legal
             mp->stage = STAGE_GENERATE_NOISY;
-            if (moveIsPsuedoLegal(board, mp->tableMove))
+            if (moveIsPseudoLegal(board, mp->tableMove))
                 return mp->tableMove;
 
             /* fallthrough */
@@ -187,35 +187,35 @@ uint16_t selectNextMove(MovePicker *mp, Board *board, int skipQuiets) {
 
         case STAGE_KILLER_1:
 
-            // Play killer move if not yet played, and psuedo legal
+            // Play killer move if not yet played, and pseudo legal
             mp->stage = STAGE_KILLER_2;
             if (   !skipQuiets
                 &&  mp->killer1 != mp->tableMove
-                &&  moveIsPsuedoLegal(board, mp->killer1))
+                &&  moveIsPseudoLegal(board, mp->killer1))
                 return mp->killer1;
 
             /* fallthrough */
 
         case STAGE_KILLER_2:
 
-            // Play killer move if not yet played, and psuedo legal
+            // Play killer move if not yet played, and pseudo legal
             mp->stage = STAGE_COUNTER_MOVE;
             if (   !skipQuiets
                 &&  mp->killer2 != mp->tableMove
-                &&  moveIsPsuedoLegal(board, mp->killer2))
+                &&  moveIsPseudoLegal(board, mp->killer2))
                 return mp->killer2;
 
             /* fallthrough */
 
         case STAGE_COUNTER_MOVE:
 
-            // Play counter move if not yet played, and psuedo legal
+            // Play counter move if not yet played, and pseudo legal
             mp->stage = STAGE_GENERATE_QUIET;
             if (   !skipQuiets
                 &&  mp->counter != mp->tableMove
                 &&  mp->counter != mp->killer1
                 &&  mp->counter != mp->killer2
-                &&  moveIsPsuedoLegal(board, mp->counter))
+                &&  moveIsPseudoLegal(board, mp->counter))
                 return mp->counter;
 
             /* fallthrough */
