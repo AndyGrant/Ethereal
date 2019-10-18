@@ -25,7 +25,7 @@
 #define KPRECISION  (     10) // Iterations for computing K
 #define NPARTITIONS (     64) // Total thread partitions
 #define REPORTING   (     25) // How often to report progress
-#define NTERMS      (      0) // Total terms in the Tuner (600)
+#define NTERMS      (      0) // Total terms in the Tuner (601)
 
 #define LEARNING    (    1.0) // Learning rate
 #define LRDROPRATE  (   1.25) // Cut LR by this each failure
@@ -236,7 +236,7 @@ void printParameters_3(char *name, int params[NTERMS][PHASE_NB], int i, int A, i
     ENABLE_1(fname, KingPSQT32, 32, NORMAL);                    \
     ENABLE_2(fname, PawnCandidatePasser, 2, 8, NORMAL);         \
     ENABLE_0(fname, PawnIsolated, NORMAL);                      \
-    ENABLE_0(fname, PawnStacked, NORMAL);                       \
+    ENABLE_1(fname, PawnStacked, 2, NORMAL);                    \
     ENABLE_1(fname, PawnBackwards, 2, NORMAL);                  \
     ENABLE_1(fname, PawnConnected32, 32, NORMAL);               \
     ENABLE_1(fname, KnightOutpost, 2, NORMAL);                  \

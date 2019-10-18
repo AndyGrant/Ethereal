@@ -497,7 +497,7 @@ int moveWasLegal(Board *board) {
     return !squareIsAttacked(board, !board->turn, sq);
 }
 
-int moveIsPsuedoLegal(Board *board, uint16_t move) {
+int moveIsPseudoLegal(Board *board, uint16_t move) {
 
     int from   = MoveFrom(move);
     int type   = MoveType(move);
@@ -582,7 +582,7 @@ int moveIsPsuedoLegal(Board *board, uint16_t move) {
 
     // Verifying a castle move can be difficult, so instead we will just
     // attempt to generate the (two) possible castle moves for the given
-    // player. If one matches, we can then verify the psuedo legality
+    // player. If one matches, we can then verify the pseudo legality
     // using the same code as from movegen.c
 
     while (castles && !board->kingAttackers) {

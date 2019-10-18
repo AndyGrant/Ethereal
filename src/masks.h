@@ -29,6 +29,7 @@ int kingPawnFileDistance(uint64_t pawns, int ksq);
 uint64_t bitsBetweenMasks(int sq1, int sq2);
 uint64_t kingAreaMasks(int colour, int sq);
 uint64_t forwardRanksMasks(int colour, int rank);
+uint64_t forwardFileMasks(int colour, int sq);
 uint64_t adjacentFilesMasks(int file);
 uint64_t passedPawnMasks(int colour, int sq);
 uint64_t pawnConnectedMasks(int colour, int sq);
