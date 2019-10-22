@@ -120,7 +120,7 @@ const int PawnCandidatePasser[2][RANK_NB] = {
 
 const int PawnIsolated = S(  -7, -11);
 
-const int PawnStacked[2] = { S( -17, -27), S( -18, -19) };
+const int PawnStacked[2] = { S(  -9, -14), S(  -9,  -9) };
 
 const int PawnBackwards[2] = { S(   7,   0), S(  -7, -19) };
 
@@ -432,9 +432,9 @@ int evaluatePawns(EvalInfo *ei, Board *board, int colour) {
         }
 
         // Apply a penalty if the pawn is stacked
-        if (Files[fileOf(sq)] & tempPawns) {
+        if (several(Files[fileOf(sq)] & myPawns)) {
             flag = (stoppers && (threats || neighbors))
-                || (stoppers &  !forwardFileMasks(US, sq));
+                || (stoppers & ~forwardFileMasks(US, sq));
             pkeval += PawnStacked[flag];
             if (TRACE) T.PawnStacked[flag][US]++;
         }
