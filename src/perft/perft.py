@@ -44,7 +44,7 @@ for line in data:
     depth = int(last.split(" ")[0][1:])
     nodes = int(last.split(" ")[1])
 
-    print("| {0:>5} | {1:>11} | {2:<76} | ".format(depth, nodes, fen)),
+    sys.stdout.write("| {0:>5} | {1:>11} | {2:<76} | ".format(depth, nodes, fen)),
     sys.stdout.flush()
 
     process.stdin.write("position fen %s\n" % (fen))
@@ -53,8 +53,8 @@ for line in data:
 
     found = int(process.stdout.readline().strip())
 
-    if found == nodes: print(" PASS |")
-    if found != nodes: print(" FAIL | (%10d)" % (found))
+    if found == nodes: sys.stdout.write (" PASS  |\n")
+    if found != nodes: sys.stdout.write (" FAIL  | (%10d)\n" % (found))
 
 end = time.time()
 
