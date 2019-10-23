@@ -406,6 +406,7 @@ int evaluatePawns(EvalInfo *ei, Board *board, int colour) {
         if (TRACE) T.PawnPSQT32[relativeSquare32(US, sq)][US]++;
 
         uint64_t neighbors   = myPawns    & adjacentFilesMasks(fileOf(sq));
+        uint64_t backup      = myPawns    & passedPawnMasks(THEM, sq);
         uint64_t stoppers    = enemyPawns & passedPawnMasks(US, sq);
         uint64_t threats     = enemyPawns & pawnAttacks(US, sq);
         uint64_t support     = myPawns    & pawnAttacks(THEM, sq);
@@ -416,22 +417,26 @@ int evaluatePawns(EvalInfo *ei, Board *board, int colour) {
         // Save passed pawn information for later evaluation
         if (!stoppers) setBit(&ei->passedPawns, sq);
 
-        // Apply a bonus for pawns which will become passers by advancing a single
-        // square when exchanging our supporters with the remaining passer stoppers
+        // Apply a bonus for pawns which will become passers by advancing a
+        // square then exchanging our supporters with the remaining stoppers
         else if (!leftovers && popcount(pushSupport) >= popcount(pushThreats)) {
             flag = popcount(support) >= popcount(threats);
             pkeval += PawnCandidatePasser[flag][relativeRankOf(US, sq)];
             if (TRACE) T.PawnCandidatePasser[flag][relativeRankOf(US, sq)][US]++;
         }
 
-        // Apply a penalty if the pawn is isolated, and there is not an
-        // immediate pawn capture to potentially remedy the isolation
+        // Apply a penalty if the pawn is isolated. We consider pawns that
+        // are able to capture another pawn to not be isolated, as they may
+        // have the potential to deisolate by capturing, or be traded away
         if (!threats && !neighbors) {
             pkeval += PawnIsolated;
             if (TRACE) T.PawnIsolated[US]++;
         }
 
-        // Apply a penalty if the pawn is stacked
+        // Apply a penalty if the pawn is stacked. We adjust the bonus for when
+        // the pawn appears to be a candidate to unstack. This occurs when the
+        // pawn is not passed but may capture or be recaptured by our own pawns,
+        // and when the pawn may freely advance on a file and then be traded away
         if (several(Files[fileOf(sq)] & myPawns)) {
             flag = (stoppers && (threats || neighbors))
                 || (stoppers & ~forwardFileMasks(US, sq));
@@ -439,15 +444,17 @@ int evaluatePawns(EvalInfo *ei, Board *board, int colour) {
             if (TRACE) T.PawnStacked[flag][US]++;
         }
 
-        // Apply a penalty if the pawn is backward
-        if (   !(passedPawnMasks(THEM, sq) & myPawns)
-            &&  (testBit(ei->pawnAttacks[THEM], sq + Forward))) {
+        // Apply a penalty if the pawn is backward. We follow the usual definition
+        // of backwards, but also specify that the pawn is not both isolated and
+        // backwards at the same time. We don't give backward pawns a connected bonus
+        if (neighbors && pushThreats && !backup) {
             flag = !(Files[fileOf(sq)] & enemyPawns);
             pkeval += PawnBackwards[flag];
             if (TRACE) T.PawnBackwards[flag][US]++;
         }
 
-        // Apply a bonus if the pawn is connected and not backward
+        // Apply a bonus if the pawn is connected and not backwards. We consider a
+        // pawn to be connected when there is a pawn lever or the pawn is supported
         else if (pawnConnectedMasks(US, sq) & myPawns) {
             pkeval += PawnConnected32[relativeSquare32(US, sq)];
             if (TRACE) T.PawnConnected32[relativeSquare32(US, sq)][US]++;
