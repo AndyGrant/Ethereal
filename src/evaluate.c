@@ -344,7 +344,7 @@ int evaluateBoard(Board *board, PKTable *pktable) {
     phase = (phase * 256 + 12) / 24;
 
     // Scale evaluation based on remaining material
-    factor = evaluateScaleFactor(board);
+    factor = evaluateScaleFactor(board, eval);
 
     // Compute the interpolated and scaled evaluation
     eval = (ScoreMG(eval) * (256 - phase)
@@ -935,7 +935,7 @@ int evaluateThreats(EvalInfo *ei, Board *board, int colour) {
     return eval;
 }
 
-int evaluateScaleFactor(Board *board) {
+int evaluateScaleFactor(Board *board, int eval) {
 
     // Scale endgames based on remaining material. Currently, we only
     // look for OCB endgames that include only one Knight or one Rook
@@ -964,6 +964,14 @@ int evaluateScaleFactor(Board *board) {
             && onlyOne(black & rooks))
             return SCALE_OCB_ONE_ROOK;
     }
+
+    int eg = ScoreEG(eval);
+
+    // Lone minor vs king and pawns, never give the advantage to the side with the minor
+    if ( (eg > 0) && popcount(white) == 2 && (white & (knights | bishops)))
+        return SCALE_DRAW;
+    else if ( (eg < 0) && popcount(black) == 2 && (black & (knights | bishops)))
+        return SCALE_DRAW;
 
     return SCALE_NORMAL;
 }
