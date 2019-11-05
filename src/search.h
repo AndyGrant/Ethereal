@@ -65,6 +65,7 @@ static const int ProbCutDepth = 5;
 static const int ProbCutMargin = 100;
 
 static const int FutilityMargin = 90;
+static const int FutilityMarginNoHistory = 256;
 static const int FutilityPruningDepth = 8;
 static const int FutilityPruningHistoryLimit[] = { 12000, 6000 };
 
