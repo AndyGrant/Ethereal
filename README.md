@@ -25,6 +25,10 @@ The size of the hash table in megabytes. For analysis the more hash given the be
 
 Number of threads given to Ethereal while moving. Typically the more threads the better. There is some debate as to whether using hyper-threads provides an elo gain. I firmly believe that for Ethereal the answer is yes, and recommend all users make use of the maximum number of threads.
 
+### MultiPV
+
+The number of lines to output for each search iteration. For best performance, MultiPV should be left at the default value of 1 in all cases. This option should only be used for analysis.
+
 ### MoveOverhead
 
 The time buffer when playing games under time constraints. If you notice any time losses you should increase the move overhead. Additionally when playing with Syzygy Table bases a larger than default overhead is recommended.
