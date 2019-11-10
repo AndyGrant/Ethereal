@@ -108,8 +108,9 @@ void* iterativeDeepening(void *vthread) {
         // If we abort to here, we stop searching
         if (setjmp(thread->jbuffer)) break;
 
-        // Perform the actual search for the current depth
-        thread->value = aspirationWindow(thread, thread->depth, thread->value);
+        // Perform a search for the current depth for each requested line of play
+        for (thread->multiPV = 0; thread->multiPV < limits->multiPV; thread->multiPV++)
+            aspirationWindow(thread);
 
         // Occasionally skip depths using Laser's method
         if (!mainThread && (thread->depth + cycle) % SkipDepths[cycle] == 0)
@@ -120,10 +121,9 @@ void* iterativeDeepening(void *vthread) {
 
         // Update SearchInfo and report some results
         info->depth                    = thread->depth;
-        info->values[info->depth]      = thread->value;
-        info->bestMoves[info->depth]   = thread->pv.line[0];
-        info->ponderMoves[info->depth] = thread->pv.length >= 2 ? thread->pv.line[1] : NONE_MOVE;
-        uciReport(thread->threads, -MATE, MATE, thread->value);
+        info->values[info->depth]      = thread->values[0];
+        info->bestMoves[info->depth]   = thread->bestMoves[0];
+        info->ponderMoves[info->depth] = thread->ponderMoves[0];
 
         // Update time allocation based on score and pv changes
         updateTimeManagment(info, limits);
@@ -142,26 +142,38 @@ void* iterativeDeepening(void *vthread) {
     return NULL;
 }
 
-int aspirationWindow(Thread *thread, int depth, int lastValue) {
+void aspirationWindow(Thread *thread) {
 
+    PVariation *const pv = &thread->pv;
+    const int multiPV    = thread->multiPV;
     const int mainThread = thread->index == 0;
-    int alpha, beta, value, delta = WindowSize;
 
-    // Create an aspiration window, unless still below the starting depth
-    alpha = depth >= WindowDepth ? MAX(-MATE, lastValue - delta) : -MATE;
-    beta  = depth >= WindowDepth ? MIN( MATE, lastValue + delta) :  MATE;
+    int value, alpha = -MATE, beta = MATE, delta = WindowSize;
 
-    // Keep trying larger windows until one works
+    // Create an aspiration window after a few depths using
+    // the eval from the bestline from the previous iteration
+    if (thread->depth >= WindowDepth) {
+        alpha = MAX(-MATE, thread->values[0] - delta);
+        beta  = MIN( MATE, thread->values[0] + delta);
+    }
+
     while (1) {
 
-        // Perform a search on the window, return if inside the window
-        value = search(thread, &thread->pv, alpha, beta, depth, 0);
-        if (value > alpha && value < beta)
-            return value;
-
-        // Report lower and upper bounds after at a certain time
-        if (mainThread && elapsedTime(thread->info) >= WindowTimerMS)
+        // Perform a search and consider reporting results
+        value = search(thread, pv, alpha, beta, thread->depth, 0);
+        if (   (mainThread && value > alpha && value < beta)
+            || (mainThread && elapsedTime(thread->info) >= WindowTimerMS))
             uciReport(thread->threads, alpha, beta, value);
+
+        // Search returned a result within our window. Save the eval as well
+        // as the best and ponder moves. If we do not have a ponder move in
+        // the PV, we set to NONE_MOVE to avoid printing an illegal PV line
+        if (value > alpha && value < beta) {
+            thread->values[multiPV]      = value;
+            thread->bestMoves[multiPV]   = pv->line[0];
+            thread->ponderMoves[multiPV] = pv->length > 1 ? pv->line[1] : NONE_MOVE;
+            return;
+        }
 
         // Search failed low
         if (value <= alpha) {
@@ -170,7 +182,7 @@ int aspirationWindow(Thread *thread, int depth, int lastValue) {
         }
 
         // Search failed high
-        if (value >= beta)
+        else if (value >= beta)
             beta = MIN(MATE, beta + delta);
 
         // Expand the search window
@@ -376,6 +388,10 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
     initMovePicker(&movePicker, thread, ttMove, height);
     while ((move = selectNextMove(&movePicker, board, skipQuiets)) != NONE_MOVE) {
 
+        // In MultiPV mode, skip over already examined lines
+        if (RootNode && moveExaminedByMultiPV(thread, move))
+            continue;
+
         // For quiet moves we fetch various history scores
         if ((isQuiet = !moveIsTactical(board, move))) {
             getHistory(thread, move, height, &hist, &cmhist, &fmhist);
@@ -441,7 +457,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
         // that we are going to search. We only do this from the main thread,
         // and we wait a few seconds in order to avoid floiding the output
         if (RootNode && !thread->index && elapsedTime(thread->info) > CurrmoveTimerMS)
-            uciReportCurrentMove(board, move, played, depth);
+            uciReportCurrentMove(board, move, played + thread->multiPV, depth);
 
         // Step 14. Late Move Reductions. Compute the reduction,
         // allow the later steps to perform the reduced searches
@@ -539,10 +555,13 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
     if (best >= beta && !moveIsTactical(board, bestMove))
         updateHistoryHeuristics(thread, quietsTried, quietsPlayed, height, depth*depth);
 
-    // Step 20. Store results of search into the table
-    ttBound = best >= beta    ? BOUND_LOWER
-            : best > oldAlpha ? BOUND_EXACT : BOUND_UPPER;
-    storeTTEntry(board->hash, bestMove, valueToTT(best, height), eval, depth, ttBound);
+    // Step 20. Store results of search into the Transposition Table. We do
+    // not overwrite the Root entry from the first line of play we examined
+    if (!RootNode || !thread->multiPV) {
+        ttBound = best >= beta    ? BOUND_LOWER
+                : best > oldAlpha ? BOUND_EXACT : BOUND_UPPER;
+        storeTTEntry(board->hash, bestMove, valueToTT(best, height), eval, depth, ttBound);
+    }
 
     return best;
 }

@@ -27,6 +27,7 @@
 #include "evaluate.h"
 #include "masks.h"
 #include "move.h"
+#include "movegen.h"
 #include "search.h"
 #include "thread.h"
 #include "types.h"
@@ -434,6 +435,29 @@ void revertNullMove(Board *board, Undo *undo) {
     // NULL moves simply swap the turn only
     board->turn = !board->turn;
     board->numMoves--;
+}
+
+int legalMoveCount(Board * board) {
+
+    // Count of the legal number of moves for a given position
+
+    int size = 0;
+    uint16_t moves[MAX_MOVES];
+    genAllLegalMoves(board, moves, &size);
+
+    return size;
+}
+
+int moveExaminedByMultiPV(Thread *thread, uint16_t move) {
+
+    // Check to see if this move was already selected as the
+    // best move in a previous iteration of this search depth
+
+    for (int i = 0; i < thread->multiPV; i++)
+        if (thread->bestMoves[i] == move)
+            return 1;
+
+    return 0;
 }
 
 int moveIsTactical(Board *board, uint16_t move) {

@@ -33,13 +33,17 @@ enum {
 
 struct Thread {
 
+    Board board;
+    PVariation pv;
     Limits *limits;
     SearchInfo *info;
 
-    Board board;
-    PVariation pv;
+    int multiPV;
+    int values[MAX_MOVES];
+    uint16_t bestMoves[MAX_MOVES];
+    uint16_t ponderMoves[MAX_MOVES];
 
-    int value, depth, seldepth;
+    int depth, seldepth;
     uint64_t nodes, tbhits;
 
     int *evalStack, _evalStack[STACK_SIZE];
@@ -47,15 +51,15 @@ struct Thread {
     int *pieceStack, _pieceStack[STACK_SIZE];
     Undo undoStack[STACK_SIZE];
 
-    int index, nthreads;
-    Thread *threads;
-    jmp_buf jbuffer;
-
     PKTable pktable;
     KillerTable killers;
     CounterMoveTable cmtable;
     HistoryTable history;
     ContinuationTable continuation;
+
+    int index, nthreads;
+    Thread *threads;
+    jmp_buf jbuffer;
 };
 
 

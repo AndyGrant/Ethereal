@@ -53,25 +53,21 @@ int main(int argc, char **argv) {
     Board board;
     char str[8192];
     Thread *threads;
-    ThreadsGo threadsgo;
     pthread_t pthreadsgo;
+    UCIGoStruct uciGoStruct;
 
-    // By default use 1 thread, 16MB hash, and Standard chess.
-    // Usage ./Ethereal bench <depth=13> <threads=1> <hash=16>
-    int depth     = argc > 2 ? atoi(argv[2]) : 13;
-    int nthreads  = argc > 3 ? atoi(argv[3]) : 1;
-    int megabytes = argc > 4 ? atoi(argv[4]) : 16;
-    int chess960  = 0;
+    int chess960 = 0;
+    int multiPV  = 1;
 
-    // Initialize the core components of Ethereal
+    // Initialize core components of Ethereal
     initAttacks(); initMasks(); initEval();
-    initSearch(); initZobrist(); initTT(megabytes);
-    threads = createThreadPool(nthreads);
+    initSearch(); initZobrist(); initTT(16);
+    threads = createThreadPool(1);
     boardFromFEN(&board, StartPosition, chess960);
 
     // Allow the bench to be run from the command line
-    if (argc > 1 && stringEquals(argv[1], "bench")) {
-        runBenchmark(threads, depth);
+    if (argc > 1 && strEquals(argv[1], "bench")) {
+        runBenchmark(argc, argv);
         return 0;
     }
 
@@ -83,11 +79,12 @@ int main(int argc, char **argv) {
 
     while (getInput(str)) {
 
-        if (stringEquals(str, "uci")) {
+        if (strEquals(str, "uci")) {
             printf("id name Ethereal " ETHEREAL_VERSION "\n");
             printf("id author Andrew Grant & Laldon\n");
             printf("option name Hash type spin default 16 min 1 max 65536\n");
             printf("option name Threads type spin default 1 min 1 max 2048\n");
+            printf("option name MultiPV type spin default 1 min 1 max 256\n");
             printf("option name MoveOverhead type spin default 100 min 0 max 10000\n");
             printf("option name SyzygyPath type string default <empty>\n");
             printf("option name SyzygyProbeDepth type spin default 0 min 0 max 127\n");
@@ -96,50 +93,48 @@ int main(int argc, char **argv) {
             printf("uciok\n"), fflush(stdout);
         }
 
-        else if (stringEquals(str, "isready")) {
-            pthread_mutex_lock(&READYLOCK);
+        else if (strEquals(str, "isready"))
             printf("readyok\n"), fflush(stdout);
-            pthread_mutex_unlock(&READYLOCK);
-        }
 
-        else if (stringEquals(str, "ucinewgame"))
+        else if (strEquals(str, "ucinewgame"))
             resetThreadPool(threads), clearTT();
 
-        else if (stringStartsWith(str, "setoption"))
-            uciSetOption(str, &megabytes, &chess960, &nthreads, &threads);
+        else if (strStartsWith(str, "setoption"))
+            uciSetOption(str, &threads, &multiPV, &chess960);
 
-        else if (stringStartsWith(str, "position"))
+        else if (strStartsWith(str, "position"))
             uciPosition(str, &board, chess960);
 
-        else if (stringStartsWith(str, "go")) {
-            strncpy(threadsgo.str, str, 512);
-            threadsgo.threads = threads;
-            threadsgo.board = &board;
-            pthread_create(&pthreadsgo, NULL, &uciGo, &threadsgo);
+        else if (strStartsWith(str, "go")) {
+            strncpy(uciGoStruct.str, str, 512);
+            uciGoStruct.multiPV = multiPV;
+            uciGoStruct.board   = &board;
+            uciGoStruct.threads = threads;
+            pthread_create(&pthreadsgo, NULL, &uciGo, &uciGoStruct);
         }
 
-        else if (stringEquals(str, "ponderhit"))
+        else if (strEquals(str, "ponderhit"))
             IS_PONDERING = 0;
 
-        else if (stringEquals(str, "stop")) {
+        else if (strEquals(str, "stop")) {
             ABORT_SIGNAL = 1, IS_PONDERING = 0;
             pthread_join(pthreadsgo, NULL);
         }
 
-        else if (stringEquals(str, "quit"))
+        else if (strEquals(str, "quit"))
             break;
 
-        else if (stringStartsWith(str, "perft"))
+        else if (strStartsWith(str, "perft"))
             printf("%"PRIu64"\n", perft(&board, atoi(str + strlen("perft ")))), fflush(stdout);
 
-        else if (stringStartsWith(str, "print"))
+        else if (strStartsWith(str, "print"))
             printBoard(&board), fflush(stdout);
     }
 
     return 0;
 }
 
-void *uciGo(void *vthreadsgo) {
+void *uciGo(void *cargo) {
 
     // Get our starting time as soon as possible
     double start = getRealTime();
@@ -153,9 +148,10 @@ void *uciGo(void *vthreadsgo) {
     double wtime = 0, btime = 0, movetime = 0;
     double winc = 0, binc = 0, mtg = -1;
 
-    char *str       = ((ThreadsGo*)vthreadsgo)->str;
-    Board *board    = ((ThreadsGo*)vthreadsgo)->board;
-    Thread *threads = ((ThreadsGo*)vthreadsgo)->threads;
+    int multiPV     = ((UCIGoStruct*)cargo)->multiPV;
+    char *str       = ((UCIGoStruct*)cargo)->str;
+    Board *board    = ((UCIGoStruct*)cargo)->board;
+    Thread *threads = ((UCIGoStruct*)cargo)->threads;
 
     // Grab the ready lock, as we cannot be ready until we finish this search
     pthread_mutex_lock(&READYLOCK);
@@ -168,33 +164,15 @@ void *uciGo(void *vthreadsgo) {
 
     // Parse any time control and search method information that was sent
     for (ptr = strtok(NULL, " "); ptr != NULL; ptr = strtok(NULL, " ")) {
-
-        if (stringEquals(ptr, "wtime"))
-            wtime = (double)(atoi(strtok(NULL, " ")));
-
-        else if (stringEquals(ptr, "btime"))
-            btime = (double)(atoi(strtok(NULL, " ")));
-
-        else if (stringEquals(ptr, "winc"))
-            winc = (double)(atoi(strtok(NULL, " ")));
-
-        else if (stringEquals(ptr, "binc"))
-            binc = (double)(atoi(strtok(NULL, " ")));
-
-        else if (stringEquals(ptr, "movestogo"))
-            mtg = (double)(atoi(strtok(NULL, " ")));
-
-        else if (stringEquals(ptr, "depth"))
-            depth = atoi(strtok(NULL, " "));
-
-        else if (stringEquals(ptr, "movetime"))
-            movetime = (double)(atoi(strtok(NULL, " ")));
-
-        else if (stringEquals(ptr, "infinite"))
-            infinite = 1;
-
-        else if (stringEquals(ptr, "ponder"))
-            IS_PONDERING = 1;
+        if (strEquals(ptr, "wtime")) wtime = atoi(strtok(NULL, " "));
+        if (strEquals(ptr, "btime")) btime = atoi(strtok(NULL, " "));
+        if (strEquals(ptr, "winc")) winc = atoi(strtok(NULL, " "));
+        if (strEquals(ptr, "binc")) binc = atoi(strtok(NULL, " "));
+        if (strEquals(ptr, "movestogo")) mtg = atoi(strtok(NULL, " "));
+        if (strEquals(ptr, "depth")) depth = atoi(strtok(NULL, " "));
+        if (strEquals(ptr, "movetime")) movetime = atoi(strtok(NULL, " "));
+        if (strEquals(ptr, "infinite")) infinite = 1;
+        if (strEquals(ptr, "ponder")) IS_PONDERING = 1;
     }
 
     // Initialize limits for the search
@@ -210,6 +188,9 @@ void *uciGo(void *vthreadsgo) {
     limits.time  = (board->turn == WHITE) ? wtime : btime;
     limits.inc   = (board->turn == WHITE) ?  winc :  binc;
     limits.mtg   = (board->turn == WHITE) ?   mtg :   mtg;
+
+    // Limit MultiPV to the number of legal moves
+    limits.multiPV = MIN(multiPV, legalMoveCount(board));
 
     // Execute search, return best and ponder moves
     getBestMove(threads, board, &limits, &bestMove, &ponderMove);
@@ -236,47 +217,52 @@ void *uciGo(void *vthreadsgo) {
     return NULL;
 }
 
-void uciSetOption(char *str, int *megabytes, int *chess960, int *nthreads, Thread **threads) {
+void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960) {
 
     // Handle setting UCI options in Ethereal. Options include:
-    //   Hash             : Size of the Transposition Table in Megabyes
-    //   Threads          : Number of search threads to use
-    //   MoveOverhead     : Overhead on time allocation to avoid time losses
-    //   SyzygyPath       : Path to Syzygy Tablebases
-    //   SyzygyProbeDepth : Minimal Depth to probe the highest cardinality Tablebase
-    //   UCI_Chess960     : Set when playing FRC, but not required in order to work
+    //  Hash             : Size of the Transposition Table in Megabyes
+    //  Threads          : Number of search threads to use
+    //  MultiPV          : Number of search lines to report per iteration
+    //  MoveOverhead     : Overhead on time allocation to avoid time losses
+    //  SyzygyPath       : Path to Syzygy Tablebases
+    //  SyzygyProbeDepth : Minimal Depth to probe the highest cardinality Tablebase
+    //  UCI_Chess960     : Set when playing FRC, but not required in order to work
 
-    if (stringStartsWith(str, "setoption name Hash value ")) {
-        *megabytes = atoi(str + strlen("setoption name Hash value "));
-        initTT(*megabytes); printf("info string set Hash to %dMB\n", *megabytes);
+    if (strStartsWith(str, "setoption name Hash value ")) {
+        int megabytes = atoi(str + strlen("setoption name Hash value "));
+        initTT(megabytes); printf("info string set Hash to %dMB\n", megabytes);
     }
 
-    if (stringStartsWith(str, "setoption name Threads value ")) {
-        free(*threads);
-        *nthreads = atoi(str + strlen("setoption name Threads value "));
-        *threads = createThreadPool(*nthreads);
-        printf("info string set Threads to %d\n", *nthreads);
+    if (strStartsWith(str, "setoption name Threads value ")) {
+        int nthreads = atoi(str + strlen("setoption name Threads value "));
+        free(*threads); *threads = createThreadPool(nthreads);
+        printf("info string set Threads to %d\n", nthreads);
     }
 
-    if (stringStartsWith(str, "setoption name MoveOverhead value ")) {
+    if (strStartsWith(str, "setoption name MultiPV value ")) {
+        *multiPV = atoi(str + strlen("setoption name MultiPV value "));
+        printf("info string set MultiPV to %d\n", *multiPV);
+    }
+
+    if (strStartsWith(str, "setoption name MoveOverhead value ")) {
         MoveOverhead = atoi(str + strlen("setoption name MoveOverhead value "));
         printf("info string set MoveOverhead to %d\n", MoveOverhead);
     }
 
-    if (stringStartsWith(str, "setoption name SyzygyPath value ")) {
+    if (strStartsWith(str, "setoption name SyzygyPath value ")) {
         char *ptr = str + strlen("setoption name SyzygyPath value ");
         tb_init(ptr); printf("info string set SyzygyPath to %s\n", ptr);
     }
 
-    if (stringStartsWith(str, "setoption name SyzygyProbeDepth value ")) {
+    if (strStartsWith(str, "setoption name SyzygyProbeDepth value ")) {
         TB_PROBE_DEPTH = atoi(str + strlen("setoption name SyzygyProbeDepth value "));
         printf("info string set SyzygyProbeDepth to %u\n", TB_PROBE_DEPTH);
     }
 
-    if (stringStartsWith(str, "setoption name UCI_Chess960 value ")) {
-        if (stringStartsWith(str, "setoption name UCI_Chess960 value true"))
+    if (strStartsWith(str, "setoption name UCI_Chess960 value ")) {
+        if (strStartsWith(str, "setoption name UCI_Chess960 value true"))
             printf("info string set UCI_Chess960 to true\n"), *chess960 = 1;
-        if (stringStartsWith(str, "setoption name UCI_Chess960 value false"))
+        if (strStartsWith(str, "setoption name UCI_Chess960 value false"))
             printf("info string set UCI_Chess960 to false\n"), *chess960 = 0;
     }
 
@@ -291,11 +277,11 @@ void uciPosition(char *str, Board *board, int chess960) {
     Undo undo[1];
 
     // Position is defined by a FEN, X-FEN or Shredder-FEN
-    if (stringContains(str, "fen"))
+    if (strContains(str, "fen"))
         boardFromFEN(board, strstr(str, "fen") + strlen("fen "), chess960);
 
     // Position is simply the usual starting position
-    else if (stringContains(str, "startpos"))
+    else if (strContains(str, "startpos"))
         boardFromFEN(board, StartPosition, chess960);
 
     // Position command may include a list of moves
@@ -317,7 +303,7 @@ void uciPosition(char *str, Board *board, int chess960) {
         // Find and apply the given move
         for (int i = 0; i < size; i++) {
             moveToString(moves[i], testStr, board->chess960);
-            if (stringEquals(moveStr, testStr)) {
+            if (strEquals(moveStr, testStr)) {
                 applyMove(board, moves[i], undo);
                 break;
             }
@@ -343,8 +329,9 @@ void uciReport(Thread *threads, int alpha, int beta, int value) {
     int hashfull    = hashfullTT();
     int depth       = threads->depth;
     int seldepth    = threads->seldepth;
+    int multiPV     = threads->multiPV + 1;
     int elapsed     = elapsedTime(threads->info);
-    int bounded     = value = MAX(alpha, MIN(value, beta));
+    int bounded     = MAX(alpha, MIN(value, beta));
     uint64_t nodes  = nodesSearchedThreadPool(threads);
     uint64_t tbhits = tbhitsThreadPool(threads);
     int nps         = (int)(1000 * (nodes / (1 + elapsed)));
@@ -361,9 +348,9 @@ void uciReport(Thread *threads, int alpha, int beta, int value) {
     char *bound = bounded >=  beta ? " lowerbound "
                 : bounded <= alpha ? " upperbound " : " ";
 
-    printf("info depth %d seldepth %d score %s %d%stime %d "
+    printf("info depth %d seldepth %d multipv %d score %s %d%stime %d "
            "nodes %"PRIu64" nps %d tbhits %"PRIu64" hashfull %d pv ",
-           depth, seldepth, type, score, bound, elapsed, nodes, nps, tbhits, hashfull);
+           depth, seldepth, multiPV, type, score, bound, elapsed, nodes, nps, tbhits, hashfull);
 
     // Iterate over the PV and print each move
     for (int i = 0; i < threads->pv.length; i++) {
@@ -386,7 +373,7 @@ void uciReportTBRoot(Board *board, uint16_t move, unsigned wdl, unsigned dtz) {
     int score = wdl == TB_LOSS ? -MATE + MAX_PLY + dtz + 1
               : wdl == TB_WIN  ?  MATE - MAX_PLY - dtz - 1 : 0;
 
-    printf("info depth %d seldepth %d score cp %d time 0 "
+    printf("info depth %d seldepth %d multipv 1 score cp %d time 0 "
            "nodes 0 tbhits 1 nps 0 hashfull %d pv ",
            MAX_PLY - 1, MAX_PLY - 1, score, 0);
 
@@ -405,15 +392,15 @@ void uciReportCurrentMove(Board *board, uint16_t move, int currmove, int depth) 
 
 }
 
-int stringEquals(char *str1, char *str2) {
+int strEquals(char *str1, char *str2) {
     return strcmp(str1, str2) == 0;
 }
 
-int stringStartsWith(char *str, char *key) {
+int strStartsWith(char *str, char *key) {
     return strstr(str, key) == str;
 }
 
-int stringContains(char *str, char *key) {
+int strContains(char *str, char *key) {
     return strstr(str, key) != NULL;
 }
 

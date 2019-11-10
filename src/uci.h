@@ -22,7 +22,7 @@
 
 #include "types.h"
 
-#define VERSION_ID "11.73"
+#define VERSION_ID "11.74"
 
 #if defined(USE_PEXT)
     #define ETHEREAL_VERSION VERSION_ID" (PEXT)"
@@ -35,23 +35,25 @@
 struct Limits {
     double start, time, inc, mtg, timeLimit;
     int limitedByNone, limitedByTime, limitedBySelf;
-    int limitedByDepth, depthLimit;
+    int limitedByDepth, depthLimit, multiPV;
 };
 
-struct ThreadsGo {
+struct UCIGoStruct {
+    int multiPV;
     char str[512];
-    Thread *threads;
     Board *board;
+    Thread *threads;
 };
 
-void* uciGo(void *vthreadgo);
-void uciSetOption(char *str, int *megabytes, int *chess960, int *nthreads, Thread **threads);
+void *uciGo(void *cargo);
+void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960);
 void uciPosition(char *str, Board *board, int chess960);
+
 void uciReport(Thread *threads, int alpha, int beta, int value);
 void uciReportTBRoot(Board *board, uint16_t move, unsigned wdl, unsigned dtz);
 void uciReportCurrentMove(Board *board, uint16_t move, int currmove, int depth);
 
-int stringEquals(char *str1, char *str2);
-int stringStartsWith(char *str, char *key);
-int stringContains(char *str, char *key);
+int strEquals(char *str1, char *str2);
+int strStartsWith(char *str, char *key);
+int strContains(char *str, char *key);
 int getInput(char *str);
