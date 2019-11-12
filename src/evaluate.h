@@ -56,7 +56,6 @@ struct EvalTrace {
     int PawnConnected32[32][COLOUR_NB];
     int KnightOutpost[2][2][COLOUR_NB];
     int KnightBehindPawn[COLOUR_NB];
-    int KnightClosednessAdjustment[9][COLOUR_NB];
     int KnightMobility[9][COLOUR_NB];
     int BishopPair[COLOUR_NB];
     int BishopRammedPawns[COLOUR_NB];
@@ -65,7 +64,6 @@ struct EvalTrace {
     int BishopMobility[14][COLOUR_NB];
     int RookFile[2][COLOUR_NB];
     int RookOnSeventh[COLOUR_NB];
-    int RookClosednessAdjustment[9][COLOUR_NB];
     int RookMobility[15][COLOUR_NB];
     int QueenMobility[28][COLOUR_NB];
     int KingPawnFileProximity[8][COLOUR_NB];
@@ -84,6 +82,8 @@ struct EvalTrace {
     int ThreatQueenAttackedByOne[COLOUR_NB];
     int ThreatOverloadedPieces[COLOUR_NB];
     int ThreatByPawnPush[COLOUR_NB];
+    int ClosednessKnightAdjustment[9][COLOUR_NB];
+    int ClosednessRookAdjustment[9][COLOUR_NB];
     int ComplexityTotalPawns[COLOUR_NB];
     int ComplexityPawnFlanks[COLOUR_NB];
     int ComplexityPawnEndgame[COLOUR_NB];
@@ -121,8 +121,9 @@ int evaluateQueens(EvalInfo *ei, Board *board, int colour);
 int evaluateKings(EvalInfo *ei, Board *board, int colour);
 int evaluatePassed(EvalInfo *ei, Board *board, int colour);
 int evaluateThreats(EvalInfo *ei, Board *board, int colour);
-int evaluateScaleFactor(Board *board, int eval);
+int evaluateClosedness(EvalInfo *ei, Board *board);
 int evaluateComplexity(EvalInfo *ei, Board *board, int eval);
+int evaluateScaleFactor(Board *board, int eval);
 void initEvalInfo(EvalInfo *ei, Board *board, PKTable *pktable);
 void initEval();
 

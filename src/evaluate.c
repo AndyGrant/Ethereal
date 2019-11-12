@@ -144,15 +144,9 @@ const int KnightOutpost[2][2] = {
 
 const int KnightBehindPawn = S(   4,  19);
 
-const int KnightClosednessAdjustment[9] = {
-    S( -11, -11), S(  -9,   3), S(  -8,  11), S(  -3,  13), 
-    S(  -1,  18), S(   2,  16), S(   5,  13), S(  -6,  28), 
-    S(  -7,  16), 
-};
-
 const int KnightMobility[9] = {
-    S( -74,-104), S( -31, -96), S( -16, -41), S(  -5, -16), 
-    S(   6,  -8), S(  11,   8), S(  19,  11), S(  28,  11), 
+    S( -74,-104), S( -31, -96), S( -16, -41), S(  -5, -16),
+    S(   6,  -8), S(  11,   8), S(  19,  11), S(  28,  11),
     S(  40,  -3),
 };
 
@@ -181,12 +175,6 @@ const int BishopMobility[14] = {
 const int RookFile[2] = { S(  15,   4), S(  35,   3) };
 
 const int RookOnSeventh = S(  -2,  26);
-
-const int RookClosednessAdjustment[9] = {
-    S(  47,  -9), S(   7,  23), S(   3,  13), S(  -3,   4), 
-    S(  -7,   3), S(  -9,  -8), S( -13, -11), S( -21, -15), 
-    S( -26, -16),
-};
 
 const int RookMobility[15] = {
     S(-148,-113), S( -52,-113), S( -15, -61), S(  -7, -21),
@@ -323,6 +311,20 @@ const int ThreatQueenAttackedByOne   = S( -39, -29);
 const int ThreatOverloadedPieces     = S(  -8, -13);
 const int ThreatByPawnPush           = S(  15,  21);
 
+/* Closedness Evaluation Terms */
+
+const int ClosednessKnightAdjustment[9] = {
+    S( -11, -11), S(  -9,   3), S(  -8,  11), S(  -3,  13),
+    S(  -1,  18), S(   2,  16), S(   5,  13), S(  -6,  28),
+    S(  -7,  16),
+};
+
+const int ClosednessRookAdjustment[9] = {
+    S(  47,  -9), S(   7,  23), S(   3,  13), S(  -3,   4),
+    S(  -7,   3), S(  -9,  -8), S( -13, -11), S( -21, -15),
+    S( -26, -16),
+};
+
 /* Complexity Evaluation Terms */
 
 const int ComplexityTotalPawns  = S(   0,   7);
@@ -346,6 +348,7 @@ int evaluateBoard(Board *board, PKTable *pktable) {
     eval   = evaluatePieces(&ei, board);
     pkeval = ei.pkeval[WHITE] - ei.pkeval[BLACK];
     eval  += pkeval + board->psqtmat;
+    eval  += evaluateClosedness(&ei, board);
     eval  += evaluateComplexity(&ei, board, eval);
 
     // Calculate the game phase based on remaining material (Fruit Method)
@@ -369,7 +372,7 @@ int evaluateBoard(Board *board, PKTable *pktable) {
 
     // Store a new Pawn King Entry if we did not have one
     if (ei.pkentry == NULL && pktable != NULL)
-        storePKEntry(pktable, board->pkhash, ei.passedPawns, pkeval, ei.closedness);
+        storePKEntry(pktable, board->pkhash, ei.passedPawns, pkeval);
 
     // Return the evaluation relative to the side to move
     return board->turn == WHITE ? eval : -eval;
@@ -526,10 +529,6 @@ int evaluateKnights(EvalInfo *ei, Board *board, int colour) {
             if (TRACE) T.KnightBehindPawn[US]++;
         }
 
-        // Apply a bonus/penalty adjustment depending on how closed the position is.
-        eval += KnightClosednessAdjustment[ei->closedness];
-        if (TRACE) T.KnightClosednessAdjustment[ei->closedness][US]++;
-
         // Apply a bonus (or penalty) based on the mobility of the knight
         count = popcount(ei->mobilityAreas[US] & attacks);
         eval += KnightMobility[count];
@@ -658,10 +657,6 @@ int evaluateRooks(EvalInfo *ei, Board *board, int colour) {
             eval += RookOnSeventh;
             if (TRACE) T.RookOnSeventh[US]++;
         }
-
-        // Apply a bonus/penalty adjustment depending on how closed the position is.
-        eval += RookClosednessAdjustment[ei->closedness];
-        if (TRACE) T.RookClosednessAdjustment[ei->closedness][US]++;
 
         // Apply a bonus (or penalty) based on the mobility of the rook
         count = popcount(ei->mobilityAreas[US] & attacks);
@@ -955,6 +950,72 @@ int evaluateThreats(EvalInfo *ei, Board *board, int colour) {
     return eval;
 }
 
+int evaluateClosedness(EvalInfo *ei, Board *board) {
+
+    int closedness, count, eval = 0;
+
+    uint64_t white = board->colours[WHITE];
+    uint64_t black = board->colours[BLACK];
+
+    uint64_t knights = board->pieces[KNIGHT];
+    uint64_t rooks   = board->pieces[ROOK  ];
+
+    // Compute Closedness factor for this position
+    closedness = 1 * popcount(board->pieces[PAWN])
+               + 3 * popcount(ei->rammedPawns[WHITE])
+               - 4 * openFileCount(board->pieces[PAWN]);
+    closedness = MAX(0, MIN(8, closedness / 3));
+
+    // Evaluate Knights based on how Closed the position is
+    count = popcount(white & knights) - popcount(black & knights);
+    eval += count * ClosednessKnightAdjustment[closedness];
+    if (TRACE) T.ClosednessKnightAdjustment[closedness][WHITE] += count;
+
+    // Evaluate Rooks based on how Closed the position is
+    count = popcount(white & rooks) - popcount(black & rooks);
+    eval += count * ClosednessRookAdjustment[closedness];
+    if (TRACE) T.ClosednessRookAdjustment[closedness][WHITE] += count;
+
+    return eval;
+}
+
+int evaluateComplexity(EvalInfo *ei, Board *board, int eval) {
+
+    // Adjust endgame evaluation based on features related to how
+    // likely the stronger side is to convert the position.
+    // More often than not, this is a penalty for drawish positions.
+
+    (void) ei; // Silence compiler warning
+
+    int complexity;
+    int eg = ScoreEG(eval);
+    int sign = (eg > 0) - (eg < 0);
+
+    int pawnsOnBothFlanks = (board->pieces[PAWN] & LEFT_FLANK )
+                         && (board->pieces[PAWN] & RIGHT_FLANK);
+
+    uint64_t knights = board->pieces[KNIGHT];
+    uint64_t bishops = board->pieces[BISHOP];
+    uint64_t rooks   = board->pieces[ROOK  ];
+    uint64_t queens  = board->pieces[QUEEN ];
+
+    // Compute the initiative bonus or malus for the attacking side
+    complexity =  ComplexityTotalPawns  * popcount(board->pieces[PAWN])
+               +  ComplexityPawnFlanks  * pawnsOnBothFlanks
+               +  ComplexityPawnEndgame * !(knights | bishops | rooks | queens)
+               +  ComplexityAdjustment;
+
+    if (TRACE) T.ComplexityTotalPawns[WHITE]  += sign * popcount(board->pieces[PAWN]);
+    if (TRACE) T.ComplexityPawnFlanks[WHITE]  += sign * pawnsOnBothFlanks;
+    if (TRACE) T.ComplexityPawnEndgame[WHITE] += sign * !(knights | bishops | rooks | queens);
+    if (TRACE) T.ComplexityAdjustment[WHITE]  += sign;
+
+    // Avoid changing which side has the advantage
+    int v = sign * MAX(ScoreEG(complexity), -abs(eg));
+
+    return MakeScore(0, v);
+}
+
 int evaluateScaleFactor(Board *board, int eval) {
 
     // Scale endgames based on remaining material. Currently, we only
@@ -994,43 +1055,6 @@ int evaluateScaleFactor(Board *board, int eval) {
         return SCALE_DRAW;
 
     return SCALE_NORMAL;
-}
-
-int evaluateComplexity(EvalInfo *ei, Board *board, int eval) {
-
-    // Adjust endgame evaluation based on features related to how
-    // likely the stronger side is to convert the position.
-    // More often than not, this is a penalty for drawish positions.
-
-    (void) ei; // Silence compiler warning
-
-    int complexity;
-    int eg = ScoreEG(eval);
-    int sign = (eg > 0) - (eg < 0);
-
-    int pawnsOnBothFlanks = (board->pieces[PAWN] & LEFT_FLANK )
-                         && (board->pieces[PAWN] & RIGHT_FLANK);
-
-    uint64_t knights = board->pieces[KNIGHT];
-    uint64_t bishops = board->pieces[BISHOP];
-    uint64_t rooks   = board->pieces[ROOK  ];
-    uint64_t queens  = board->pieces[QUEEN ];
-
-    // Compute the initiative bonus or malus for the attacking side
-    complexity =  ComplexityTotalPawns  * popcount(board->pieces[PAWN])
-               +  ComplexityPawnFlanks  * pawnsOnBothFlanks
-               +  ComplexityPawnEndgame * !(knights | bishops | rooks | queens)
-               +  ComplexityAdjustment;
-
-    if (TRACE) T.ComplexityTotalPawns[WHITE]  += sign * popcount(board->pieces[PAWN]);
-    if (TRACE) T.ComplexityPawnFlanks[WHITE]  += sign * pawnsOnBothFlanks;
-    if (TRACE) T.ComplexityPawnEndgame[WHITE] += sign * !(knights | bishops | rooks | queens);
-    if (TRACE) T.ComplexityAdjustment[WHITE]  += sign;
-
-    // Avoid changing which side has the advantage
-    int v = sign * MAX(ScoreEG(complexity), -abs(eg));
-
-    return MakeScore(0, v);
 }
 
 void initEvalInfo(EvalInfo *ei, Board *board, PKTable *pktable) {
@@ -1085,14 +1109,6 @@ void initEvalInfo(EvalInfo *ei, Board *board, PKTable *pktable) {
     ei->passedPawns   = ei->pkentry == NULL ? 0ull : ei->pkentry->passed;
     ei->pkeval[WHITE] = ei->pkentry == NULL ? 0    : ei->pkentry->eval;
     ei->pkeval[BLACK] = ei->pkentry == NULL ? 0    : 0;
-    if (ei->pkentry == NULL) {
-        // The starting pos has closedness = 5
-        int closed = popcount(pawns) - 4 * openFileCount(pawns) + 3 * popcount(pawnAdvance((black & pawns), ~(white & pawns), BLACK));
-        ei->closedness = MAX(0, MIN(8, closed/3));
-    }
-    else {
-        ei->closedness = ei->pkentry->closedness;
-    }
 }
 
 void initEval() {
