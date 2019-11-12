@@ -150,6 +150,11 @@ int kingPawnFileDistance(uint64_t pawns, int ksq) {
     return KingPawnFileDistance[fileOf(ksq)][pawns & 0xFF];
 }
 
+int openFileCount(uint64_t pawns) {
+    pawns |= pawns >> 8; pawns |= pawns >> 16; pawns |= pawns >> 32;
+    return popcount(~pawns & 0xFF);
+}
+
 uint64_t bitsBetweenMasks(int s1, int s2) {
     assert(0 <= s1 && s1 < SQUARE_NB);
     assert(0 <= s2 && s2 < SQUARE_NB);

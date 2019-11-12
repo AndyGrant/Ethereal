@@ -35,9 +35,9 @@ int PSQT[32][SQUARE_NB];
 /* Material Value Evaluation Terms */
 
 const int PawnValue   = S( 105, 118);
-const int KnightValue = S( 450, 405);
+const int KnightValue = S( 449, 410);
 const int BishopValue = S( 473, 423);
-const int RookValue   = S( 669, 695);
+const int RookValue   = S( 654, 684);
 const int QueenValue  = S(1295,1380);
 const int KingValue   = S(   0,   0);
 
@@ -144,10 +144,16 @@ const int KnightOutpost[2][2] = {
 
 const int KnightBehindPawn = S(   4,  19);
 
+const int KnightClosednessAdjustment[9] = {
+    S( -11, -11), S(  -9,   3), S(  -8,  11), S(  -3,  13), 
+    S(  -1,  18), S(   2,  16), S(   5,  13), S(  -6,  28), 
+    S(  -7,  16), 
+};
+
 const int KnightMobility[9] = {
-    S( -77,-104), S( -32,-100), S( -18, -43), S(  -5, -18),
-    S(   6,  -8), S(  12,   9), S(  21,  11), S(  30,  11),
-    S(  42,  -3),
+    S( -74,-104), S( -31, -96), S( -16, -41), S(  -5, -16), 
+    S(   6,  -8), S(  11,   8), S(  19,  11), S(  28,  11), 
+    S(  40,  -3),
 };
 
 /* Bishop Evaluation Terms */
@@ -175,6 +181,12 @@ const int BishopMobility[14] = {
 const int RookFile[2] = { S(  15,   4), S(  35,   3) };
 
 const int RookOnSeventh = S(  -2,  26);
+
+const int RookClosednessAdjustment[9] = {
+    S(  47,  -9), S(   7,  23), S(   3,  13), S(  -3,   4), 
+    S(  -7,   3), S(  -9,  -8), S( -13, -11), S( -21, -15), 
+    S( -26, -16),
+};
 
 const int RookMobility[15] = {
     S(-148,-113), S( -52,-113), S( -15, -61), S(  -7, -21),
@@ -357,7 +369,7 @@ int evaluateBoard(Board *board, PKTable *pktable) {
 
     // Store a new Pawn King Entry if we did not have one
     if (ei.pkentry == NULL && pktable != NULL)
-        storePKEntry(pktable, board->pkhash, ei.passedPawns, pkeval);
+        storePKEntry(pktable, board->pkhash, ei.passedPawns, pkeval, ei.closedness);
 
     // Return the evaluation relative to the side to move
     return board->turn == WHITE ? eval : -eval;
@@ -514,6 +526,10 @@ int evaluateKnights(EvalInfo *ei, Board *board, int colour) {
             if (TRACE) T.KnightBehindPawn[US]++;
         }
 
+        // Apply a bonus/penalty adjustment depending on how closed the position is.
+        eval += KnightClosednessAdjustment[ei->closedness];
+        if (TRACE) T.KnightClosednessAdjustment[ei->closedness][US]++;
+
         // Apply a bonus (or penalty) based on the mobility of the knight
         count = popcount(ei->mobilityAreas[US] & attacks);
         eval += KnightMobility[count];
@@ -642,6 +658,10 @@ int evaluateRooks(EvalInfo *ei, Board *board, int colour) {
             eval += RookOnSeventh;
             if (TRACE) T.RookOnSeventh[US]++;
         }
+
+        // Apply a bonus/penalty adjustment depending on how closed the position is.
+        eval += RookClosednessAdjustment[ei->closedness];
+        if (TRACE) T.RookClosednessAdjustment[ei->closedness][US]++;
 
         // Apply a bonus (or penalty) based on the mobility of the rook
         count = popcount(ei->mobilityAreas[US] & attacks);
@@ -1065,6 +1085,14 @@ void initEvalInfo(EvalInfo *ei, Board *board, PKTable *pktable) {
     ei->passedPawns   = ei->pkentry == NULL ? 0ull : ei->pkentry->passed;
     ei->pkeval[WHITE] = ei->pkentry == NULL ? 0    : ei->pkentry->eval;
     ei->pkeval[BLACK] = ei->pkentry == NULL ? 0    : 0;
+    if (ei->pkentry == NULL) {
+        // The starting pos has closedness = 5
+        int closed = popcount(pawns) - 4 * openFileCount(pawns) + 3 * popcount(pawnAdvance((black & pawns), ~(white & pawns), BLACK));
+        ei->closedness = MAX(0, MIN(8, closed/3));
+    }
+    else {
+        ei->closedness = ei->pkentry->closedness;
+    }
 }
 
 void initEval() {
