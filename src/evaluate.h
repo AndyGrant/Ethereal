@@ -79,6 +79,8 @@ struct EvalTrace {
     int ThreatMinorAttackedByMinor[COLOUR_NB];
     int ThreatMinorAttackedByMajor[COLOUR_NB];
     int ThreatRookAttackedByLesser[COLOUR_NB];
+    int ThreatMinorAttackedByKing[COLOUR_NB];
+    int ThreatRookAttackedByKing[COLOUR_NB];
     int ThreatQueenAttackedByOne[COLOUR_NB];
     int ThreatOverloadedPieces[COLOUR_NB];
     int ThreatByPawnPush[COLOUR_NB];
