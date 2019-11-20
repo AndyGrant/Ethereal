@@ -50,6 +50,8 @@ const char *StartPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq 
 
 int main(int argc, char **argv) {
 
+    printf("Ethereal %s by Andrew Grant & Laldon\n", VERSION_ID);
+  
     Board board;
     char str[8192];
     Thread *threads;
