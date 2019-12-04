@@ -148,7 +148,7 @@ void aspirationWindow(Thread *thread) {
     const int multiPV    = thread->multiPV;
     const int mainThread = thread->index == 0;
 
-    int value, alpha = -MATE, beta = MATE, delta = WindowSize;
+    int value, alpha = -MATE, beta = MATE, delta = WindowSize, failHighCnt = 0, adjustedDepth;
 
     // Create an aspiration window after a few depths using
     // the eval from the bestline from the previous iteration
@@ -158,9 +158,11 @@ void aspirationWindow(Thread *thread) {
     }
 
     while (1) {
+          
+        adjustedDepth = MAX(1, thread->depth - failHighCnt);
 
         // Perform a search and consider reporting results
-        value = search(thread, pv, alpha, beta, thread->depth, 0);
+        value = search(thread, pv, alpha, beta, adjustedDepth, 0);
         if (   (mainThread && value > alpha && value < beta)
             || (mainThread && elapsedTime(thread->info) >= WindowTimerMS))
             uciReport(thread->threads, alpha, beta, value);
@@ -178,15 +180,19 @@ void aspirationWindow(Thread *thread) {
         // Search failed low
         if (value <= alpha) {
             beta  = (alpha + beta) / 2;
-            alpha = MAX(-MATE, alpha - delta);
+            alpha = MAX(-MATE, value - delta);
+            
+            failHighCnt = 0;
         }
 
         // Search failed high
-        else if (value >= beta)
-            beta = MIN(MATE, beta + delta);
+        else if (value >= beta) { 
+            beta = MIN(MATE, value + delta);
+            failHighCnt++;
+        }
 
         // Expand the search window
-        delta = delta + delta / 2;
+        delta += delta / 4 + 5;
     }
 }
 
