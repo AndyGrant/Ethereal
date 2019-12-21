@@ -499,7 +499,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
                   || (isQuiet && quietsSeen <= 4 && cmhist >= 10000 && fmhist >= 10000)
                   || (singular && moveIsSingular(thread, ttMove, ttValue, depth, height, beta, &multiCut));
 
-        if (!RootNode && multiCut) {
+        if (multiCut) {
             revert(thread, board, move, height);
             return ttValue - depth;
         }
@@ -804,7 +804,7 @@ int moveIsSingular(Thread *thread, uint16_t ttMove, int ttValue, int depth, int 
     // Reapply the table move we took off
     applyLegal(thread, board, ttMove, height);
 
-    *multiCut = value >= beta;
+    *multiCut = value >= rBeta && rBeta >= beta;
 
     // Move is singular if all other moves failed low
     return value <= rBeta;
