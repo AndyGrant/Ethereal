@@ -200,29 +200,13 @@ int squareIsAttacked(Board *board, int colour, int sq) {
     // Check for attacks to this square. While this function has the same
     // result as using attackersToSquare(board, colour, sq) != 0ull, this
     // has a better running time by avoiding some slider move lookups. The
-    // speed gain is able to easily be proven using the provided PERFT suit
+    // speed gain is easily proven using the provided PERFT suite
 
     return (pawnAttacks(colour, sq) & enemyPawns)
         || (knightAttacks(sq) & enemyKnights)
         || (enemyBishops && (bishopAttacks(sq, occupied) & enemyBishops))
         || (enemyRooks && (rookAttacks(sq, occupied) & enemyRooks))
         || (kingAttacks(sq) & enemyKings);
-}
-
-uint64_t attackersToSquare(Board *board, int colour, int sq) {
-
-    uint64_t enemy    = board->colours[!colour];
-    uint64_t occupied = board->colours[ colour] | enemy;
-
-    // Find all enemy pieces which are a threat to the given square. We may
-    // go through the each piece type, pretend that the given square contains
-    // this piece, and search for attacks of our opponents matching piece types
-
-    return (pawnAttacks(colour, sq) & enemy & board->pieces[PAWN])
-         | (knightAttacks(sq) & enemy & board->pieces[KNIGHT])
-         | (bishopAttacks(sq, occupied) & enemy & (board->pieces[BISHOP] | board->pieces[QUEEN]))
-         | (rookAttacks(sq, occupied) & enemy & (board->pieces[ROOK] | board->pieces[QUEEN]))
-         | (kingAttacks(sq) & enemy & board->pieces[KING]);
 }
 
 uint64_t allAttackersToSquare(Board *board, uint64_t occupied, int sq) {
@@ -242,7 +226,8 @@ uint64_t allAttackersToSquare(Board *board, uint64_t occupied, int sq) {
 
 uint64_t attackersToKingSquare(Board *board) {
 
-    // Wrapper for attackersToSquare() for use in check detection
+    // Wrapper for allAttackersToSquare() for use in check detection
     int kingsq = getlsb(board->colours[board->turn] & board->pieces[KING]);
-    return attackersToSquare(board, board->turn, kingsq);
+    uint64_t occupied = board->colours[WHITE] | board->colours[BLACK];
+    return allAttackersToSquare(board, occupied, kingsq) & board->colours[!board->turn];
 }
