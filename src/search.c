@@ -494,9 +494,15 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
         // an early move has excellent continuation history, or when we have a move
         // from the transposition table which appears to beat all other moves by a
         // relativly large margin,
+        int multiCut = 0;
         extension =  (inCheck)
                   || (isQuiet && quietsSeen <= 4 && cmhist >= 10000 && fmhist >= 10000)
-                  || (singular && moveIsSingular(thread, ttMove, ttValue, depth, height));
+                  || (singular && moveIsSingular(thread, ttMove, ttValue, depth, height, beta, &multiCut));
+
+        if (multiCut) {
+            revert(thread, board, move, height);
+            return MAX(ttValue - depth, -MATE);
+        }
 
         // Factor the extension into the new depth. Do not extend at the root
         newDepth = depth + (extension && !RootNode);
@@ -757,7 +763,7 @@ int staticExchangeEvaluation(Board *board, uint16_t move, int threshold) {
     return board->turn != colour;
 }
 
-int moveIsSingular(Thread *thread, uint16_t ttMove, int ttValue, int depth, int height) {
+int moveIsSingular(Thread *thread, uint16_t ttMove, int ttValue, int depth, int height, int beta, int *multiCut) {
 
     Board *const board = &thread->board;
 
@@ -797,6 +803,8 @@ int moveIsSingular(Thread *thread, uint16_t ttMove, int ttValue, int depth, int 
 
     // Reapply the table move we took off
     applyLegal(thread, board, ttMove, height);
+
+    *multiCut = value >= rBeta && rBeta >= beta;
 
     // Move is singular if all other moves failed low
     return value <= rBeta;
