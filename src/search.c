@@ -501,7 +501,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
 
         if (multiCut) {
             revert(thread, board, move, height);
-            return ttValue - depth;
+            return MAX(ttValue - depth, -MATE);
         }
 
         // Factor the extension into the new depth. Do not extend at the root
