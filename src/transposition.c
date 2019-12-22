@@ -87,6 +87,32 @@ void clearTT() {
     memset(Table.buckets, 0, sizeof(TTBucket) * (Table.hashMask + 1u));
 }
 
+void lockTTBucket(TTBucket *bucket) {
+
+#ifndef NO_TT_LOCKS
+    uint8_t previous;
+
+    do {
+        previous =
+            atomic_exchange_explicit(
+                &bucket->lock,
+                1, // desired
+                memory_order_acquire);
+    } while (previous == 1);
+#else
+    (void)bucket;
+#endif
+}
+
+void unlockTTBucket(TTBucket *bucket) {
+
+#ifndef NO_TT_LOCKS
+    atomic_store_explicit(&bucket->lock, 0, memory_order_release);
+#else
+    (void)bucket;
+#endif
+}
+
 int hashfullTT() {
 
     // Take a sample of the first thousand buckets in the table
@@ -132,11 +158,15 @@ void prefetchTTEntry(uint64_t hash)
 int getTTEntry(uint64_t hash, uint16_t *move, int *value, int *eval, int *depth, int *bound) {
 
     const uint16_t hash16 = hash >> 48;
-    TTEntry *slots = Table.buckets[hash & Table.hashMask].slots;
+    TTBucket *bucket = &Table.buckets[hash & Table.hashMask];
+    TTEntry *slots = bucket->slots;
+    uint16_t *hashes = bucket->hashes;
+
+    lockTTBucket(bucket);
 
     // Search for a matching hash signature
     for (int i = 0; i < TT_BUCKET_NB; i++) {
-        if (slots[i].hash16 == hash16) {
+        if (hashes[i] == hash16) {
 
             // Update age but retain bound type
             slots[i].generation = Table.generation | (slots[i].generation & TT_MASK_BOUND);
@@ -147,10 +177,13 @@ int getTTEntry(uint64_t hash, uint16_t *move, int *value, int *eval, int *depth,
             *eval  = slots[i].eval;
             *depth = slots[i].depth;
             *bound = slots[i].generation & TT_MASK_BOUND;
+
+            unlockTTBucket(bucket);
             return 1;
         }
     }
 
+    unlockTTBucket(bucket);
     return 0;
 }
 
@@ -158,25 +191,40 @@ void storeTTEntry(uint64_t hash, uint16_t move, int value, int eval, int depth, 
 
     int i;
     const uint16_t hash16 = hash >> 48;
-    TTEntry *slots = Table.buckets[hash & Table.hashMask].slots;
+
+    TTBucket *bucket = &Table.buckets[hash & Table.hashMask];
+    TTEntry *slots = bucket->slots;
+    uint16_t *hashes = bucket->hashes;
+
     TTEntry *replace = slots; // &slots[0]
+    size_t replaceIndex = 0;
+
+    lockTTBucket(bucket);
 
     // Find a matching hash, or replace using MAX(x1, x2, x3),
     // where xN equals the depth minus 4 times the age difference
-    for (i = 0; i < TT_BUCKET_NB && slots[i].hash16 != hash16; i++)
+    for (i = 0; i < TT_BUCKET_NB && hashes[i] != hash16; i++)
         if (   replace->depth - ((259 + Table.generation - replace->generation) & TT_MASK_AGE)
-            >= slots[i].depth - ((259 + Table.generation - slots[i].generation) & TT_MASK_AGE))
+            >= slots[i].depth - ((259 + Table.generation - slots[i].generation) & TT_MASK_AGE)) {
             replace = &slots[i];
+            replaceIndex = i;
+        }
 
     // Prefer a matching hash, otherwise score a replacement
-    replace = (i != TT_BUCKET_NB) ? &slots[i] : replace;
+    if (i != TT_BUCKET_NB) {
+        replace = &slots[i];
+        replaceIndex = i;
+    }
 
     // Don't overwrite an entry from the same position, unless we have
     // an exact bound or depth that is nearly as good as the old one
     if (   bound != BOUND_EXACT
-        && hash16 == replace->hash16
-        && depth < replace->depth - 3)
+        && hash16 == hashes[replaceIndex]
+        && depth < replace->depth - 3) {
+
+        unlockTTBucket(bucket);
         return;
+    }
 
     // Finally, copy the new data into the replaced slot
     replace->depth      = (int8_t)depth;
@@ -184,7 +232,9 @@ void storeTTEntry(uint64_t hash, uint16_t move, int value, int eval, int depth, 
     replace->value      = (int16_t)value;
     replace->eval       = (int16_t)eval;
     replace->move       = (uint16_t)move;
-    replace->hash16     = (uint16_t)hash16;
+    hashes[replaceIndex] = (uint16_t)hash16;
+
+    unlockTTBucket(bucket);
 }
 
 PKEntry* getPKEntry(PKTable *pktable, uint64_t pkhash) {

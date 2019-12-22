@@ -16,7 +16,7 @@
 
 CC      = gcc
 SRC     = *.c fathom/tbprobe.c
-LIBS    = -lpthread -lm
+LIBS    = -lpthread -latomic -lm
 EXE     = Ethereal
 
 WFLAGS = -std=gnu11 -Wall -Wextra -Wshadow
@@ -43,6 +43,7 @@ release:
 	$(CC) $(RFLAGS) $(SRC) $(LIBS) -o ../dist/$(EXE)$(VER)-x64-nopopcnt.exe
 	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(POPCNTFLAGS) -o ../dist/$(EXE)$(VER)-x64-popcnt.exe
 	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(PEXTFLAGS) -o ../dist/$(EXE)$(VER)-x64-pext.exe
+	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(PEXTFLAGS) -DNO_TT_LOCKS -o ../dist/$(EXE)$(VER)-x64-pext-nolocks.exe
 
 texel:
 	$(CC) $(TFLAGS) $(SRC) $(LIBS) $(POPCNT) -o $(EXE)

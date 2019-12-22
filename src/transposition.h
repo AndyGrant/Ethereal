@@ -19,6 +19,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdatomic.h>
 
 #include "types.h"
 
@@ -45,12 +46,19 @@ struct TTEntry {
     int8_t depth;
     uint8_t generation;
     int16_t eval, value;
-    uint16_t move, hash16;
+    uint16_t move;
 };
 
 struct TTBucket {
+    // We'll keep these close to each other to optimize the memory accesses a
+    // bit. Basically, accessing the lock should more or less already load the
+    // hashes in the cache, too, which speeds up TT lookups a bit. (8 bytes)
+    _Atomic(uint8_t) lock;
+    uint8_t padding;
+    uint16_t hashes[TT_BUCKET_NB];
+
+    // The TT data (24 bytes)
     TTEntry slots[TT_BUCKET_NB];
-    uint16_t padding;
 };
 
 struct TTable {
@@ -75,6 +83,8 @@ void clearTT();
 int hashfullTT();
 int valueFromTT(int value, int height);
 int valueToTT(int value, int height);
+void lockTTBucket(TTBucket *bucket);
+void unlockTTBucket(TTBucket *bucket);
 void prefetchTTEntry(uint64_t hash);
 int getTTEntry(uint64_t hash, uint16_t *move, int *value, int *eval, int *depth, int *bound);
 void storeTTEntry(uint64_t hash, uint16_t move, int value, int eval, int depth, int bound);
