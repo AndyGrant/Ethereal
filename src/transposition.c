@@ -91,14 +91,28 @@ void lockTTBucket(TTBucket *bucket) {
 
 #ifndef NO_TT_LOCKS
     uint8_t previous;
+    unsigned iteration = 0;
 
-    do {
+    while (1) {
         previous =
             atomic_exchange_explicit(
                 &bucket->lock,
                 1, // desired
                 memory_order_acquire);
-    } while (previous == 1);
+
+        if (previous == 0)
+            return;
+
+        // didn't get the lock, sleep a bit
+        // amounts: 50, 100, 200, ..., 6400, 12800, 12800, ... (max sleep)
+        uint32_t sleepAmount = 50 << iteration;
+
+        // volatile here should prevent the compiler from optimizing this out
+        for (volatile uint32_t c = 0; c < sleepAmount; ++c) ;
+
+        if (iteration < 8)
+            ++iteration;
+    }
 #else
     (void)bucket;
 #endif
