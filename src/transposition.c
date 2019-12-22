@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <sys/mman.h>
+
 #include "transposition.h"
 #include "types.h"
 
@@ -29,6 +31,7 @@ TTable Table; // Global Transposition Table
 void initTT(uint64_t megabytes) {
 
     uint64_t keySize = 16ull;
+    size_t hashSize;
 
     // Cleanup memory when resizing the table
     if (Table.hashMask) free(Table.buckets);
@@ -46,7 +49,21 @@ void initTT(uint64_t megabytes) {
 
     // Allocate the TTBuckets and save the lookup mask
     Table.hashMask = (1ull << keySize) - 1u;
-    Table.buckets  = malloc(sizeof(TTBucket) * (1ull << keySize));
+
+    hashSize = sizeof(TTBucket) * (1ull << keySize);
+
+    // allocate hash with 2M align. This is for huge pages
+    Table.buckets = aligned_alloc(1ull << 21, hashSize);
+
+#ifdef MADV_HUGEPAGE
+    // Linux-specific call to request huge pages, in case aligned_alloc() call
+    // above doesn't already trigger them (depends on transparent huge page
+    // settings)
+    madvise(Table.buckets, hashSize, MADV_HUGEPAGE);
+#endif
+    // Tell kernel that we need the memory. This should improve clear speed a
+    // bit.
+    madvise(Table.buckets, hashSize, MADV_WILLNEED);
 
     clearTT(); // Clear the table and load everything into the cache
 }
