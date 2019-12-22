@@ -212,6 +212,9 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
     if (depth <= 0 && !board->kingAttackers)
         return qsearch(thread, pv, alpha, beta, height);
 
+    // Prefetch TT as early as reasonable
+    prefetchTTEntry(board->hash);
+
     // Ensure a fresh PV
     pv->length = 0;
 
@@ -544,6 +547,9 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
         }
     }
 
+    // Prefetch TT for store
+    prefetchTTEntry(board->hash);
+
     // Step 18. Stalemate and Checkmate detection. If no moves were found to
     // be legal (search makes sure to play at least one legal move, if any),
     // then we are either mated or stalemated, which we can tell by the inCheck
@@ -575,6 +581,9 @@ int qsearch(Thread *thread, PVariation *pv, int alpha, int beta, int height) {
     uint16_t move, ttMove = NONE_MOVE;
     MovePicker movePicker;
     PVariation lpv;
+
+    // Prefetch TT as early as reasonable
+    prefetchTTEntry(board->hash);
 
     // Ensure a fresh PV
     pv->length = 0;
