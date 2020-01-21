@@ -53,9 +53,6 @@ static const int WindowTimerMS = 2500;
 
 static const int CurrmoveTimerMS = 2500;
 
-static const int RazorDepth = 1;
-static const int RazorMargin = 325;
-
 static const int BetaPruningDepth = 8;
 static const int BetaMargin = 85;
 
