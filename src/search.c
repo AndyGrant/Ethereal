@@ -320,8 +320,12 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
     thread->killers[height+1][0] = NONE_MOVE;
     thread->killers[height+1][1] = NONE_MOVE;
 
-    // Step 7. Beta Pruning / Reverse Futility Pruning / Static Null
-    // Move Pruning. If the eval is well above beta, defined by a depth
+    // ------------------------------------------------------------------------
+    // All elo estimates as of Ethereal 11.80, @ 12s+0.12 @ 1.275mnps
+    // ------------------------------------------------------------------------
+
+    // Step 7 (~32 elo). Beta Pruning / Reverse Futility Pruning / Static
+    // Null Move Pruning. If the eval is well above beta, defined by a depth
     // dependent margin, then we assume the eval will hold above beta
     if (   !PvNode
         && !inCheck
@@ -329,7 +333,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
         &&  eval - BetaMargin * depth > beta)
         return eval;
 
-    // Step 8. Null Move Pruning. If our position is so good that giving
+    // Step 8 (~93 elo). Null Move Pruning. If our position is so good that giving
     // our opponent back-to-back moves is still not enough for them to
     // gain control of the game, we can be somewhat safe in saying that
     // our position is too good to be true. We avoid NMP when we have
@@ -352,7 +356,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
         if (value >= beta) return beta;
     }
 
-    // Step 9. Probcut Pruning. If we have a good capture that causes a cutoff
+    // Step 9 (~9 elo). Probcut Pruning. If we have a good capture that causes a cutoff
     // with an adjusted beta value at a reduced search depth, we expect that it
     // will cause a similar cutoff at this search depth, with a normal beta value
     if (   !PvNode
@@ -390,45 +394,45 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
             quietsSeen++;
         }
 
-        // Step 11. Quiet Move Pruning. Prune any quiet move that meets one
+        // Step 11 (~175 elo). Quiet Move Pruning. Prune any quiet move that meets one
         // of the criteria below, only after proving a non mated line exists
         if (isQuiet && best > MATED_IN_MAX) {
 
-            // Step 11A. Futility Pruning. If our score is far below alpha, and we
-            // don't expect anything from this move, we can skip all other quiets
+            // Step 11A (~3 elo). Futility Pruning. If our score is far below alpha,
+            // and we don't expect anything from this move, we can skip all other quiets
             if (   depth <= FutilityPruningDepth
                 && eval + futilityMargin <= alpha
                 && hist + cmhist + fmhist < FutilityPruningHistoryLimit[improving])
                 skipQuiets = 1;
 
-            // Step 11B. Futility Pruning. If our score is not only far below
-            // alpha but still far below alpha after adding the FutilityMargin,
+            // Step 11B (~2.5 elo). Futility Pruning. If our score is not only far
+            // below alpha but still far below alpha after adding the FutilityMargin,
             // we can somewhat safely skip all quiet moves after this one
             if (   depth <= FutilityPruningDepth
                 && eval + futilityMargin + FutilityMarginNoHistory <= alpha)
                 skipQuiets = 1;
 
-            // Step 11C. Late Move Pruning / Move Count Pruning. If we have
-            // tried many quiets in this position already, and we don't expect
+            // Step 11C (~77 elo). Late Move Pruning / Move Count Pruning. If we
+            // have tried many quiets in this position already, and we don't expect
             // anything from this move, we can skip all the remaining quiets
             if (   depth <= LateMovePruningDepth
                 && quietsSeen >= LateMovePruningCounts[improving][depth])
                 skipQuiets = 1;
 
-            // Step 11D. Counter Move Pruning. Moves with poor counter
+            // Step 11D (~8 elo). Counter Move Pruning. Moves with poor counter
             // move history are pruned at near leaf nodes of the search.
             if (   depth <= CounterMovePruningDepth[improving]
                 && cmhist < CounterMoveHistoryLimit[improving])
                 continue;
 
-            // Step 11E. Follow Up Move Pruning. Moves with poor follow up
-            // move history are pruned at near leaf nodes of the search.
+            // Step 11E (~1.5 elo). Follow Up Move Pruning. Moves with poor
+            // follow up move history are pruned at near leaf nodes of the search.
             if (   depth <= FollowUpMovePruningDepth[improving]
                 && fmhist < FollowUpMoveHistoryLimit[improving])
                 continue;
         }
 
-        // Step 12. Static Exchange Evaluation Pruning. Prune moves which fail
+        // Step 12 (~42 elo). Static Exchange Evaluation Pruning. Prune moves which fail
         // to beat a depth dependent SEE threshold. The use of movePicker.stage
         // is a speedup, which assumes that good noisy moves have a positive SEE
         if (    best > MATED_IN_MAX
@@ -451,7 +455,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
         if (RootNode && !thread->index && elapsedTime(thread->info) > CurrmoveTimerMS)
             uciReportCurrentMove(board, move, played + thread->multiPV, depth);
 
-        // Step 13. Late Move Reductions. Compute the reduction,
+        // Step 13 (~249 elo). Late Move Reductions. Compute the reduction,
         // allow the later steps to perform the reduced searches
         if (isQuiet && depth > 2 && played > 1) {
 
@@ -482,8 +486,8 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
                  &&  ttDepth >= depth - 2
                  && (ttBound & BOUND_LOWER);
 
-        // Step 14. Extensions. Search an additional ply when we are in check, when
-        // an early move has excellent continuation history, or when we have a move
+        // Step 14 (~60 elo). Extensions. Search an additional ply when we are in check,
+        // when an early move has excellent continuation history, or when we have a move
         // from the transposition table which appears to beat all other moves by a
         // relativly large margin,
         int multiCut = 0;
@@ -549,7 +553,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
     // can differentiate between close mates and far away mates from the root
     if (played == 0) return inCheck ? -MATE + height : 0;
 
-    // Step 18. Update History counters on a fail high for a quiet move
+    // Step 18 (~760 elo). Update History counters on a fail high for a quiet move
     if (best >= beta && !moveIsTactical(board, bestMove))
         updateHistoryHeuristics(thread, quietsTried, quietsPlayed, height, depth*depth);
 
