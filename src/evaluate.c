@@ -300,6 +300,11 @@ const int PassedEnemyDistance[8] = {
 
 const int PassedSafePromotionPath = S( -29,  37);
 
+const int PassedStacked[8] = {
+    S(   0,   0), S(   0,  -3), S(   0,  -6), S(   0, -10),
+    S(  -4, -12), S(  -8, -16), S(   0,   0), S(   0,   0),
+};
+
 /* Threat Evaluation Terms */
 
 const int ThreatWeakPawn             = S( -13, -26);
@@ -866,6 +871,12 @@ int evaluatePassed(EvalInfo *ei, Board *board, int colour) {
         flag = !(bitboard & (board->colours[THEM] | ei->attacked[THEM]));
         eval += flag * PassedSafePromotionPath;
         if (TRACE) T.PassedSafePromotionPath[US] += flag;
+
+        // Apply an extra penalty for stacked passers
+        if(forwardFileMasks(US, sq) & tempPawns) {
+            eval += PassedStacked[rank];
+            if (TRACE) T.PassedStacked[rank][US]++;
+        }
     }
 
     return eval;
