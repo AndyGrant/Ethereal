@@ -300,7 +300,7 @@ const int PassedEnemyDistance[8] = {
 
 const int PassedSafePromotionPath = S( -29,  37);
 
-const int PassedStacked[8] = {
+const int PassedStacked[RANK_NB] = {
     S(   0,   0), S(   0,  -3), S(   0,  -6), S(   0, -10),
     S(  -4, -12), S(  -8, -16), S(   0,   0), S(   0,   0),
 };
@@ -839,8 +839,9 @@ int evaluatePassed(EvalInfo *ei, Board *board, int colour) {
     int sq, rank, dist, flag, canAdvance, safeAdvance, eval = 0;
 
     uint64_t bitboard;
-    uint64_t tempPawns = board->colours[US] & ei->passedPawns;
+    uint64_t myPassers = board->colours[US] & ei->passedPawns;
     uint64_t occupied  = board->colours[WHITE] | board->colours[BLACK];
+    uint64_t tempPawns = myPassers;
 
     // Evaluate each passed pawn
     while (tempPawns) {
@@ -872,8 +873,8 @@ int evaluatePassed(EvalInfo *ei, Board *board, int colour) {
         eval += flag * PassedSafePromotionPath;
         if (TRACE) T.PassedSafePromotionPath[US] += flag;
 
-        // Apply an extra penalty for stacked passers
-        if(forwardFileMasks(US, sq) & tempPawns) {
+        // Apply an extra penalty to the foremost stacked passer
+        if(several(forwardFileMasks(THEM, sq) & myPassers)) {
             eval += PassedStacked[rank];
             if (TRACE) T.PassedStacked[rank][US]++;
         }
