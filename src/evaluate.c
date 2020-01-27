@@ -301,14 +301,14 @@ const int PassedEnemyDistance[8] = {
 const int PassedSafePromotionPath = S( -29,  37);
 
 const int PassedStacked[RANK_NB] = {
-    S(   0,   0), S(   0,  -3), S(   0,  -6), S(   0, -10),
+    S(   0,   0), S(   0,   0), S(   0,  -6), S(   0, -10),
     S(  -4, -12), S(  -8, -16), S(   0,   0), S(   0,   0),
 };
 
 /* Threat Evaluation Terms */
 
-const int ThreatRestrictPiece        = S(  -1,  -1);
-const int ThreatRestrictEmpty        = S(  -3,  -1);
+const int ThreatRestrictPiece        = S(  -3,  -1);
+const int ThreatRestrictEmpty        = S(  -4,  -2);
 const int ThreatWeakPawn             = S( -13, -26);
 const int ThreatMinorAttackedByPawn  = S( -51, -53);
 const int ThreatMinorAttackedByMinor = S( -26, -36);
