@@ -67,6 +67,7 @@ extern const int BishopPair;
 extern const int BishopRammedPawns;
 extern const int BishopOutpost[2][2];
 extern const int BishopBehindPawn;
+extern const int BishopLongDiagonal;
 extern const int BishopMobility[14];
 extern const int RookFile[2];
 extern const int RookOnSeventh;
