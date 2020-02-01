@@ -58,7 +58,7 @@ extern const int KingPSQT32[32];
 extern const int PawnCandidatePasser[2][8];
 extern const int PawnIsolated;
 extern const int PawnStacked[2];
-extern const int PawnBackwards[2];
+extern const int PawnBackwards[2][8];
 extern const int PawnConnected32[32];
 extern const int KnightOutpost[2][2];
 extern const int KnightBehindPawn;
