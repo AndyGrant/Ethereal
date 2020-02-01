@@ -44,13 +44,13 @@ const int KingValue   = S(   0,   0);
 /* Piece Square Evaluation Terms */
 
 const int PawnPSQT32[32] = {
-    S(   0,   0), S(   0,   0), S(   0,   0), S(   0,   0),
-    S( -19,   9), S(   6,   4), S( -11,   7), S(  -6,  -1),
-    S( -21,   4), S( -11,   3), S(  -8,  -5), S(  -2, -13),
-    S( -16,  12), S( -10,  11), S(  14, -13), S(  12, -24),
-    S(  -4,  16), S(   4,  11), S(   0,  -2), S(  14, -21),
-    S(  -4,  32), S(   1,  30), S(  10,  19), S(  38,  -8),
-    S( -17, -40), S( -65,  -9), S(   3, -23), S(  40, -37),
+    S(   0,   0), S(   0,   0), S(   0,   0), S(   0,   0), 
+    S( -20,   5), S(   2,   1), S( -13,   4), S(  -8,  -2), 
+    S( -23,   2), S( -16,   2), S( -10,  -7), S(  -5, -15), 
+    S( -18,   8), S( -14,   8), S(  10, -14), S(   8, -27), 
+    S(  -9,  10), S(  -5,   6), S(  -7,  -8), S(   2, -24), 
+    S(  -8,  23), S(  -5,  21), S(   2,  10), S(  29, -17), 
+    S( -19, -48), S( -67, -15), S(   1, -29), S(  38, -43), 
     S(   0,   0), S(   0,   0), S(   0,   0), S(   0,   0),
 };
 
@@ -122,7 +122,12 @@ const int PawnIsolated = S(  -7, -11);
 
 const int PawnStacked[2] = { S(  -9, -14), S(  -9,  -9) };
 
-const int PawnBackwards[2] = { S(   7,   0), S(  -7, -19) };
+const int PawnBackwards[2][8] = {
+   {S(   0,   0), S(   3,  -7), S(   9,  -5), S(   7,  -9),
+    S(   9,  -9), S(   0,   0), S(   0,   0), S(   0,   0)},
+   {S(   0,   0), S( -10, -30), S(  -5, -26), S(   2, -26),
+    S(   5, -23), S(   0,   0), S(   0,   0), S(   0,   0)},
+};
 
 const int PawnConnected32[32] = {
     S(   0,   0), S(   0,   0), S(   0,   0), S(   0,   0),
@@ -485,8 +490,8 @@ int evaluatePawns(EvalInfo *ei, Board *board, int colour) {
         // backwards at the same time. We don't give backward pawns a connected bonus
         if (neighbors && pushThreats && !backup) {
             flag = !(Files[fileOf(sq)] & enemyPawns);
-            pkeval += PawnBackwards[flag];
-            if (TRACE) T.PawnBackwards[flag][US]++;
+            pkeval += PawnBackwards[flag][relativeRankOf(US, sq)];
+            if (TRACE) T.PawnBackwards[flag][relativeRankOf(US, sq)][US]++;
         }
 
         // Apply a bonus if the pawn is connected and not backwards. We consider a
