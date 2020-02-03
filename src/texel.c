@@ -85,6 +85,7 @@ extern const int PassedSafePromotionPath;
 extern const int PassedStacked[8];
 extern const int ThreatRestrictPiece;
 extern const int ThreatRestrictEmpty;
+extern const int ThreatCenterControl;
 extern const int ThreatWeakPawn;
 extern const int ThreatMinorAttackedByPawn;
 extern const int ThreatMinorAttackedByMinor;

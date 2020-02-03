@@ -79,6 +79,7 @@ struct EvalTrace {
     int PassedStacked[8][COLOUR_NB];
     int ThreatRestrictPiece[COLOUR_NB];
     int ThreatRestrictEmpty[COLOUR_NB];
+    int ThreatCenterControl[COLOUR_NB];
     int ThreatWeakPawn[COLOUR_NB];
     int ThreatMinorAttackedByPawn[COLOUR_NB];
     int ThreatMinorAttackedByMinor[COLOUR_NB];
