@@ -106,6 +106,12 @@ int valueToTT(int value, int height) {
          : value <= MATED_IN_MAX ? value - height : value;
 }
 
+void prefetchTTEntry(uint64_t hash) {
+
+    TTBucket *bucket = &Table.buckets[hash & Table.hashMask];
+    __builtin_prefetch(bucket);
+}
+
 int getTTEntry(uint64_t hash, uint16_t *move, int *value, int *eval, int *depth, int *bound) {
 
     const uint16_t hash16 = hash >> 48;
