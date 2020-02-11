@@ -119,7 +119,7 @@ struct EvalInfo {
     PKEntry *pkentry;
 };
 
-int evaluateBoard(Board *board, PKTable *pktable);
+int evaluateBoard(Board *board, PKTable *pktable, int contempt);
 int evaluatePieces(EvalInfo *ei, Board *board);
 int evaluatePawns(EvalInfo *ei, Board *board, int colour);
 int evaluateKnights(EvalInfo *ei, Board *board, int colour);
