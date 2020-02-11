@@ -241,7 +241,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
 
         // Check to see if we have exceeded the maxiumum search draft
         if (height >= MAX_PLY)
-            return evaluateBoard(board, &thread->pktable);
+            return evaluateBoard(board, &thread->pktable, thread->contempt);
 
         // Mate Distance Pruning. Check to see if this line is so
         // good, or so bad, that being mated in the ply, or  mating in
@@ -306,7 +306,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
     // can recompute the eval as `eval = -last_eval + 2 * Tempo`
     eval = thread->evalStack[height] =
            ttHit && ttEval != VALUE_NONE            ?  ttEval
-         : thread->moveStack[height-1] != NULL_MOVE ?  evaluateBoard(board, &thread->pktable)
+         : thread->moveStack[height-1] != NULL_MOVE ?  evaluateBoard(board, &thread->pktable, thread->contempt)
                                                     : -thread->evalStack[height-1] + 2 * Tempo;
 
     // Futility Pruning Margin
@@ -607,7 +607,7 @@ int qsearch(Thread *thread, PVariation *pv, int alpha, int beta, int height) {
     // Step 3. Max Draft Cutoff. If we are at the maximum search draft,
     // then end the search here with a static eval of the current board
     if (height >= MAX_PLY)
-        return evaluateBoard(board, &thread->pktable);
+        return evaluateBoard(board, &thread->pktable, thread->contempt);
 
     // Step 4. Probe the Transposition Table, adjust the value, and consider cutoffs
     if ((ttHit = getTTEntry(board->hash, &ttMove, &ttValue, &ttEval, &ttDepth, &ttBound))) {
@@ -626,7 +626,7 @@ int qsearch(Thread *thread, PVariation *pv, int alpha, int beta, int height) {
     // can recompute the eval as `eval = -last_eval + 2 * Tempo`
     eval = thread->evalStack[height] =
            ttHit && ttEval != VALUE_NONE            ?  ttEval
-         : thread->moveStack[height-1] != NULL_MOVE ?  evaluateBoard(board, &thread->pktable)
+         : thread->moveStack[height-1] != NULL_MOVE ?  evaluateBoard(board, &thread->pktable, thread->contempt)
                                                     : -thread->evalStack[height-1] + 2 * Tempo;
 
     // Step 5. Eval Pruning. If a static evaluation of the board will
@@ -692,16 +692,18 @@ int staticExchangeEvaluation(Board *board, uint16_t move, int threshold) {
                : MovePromoPiece(move);
 
     // Balance is the value of the move minus threshold. Function
-    // call takes care for Enpass and Promotion moves. Castling is
-    // handled as a result of a King's value being zero, by trichotomy
-    // either the best case or the worst case condition will be hit
+    // call takes care for Enpass, Promotion and Castling moves.
     balance = moveEstimatedValue(board, move) - threshold;
 
-    // Best case is we lose nothing for the move
+    // If the move doesn't gain enough to beat the threshold, don't look any
+    // further. This is only relevant for movepicker SEE calls.
     if (balance < 0) return 0;
 
     // Worst case is losing the moved piece
     balance -= SEEPieceValues[nextVictim];
+
+    // If the balance is positive even if losing the moved piece,
+    // the exchange is guaranteed to beat the threshold.
     if (balance >= 0) return 1;
 
     // Grab sliders for updating revealed attackers

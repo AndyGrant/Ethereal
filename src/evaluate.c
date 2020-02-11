@@ -359,7 +359,7 @@ const int Tempo = 20;
 
 #undef S
 
-int evaluateBoard(Board *board, PKTable *pktable) {
+int evaluateBoard(Board *board, PKTable *pktable, int contempt) {
 
     EvalInfo ei;
     int phase, factor, eval, pkeval;
@@ -369,6 +369,7 @@ int evaluateBoard(Board *board, PKTable *pktable) {
     eval   = evaluatePieces(&ei, board);
     pkeval = ei.pkeval[WHITE] - ei.pkeval[BLACK];
     eval  += pkeval + board->psqtmat;
+    eval  += contempt;
     eval  += evaluateClosedness(&ei, board);
     eval  += evaluateComplexity(&ei, board, eval);
 
