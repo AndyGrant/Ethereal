@@ -1096,40 +1096,54 @@ int evaluateComplexity(EvalInfo *ei, Board *board, int eval) {
 
 int evaluateScaleFactor(Board *board, int eval) {
 
-    // Scale endgames based on remaining material. Currently, we only
-    // look for OCB endgames that include only one Knight or one Rook
+    // Scale endgames based upon the remaining material. We check
+    // for various Opposite Coloured Bishop cases, positions with
+    // a lone Queen against multiple minor pieces and/or rooks, and
+    // positions with a Lone minor that should not be winnable
 
-    uint64_t white   = board->colours[WHITE];
-    uint64_t black   = board->colours[BLACK];
-    uint64_t knights = board->pieces[KNIGHT];
-    uint64_t bishops = board->pieces[BISHOP];
-    uint64_t rooks   = board->pieces[ROOK  ];
-    uint64_t queens  = board->pieces[QUEEN ];
+    const uint64_t knights = board->pieces[KNIGHT];
+    const uint64_t bishops = board->pieces[BISHOP];
+    const uint64_t rooks   = board->pieces[ROOK  ];
+    const uint64_t queens  = board->pieces[QUEEN ];
 
+    const uint64_t minors  = knights | bishops;
+    const uint64_t pieces  = knights | bishops | rooks;
+
+    const uint64_t white   = board->colours[WHITE];
+    const uint64_t black   = board->colours[BLACK];
+
+    const uint64_t weak    = ScoreEG(eval) < 0 ? white : black;
+    const uint64_t strong  = ScoreEG(eval) < 0 ? black : white;
+
+
+    // Check for opposite coloured bishops
     if (   onlyOne(white & bishops)
         && onlyOne(black & bishops)
         && onlyOne(bishops & WHITE_SQUARES)) {
 
-        if (!(knights | rooks | queens))
-            return SCALE_OCB_BISHOPS_ONLY;
-
-        if (   !(rooks | queens)
-            &&  onlyOne(white & knights)
-            &&  onlyOne(black & knights))
+        // Scale factor for OCB + knights
+        if ( !(rooks | queens)
+            && onlyOne(white & knights)
+            && onlyOne(black & knights))
             return SCALE_OCB_ONE_KNIGHT;
 
-        if (   !(knights | queens)
+        // Scale factor for OCB + rooks
+        if ( !(knights | queens)
             && onlyOne(white & rooks)
             && onlyOne(black & rooks))
             return SCALE_OCB_ONE_ROOK;
+
+        // Scale factor for lone OCB
+        if (!(knights | rooks | queens))
+            return SCALE_OCB_BISHOPS_ONLY;
     }
 
-    int eg = ScoreEG(eval);
+    // Lone Queens are weak against multiple pieces
+    if (onlyOne(queens) && several(pieces) && pieces == (weak & pieces))
+        return SCALE_LONE_QUEEN;
 
-    // Lone minor vs king and pawns, never give the advantage to the side with the minor
-    if ( (eg > 0) && popcount(white) == 2 && (white & (knights | bishops)))
-        return SCALE_DRAW;
-    else if ( (eg < 0) && popcount(black) == 2 && (black & (knights | bishops)))
+    // Lone Minor vs King + Pawns should never be won
+    if ((strong & minors) && popcount(strong) == 2)
         return SCALE_DRAW;
 
     return SCALE_NORMAL;
