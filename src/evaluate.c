@@ -44,36 +44,36 @@ const int KingValue   = S(   0,   0);
 /* Piece Square Evaluation Terms */
 
 const int PawnPSQT32[32] = {
-    S(   0,   0), S(   0,   0), S(   0,   0), S(   0,   0), 
-    S( -20,   5), S(   2,   1), S( -13,   4), S(  -8,  -2), 
-    S( -23,   2), S( -16,   2), S( -10,  -7), S(  -5, -15), 
-    S( -18,   8), S( -14,   8), S(  10, -14), S(   8, -27), 
-    S(  -9,  10), S(  -5,   6), S(  -7,  -8), S(   2, -24), 
-    S(  -8,  23), S(  -5,  21), S(   2,  10), S(  29, -17), 
-    S( -19, -48), S( -67, -15), S(   1, -29), S(  38, -43), 
+    S(   0,   0), S(   0,   0), S(   0,   0), S(   0,   0),
+    S( -20,   5), S(   2,   1), S( -13,   4), S(  -8,  -2),
+    S( -23,   2), S( -16,   2), S( -10,  -7), S(  -5, -15),
+    S( -18,   8), S( -14,   8), S(  10, -14), S(   8, -27),
+    S(  -9,  10), S(  -5,   6), S(  -7,  -8), S(   2, -24),
+    S(  -8,  23), S(  -5,  21), S(   2,  10), S(  29, -17),
+    S( -19, -48), S( -67, -15), S(   1, -29), S(  38, -43),
     S(   0,   0), S(   0,   0), S(   0,   0), S(   0,   0),
 };
 
 const int KnightPSQT32[32] = {
-    S( -49, -26), S(  -8, -34), S( -13, -27), S(   1, -17), 
-    S(  -2, -21), S(   4, -12), S(   4, -29), S(  10, -18), 
-    S(   9, -25), S(  22, -24), S(  14, -18), S(  23,  -6), 
-    S(  19,   4), S(  23,   6), S(  31,  14), S(  30,  21), 
-    S(  25,  17), S(  28,  10), S(  39,  24), S(  31,  36), 
-    S( -14,  15), S(   6,  12), S(  31,  25), S(  30,  27), 
-    S(   8, -11), S(  -7,   1), S(  33, -21), S(  42,  -1), 
-    S(-170, -18), S( -81,  -2), S(-110,  19), S( -30,   0), 
+    S( -49, -26), S(  -8, -34), S( -13, -27), S(   1, -17),
+    S(  -2, -21), S(   4, -12), S(   4, -29), S(  10, -18),
+    S(   9, -25), S(  22, -24), S(  14, -18), S(  23,  -6),
+    S(  19,   4), S(  23,   6), S(  31,  14), S(  30,  21),
+    S(  25,  17), S(  28,  10), S(  39,  24), S(  31,  36),
+    S( -14,  15), S(   6,  12), S(  31,  25), S(  30,  27),
+    S(   8, -11), S(  -7,   1), S(  33, -21), S(  42,  -1),
+    S(-170, -18), S( -81,  -2), S(-110,  19), S( -30,   0),
 };
 
 const int BishopPSQT32[32] = {
-    S(   8, -24), S(  13, -18), S( -10,  -6), S(  10, -10), 
-    S(  30, -33), S(  12, -36), S(  20, -19), S(  12, -11), 
-    S(  16, -12), S(  29, -15), S(   5, -17), S(  21,  -5), 
-    S(  15,  -8), S(  19,  -3), S(  17,   3), S(  23,   6), 
-    S( -11,  12), S(  19,   4), S(   6,  12), S(  13,  17), 
-    S(   1,   7), S(  -1,  15), S(   0,   4), S(  18,  11), 
-    S( -45,  16), S( -53,   4), S(  -7,   6), S( -21,  10), 
-    S( -50,  -5), S( -47,   9), S( -87,  16), S( -90,  26), 
+    S(   8, -24), S(  13, -18), S( -10,  -6), S(  10, -10),
+    S(  30, -33), S(  12, -36), S(  20, -19), S(  12, -11),
+    S(  16, -12), S(  29, -15), S(   5, -17), S(  21,  -5),
+    S(  15,  -8), S(  19,  -3), S(  17,   3), S(  23,   6),
+    S( -11,  12), S(  19,   4), S(   6,  12), S(  13,  17),
+    S(   1,   7), S(  -1,  15), S(   0,   4), S(  18,  11),
+    S( -45,  16), S( -53,   4), S(  -7,   6), S( -21,  10),
+    S( -50,  -5), S( -47,   9), S( -87,  16), S( -90,  26),
 };
 
 const int RookPSQT32[32] = {
@@ -150,7 +150,7 @@ const int KnightOutpost[2][2] = {
 const int KnightBehindPawn = S(   4,  19);
 
 const int KnightInSiberia[4] = {
-    S(  -7,   0), S(  -9,  -4), S( -17,  -3), S( -17,  -1), 
+    S(  -7,   0), S(  -9,  -4), S( -17,  -3), S( -17,  -1),
 };
 
 const int KnightMobility[9] = {
@@ -1101,6 +1101,7 @@ int evaluateScaleFactor(Board *board, int eval) {
     // a lone Queen against multiple minor pieces and/or rooks, and
     // positions with a Lone minor that should not be winnable
 
+    const uint64_t pawns   = board->pieces[PAWN  ];
     const uint64_t knights = board->pieces[KNIGHT];
     const uint64_t bishops = board->pieces[BISHOP];
     const uint64_t rooks   = board->pieces[ROOK  ];
@@ -1145,6 +1146,13 @@ int evaluateScaleFactor(Board *board, int eval) {
     // Lone Minor vs King + Pawns should never be won
     if ((strong & minors) && popcount(strong) == 2)
         return SCALE_DRAW;
+
+    // Scale up lone pieces with massive pawn advantages
+    if (   !queens
+        && !several(pieces & white)
+        && !several(pieces & black)
+        &&  popcount(strong & pawns) - popcount(weak & pawns) > 2)
+        return SCALE_LARGE_PAWN_ADV;
 
     return SCALE_NORMAL;
 }

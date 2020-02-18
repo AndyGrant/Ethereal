@@ -29,12 +29,13 @@
 #endif
 
 enum {
+    SCALE_DRAW             =   0,
     SCALE_OCB_BISHOPS_ONLY =  64,
     SCALE_OCB_ONE_KNIGHT   = 106,
     SCALE_OCB_ONE_ROOK     =  96,
     SCALE_LONE_QUEEN       =  88,
-    SCALE_DRAW             =   0,
     SCALE_NORMAL           = 128,
+    SCALE_LARGE_PAWN_ADV   = 144,
 };
 
 struct EvalTrace {
