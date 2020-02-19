@@ -148,7 +148,8 @@ void aspirationWindow(Thread *thread) {
     const int multiPV    = thread->multiPV;
     const int mainThread = thread->index == 0;
 
-    int value, alpha = -MATE, beta = MATE, delta = WindowSize;
+    int value, depth = thread->depth;
+    int alpha = -MATE, beta = MATE, delta = WindowSize;
 
     // Create an aspiration window after a few depths using
     // the eval from the bestline from the previous iteration
@@ -160,14 +161,13 @@ void aspirationWindow(Thread *thread) {
     while (1) {
 
         // Perform a search and consider reporting results
-        value = search(thread, pv, alpha, beta, thread->depth, 0);
+        value = search(thread, pv, alpha, beta, MAX(1, depth), 0);
         if (   (mainThread && value > alpha && value < beta)
             || (mainThread && elapsedTime(thread->info) >= WindowTimerMS))
             uciReport(thread->threads, alpha, beta, value);
 
-        // Search returned a result within our window. Save the eval as well
-        // as the best and ponder moves. If we do not have a ponder move in
-        // the PV, we set to NONE_MOVE to avoid printing an illegal PV line
+        // Search returned a result within our window. Save the eval,
+        // best move, and ponder moves. Don't report an illegal PV move
         if (value > alpha && value < beta) {
             thread->values[multiPV]      = value;
             thread->bestMoves[multiPV]   = pv->line[0];
@@ -175,15 +175,18 @@ void aspirationWindow(Thread *thread) {
             return;
         }
 
-        // Search failed low
+        // Search failed low, adjust window and reset depth
         if (value <= alpha) {
             beta  = (alpha + beta) / 2;
             alpha = MAX(-MATE, alpha - delta);
+            depth = thread->depth;
         }
 
-        // Search failed high
-        else if (value >= beta)
+        // Search failed high, adjust window and reduce depth
+        else if (value >= beta) {
             beta = MIN(MATE, beta + delta);
+            depth = depth - 1;
+        }
 
         // Expand the search window
         delta = delta + delta / 2;
