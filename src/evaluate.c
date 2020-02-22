@@ -318,9 +318,6 @@ const int PassedStacked[RANK_NB] = {
 
 /* Threat Evaluation Terms */
 
-const int ThreatRestrictPiece        = S(  -3,  -1);
-const int ThreatRestrictEmpty        = S(  -4,  -2);
-const int ThreatCenterControl        = S(   5,  -5);
 const int ThreatWeakPawn             = S( -13, -26);
 const int ThreatMinorAttackedByPawn  = S( -51, -53);
 const int ThreatMinorAttackedByMinor = S( -26, -36);
@@ -331,6 +328,12 @@ const int ThreatRookAttackedByKing   = S( -13, -18);
 const int ThreatQueenAttackedByOne   = S( -39, -29);
 const int ThreatOverloadedPieces     = S(  -8, -13);
 const int ThreatByPawnPush           = S(  15,  21);
+
+/* Space Evaluation Terms */
+
+const int SpaceRestrictPiece = S(  -3,  -1);
+const int SpaceRestrictEmpty = S(  -4,  -2);
+const int SpaceCenterControl = S(   5,  -5);
 
 /* Closedness Evaluation Terms */
 
@@ -412,6 +415,7 @@ int evaluatePieces(EvalInfo *ei, Board *board) {
     eval +=   evaluateKings(ei, board, WHITE)   - evaluateKings(ei, board, BLACK);
     eval +=  evaluatePassed(ei, board, WHITE)  - evaluatePassed(ei, board, BLACK);
     eval += evaluateThreats(ei, board, WHITE) - evaluateThreats(ei, board, BLACK);
+    eval +=   evaluateSpace(ei, board, WHITE) -   evaluateSpace(ei, board, BLACK);
 
     return eval;
 }
@@ -937,8 +941,6 @@ int evaluateThreats(EvalInfo *ei, Board *board, int colour) {
     uint64_t poorlyDefended = (ei->attacked[THEM] & ~ei->attacked[US])
                             | (ei->attackedBy2[THEM] & ~ei->attackedBy2[US] & ~ei->attackedBy[US][PAWN]);
 
-    uint64_t uncontrolled =  ei->attacked[THEM] & ei->attacked[US] & poorlyDefended;
-
     uint64_t weakMinors = (knights | bishops) & poorlyDefended;
 
     // A friendly minor or major is overloaded if attacked and defended by exactly one
@@ -953,27 +955,6 @@ int evaluateThreats(EvalInfo *ei, Board *board, int colour) {
     pushThreat |= pawnAdvance(pushThreat & ~attacksByPawns & Rank3Rel, occupied, US);
     pushThreat &= ~attacksByPawns & (ei->attacked[US] | ~ei->attacked[THEM]);
     pushThreat  = pawnAttackSpan(pushThreat, enemy & ~ei->attackedBy[US][PAWN], US);
-
-
-    // Penalty for restricted piece moves
-    count = popcount(uncontrolled & (friendly | enemy));
-    eval += count * ThreatRestrictPiece;
-    if (TRACE) T.ThreatRestrictPiece[US] += count;
-
-    count = popcount(uncontrolled & ~friendly & ~enemy);
-    eval += count * ThreatRestrictEmpty;
-    if (TRACE) T.ThreatRestrictEmpty[US] += count;
-
-    // Bonus for uncontested central squares
-    // This is mostly relevant in the opening and the early middlegame, while rarely correct
-    // in the endgame where one rook or queen could control many uncontested squares.
-    // Thus we don't apply this term when below a threshold of minors/majors count.
-    if (      popcount(board->pieces[KNIGHT] | board->pieces[BISHOP])
-        + 2 * popcount(board->pieces[ROOK  ] | board->pieces[QUEEN ]) > 12) {
-        count = popcount(~ei->attacked[THEM] & (ei->attacked[US] | friendly) & CENTER_BIG);
-        eval += count * ThreatCenterControl;
-        if (TRACE) T.ThreatCenterControl[US] += count;
-    }
 
     // Penalty for each of our poorly supported pawns
     count = popcount(pawns & ~attacksByPawns & poorlyDefended);
@@ -1024,6 +1005,42 @@ int evaluateThreats(EvalInfo *ei, Board *board, int colour) {
     count = popcount(pushThreat);
     eval += count * ThreatByPawnPush;
     if (TRACE) T.ThreatByPawnPush[colour] += count;
+
+    return eval;
+}
+
+int evaluateSpace(EvalInfo *ei, Board *board, int colour) {
+
+    const int US = colour, THEM = !colour;
+
+    int count, eval = 0;
+
+    uint64_t friendly = board->colours[  US];
+    uint64_t enemy    = board->colours[THEM];
+
+    // Squares we attack with more enemy attackers and no friendly pawn attacks
+    uint64_t uncontrolled =   ei->attackedBy2[THEM] & ei->attacked[US]
+                           & ~ei->attackedBy2[US  ] & ~ei->attackedBy[US][PAWN];
+
+    // Penalty for restricted piece moves
+    count = popcount(uncontrolled & (friendly | enemy));
+    eval += count * SpaceRestrictPiece;
+    if (TRACE) T.SpaceRestrictPiece[US] += count;
+
+    count = popcount(uncontrolled & ~friendly & ~enemy);
+    eval += count * SpaceRestrictEmpty;
+    if (TRACE) T.SpaceRestrictEmpty[US] += count;
+
+    // Bonus for uncontested central squares
+    // This is mostly relevant in the opening and the early middlegame, while rarely correct
+    // in the endgame where one rook or queen could control many uncontested squares.
+    // Thus we don't apply this term when below a threshold of minors/majors count.
+    if (      popcount(board->pieces[KNIGHT] | board->pieces[BISHOP])
+        + 2 * popcount(board->pieces[ROOK  ] | board->pieces[QUEEN ]) > 12) {
+        count = popcount(~ei->attacked[THEM] & (ei->attacked[US] | friendly) & CENTER_BIG);
+        eval += count * SpaceCenterControl;
+        if (TRACE) T.SpaceCenterControl[US] += count;
+    }
 
     return eval;
 }

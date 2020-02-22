@@ -83,9 +83,6 @@ extern const int PassedFriendlyDistance[8];
 extern const int PassedEnemyDistance[8];
 extern const int PassedSafePromotionPath;
 extern const int PassedStacked[8];
-extern const int ThreatRestrictPiece;
-extern const int ThreatRestrictEmpty;
-extern const int ThreatCenterControl;
 extern const int ThreatWeakPawn;
 extern const int ThreatMinorAttackedByPawn;
 extern const int ThreatMinorAttackedByMinor;
@@ -96,6 +93,9 @@ extern const int ThreatRookAttackedByKing;
 extern const int ThreatQueenAttackedByOne;
 extern const int ThreatOverloadedPieces;
 extern const int ThreatByPawnPush;
+extern const int SpaceRestrictPiece;
+extern const int SpaceRestrictEmpty;
+extern const int SpaceCenterControl;
 extern const int ClosednessKnightAdjustment[9];
 extern const int ClosednessRookAdjustment[9];
 extern const int ComplexityTotalPawns;
@@ -226,7 +226,7 @@ void initTexelEntries(TexelEntry *tes, Thread *thread) {
         // Vectorize the evaluation coefficients and save the eval
         // relative to WHITE. We must first clear the coeff vector.
         T = EmptyTrace;
-        tes[i].eval = evaluateBoard(&thread->board, NULL);
+        tes[i].eval = evaluateBoard(&thread->board, NULL, 0);
         if (thread->board.turn == BLACK) tes[i].eval *= -1;
         initCoefficients(coeffs);
 

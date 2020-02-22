@@ -19,7 +19,7 @@ Most GUIs should support a method to set each option. If they do not, then refer
 
 ### Hash
 
-The size of the hash table in megabytes. For analysis the more hash given the better. For testing against other engines, just be sure to give each engine the same amount of Hash. For testing against non-classical engines, reach out to me and I will make a recommendation.
+The size of the hash table in megabytes. For analysis the more hash given the better. For testing against other engines, just be sure to give each engine the same amount of Hash. 64MB/thread/minute is generally a good value. For testing against non-classical engines, reach out to me and I will make a recommendation.
 
 ### Threads
 
@@ -28,6 +28,14 @@ Number of threads given to Ethereal while moving. Typically the more threads the
 ### MultiPV
 
 The number of lines to output for each search iteration. For best performance, MultiPV should be left at the default value of 1 in all cases. This option should only be used for analysis.
+
+### ContemptDrawPenalty
+
+The number of centipawns added to the evaluation of the side to move. A positive value incentivizes preferring slightly negative evaluations to forced draws and leads to more decisive games. A small positive value is recommended in most situations.
+
+### ContemptComplexity
+
+The number of centipawns added to the evaluation of the side to move when all minor and major pieces are on the board, progressively reduced to zero with less pieces. A positive value incentivizes Ethereal to favor lines where the opponent cannot force simplifications as easily and leads to more decisive games. It is expected to hurt performance against significantly stronger engines, but to help against weaker engines. The optimal value for best results thus depends on conditions.
 
 ### MoveOverhead
 
