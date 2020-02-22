@@ -77,9 +77,6 @@
 #define TunePassedEnemyDistance         (0)
 #define TunePassedSafePromotionPath     (0)
 #define TunePassedStacked               (0)
-#define TuneThreatRestrictPiece         (0)
-#define TuneThreatRestrictEmpty         (0)
-#define TuneThreatCenterControl         (0)
 #define TuneThreatWeakPawn              (0)
 #define TuneThreatMinorAttackedByPawn   (0)
 #define TuneThreatMinorAttackedByMinor  (0)
@@ -90,6 +87,9 @@
 #define TuneThreatQueenAttackedByOne    (0)
 #define TuneThreatOverloadedPieces      (0)
 #define TuneThreatByPawnPush            (0)
+#define TuneSpaceRestrictPiece          (0)
+#define TuneSpaceRestrictEmpty          (0)
+#define TuneSpaceCenterControl          (0)
 #define TuneClosednessKnightAdjustment  (0)
 #define TuneClosednessRookAdjustment    (0)
 #define TuneComplexityTotalPawns        (0)
@@ -275,9 +275,6 @@ void printParameters_3(char *name, int params[NTERMS][PHASE_NB], int i, int A, i
     ENABLE_1(fname, PassedEnemyDistance, 8, NORMAL);            \
     ENABLE_0(fname, PassedSafePromotionPath, NORMAL);           \
     ENABLE_1(fname, PassedStacked, 8, NORMAL);                  \
-    ENABLE_0(fname, ThreatRestrictPiece, NORMAL);               \
-    ENABLE_0(fname, ThreatRestrictEmpty, NORMAL);               \
-    ENABLE_0(fname, ThreatCenterControl, NORMAL);               \
     ENABLE_0(fname, ThreatWeakPawn, NORMAL);                    \
     ENABLE_0(fname, ThreatMinorAttackedByPawn, NORMAL);         \
     ENABLE_0(fname, ThreatMinorAttackedByMinor, NORMAL);        \
@@ -288,6 +285,9 @@ void printParameters_3(char *name, int params[NTERMS][PHASE_NB], int i, int A, i
     ENABLE_0(fname, ThreatQueenAttackedByOne, NORMAL);          \
     ENABLE_0(fname, ThreatOverloadedPieces, NORMAL);            \
     ENABLE_0(fname, ThreatByPawnPush, NORMAL);                  \
+    ENABLE_0(fname, SpaceRestrictPiece, NORMAL);                \
+    ENABLE_0(fname, SpaceRestrictEmpty, NORMAL);                \
+    ENABLE_0(fname, SpaceCenterControl, NORMAL);                \
     ENABLE_1(fname, ClosednessKnightAdjustment, 9, NORMAL);     \
     ENABLE_1(fname, ClosednessRookAdjustment, 9, NORMAL);       \
     ENABLE_0(fname, ComplexityTotalPawns, EGONLY);              \

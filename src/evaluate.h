@@ -79,9 +79,6 @@ struct EvalTrace {
     int PassedEnemyDistance[8][COLOUR_NB];
     int PassedSafePromotionPath[COLOUR_NB];
     int PassedStacked[8][COLOUR_NB];
-    int ThreatRestrictPiece[COLOUR_NB];
-    int ThreatRestrictEmpty[COLOUR_NB];
-    int ThreatCenterControl[COLOUR_NB];
     int ThreatWeakPawn[COLOUR_NB];
     int ThreatMinorAttackedByPawn[COLOUR_NB];
     int ThreatMinorAttackedByMinor[COLOUR_NB];
@@ -92,6 +89,9 @@ struct EvalTrace {
     int ThreatQueenAttackedByOne[COLOUR_NB];
     int ThreatOverloadedPieces[COLOUR_NB];
     int ThreatByPawnPush[COLOUR_NB];
+    int SpaceRestrictPiece[COLOUR_NB];
+    int SpaceRestrictEmpty[COLOUR_NB];
+    int SpaceCenterControl[COLOUR_NB];
     int ClosednessKnightAdjustment[9][COLOUR_NB];
     int ClosednessRookAdjustment[9][COLOUR_NB];
     int ComplexityTotalPawns[COLOUR_NB];
@@ -132,6 +132,7 @@ int evaluateQueens(EvalInfo *ei, Board *board, int colour);
 int evaluateKings(EvalInfo *ei, Board *board, int colour);
 int evaluatePassed(EvalInfo *ei, Board *board, int colour);
 int evaluateThreats(EvalInfo *ei, Board *board, int colour);
+int evaluateSpace(EvalInfo *ei, Board *board, int colour);
 int evaluateClosedness(EvalInfo *ei, Board *board);
 int evaluateComplexity(EvalInfo *ei, Board *board, int eval);
 int evaluateScaleFactor(Board *board, int eval);

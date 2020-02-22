@@ -83,12 +83,12 @@ int main(int argc, char **argv) {
 
         if (strEquals(str, "uci")) {
             printf("id name Ethereal " ETHEREAL_VERSION "\n");
-            printf("id author Andrew Grant & Laldon\n");
+            printf("id author Andrew Grant, Alayan & Laldon\n");
             printf("option name Hash type spin default 16 min 1 max 65536\n");
             printf("option name Threads type spin default 1 min 1 max 2048\n");
             printf("option name MultiPV type spin default 1 min 1 max 256\n");
-            printf("option name ContemptDrawPenalty type spin default 0 min -300 max 300\n");
-            printf("option name ContemptComplexity type spin default 0 min -100 max 100\n");
+            printf("option name ContemptDrawPenalty type spin default 12 min -300 max 300\n");
+            printf("option name ContemptComplexity type spin default 12 min -100 max 100\n");
             printf("option name MoveOverhead type spin default 100 min 0 max 10000\n");
             printf("option name SyzygyPath type string default <empty>\n");
             printf("option name SyzygyProbeDepth type spin default 0 min 0 max 127\n");
