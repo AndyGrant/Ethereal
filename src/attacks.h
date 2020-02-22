@@ -41,6 +41,7 @@ uint64_t kingAttacks(int sq);
 uint64_t pawnLeftAttacks(uint64_t pawns, uint64_t targets, int colour);
 uint64_t pawnRightAttacks(uint64_t pawns, uint64_t targets, int colour);
 uint64_t pawnAttackSpan(uint64_t pawns, uint64_t targets, int colour);
+uint64_t pawnAttackDouble(uint64_t pawns, uint64_t targets, int colour);
 uint64_t pawnAdvance(uint64_t pawns, uint64_t occupied, int colour);
 uint64_t pawnEnpassCaptures(uint64_t pawns, int epsq, int colour);
 
