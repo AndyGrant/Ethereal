@@ -178,6 +178,11 @@ uint64_t pawnAttackSpan(uint64_t pawns, uint64_t targets, int colour) {
         | pawnRightAttacks(pawns, targets, colour);
 }
 
+uint64_t pawnAttackDouble(uint64_t pawns, uint64_t targets, int colour) {
+    return pawnLeftAttacks(pawns, targets, colour)
+        & pawnRightAttacks(pawns, targets, colour);
+}
+
 uint64_t pawnAdvance(uint64_t pawns, uint64_t occupied, int colour) {
     return ~occupied & (colour == WHITE ? (pawns << 8) : (pawns >> 8));
 }
