@@ -236,7 +236,7 @@ void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960) {
 
     if (strStartsWith(str, "setoption name Hash value ")) {
         int megabytes = atoi(str + strlen("setoption name Hash value "));
-        initTT(megabytes); printf("info string set Hash to %dMB\n", megabytes);
+        initTT(megabytes); printf("info string set Hash to %dMB\n", hashSizeMBTT());
     }
 
     if (strStartsWith(str, "setoption name Threads value ")) {

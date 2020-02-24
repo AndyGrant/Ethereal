@@ -29,10 +29,9 @@
 #include "types.h"
 
 TTable Table; // Global Transposition Table
+static const uint64_t MB = 1ull << 20;
 
 void initTT(uint64_t megabytes) {
-
-    const uint64_t MB = 1ull << 20;
 
     // Cleanup memory when resizing the table
     if (Table.hashMask) free(Table.buckets);
@@ -59,6 +58,10 @@ void initTT(uint64_t megabytes) {
     Table.hashMask = (1ull << keySize) - 1u;
 
     clearTT(); // Clear the table and load everything into the cache
+}
+
+int hashSizeMBTT() {
+    return ((Table.hashMask + 1) * sizeof(TTBucket)) / MB;
 }
 
 void updateTT() {
