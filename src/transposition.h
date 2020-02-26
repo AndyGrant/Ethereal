@@ -70,6 +70,7 @@ struct PKTable {
 };
 
 void initTT(uint64_t megabytes);
+int hashSizeMBTT();
 void updateTT();
 void clearTT();
 int hashfullTT();

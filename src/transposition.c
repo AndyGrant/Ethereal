@@ -21,34 +21,47 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(__linux__)
+    #include <sys/mman.h>
+#endif
+
 #include "transposition.h"
 #include "types.h"
 
 TTable Table; // Global Transposition Table
+static const uint64_t MB = 1ull << 20;
 
 void initTT(uint64_t megabytes) {
-
-    uint64_t keySize = 16ull;
 
     // Cleanup memory when resizing the table
     if (Table.hashMask) free(Table.buckets);
 
-    // The smallest TT size we allow is 1MB, which matches up with
-    // a TT using a 15 bit lookup key. We start the key at 16, because
-    // while adjusting the given size to the nearest power of two less
-    // than or equal to the size, we end with a decrement to the key
-    // size. The formula works under the assumption that a TTBucket is
-    // exactly 32 bytes. We assure this in order to get good caching
+    // Use a default keysize of 16 bits, which should be equal to
+    // the smallest possible hash table size, which is 2 megabytes
+    assert((1ull << 16ull) * sizeof(TTBucket) == 2 * MB);
+    uint64_t keySize = 16ull;
 
-    for (;1ull << (keySize + 5) <= megabytes << 20 ; keySize++);
-    assert(sizeof(TTBucket) == 32);
-    keySize = keySize - 1;
+    // Find the largest keysize that is still within our given megabytes
+    while ((1ull << keySize) * sizeof(TTBucket) <= megabytes * MB / 2) keySize++;
+    assert((1ull << keySize) * sizeof(TTBucket) <= megabytes * MB);
 
-    // Allocate the TTBuckets and save the lookup mask
+#if defined(__linux__)
+    // On Linux systems we align on 2MB boundaries and request Huge Pages
+    Table.buckets = aligned_alloc(2 * MB, (1ull << keySize) * sizeof(TTBucket));
+    madvise(Table.buckets, (1ull << keySize) * sizeof(TTBucket), MADV_HUGEPAGE);
+#else
+    // Otherwise, we simply allocate as usual and make no requests
+    Table.buckets = malloc((1ull << keySize) * sizeof(TTBucket));
+#endif
+
+    // Save the lookup mask
     Table.hashMask = (1ull << keySize) - 1u;
-    Table.buckets  = malloc(sizeof(TTBucket) * (1ull << keySize));
 
     clearTT(); // Clear the table and load everything into the cache
+}
+
+int hashSizeMBTT() {
+    return ((Table.hashMask + 1) * sizeof(TTBucket)) / MB;
 }
 
 void updateTT() {
