@@ -237,10 +237,9 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
     // the RootNode, since this would prevent us from having a best move
     if (!RootNode) {
 
-        // Check for the fifty move rule, a draw by
-        // repetition, or insufficient mating material
-        if (boardIsDrawn(board, height))
-            return 0;
+        // Draw Detection. Check for the fifty move rule, repetition, or insufficient 
+        // material. Add variance to the draw score, to avoid blindness to 3-fold lines
+        if (boardIsDrawn(board, height)) return 1 - (thread->nodes & 2);
 
         // Check to see if we have exceeded the maxiumum search draft
         if (height >= MAX_PLY)
@@ -602,10 +601,9 @@ int qsearch(Thread *thread, PVariation *pv, int alpha, int beta, int height) {
     if (ABORT_SIGNAL || (terminateSearchEarly(thread) && !IS_PONDERING))
         longjmp(thread->jbuffer, 1);
 
-    // Step 2. Draw Detection. Check for the fifty move rule,
-    // a draw by repetition, or insufficient mating material
-    if (boardIsDrawn(board, height))
-        return 0;
+    // Step 2. Draw Detection. Check for the fifty move rule, repetition, or insufficient 
+    // material. Add variance to the draw score, to avoid blindness to 3-fold lines
+    if (boardIsDrawn(board, height)) return 1 - (thread->nodes & 2);
 
     // Step 3. Max Draft Cutoff. If we are at the maximum search draft,
     // then end the search here with a static eval of the current board
