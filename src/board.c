@@ -363,8 +363,8 @@ void runBenchmark(int argc, char **argv) {
     Limits limits;
     Thread *threads;
 
-    double start;
-    uint64_t nodes = 0ull;
+    double start, laptime, laptime_start;
+    uint64_t nodes = 0ull, lapnodes = 0ull;
     uint16_t bestMove, ponderMove;
 
     int depth     = argc > 2 ? atoi(argv[2]) : 13;
@@ -386,17 +386,25 @@ void runBenchmark(int argc, char **argv) {
     start = getRealTime();
 
     for (int i = 0; strcmp(Benchmarks[i], ""); i++) {
+        lapnodes = 0ull;
+        laptime_start = getRealTime();
         printf("\nPosition #%d: %s\n", i + 1, Benchmarks[i]);
         boardFromFEN(&board, Benchmarks[i], 0);
-        limits.start = getRealTime();
         getBestMove(threads, &board, &limits, &bestMove, &ponderMove);
-        nodes += nodesSearchedThreadPool(threads);
+        laptime =  getRealTime() - laptime_start;
+        lapnodes = nodesSearchedThreadPool(threads);
+        nodes += lapnodes;
+        fprintf(stderr, "\nPosition : %d\n", i+1 );
+        fprintf(stderr, "Time     : %0.3f secs\n", laptime/1000);
+        fprintf(stderr, "Nodes    : %"PRIu64"\n", lapnodes);
+        fprintf(stderr,"NPS      : %d\n", (int)(lapnodes / ((laptime + 1) / 1000.0)));
         clearTT(); // Reset TT for new search
     }
-
-    printf("Time  : %dms\n", (int)(getRealTime() - start));
-    printf("Nodes : %"PRIu64"\n", nodes);
-    printf("NPS   : %d\n", (int)(nodes / ((getRealTime() - start) / 1000.0)));
+    fprintf(stderr,"\n----------------------\n");
+    fprintf(stderr, "Time  :   %0.3f secs\n", (double)(getRealTime() - start)/1000);
+    fprintf(stderr,"Nodes : %"PRIu64"\n", nodes);
+    fprintf(stderr,"NPS   : %d\n", (int)(nodes / ((getRealTime() - start) / 1000.0)));
+    fprintf(stderr,"======================\n\n");
 
     free(threads);
 }

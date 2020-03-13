@@ -27,6 +27,8 @@ PFLAGS = -DNDEBUG -O0 $(WFLAGS) -p -pg
 DFLAGS = -O0 $(WFLAGS)
 
 POPCNTFLAGS = -DUSE_POPCNT -msse3 -mpopcnt
+PGO_FLAGS = -DNDEBUG -O3 $(WFLAGS) -march=native -flto -static -fprofile-generate -lgcov
+PGO_BFLAGS = -DNDEBUG -O3 $(WFLAGS) -march=native -flto -static -fprofile-use -fno-peel-loops -fno-tracer -lgcov
 PEXTFLAGS   = $(POPCNTFLAGS) -DUSE_PEXT -mbmi2
 
 popcnt:
@@ -49,6 +51,29 @@ texel:
 
 profile:
 	$(CC) $(PFLAGS) $(SRC) $(LIBS) $(POPCNT) -o $(EXE)
+
+profile-gen:
+	$(CC)  $(SRC) $(LIBS) $(POPCNT) $(PGO_FLAGS) -o $(EXE)
+
+profile-use:
+	$(CC)  $(SRC) $(LIBS) $(POPCNT) $(PGO_BFLAGS) -o $(EXE)
+
+bench:
+	$(EXE) bench >/dev/null
+
+clean:
+	rm *gcda
+	strip $(EXE)*
+
+
+pgo:
+	make profile-gen
+	make bench
+	make profile-use
+	make bench
+	make clean
+	@echo ""
+	@echo "Success - PGO Build completed! "
 
 debug:
 	$(CC) $(DFLAGS) $(SRC) $(LIBS) $(POPCNT) -o $(EXE)
