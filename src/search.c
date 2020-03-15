@@ -204,7 +204,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
     int quietsSeen = 0, quietsPlayed = 0, played = 0;
     int ttHit, ttValue = 0, ttEval = 0, ttDepth = 0, ttBound = 0;
     int R, newDepth, rAlpha, rBeta, oldAlpha = alpha;
-    int inCheck, isQuiet, improving, extension, singular, skipQuiets = 0;
+    int inCheck, isQuiet, improving, extension, singular, multiCut, skipQuiets = 0;
     int eval, value = -MATE, best = -MATE, futilityMargin, seeMargin[2];
     uint16_t move, ttMove = NONE_MOVE, bestMove = NONE_MOVE, quietsTried[MAX_MOVES];
     MovePicker movePicker;
@@ -237,7 +237,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
     // the RootNode, since this would prevent us from having a best move
     if (!RootNode) {
 
-        // Draw Detection. Check for the fifty move rule, repetition, or insufficient 
+        // Draw Detection. Check for the fifty move rule, repetition, or insufficient
         // material. Add variance to the draw score, to avoid blindness to 3-fold lines
         if (boardIsDrawn(board, height)) return 1 - (thread->nodes & 2);
 
@@ -491,16 +491,20 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
                  &&  ttDepth >= depth - 2
                  && (ttBound & BOUND_LOWER);
 
-        // Step 14 (~60 elo). Extensions. Search an additional ply when we are in check,
-        // when an early move has excellent continuation history, or when we have a move
-        // from the transposition table which appears to beat all other moves by a
-        // relativly large margin,
-        int multiCut = 0;
-        extension =  (inCheck)
-                  || (isQuiet && quietsSeen <= 4 && cmhist >= 10000 && fmhist >= 10000)
-                  || (singular && moveIsSingular(thread, ttMove, ttValue, depth, height, beta, &multiCut));
+        // Step 14 (~60 elo). Extensions. Search an additional ply when the move comes from the
+        // Transposition Table and appears to beat all other moves by a fair margin. Otherwise,
+        // extend moves which were not candidates for singularity, but are for positions that
+        // are in check, as well as moves which have excellent continuation history scores
 
-        if (multiCut) {
+        extension = singular
+                  ? moveIsSingular(thread, ttMove, ttValue, depth, height, beta, &multiCut)
+                  : inCheck || (isQuiet && quietsSeen <= 4 && cmhist >= 10000 && fmhist >= 10000);
+
+        // Step 15. MultiCut. Sometimes candidate Singular moves are shown to be non-Singular.
+        // If this happens, and the rBeta used for that proof is greater than beta, then we
+        // have multiple moves which appear to beat beta at a reduced depth.
+
+        if (singular && multiCut) {
             revert(thread, board, move, height);
             return MAX(ttValue - depth, -MATE);
         }
@@ -508,19 +512,19 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
         // Factor the extension into the new depth. Do not extend at the root
         newDepth = depth + (extension && !RootNode);
 
-        // Step 15A. If we triggered the LMR conditions (which we know by the value of R),
+        // Step 16A. If we triggered the LMR conditions (which we know by the value of R),
         // then we will perform a reduced search on the null alpha window, as we have no
         // expectation that this move will be worth looking into deeper
         if (R != 1) value = -search(thread, &lpv, -alpha-1, -alpha, newDepth-R, height+1);
 
-        // Step 15B. There are two situations in which we will search again on a null window,
+        // Step 16B. There are two situations in which we will search again on a null window,
         // but without a depth reduction R. First, if the LMR search happened, and failed
         // high, secondly, if we did not try an LMR search, and this is not the first move
         // we have tried in a PvNode, we will research with the normally reduced depth
         if ((R != 1 && value > alpha) || (R == 1 && !(PvNode && played == 1)))
             value = -search(thread, &lpv, -alpha-1, -alpha, newDepth-1, height+1);
 
-        // Step 15C. Finally, if we are in a PvNode and a move beat alpha while being
+        // Step 16C. Finally, if we are in a PvNode and a move beat alpha while being
         // search on a reduced depth, we will search again on the normal window. Also,
         // if we did not perform Step 15B, we will search for the first time on the
         // normal window. This happens only for the first move in a PvNode
@@ -530,7 +534,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
         // Revert the board state
         revert(thread, board, move, height);
 
-        // Step 16. Update search stats for the best move and its value. Update
+        // Step 17. Update search stats for the best move and its value. Update
         // our lower bound (alpha) if exceeded, and also update the PV in that case
         if (value > best) {
 
@@ -554,18 +558,18 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
     // Prefetch TT for store
     prefetchTTEntry(board->hash);
 
-    // Step 17. Stalemate and Checkmate detection. If no moves were found to
+    // Step 18. Stalemate and Checkmate detection. If no moves were found to
     // be legal (search makes sure to play at least one legal move, if any),
     // then we are either mated or stalemated, which we can tell by the inCheck
     // flag. For mates, return a score based on the distance from root, so we
     // can differentiate between close mates and far away mates from the root
     if (played == 0) return inCheck ? -MATE + height : 0;
 
-    // Step 18 (~760 elo). Update History counters on a fail high for a quiet move
+    // Step 19 (~760 elo). Update History counters on a fail high for a quiet move
     if (best >= beta && !moveIsTactical(board, bestMove))
         updateHistoryHeuristics(thread, quietsTried, quietsPlayed, height, depth*depth);
 
-    // Step 19. Store results of search into the Transposition Table. We do
+    // Step 20. Store results of search into the Transposition Table. We do
     // not overwrite the Root entry from the first line of play we examined
     if (!RootNode || !thread->multiPV) {
         ttBound = best >= beta    ? BOUND_LOWER
@@ -601,7 +605,7 @@ int qsearch(Thread *thread, PVariation *pv, int alpha, int beta, int height) {
     if (ABORT_SIGNAL || (terminateSearchEarly(thread) && !IS_PONDERING))
         longjmp(thread->jbuffer, 1);
 
-    // Step 2. Draw Detection. Check for the fifty move rule, repetition, or insufficient 
+    // Step 2. Draw Detection. Check for the fifty move rule, repetition, or insufficient
     // material. Add variance to the draw score, to avoid blindness to 3-fold lines
     if (boardIsDrawn(board, height)) return 1 - (thread->nodes & 2);
 
