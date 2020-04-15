@@ -279,8 +279,8 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
 
         // Convert the WDL value to a score. We consider blessed losses
         // and cursed wins to be a draw, and thus set value to zero.
-        value = tbresult == TB_LOSS ? -MATE + MAX_PLY + height + 1
-              : tbresult == TB_WIN  ?  MATE - MAX_PLY - height - 1 : 0;
+        value = tbresult == TB_LOSS ? -TBWIN + height + 1
+              : tbresult == TB_WIN  ?  TBWIN - height - 1 : 0;
 
         // Identify the bound based on WDL scores. For wins and losses the
         // bound is not exact because we are dependent on the height, but
@@ -293,7 +293,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
             || (ttBound == BOUND_LOWER && value >= beta)
             || (ttBound == BOUND_UPPER && value <= alpha)) {
 
-            storeTTEntry(board->hash, NONE_MOVE, value, VALUE_NONE, depth, ttBound);
+            storeTTEntry(board->hash, NONE_MOVE, valueToTT(value, height), VALUE_NONE, depth, ttBound);
             return value;
         }
     }
@@ -401,7 +401,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
 
         // Step 11 (~175 elo). Quiet Move Pruning. Prune any quiet move that meets one
         // of the criteria below, only after proving a non mated line exists
-        if (isQuiet && best > MATED_IN_MAX) {
+        if (isQuiet && best > -MATE_IN_MAX) {
 
             // Step 11A (~3 elo). Futility Pruning. If our score is far below alpha,
             // and we don't expect anything from this move, we can skip all other quiets
@@ -440,7 +440,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
         // Step 12 (~42 elo). Static Exchange Evaluation Pruning. Prune moves which fail
         // to beat a depth dependent SEE threshold. The use of movePicker.stage
         // is a speedup, which assumes that good noisy moves have a positive SEE
-        if (    best > MATED_IN_MAX
+        if (    best > -MATE_IN_MAX
             &&  depth <= SEEPruningDepth
             &&  movePicker.stage > STAGE_GOOD_NOISY
             && !staticExchangeEvaluation(board, move, seeMargin[isQuiet]))
