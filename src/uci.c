@@ -357,8 +357,7 @@ void uciReport(Thread *threads, int alpha, int beta, int value) {
                 : bounded <= -MATE_IN_MAX ? -(bounded + MATE)     / 2 : bounded;
 
     // Two possible score types, mate and cp = centipawns
-    char *type  = bounded >=  MATE_IN_MAX ? "mate"
-                : bounded <= -MATE_IN_MAX ? "mate" : "cp";
+    char *type  = abs(bounded) >= MATE_IN_MAX ? "mate" : "cp";
 
     // Partial results from a windowed search have bounds
     char *bound = bounded >=  beta ? " lowerbound "
