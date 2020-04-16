@@ -279,8 +279,8 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
 
         // Convert the WDL value to a score. We consider blessed losses
         // and cursed wins to be a draw, and thus set value to zero.
-        value = tbresult == TB_LOSS ? -TBWIN + height + 1
-              : tbresult == TB_WIN  ?  TBWIN - height - 1 : 0;
+        value = tbresult == TB_LOSS ? -TBWIN + height
+              : tbresult == TB_WIN  ?  TBWIN - height : 0;
 
         // Identify the bound based on WDL scores. For wins and losses the
         // bound is not exact because we are dependent on the height, but
