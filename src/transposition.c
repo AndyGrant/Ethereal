@@ -106,8 +106,8 @@ int valueFromTT(int value, int height) {
     // When probing MATE scores into the table
     // we must factor in the search height
 
-    return value >=  MATE_IN_MAX ? value - height
-         : value <= MATED_IN_MAX ? value + height : value;
+    return value >=  TBWIN_IN_MAX ? value - height
+         : value <= -TBWIN_IN_MAX ? value + height : value;
 }
 
 int valueToTT(int value, int height) {
@@ -115,8 +115,8 @@ int valueToTT(int value, int height) {
     // When storing MATE scores into the table
     // we must factor in the search height
 
-    return value >=  MATE_IN_MAX ? value + height
-         : value <= MATED_IN_MAX ? value - height : value;
+    return value >=  TBWIN_IN_MAX ? value + height
+         : value <= -TBWIN_IN_MAX ? value - height : value;
 }
 
 void prefetchTTEntry(uint64_t hash) {
