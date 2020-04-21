@@ -428,7 +428,7 @@ void printParameters(TexelVector params, TexelVector cparams) {
 
     int i = 0; // EXECUTE_ON_TERMS will update i accordingly
 
-    EXECUTE_ON_TERMS(PRINT_PARAM);
+    EXECUTE_ON_TERMS(PRINT);
 
     if (i != NTERMS) {
         printf("Error in printParameters(): i = %d ; NTERMS = %d\n", i, NTERMS);
@@ -436,32 +436,46 @@ void printParameters(TexelVector params, TexelVector cparams) {
     }
 }
 
-void printParameters_0(char *name, int params[NTERMS][PHASE_NB], int i) {
-    printf("const int %s = S(%4d,%4d);\n\n", name, params[i][MG], params[i][EG]);
-    i++;
+void print_0(char *name, int params[NTERMS][PHASE_NB], int i, char *S) {
+
+    printf("const int %s%s = S(%4d,%4d);\n\n", name, S, params[i][MG], params[i][EG]);
+
 }
 
-void printParameters_1(char *name, int params[NTERMS][PHASE_NB], int i, int A) {
+void print_1(char *name, int params[NTERMS][PHASE_NB], int i, int A, char *S) {
 
-    printf("const int %s[%d] = {", name, A);
+    printf("const int %s%s = { ", name, S);
 
-    for (int a = 0; a < A; a++, i++) {
-        if (a % 4 == 0) printf("\n    ");
-        printf("S(%4d,%4d), ", params[i][MG], params[i][EG]);
+    if (A >= 3) {
+
+        for (int a = 0; a < A; a++, i++) {
+            if (a % 4 == 0) printf("\n    ");
+            printf("S(%4d,%4d), ", params[i][MG], params[i][EG]);
+        }
+
+        printf("\n};\n\n");
     }
 
-    printf("\n};\n\n");
+    else {
+
+        for (int a = 0; a < A; a++, i++) {
+            printf("S(%4d,%4d)", params[i][MG], params[i][EG]);
+            if (a != A - 1) printf(", "); else printf(" };\n\n");
+        }
+    }
+
 }
 
-void printParameters_2(char *name, int params[NTERMS][PHASE_NB], int i, int A, int B) {
+void print_2(char *name, int params[NTERMS][PHASE_NB], int i, int A, int B, char *S) {
 
-    printf("const int %s[%d][%d] = {\n", name, A, B);
+    printf("const int %s%s = {\n", name, S);
 
     for (int a = 0; a < A; a++) {
 
         printf("   {");
 
         for (int b = 0; b < B; b++, i++) {
+            if (b && b % 4 == 0) printf("\n    ");
             printf("S(%4d,%4d)", params[i][MG], params[i][EG]);
             printf("%s", b == B - 1 ? "" : ", ");
         }
@@ -473,9 +487,9 @@ void printParameters_2(char *name, int params[NTERMS][PHASE_NB], int i, int A, i
 
 }
 
-void printParameters_3(char *name, int params[NTERMS][PHASE_NB], int i, int A, int B, int C) {
+void print_3(char *name, int params[NTERMS][PHASE_NB], int i, int A, int B, int C, char *S) {
 
-    printf("const int %s[%d][%d][%d] = {\n", name, A, B, C);
+    printf("const int %s%s = {\n", name, S);
 
     for (int a = 0; a < A; a++) {
 
@@ -484,6 +498,7 @@ void printParameters_3(char *name, int params[NTERMS][PHASE_NB], int i, int A, i
             printf("%s", b ? "   {" : "  {{");;
 
             for (int c = 0; c < C; c++, i++) {
+                if (c &&  c % 4 == 0) printf("\n    ");
                 printf("S(%4d,%4d)", params[i][MG], params[i][EG]);
                 printf("%s", c == C - 1 ? "" : ", ");
             }

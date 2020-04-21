@@ -24,7 +24,7 @@
 
 #define NPARTITIONS  (     64) // Total thread partitions
 #define KPRECISION   (     10) // Iterations for computing K
-#define REPORTING    (     25) // How often to report progress
+#define REPORTING    (    100) // How often to report progress
 #define NTERMS       (      0) // Total terms in the Tuner (647)
 
 #define LEARNING     (    5.0) // Learning rate
@@ -35,7 +35,7 @@
 #define STATICWEIGHT (   0.50) // Weight of the Static Evaluation
 #define SEARCHWEIGHT (   0.50) // Weight of the Depth 10 Search
 
-#define STACKSIZE ((int)((double) NPOSITIONS * NTERMS / 8))
+#define STACKSIZE ((int)((double) NPOSITIONS * NTERMS / 32))
 
 #define TunePawnValue                   (0)
 #define TuneKnightValue                 (0)
@@ -131,167 +131,167 @@ double linearEvaluation(TexelEntry *te, TexelVector params);
 double sigmoid(double K, double S);
 
 void printParameters(TexelVector params, TexelVector cparams);
-void printParameters_0(char *name, int params[NTERMS][PHASE_NB], int i);
-void printParameters_1(char *name, int params[NTERMS][PHASE_NB], int i, int A);
-void printParameters_2(char *name, int params[NTERMS][PHASE_NB], int i, int A, int B);
-void printParameters_3(char *name, int params[NTERMS][PHASE_NB], int i, int A, int B, int C);
+void print_0(char *name, int params[NTERMS][PHASE_NB], int i, char *S);
+void print_1(char *name, int params[NTERMS][PHASE_NB], int i, int A, char *S);
+void print_2(char *name, int params[NTERMS][PHASE_NB], int i, int A, int B, char *S);
+void print_3(char *name, int params[NTERMS][PHASE_NB], int i, int A, int B, int C, char *S);
 
-// Initalize the Phase Manger which tracks the Term type
+// Initalize the Phase Manger for an N dimensional array
 
-#define INIT_PHASE_0(term, P) do {                              \
+#define INIT_PHASE_0(term, P, S) do {                           \
     phases[i  ][MG] = (P == NORMAL || P == MGONLY);             \
     phases[i++][EG] = (P == NORMAL || P == EGONLY);             \
 } while (0)
 
-#define INIT_PHASE_1(term, A, P) do {                           \
+#define INIT_PHASE_1(term, A, P, S) do {                        \
     for (int _a = 0; _a < A; _a++)                              \
        {phases[i  ][MG] = (P == NORMAL || P == MGONLY);         \
         phases[i++][EG] = (P == NORMAL || P == EGONLY);}        \
 } while (0)
 
-#define INIT_PHASE_2(term, A, B, P) do {                        \
+#define INIT_PHASE_2(term, A, B, P, S) do {                     \
     for (int _b = 0; _b < A; _b++)                              \
-        INIT_PHASE_1(term[_b], B, P);                           \
+        INIT_PHASE_1(term[_b], B, P, S);                        \
 } while (0)
 
-#define INIT_PHASE_3(term, A, B, C, P) do {                     \
+#define INIT_PHASE_3(term, A, B, C, P, S) do {                  \
     for (int _c = 0; _c < A; _c++)                              \
-        INIT_PHASE_2(term[_c], B, C, P);                        \
+        INIT_PHASE_2(term[_c], B, C, P, S);                     \
 } while (0)
 
 // Initalize Parameters of an N dimensional array
 
-#define INIT_PARAM_0(term, P) do {                              \
+#define INIT_PARAM_0(term, P, S) do {                           \
      cparams[i  ][MG] = ScoreMG(term);                          \
      cparams[i++][EG] = ScoreEG(term);                          \
 } while (0)
 
-#define INIT_PARAM_1(term, A, P) do {                           \
+#define INIT_PARAM_1(term, A, P, S) do {                        \
     for (int _a = 0; _a < A; _a++)                              \
        {cparams[i  ][MG] = ScoreMG(term[_a]);                   \
         cparams[i++][EG] = ScoreEG(term[_a]);}                  \
 } while (0)
 
-#define INIT_PARAM_2(term, A, B, P) do {                        \
+#define INIT_PARAM_2(term, A, B, P, S) do {                     \
     for (int _b = 0; _b < A; _b++)                              \
-        INIT_PARAM_1(term[_b], B, P);                           \
+        INIT_PARAM_1(term[_b], B, P, S);                        \
 } while (0)
 
-#define INIT_PARAM_3(term, A, B, C, P) do {                     \
+#define INIT_PARAM_3(term, A, B, C, P, S) do {                  \
     for (int _c = 0; _c < A; _c++)                              \
-        INIT_PARAM_2(term[_c], B, C, P);                        \
+        INIT_PARAM_2(term[_c], B, C, P, S);                     \
 } while (0)
 
 // Initalize Coefficients from an N dimensional array
 
-#define INIT_COEFF_0(term, P) do {                              \
+#define INIT_COEFF_0(term, P, S) do {                           \
     coeffs[i++] = T.term[WHITE] - T.term[BLACK];                \
 } while (0)
 
-#define INIT_COEFF_1(term, A, P) do {                           \
+#define INIT_COEFF_1(term, A, P, S) do {                        \
     for (int _a = 0; _a < A; _a++)                              \
         coeffs[i++] = T.term[_a][WHITE] - T.term[_a][BLACK];    \
 } while (0)
 
-#define INIT_COEFF_2(term, A, B, P) do {                        \
+#define INIT_COEFF_2(term, A, B, P, S) do {                     \
     for (int _b = 0; _b < A; _b++)                              \
-        INIT_COEFF_1(term[_b], B, P);                           \
+        INIT_COEFF_1(term[_b], B, P, S);                        \
 } while (0)
 
-#define INIT_COEFF_3(term, A, B, C, P) do {                     \
+#define INIT_COEFF_3(term, A, B, C, P, S) do {                  \
     for (int _c = 0; _c < A; _c++)                              \
-        INIT_COEFF_2(term[_c], B, C, P);                        \
+        INIT_COEFF_2(term[_c], B, C, P, S);                     \
 } while (0)
 
 // Print Parameters of an N dimensional array
 
-#define PRINT_PARAM_0(term, P) (printParameters_0(#term, tparams, i), i+=1)
+#define PRINT_0(term, P, S) (print_0(#term, tparams, i, S), i+=1)
 
-#define PRINT_PARAM_1(term, A, P) (printParameters_1(#term, tparams, i, A), i+=A)
+#define PRINT_1(term, A, P, S) (print_1(#term, tparams, i, A, S), i+=A)
 
-#define PRINT_PARAM_2(term, A, B, P) (printParameters_2(#term, tparams, i, A, B), i+=A*B)
+#define PRINT_2(term, A, B, P, S) (print_2(#term, tparams, i, A, B, S), i+=A*B)
 
-#define PRINT_PARAM_3(term, A, B, C, P) (printParameters_3(#term, tparams, i, A, B, C), i+=A*B*C)
+#define PRINT_3(term, A, B, C, P, S) (print_3(#term, tparams, i, A, B, C, S), i+=A*B*C)
 
 // Generic wrapper for all of the above functions
 
-#define ENABLE_0(fname, term, P) do {                           \
-    if (Tune##term) fname##_0(term, P);                         \
+#define ENABLE_0(F, term, P, S) do {                            \
+    if (Tune##term) F##_0(term, P, S);                          \
 } while (0)
 
-#define ENABLE_1(fname, term, A, P) do {                        \
-    if (Tune##term) fname##_1(term, A, P);                      \
+#define ENABLE_1(F, term, A, P, S) do {                         \
+    if (Tune##term) F##_1(term, A, P, S);                       \
 } while (0)
 
-#define ENABLE_2(fname, term, A, B, P) do {                     \
-    if (Tune##term) fname##_2(term, A, B, P);                   \
+#define ENABLE_2(F, term, A, B, P, S) do {                      \
+    if (Tune##term) F##_2(term, A, B, P, S);                    \
 } while (0)
 
-#define ENABLE_3(fname, term, A, B, C, P) do {                  \
-    if (Tune##term) fname##_3(term, A, B, C, P);                \
+#define ENABLE_3(F, term, A, B, C, P, S) do {                   \
+    if (Tune##term) F##_3(term, A, B, C, P, S);                 \
 } while (0)
 
 // Configuration for each aspect of the evaluation terms
 
-#define EXECUTE_ON_TERMS(fname) do {                            \
-    ENABLE_0(fname, PawnValue, NORMAL);                         \
-    ENABLE_0(fname, KnightValue, NORMAL);                       \
-    ENABLE_0(fname, BishopValue, NORMAL);                       \
-    ENABLE_0(fname, RookValue, NORMAL);                         \
-    ENABLE_0(fname, QueenValue, NORMAL);                        \
-    ENABLE_0(fname, KingValue, NORMAL);                         \
-    ENABLE_1(fname, PawnPSQT32, 32, NORMAL);                    \
-    ENABLE_1(fname, KnightPSQT32, 32, NORMAL);                  \
-    ENABLE_1(fname, BishopPSQT32, 32, NORMAL);                  \
-    ENABLE_1(fname, RookPSQT32, 32, NORMAL);                    \
-    ENABLE_1(fname, QueenPSQT32, 32, NORMAL);                   \
-    ENABLE_1(fname, KingPSQT32, 32, NORMAL);                    \
-    ENABLE_2(fname, PawnCandidatePasser, 2, 8, NORMAL);         \
-    ENABLE_0(fname, PawnIsolated, NORMAL);                      \
-    ENABLE_1(fname, PawnStacked, 2, NORMAL);                    \
-    ENABLE_2(fname, PawnBackwards, 2, 8, NORMAL);               \
-    ENABLE_1(fname, PawnConnected32, 32, NORMAL);               \
-    ENABLE_2(fname, KnightOutpost, 2, 2, NORMAL);               \
-    ENABLE_0(fname, KnightBehindPawn, NORMAL);                  \
-    ENABLE_1(fname, KnightInSiberia, 4, NORMAL);                \
-    ENABLE_1(fname, KnightMobility, 9, NORMAL);                 \
-    ENABLE_0(fname, BishopPair, NORMAL);                        \
-    ENABLE_0(fname, BishopRammedPawns, NORMAL);                 \
-    ENABLE_2(fname, BishopOutpost, 2, 2, NORMAL);               \
-    ENABLE_0(fname, BishopBehindPawn, NORMAL);                  \
-    ENABLE_0(fname, BishopLongDiagonal, NORMAL);                \
-    ENABLE_1(fname, BishopMobility, 14, NORMAL);                \
-    ENABLE_1(fname, RookFile, 2, NORMAL);                       \
-    ENABLE_0(fname, RookOnSeventh, NORMAL);                     \
-    ENABLE_1(fname, RookMobility, 15, NORMAL);                  \
-    ENABLE_1(fname, QueenMobility, 28, NORMAL);                 \
-    ENABLE_1(fname, KingDefenders, 12, NORMAL);                 \
-    ENABLE_1(fname, KingPawnFileProximity, 8, NORMAL);          \
-    ENABLE_3(fname, KingShelter, 2, 8, 8, NORMAL);              \
-    ENABLE_3(fname, KingStorm, 2, 4, 8, NORMAL);                \
-    ENABLE_3(fname, PassedPawn, 2, 2, 8, NORMAL);               \
-    ENABLE_1(fname, PassedFriendlyDistance, 8, NORMAL);         \
-    ENABLE_1(fname, PassedEnemyDistance, 8, NORMAL);            \
-    ENABLE_0(fname, PassedSafePromotionPath, NORMAL);           \
-    ENABLE_0(fname, ThreatWeakPawn, NORMAL);                    \
-    ENABLE_0(fname, ThreatMinorAttackedByPawn, NORMAL);         \
-    ENABLE_0(fname, ThreatMinorAttackedByMinor, NORMAL);        \
-    ENABLE_0(fname, ThreatMinorAttackedByMajor, NORMAL);        \
-    ENABLE_0(fname, ThreatRookAttackedByLesser, NORMAL);        \
-    ENABLE_0(fname, ThreatMinorAttackedByKing, NORMAL);         \
-    ENABLE_0(fname, ThreatRookAttackedByKing, NORMAL);          \
-    ENABLE_0(fname, ThreatQueenAttackedByOne, NORMAL);          \
-    ENABLE_0(fname, ThreatOverloadedPieces, NORMAL);            \
-    ENABLE_0(fname, ThreatByPawnPush, NORMAL);                  \
-    ENABLE_0(fname, SpaceRestrictPiece, NORMAL);                \
-    ENABLE_0(fname, SpaceRestrictEmpty, NORMAL);                \
-    ENABLE_0(fname, SpaceCenterControl, NORMAL);                \
-    ENABLE_1(fname, ClosednessKnightAdjustment, 9, NORMAL);     \
-    ENABLE_1(fname, ClosednessRookAdjustment, 9, NORMAL);       \
-    ENABLE_0(fname, ComplexityTotalPawns, EGONLY);              \
-    ENABLE_0(fname, ComplexityPawnFlanks, EGONLY);              \
-    ENABLE_0(fname, ComplexityPawnEndgame, EGONLY);             \
-    ENABLE_0(fname, ComplexityAdjustment, EGONLY);              \
+#define EXECUTE_ON_TERMS(F) do {                                            \
+    ENABLE_0(F, PawnValue, NORMAL, "");                                     \
+    ENABLE_0(F, KnightValue, NORMAL, "");                                   \
+    ENABLE_0(F, BishopValue, NORMAL, "");                                   \
+    ENABLE_0(F, RookValue, NORMAL, "");                                     \
+    ENABLE_0(F, QueenValue, NORMAL, "");                                    \
+    ENABLE_0(F, KingValue, NORMAL, "");                                     \
+    ENABLE_1(F, PawnPSQT32, 32, NORMAL, "[32]");                            \
+    ENABLE_1(F, KnightPSQT32, 32, NORMAL, "[32]");                          \
+    ENABLE_1(F, BishopPSQT32, 32, NORMAL, "[32]");                          \
+    ENABLE_1(F, RookPSQT32, 32, NORMAL, "[32]");                            \
+    ENABLE_1(F, QueenPSQT32, 32, NORMAL, "[32]");                           \
+    ENABLE_1(F, KingPSQT32, 32, NORMAL, "[32]");                            \
+    ENABLE_2(F, PawnCandidatePasser, 2, 8, NORMAL, "[2][RANK_NB]");         \
+    ENABLE_0(F, PawnIsolated, NORMAL, "");                                  \
+    ENABLE_1(F, PawnStacked, 2, NORMAL, "[2]");                             \
+    ENABLE_2(F, PawnBackwards, 2, 8, NORMAL, "[2][RANK_NB]");               \
+    ENABLE_1(F, PawnConnected32, 32, NORMAL, "[32]");                       \
+    ENABLE_2(F, KnightOutpost, 2, 2, NORMAL, "[2][2]");                     \
+    ENABLE_0(F, KnightBehindPawn, NORMAL, "");                              \
+    ENABLE_1(F, KnightInSiberia, 4, NORMAL, "[4]");                         \
+    ENABLE_1(F, KnightMobility, 9, NORMAL, "[9]");                          \
+    ENABLE_0(F, BishopPair, NORMAL, "");                                    \
+    ENABLE_0(F, BishopRammedPawns, NORMAL, "");                             \
+    ENABLE_2(F, BishopOutpost, 2, 2, NORMAL, "[2][2]");                     \
+    ENABLE_0(F, BishopBehindPawn, NORMAL, "");                              \
+    ENABLE_0(F, BishopLongDiagonal, NORMAL, "");                            \
+    ENABLE_1(F, BishopMobility, 14, NORMAL, "[14]");                        \
+    ENABLE_1(F, RookFile, 2, NORMAL, "[2]");                                \
+    ENABLE_0(F, RookOnSeventh, NORMAL, "");                                 \
+    ENABLE_1(F, RookMobility, 15, NORMAL, "[15]");                          \
+    ENABLE_1(F, QueenMobility, 28, NORMAL, "[28]");                         \
+    ENABLE_1(F, KingDefenders, 12, NORMAL, "[12]");                         \
+    ENABLE_1(F, KingPawnFileProximity, 8, NORMAL, "[FILE_NB]");             \
+    ENABLE_3(F, KingShelter, 2, 8, 8, NORMAL, "[2][FILE_NB][RANK_NB]");     \
+    ENABLE_3(F, KingStorm, 2, 4, 8, NORMAL, "[2][FILE_NB/2][RANK_NB]");     \
+    ENABLE_3(F, PassedPawn, 2, 2, 8, NORMAL, "[2][2][RANK_NB]");            \
+    ENABLE_1(F, PassedFriendlyDistance, 8, NORMAL, "[FILE_NB]");            \
+    ENABLE_1(F, PassedEnemyDistance, 8, NORMAL, "[FILE_NB]");               \
+    ENABLE_0(F, PassedSafePromotionPath, NORMAL, "");                       \
+    ENABLE_0(F, ThreatWeakPawn, NORMAL, "");                                \
+    ENABLE_0(F, ThreatMinorAttackedByPawn, NORMAL, "");                     \
+    ENABLE_0(F, ThreatMinorAttackedByMinor, NORMAL, "");                    \
+    ENABLE_0(F, ThreatMinorAttackedByMajor, NORMAL, "");                    \
+    ENABLE_0(F, ThreatRookAttackedByLesser, NORMAL, "");                    \
+    ENABLE_0(F, ThreatMinorAttackedByKing, NORMAL, "");                     \
+    ENABLE_0(F, ThreatRookAttackedByKing, NORMAL, "");                      \
+    ENABLE_0(F, ThreatQueenAttackedByOne, NORMAL, "");                      \
+    ENABLE_0(F, ThreatOverloadedPieces, NORMAL, "");                        \
+    ENABLE_0(F, ThreatByPawnPush, NORMAL, "");                              \
+    ENABLE_0(F, SpaceRestrictPiece, NORMAL, "");                            \
+    ENABLE_0(F, SpaceRestrictEmpty, NORMAL, "");                            \
+    ENABLE_0(F, SpaceCenterControl, NORMAL, "");                            \
+    ENABLE_1(F, ClosednessKnightAdjustment, 9, NORMAL, "[9]");              \
+    ENABLE_1(F, ClosednessRookAdjustment, 9, NORMAL, "[9]");                \
+    ENABLE_0(F, ComplexityTotalPawns, EGONLY, "");                          \
+    ENABLE_0(F, ComplexityPawnFlanks, EGONLY, "");                          \
+    ENABLE_0(F, ComplexityPawnEndgame, EGONLY, "");                         \
+    ENABLE_0(F, ComplexityAdjustment, EGONLY, "");                          \
 } while (0)
 
 #endif
