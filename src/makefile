@@ -20,14 +20,18 @@ LIBS    = -lpthread -lm
 EXE     = Ethereal
 
 WFLAGS = -std=gnu11 -Wall -Wextra -Wshadow
-CFLAGS = -DNDEBUG -O3 $(WFLAGS) -march=native -flto
-RFLAGS = -DNDEBUG -O3 $(WFLAGS) -flto -static
-TFLAGS = -DNDEBUG -O3 $(WFLAGS) -march=native -flto -fopenmp -DTUNE
-PFLAGS = -DNDEBUG -O0 $(WFLAGS) -p -pg
+CFLAGS = -O3 $(WFLAGS) -DNDEBUG -flto -march=native
+RFLAGS = -O3 $(WFLAGS) -DNDEBUG -flto -static
+TFLAGS = -O3 $(WFLAGS) -DNDEBUG -flto -march=native -fopenmp -DTUNE
+PFLAGS = -O0 $(WFLAGS) -DNDEBUG -p -pg
 DFLAGS = -O0 $(WFLAGS)
 
 POPCNTFLAGS = -DUSE_POPCNT -msse3 -mpopcnt
 PEXTFLAGS   = $(POPCNTFLAGS) -DUSE_PEXT -mbmi2
+
+ARMV8FLAGS  = -O3 $(WFLAGS) -DNDEBUG -flto -march=armv8-a -m64
+ARMV7FLAGS  = -O3 $(WFLAGS) -DNDEBUG -flto -march=armv7-a -m32
+ARMV7FLAGS += -mfloat-abi=softfp -mfpu=vfpv3-d16 -mthumb -Wl,--fix-cortex-a8
 
 popcnt:
 	$(CC) $(CFLAGS) $(SRC) $(LIBS) $(POPCNTFLAGS) -o $(EXE)
@@ -52,3 +56,9 @@ profile:
 
 debug:
 	$(CC) $(DFLAGS) $(SRC) $(LIBS) $(POPCNT) -o $(EXE)
+
+armv8:
+	$(CC) $(ARMV8FLAGS) $(SRC) -lm -o $(EXE)
+
+armv7:
+	$(CC) $(ARMV7FLAGS) $(SRC) -lm -o $(EXE)
