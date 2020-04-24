@@ -185,7 +185,7 @@ void aspirationWindow(Thread *thread) {
         // Search failed high, adjust window and reduce depth
         else if (value >= beta) {
             beta = MIN(MATE, beta + delta);
-            depth = depth - 1;
+            depth = depth - (abs(value) <= MATE / 2);
         }
 
         // Expand the search window
@@ -458,7 +458,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
         // that we are going to search. We only do this from the main thread,
         // and we wait a few seconds in order to avoid floiding the output
         if (RootNode && !thread->index && elapsedTime(thread->info) > CurrmoveTimerMS)
-            uciReportCurrentMove(board, move, played + thread->multiPV, depth);
+            uciReportCurrentMove(board, move, played + thread->multiPV, thread->depth);
 
         // Identify moves which are candidate singular moves
         singular =  !RootNode
