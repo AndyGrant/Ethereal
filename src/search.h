@@ -41,7 +41,7 @@ void aspirationWindow(Thread *thread);
 int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int height);
 int qsearch(Thread *thread, PVariation *pv, int alpha, int beta, int height);
 int staticExchangeEvaluation(Board *board, uint16_t move, int threshold);
-int moveIsSingular(Thread *thread, uint16_t ttMove, int ttValue, int depth, int height, int beta, int *multiCut);
+int singularity(Thread *thread, MovePicker *mp, int ttValue, int depth, int beta);
 
 static const int SMPCycles      = 16;
 static const int SkipSize[16]   = { 1, 1, 1, 2, 2, 2, 1, 3, 2, 2, 1, 3, 3, 2, 2, 1 };

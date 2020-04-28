@@ -204,7 +204,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
     int quietsSeen = 0, quietsPlayed = 0, played = 0;
     int ttHit, ttValue = 0, ttEval = 0, ttDepth = 0, ttBound = 0;
     int R, newDepth, rAlpha, rBeta, oldAlpha = alpha;
-    int inCheck, isQuiet, improving, extension, singular, multiCut, skipQuiets = 0;
+    int inCheck, isQuiet, improving, extension, singular, skipQuiets = 0;
     int eval, value = -MATE, best = -MATE, futilityMargin, seeMargin[2];
     uint16_t move, ttMove = NONE_MOVE, bestMove = NONE_MOVE, quietsTried[MAX_MOVES];
     MovePicker movePicker;
@@ -472,17 +472,16 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
         // extend for any position where our King is checked. We also selectivly extend moves
         // with very strong continuation histories, so long as they are along the PV line
 
-        extension = singular
-                  ? moveIsSingular(thread, ttMove, ttValue, depth, height, beta, &multiCut)
+        extension = singular ? singularity(thread, &movePicker, ttValue, depth, beta)
                   : inCheck || (isQuiet && PvNode && cmhist > HistexLimit && fmhist > HistexLimit);
 
         newDepth = depth + (extension && !RootNode);
 
         // Step 14. MultiCut. Sometimes candidate Singular moves are shown to be non-Singular.
-        // If this happens, and the rBeta used for that proof is greater than beta, then we
-        // have multiple moves which appear to beat beta at a reduced depth.
+        // If this happens, and the rBeta used is greater than beta, then we have multiple moves
+        // which appear to beat beta at a reduced depth. singularity() sets the stage to STAGE_DONE
 
-        if (singular && multiCut) {
+        if (movePicker.stage == STAGE_DONE) {
             revert(thread, board, move, height);
             return MAX(ttValue - depth, -MATE);
         }
@@ -774,31 +773,31 @@ int staticExchangeEvaluation(Board *board, uint16_t move, int threshold) {
     return board->turn != colour;
 }
 
-int moveIsSingular(Thread *thread, uint16_t ttMove, int ttValue, int depth, int height, int beta, int *multiCut) {
-
-    Board *const board = &thread->board;
+int singularity(Thread *thread, MovePicker *mp, int ttValue, int depth, int beta) {
 
     uint16_t move;
     int skipQuiets = 0, quiets = 0, tacticals = 0;
     int value = -MATE, rBeta = MAX(ttValue - depth, -MATE);
+
     MovePicker movePicker;
     PVariation lpv; lpv.length = 0;
+    Board *const board = &thread->board;
 
     // Table move was already applied
-    revert(thread, board, ttMove, height);
+    revert(thread, board, mp->tableMove, mp->height);
 
     // Iterate over each move, except for the table move
-    initSingularMovePicker(&movePicker, thread, ttMove, height);
+    initSingularMovePicker(&movePicker, thread, mp->tableMove, mp->height);
     while ((move = selectNextMove(&movePicker, board, skipQuiets)) != NONE_MOVE) {
 
-        assert(move != ttMove); // Skip the table move
+        assert(move != mp->tableMove); // Skip the table move
 
         // Perform a reduced depth search on a null rbeta window
-        if (!apply(thread, board, move, height)) continue;
-        value = -search(thread, &lpv, -rBeta-1, -rBeta, depth / 2 - 1, height+1);
-        revert(thread, board, move, height);
+        if (!apply(thread, board, move, mp->height)) continue;
+        value = -search(thread, &lpv, -rBeta-1, -rBeta, depth / 2 - 1, mp->height+1);
+        revert(thread, board, move, mp->height);
 
-        // Move failed high, thus ttMove is not singular
+        // Move failed high, thus mp->tableMove is not singular
         if (value > rBeta) break;
 
         // Start skipping quiets after a few have been tried
@@ -809,10 +808,15 @@ int moveIsSingular(Thread *thread, uint16_t ttMove, int ttValue, int depth, int 
         if (skipQuiets && tacticals >= SingularTacticalLimit) break;
     }
 
-    // Reapply the table move we took off
-    applyLegal(thread, board, ttMove, height);
+    // MultiCut. We signal the Move Picker to terminate the search
+    if (value > rBeta && rBeta >= beta) {
+        if (!moveIsTactical(board, move))
+            updateKillerMoves(thread, mp->height, move);
+        mp->stage = STAGE_DONE;
+    }
 
-    *multiCut = value > rBeta && rBeta >= beta;
+    // Reapply the table move we took off
+    applyLegal(thread, board, mp->tableMove, mp->height);
 
     // Move is singular if all other moves failed low
     return value <= rBeta;

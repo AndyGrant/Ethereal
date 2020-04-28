@@ -27,6 +27,8 @@ static const int HistoryMultiplier = 32;
 static const int HistoryDivisor = 512;
 
 void updateHistoryHeuristics(Thread *thread, uint16_t *moves, int length, int height, int bonus);
+void updateKillerMoves(Thread *thread, int height, uint16_t move);
+
 void getHistory(Thread *thread, uint16_t move, int height, int *hist, int *cmhist, int *fmhist);
 void getHistoryScores(Thread *thread, uint16_t *moves, int *scores, int start, int length, int height);
 void getRefutationMoves(Thread *thread, int height, uint16_t *killer1, uint16_t *killer2, uint16_t *counter);

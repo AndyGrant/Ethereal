@@ -84,6 +84,16 @@ void updateHistoryHeuristics(Thread *thread, uint16_t *moves, int length, int he
         thread->cmtable[!colour][cmPiece][cmTo] = bestMove;
 }
 
+void updateKillerMoves(Thread *thread, int height, uint16_t move) {
+
+    // Avoid saving the same Killer Move twice
+    if (thread->killers[height][0] == move) return;
+
+    thread->killers[height][1] = thread->killers[height][0];
+    thread->killers[height][0] = move;
+}
+
+
 void getHistory(Thread *thread, uint16_t move, int height, int *hist, int *cmhist, int *fmhist) {
 
     // Extract information from this move
