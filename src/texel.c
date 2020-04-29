@@ -171,10 +171,9 @@ void runTexelTuning(Thread *thread) {
 
 void initTexelEntries(TexelEntry *tes, Thread *thread) {
 
-    Undo undo[1];
     Limits limits;
     char line[128];
-    int i, j, k, searchEval, coeffs[NTERMS];
+    int i, j, k, coeffs[NTERMS];
     FILE *fin = fopen("FENS", "r");
 
     // Initialize the thread for the search
@@ -190,12 +189,12 @@ void initTexelEntries(TexelEntry *tes, Thread *thread) {
         }
 
         // Occasional reporting for total completion
-        if ((i + 1) % 10000 == 0 || i == NPOSITIONS - 1)
+        if ((i + 1) % 100000 == 0 || i == NPOSITIONS - 1)
             printf("\rINITIALIZING TEXEL ENTRIES FROM FENS...  [%7d OF %7d]", i + 1, NPOSITIONS);
 
         // Fetch and cap a white POV search
-        searchEval = atoi(strstr(line, "] ") + 2);
-        if (strstr(line, " b ")) searchEval *= -1;
+        tes[i].eval = atoi(strstr(line, "] ") + 2);
+        if (strstr(line, " b ")) tes[i].eval *= -1;
 
         // Determine the result of the game
         if      (strstr(line, "[1.0]")) tes[i].result = 1.0;
@@ -203,11 +202,8 @@ void initTexelEntries(TexelEntry *tes, Thread *thread) {
         else if (strstr(line, "[0.5]")) tes[i].result = 0.5;
         else    {printf("Cannot Parse %s\n", line); exit(EXIT_FAILURE);}
 
-        // Resolve FEN to a quiet position
+        // Setup the given position
         boardFromFEN(&thread->board, line, 0);
-        qsearch(thread, &thread->pv, -MATE, MATE, 0);
-        for (j = 0; j < thread->pv.length; j++)
-            applyMove(&thread->board, thread->pv.line[j], undo);
 
         // Determine the game phase based on remaining material
         tes[i].phase = 24 - 4 * popcount(thread->board.pieces[QUEEN ])
@@ -215,23 +211,17 @@ void initTexelEntries(TexelEntry *tes, Thread *thread) {
                           - 1 * popcount(thread->board.pieces[BISHOP])
                           - 1 * popcount(thread->board.pieces[KNIGHT]);
 
-        // Compute phase factors for updating the gradients and
+        // Compute phase factors for updating the gradients
         tes[i].factors[MG] = 1 - tes[i].phase / 24.0;
         tes[i].factors[EG] = 0 + tes[i].phase / 24.0;
 
         // Finish the phase calculation for the evaluation
         tes[i].phase = (tes[i].phase * 256 + 12) / 24.0;
 
-        // Vectorize the evaluation coefficients and save the eval
-        // relative to WHITE. We must first clear the coeff vector.
+        // Vectorize the evaluation coefficients
         T = EmptyTrace;
-        tes[i].eval = evaluateBoard(&thread->board, NULL, 0);
-        if (thread->board.turn == BLACK) tes[i].eval *= -1;
+        evaluateBoard(&thread->board, NULL, 0);
         initCoefficients(coeffs);
-
-        // Weight the Static and Search evals
-        tes[i].eval = tes[i].eval * STATICWEIGHT
-                    +  searchEval * SEARCHWEIGHT;
 
         // Count up the non zero coefficients
         for (k = 0, j = 0; j < NTERMS; j++)
@@ -413,7 +403,7 @@ double linearEvaluation(TexelEntry *te, TexelVector params) {
 }
 
 double sigmoid(double K, double S) {
-    return 1.0 / (1.0 + pow(10.0, -K * S / 400.0));
+    return 1.0 / (1.0 + exp(-K * S / 400.0));
 }
 
 void printParameters(TexelVector params, TexelVector cparams) {

@@ -30,10 +30,7 @@
 #define LEARNING     (    5.0) // Learning rate
 #define LRDROPRATE   (   1.25) // Cut LR by this each failure
 #define BATCHSIZE    (  16384) // FENs per mini-batch
-#define NPOSITIONS   (7400000) // Total FENS in the book
-
-#define STATICWEIGHT (   0.50) // Weight of the Static Evaluation
-#define SEARCHWEIGHT (   0.50) // Weight of the Depth 10 Search
+#define NPOSITIONS   (5888224) // Total FENS in the book
 
 #define STACKSIZE ((int)((double) NPOSITIONS * NTERMS / 32))
 
