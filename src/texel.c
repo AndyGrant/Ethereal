@@ -102,10 +102,11 @@ extern const int ComplexityPawnFlanks;
 extern const int ComplexityPawnEndgame;
 extern const int ComplexityAdjustment;
 
-void runTexelTuning(Thread *thread) {
+void runTexelTuning() {
 
     TexelEntry *tes;
     int iteration = -1;
+    Thread *thread = createThreadPool(1);
     double K, error, best = 1e6, rate = LEARNING;
     TexelVector params = {0}, cparams = {0}, phases = {0};
 
