@@ -334,7 +334,9 @@ void uciReport(Thread *threads, int alpha, int beta, int value) {
     // interested in. Also, bound the value passed by alpha and
     // beta, since Ethereal uses a mix of fail-hard and fail-soft
 
-    int hashfull    = hashfullTT();
+    if (threads->depth < 12) return;
+
+    int hashfull    = 0; // hashfullTT();
     int depth       = threads->depth;
     int seldepth    = threads->seldepth;
     int multiPV     = threads->multiPV + 1;
