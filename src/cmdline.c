@@ -76,6 +76,7 @@ void runEvalBook(int argc, char **argv) {
         boardFromFEN(&board, line, 0);
         getBestMove(threads, &board, &limits, &best, &ponder);
         resetThreadPool(threads); clearTT();
+        printf("FEN: %s", line);
     }
 
     printf("Time %dms\n", (int)(getRealTime() - start));
