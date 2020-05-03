@@ -48,4 +48,3 @@ int boardDrawnByRepetition(Board *board, int height);
 int boardDrawnByInsufficientMaterial(Board *board);
 
 uint64_t perft(Board *board, int depth);
-void runBenchmark(int argc, char **argv);

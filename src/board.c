@@ -40,11 +40,6 @@
 
 const char *PieceLabel[COLOUR_NB] = {"PNBRQK", "pnbrqk"};
 
-static const char *Benchmarks[] = {
-    #include "bench.csv"
-    ""
-};
-
 static void clearBoard(Board *board) {
 
     // Wipe the entire board structure, and also set all of
@@ -355,48 +350,4 @@ uint64_t perft(Board *board, int depth) {
     }
 
     return found;
-}
-
-void runBenchmark(int argc, char **argv) {
-
-    Board board;
-    Limits limits;
-    Thread *threads;
-
-    double start;
-    uint64_t nodes = 0ull;
-    uint16_t bestMove, ponderMove;
-
-    int depth     = argc > 2 ? atoi(argv[2]) : 13;
-    int nthreads  = argc > 3 ? atoi(argv[3]) : 1;
-    int megabytes = argc > 4 ? atoi(argv[4]) : 16;
-
-    initTT(megabytes);
-    threads = createThreadPool(nthreads);
-
-    // Initialize a "go depth <x>" search
-    limits.limitedByNone  = 0;
-    limits.limitedByTime  = 0;
-    limits.limitedByDepth = 1;
-    limits.limitedBySelf  = 0;
-    limits.timeLimit      = 0;
-    limits.depthLimit     = depth;
-    limits.multiPV        = 1;
-
-    start = getRealTime();
-
-    for (int i = 0; strcmp(Benchmarks[i], ""); i++) {
-        printf("\nPosition #%d: %s\n", i + 1, Benchmarks[i]);
-        boardFromFEN(&board, Benchmarks[i], 0);
-        limits.start = getRealTime();
-        getBestMove(threads, &board, &limits, &bestMove, &ponderMove);
-        nodes += nodesSearchedThreadPool(threads);
-        clearTT(); // Reset TT for new search
-    }
-
-    printf("Time  : %dms\n", (int)(getRealTime() - start));
-    printf("Nodes : %"PRIu64"\n", nodes);
-    printf("NPS   : %d\n", (int)(nodes / ((getRealTime() - start) / 1000.0)));
-
-    free(threads);
 }

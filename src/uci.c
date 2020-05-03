@@ -25,6 +25,7 @@
 
 #include "attacks.h"
 #include "board.h"
+#include "cmdline.h"
 #include "evaluate.h"
 #include "fathom/tbprobe.h"
 #include "history.h"
@@ -67,17 +68,8 @@ int main(int argc, char **argv) {
     threads = createThreadPool(1);
     boardFromFEN(&board, StartPosition, chess960);
 
-    // Allow the bench to be run from the command line
-    if (argc > 1 && strEquals(argv[1], "bench")) {
-        runBenchmark(argc, argv);
-        return 0;
-    }
-
-    // Allow the tuner to be run when compiled
-    #ifdef TUNE
-        runTexelTuning(threads);
-        return 0;
-    #endif
+    // Handle any command line requests
+    handleCommandLine(argc, argv);
 
     while (getInput(str)) {
 
