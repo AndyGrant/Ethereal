@@ -24,6 +24,7 @@
 #include "cmdline.h"
 #include "move.h"
 #include "search.h"
+#include "texel.h"
 #include "thread.h"
 #include "time.h"
 #include "transposition.h"
@@ -47,7 +48,7 @@ void handleCommandLine(int argc, char **argv) {
 
     // Tuner is being run from the command line
     #ifdef TUNE
-        runTexelTuning()
+        runTexelTuning();
         exit(EXIT_SUCCESS);
     #endif
 }
