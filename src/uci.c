@@ -306,7 +306,7 @@ void uciPosition(char *str, Board *board, int chess960) {
         moveStr[5] = '\0';
 
         // Generate moves for this position
-        size = 0; genAllLegalMoves(board, moves, &size);
+        size = genAllLegalMoves(board, moves);
 
         // Find and apply the given move
         for (int i = 0; i < size; i++) {

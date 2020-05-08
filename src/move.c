@@ -441,11 +441,8 @@ int legalMoveCount(Board * board) {
 
     // Count of the legal number of moves for a given position
 
-    int size = 0;
     uint16_t moves[MAX_MOVES];
-    genAllLegalMoves(board, moves, &size);
-
-    return size;
+    return genAllLegalMoves(board, moves);
 }
 
 int moveExaminedByMultiPV(Thread *thread, uint16_t move) {

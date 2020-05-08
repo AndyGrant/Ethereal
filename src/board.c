@@ -336,11 +336,11 @@ uint64_t perft(Board *board, int depth) {
     uint64_t found = 0ull;
     uint16_t moves[MAX_MOVES];
 
-    if (depth == 0)
-        return 1ull;
+    if (depth == 0) return 1ull;
 
-    genAllNoisyMoves(board, moves, &size);
-    genAllQuietMoves(board, moves, &size);
+    // Call genAllNoisyMoves() & genAllNoisyMoves()
+    size += genAllNoisyMoves(board, moves);
+    size += genAllQuietMoves(board, moves + size);
 
     // Recurse on all valid moves
     for(size -= 1; size >= 0; size--) {

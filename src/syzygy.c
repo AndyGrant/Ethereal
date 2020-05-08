@@ -11,7 +11,7 @@
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -135,7 +135,7 @@ int tablebasesProbeDTZ(Board *board, uint16_t *best, uint16_t *ponder) {
         *best = NONE_MOVE, assert(0);
 
     // Verify the legality of the parsed move as a final safety check
-    genAllLegalMoves(board, moves, &size);
+    size = genAllLegalMoves(board, moves);
     for (int i = 0; i < size; i++) {
         if (moves[i] == *best) {
             uciReportTBRoot(board, *best, wdl, dtz);
