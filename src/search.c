@@ -96,7 +96,6 @@ void* iterativeDeepening(void *vthread) {
     SearchInfo *const info = thread->info;
     Limits *const limits   = thread->limits;
     const int mainThread   = thread->index == 0;
-    const int cycle        = thread->index % SMPCycles;
 
     // Bind when we expect to deal with NUMA
     if (thread->nthreads > 8)
@@ -111,10 +110,6 @@ void* iterativeDeepening(void *vthread) {
         // Perform a search for the current depth for each requested line of play
         for (thread->multiPV = 0; thread->multiPV < limits->multiPV; thread->multiPV++)
             aspirationWindow(thread);
-
-        // Occasionally skip depths using Laser's method
-        if (!mainThread && (thread->depth + cycle) % SkipDepths[cycle] == 0)
-            thread->depth += SkipSize[cycle];
 
         // Helper threads need not worry about time and search info updates
         if (!mainThread) continue;
