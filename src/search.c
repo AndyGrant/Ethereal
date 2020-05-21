@@ -369,12 +369,21 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
         initNoisyMovePicker(&movePicker, thread, rBeta - eval);
         while ((move = selectNextMove(&movePicker, board, 1)) != NONE_MOVE) {
 
-            // Perform a reduced depth verification search
+            // Apply move, skip if move is illegal
             if (!apply(thread, board, move, height)) continue;
-            value = -search(thread, &lpv, -rBeta, -rBeta+1, depth-4, height+1);
+
+            // For high depths, verify the move first with a depth one search
+            if (depth >= 2 * ProbCutDepth)
+                value = -search(thread, &lpv, -rBeta, -rBeta+1, 1, height+1);
+
+            // For low depths, or after the above, verify with a reduced search
+            if (depth < 2 * ProbCutDepth || value >= rBeta)
+                value = -search(thread, &lpv, -rBeta, -rBeta+1, depth-4, height+1);
+
+            // Revert the board state
             revert(thread, board, move, height);
 
-            // Probcut failed high
+            // Probcut failed high verifying the cutoff
             if (value >= rBeta) return value;
         }
     }

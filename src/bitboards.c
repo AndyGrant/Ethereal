@@ -66,13 +66,14 @@ uint64_t squaresOfMatchingColour(int sq) {
     return testBit(WHITE_SQUARES, sq) ? WHITE_SQUARES : BLACK_SQUARES;
 }
 
-int frontmost(int colour, uint64_t b) {
+int frontmost(int colour, uint64_t bb) {
     assert(0 <= colour && colour < COLOUR_NB);
-    return colour == WHITE ? getmsb(b) : getlsb(b);
+    return colour == WHITE ? getmsb(bb) : getlsb(bb);
 }
-int backmost(int colour, uint64_t b) {
+
+int backmost(int colour, uint64_t bb) {
     assert(0 <= colour && colour < COLOUR_NB);
-    return colour == WHITE ? getlsb(b) : getmsb(b);
+    return colour == WHITE ? getlsb(bb) : getmsb(bb);
 }
 
 int popcount(uint64_t bb) {

@@ -81,4 +81,4 @@ void setBit(uint64_t *bb, int i);
 void clearBit(uint64_t *bb, int i);
 bool testBit(uint64_t bb, int i);
 
-void printBitboard(uint64_t b);
+void printBitboard(uint64_t bb);
