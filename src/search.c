@@ -407,6 +407,9 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
         // of the criteria below, only after proving a non mated line exists
         if (isQuiet && best > -MATE_IN_MAX) {
 
+            // Base LMR value that we expect to use later
+            R = LMRTable[MIN(depth, 63)][MIN(played, 63)];
+
             // Step 11A (~3 elo). Futility Pruning. If our score is far below alpha,
             // and we don't expect anything from this move, we can skip all other quiets
             if (   depth <= FutilityPruningDepth
@@ -430,14 +433,14 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
 
             // Step 11D (~8 elo). Counter Move Pruning. Moves with poor counter
             // move history are pruned at near leaf nodes of the search.
-            if (   depth <= CounterMovePruningDepth[improving]
-                && cmhist < CounterMoveHistoryLimit[improving])
+            if (   cmhist < CounterMoveHistoryLimit[improving]
+                && depth - R <= CounterMovePruningDepth[improving])
                 continue;
 
             // Step 11E (~1.5 elo). Follow Up Move Pruning. Moves with poor
             // follow up move history are pruned at near leaf nodes of the search.
-            if (   depth <= FollowUpMovePruningDepth[improving]
-                && fmhist < FollowUpMoveHistoryLimit[improving])
+            if (   fmhist < FollowUpMoveHistoryLimit[improving]
+                && depth - R <= FollowUpMovePruningDepth[improving])
                 continue;
         }
 
