@@ -31,6 +31,7 @@
 #include "search.h"
 #include "thread.h"
 #include "types.h"
+#include "uci.h"
 #include "zobrist.h"
 
 static void updateCastleZobrist(Board *board, uint64_t oldRooks, uint64_t newRooks) {
@@ -452,6 +453,22 @@ int moveExaminedByMultiPV(Thread *thread, uint16_t move) {
 
     for (int i = 0; i < thread->multiPV; i++)
         if (thread->bestMoves[i] == move)
+            return 1;
+
+    return 0;
+}
+
+int moveIsInRootMoves(Thread *thread, uint16_t moves) {
+
+    // At the Root Node, we have to check to see if we are apart of a
+    // "go searchmoves <>" search. If we are in one of those searches,
+    // and this move is not one of the selected moves, we reject it
+
+    if (!thread->limits->limitedByMoves)
+        return 1;
+
+    for (int i = 0; i < MAX_MOVES; i++)
+        if (moves == thread->limits->rootMoves[i])
             return 1;
 
     return 0;

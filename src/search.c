@@ -393,9 +393,9 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
     initMovePicker(&movePicker, thread, ttMove, height);
     while ((move = selectNextMove(&movePicker, board, skipQuiets)) != NONE_MOVE) {
 
-        // In MultiPV mode, skip over already examined lines
-        if (RootNode && moveExaminedByMultiPV(thread, move))
-            continue;
+        // MultiPV and searchmoves may limit our search options
+        if (RootNode && moveExaminedByMultiPV(thread, move)) continue;
+        if (RootNode &&    !moveIsInRootMoves(thread, move)) continue;
 
         // For quiet moves we fetch various history scores
         if ((isQuiet = !moveIsTactical(board, move))) {

@@ -22,7 +22,7 @@
 
 #include "types.h"
 
-#define VERSION_ID "12.19"
+#define VERSION_ID "12.20"
 
 #if defined(USE_PEXT)
     #define ETHEREAL_VERSION VERSION_ID" (PEXT)"
@@ -35,7 +35,8 @@
 struct Limits {
     double start, time, inc, mtg, timeLimit;
     int limitedByNone, limitedByTime, limitedBySelf;
-    int limitedByDepth, depthLimit, multiPV;
+    int limitedByDepth, limitedByMoves, depthLimit, multiPV;
+    uint16_t rootMoves[MAX_MOVES];
 };
 
 struct UCIGoStruct {

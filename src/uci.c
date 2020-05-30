@@ -135,8 +135,7 @@ void *uciGo(void *cargo) {
     // Get our starting time as soon as possible
     double start = getRealTime();
 
-    Limits limits;
-
+    Limits limits = {0};
     uint16_t bestMove, ponderMove;
     char moveStr[6];
 
@@ -149,6 +148,10 @@ void *uciGo(void *cargo) {
     Board *board    = ((UCIGoStruct*)cargo)->board;
     Thread *threads = ((UCIGoStruct*)cargo)->threads;
 
+    uint16_t moves[MAX_MOVES];
+    int size = genAllLegalMoves(board, moves);
+    int idx = 0, searchmoves = 0;
+
     // Grab the ready lock, as we cannot be ready until we finish this search
     pthread_mutex_lock(&READYLOCK);
 
@@ -160,15 +163,23 @@ void *uciGo(void *cargo) {
 
     // Parse any time control and search method information that was sent
     for (ptr = strtok(NULL, " "); ptr != NULL; ptr = strtok(NULL, " ")) {
-        if (strEquals(ptr, "wtime")) wtime = atoi(strtok(NULL, " "));
-        if (strEquals(ptr, "btime")) btime = atoi(strtok(NULL, " "));
-        if (strEquals(ptr, "winc")) winc = atoi(strtok(NULL, " "));
-        if (strEquals(ptr, "binc")) binc = atoi(strtok(NULL, " "));
-        if (strEquals(ptr, "movestogo")) mtg = atoi(strtok(NULL, " "));
-        if (strEquals(ptr, "depth")) depth = atoi(strtok(NULL, " "));
-        if (strEquals(ptr, "movetime")) movetime = atoi(strtok(NULL, " "));
-        if (strEquals(ptr, "infinite")) infinite = 1;
-        if (strEquals(ptr, "ponder")) IS_PONDERING = 1;
+
+        if (strEquals(ptr, "wtime"      )) wtime    = atoi(strtok(NULL, " "));
+        if (strEquals(ptr, "btime"      )) btime    = atoi(strtok(NULL, " "));
+        if (strEquals(ptr, "winc"       )) winc     = atoi(strtok(NULL, " "));
+        if (strEquals(ptr, "binc"       )) binc     = atoi(strtok(NULL, " "));
+        if (strEquals(ptr, "movestogo"  )) mtg      = atoi(strtok(NULL, " "));
+        if (strEquals(ptr, "depth"      )) depth    = atoi(strtok(NULL, " "));
+        if (strEquals(ptr, "movetime"   )) movetime = atoi(strtok(NULL, " "));
+
+        if (strEquals(ptr, "infinite"   )) infinite = 1;
+        if (strEquals(ptr, "searchmoves")) searchmoves = 1;
+        if (strEquals(ptr, "ponder"     )) IS_PONDERING = 1;
+
+        for (int i = 0; i < size; i++) {
+            moveToString(moves[i], moveStr, board->chess960);
+            if (strEquals(ptr, moveStr)) limits.rootMoves[idx++] = moves[i];
+        }
     }
 
     // Initialize limits for the search
@@ -176,6 +187,7 @@ void *uciGo(void *cargo) {
     limits.limitedByTime  = movetime != 0;
     limits.limitedByDepth = depth    != 0;
     limits.limitedBySelf  = !depth && !movetime && !infinite;
+    limits.limitedByMoves = searchmoves;
     limits.timeLimit      = movetime;
     limits.depthLimit     = depth;
 
