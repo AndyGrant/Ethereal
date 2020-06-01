@@ -22,7 +22,7 @@
 
 #include "types.h"
 
-#define VERSION_ID "12.20"
+#define VERSION_ID "12.21"
 
 #if defined(USE_PEXT)
     #define ETHEREAL_VERSION VERSION_ID" (PEXT)"
