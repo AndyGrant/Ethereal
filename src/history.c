@@ -40,6 +40,20 @@ void updateHistoryHeuristics(Thread *thread, uint16_t *moves, int length, int he
     int fmPiece = thread->pieceStack[height-2];
     int fmTo = MoveTo(follow);
 
+    // Update Killer Moves (Avoid duplicates)
+    if (thread->killers[height][0] != bestMove) {
+        thread->killers[height][1] = thread->killers[height][0];
+        thread->killers[height][0] = bestMove;
+    }
+
+    // Update Counter Moves (BestMove refutes the previous move)
+    if (counter != NONE_MOVE && counter != NULL_MOVE)
+        thread->cmtable[!colour][cmPiece][cmTo] = bestMove;
+
+    // If the 1st quiet move failed-high at depth 1, we don't update history tables
+    // Depth 0 gives no bonus in any case
+    if (length == 1 && bonus <= 1) return;
+
     // Cap update size to avoid saturation
     bonus = MIN(bonus, HistoryMax);
 
@@ -72,16 +86,6 @@ void updateHistoryHeuristics(Thread *thread, uint16_t *moves, int length, int he
             thread->continuation[1][fmPiece][fmTo][piece][to] = entry;
         }
     }
-
-    // Update Killer Moves (Avoid duplicates)
-    if (thread->killers[height][0] != bestMove) {
-        thread->killers[height][1] = thread->killers[height][0];
-        thread->killers[height][0] = bestMove;
-    }
-
-    // Update Counter Moves (BestMove refutes the previous move)
-    if (counter != NONE_MOVE && counter != NULL_MOVE)
-        thread->cmtable[!colour][cmPiece][cmTo] = bestMove;
 }
 
 void updateKillerMoves(Thread *thread, int height, uint16_t move) {
