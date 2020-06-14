@@ -18,6 +18,7 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "bitboards.h"
@@ -30,6 +31,65 @@
 
 unsigned TB_PROBE_DEPTH;    // Set by UCI options
 extern unsigned TB_LARGEST; // Set by Fathom in tb_init()
+
+static void removeBadWDL(Board *board, uint16_t *move, unsigned result) {
+
+    // Extract Fathom's move representation
+    unsigned to    = TB_GET_TO(result);
+    unsigned from  = TB_GET_FROM(result);
+    unsigned ep    = TB_GET_EP(result);
+    unsigned promo = TB_GET_PROMOTES(result);
+
+    // Convert the move notation. Care that Fathom's promotion flags are inverted
+    if (ep == 0u && promo == 0u) *move = MoveMake(from, to, NORMAL_MOVE);
+    else if (ep != 0u)           *move = MoveMake(from, board->epSquare, ENPASS_MOVE);
+    else if (promo != 0u)        *move = MoveMake(from, to, PROMOTION_MOVE | ((4 - promo) << 14));
+
+    char movestr[6]; moveToString(*move, movestr, board->chess960);
+    printf("info string ignoring %s as per Syzygy\n", movestr);
+    fflush(stdout);
+}
+
+void tablebasesProbeDTZ(Board *board, Limits *limits) {
+
+    unsigned results[MAX_MOVES];
+    uint64_t white = board->colours[WHITE];
+    uint64_t black = board->colours[BLACK];
+
+    // Check to make sure we expect to be within the Syzygy tables
+    if (board->castleRooks || popcount(white | black) > (int)TB_LARGEST)
+        return;
+
+    // Tap into Fathom's API routines
+    unsigned result = tb_probe_root(
+        board->colours[WHITE],  board->colours[BLACK],
+        board->pieces[KING  ],  board->pieces[QUEEN ],
+        board->pieces[ROOK  ],  board->pieces[BISHOP],
+        board->pieces[KNIGHT],  board->pieces[PAWN  ],
+        board->halfMoveCounter, board->castleRooks,
+        board->epSquare == -1 ? 0 : board->epSquare,
+        board->turn == WHITE ? 1 : 0,
+        results
+    );
+
+    // Probe failed, or we are already in a finished position.
+    if (   result == TB_RESULT_FAILED
+        || result == TB_RESULT_CHECKMATE
+        || result == TB_RESULT_STALEMATE)
+        return;
+
+    // Search for any bad moves and remove them from Root Moves
+    for (int i = 0; i < MAX_MOVES; i++) {
+
+        // Fathom flags the end like this
+        if (results[i] == TB_RESULT_FAILED)
+            break;
+
+        // Move fails to maintain the ideal WDL outcome
+        if (TB_GET_WDL(results[i]) != TB_GET_WDL(result))
+            removeBadWDL(board, &limits->excludedMoves[i], results[i]);
+    }
+}
 
 unsigned tablebasesProbeWDL(Board *board, int depth, int height) {
 
@@ -66,85 +126,4 @@ unsigned tablebasesProbeWDL(Board *board, int depth, int height) {
         board->pieces[KNIGHT], board->pieces[PAWN  ],
         0, 0, 0, board->turn == WHITE ? 1 : 0
     );
-}
-
-int tablebasesProbeDTZ(Board *board, uint16_t *best, uint16_t *ponder) {
-
-    int size = 0;
-    uint16_t moves[MAX_MOVES];
-    unsigned wdl, dtz, to, from, ep, promo;
-
-    // Check to make sure we expect to be within the Syzygy tables
-    if (board->castleRooks || popcount(board->colours[WHITE] | board->colours[BLACK]) > (int)TB_LARGEST)
-        return 0;
-
-    // Tap into Fathom's API routines
-    unsigned result = tb_probe_root(
-        board->colours[WHITE],
-        board->colours[BLACK],
-        board->pieces[KING  ],
-        board->pieces[QUEEN ],
-        board->pieces[ROOK  ],
-        board->pieces[BISHOP],
-        board->pieces[KNIGHT],
-        board->pieces[PAWN  ],
-        board->halfMoveCounter,
-        board->castleRooks,
-        board->epSquare == -1 ? 0 : board->epSquare,
-        board->turn == WHITE ? 1 : 0,
-        NULL
-    );
-
-    // Probe failed, or we are already in a finished position, in which
-    // case someone made a mistake by playing the game further, so we will
-    // let Ethereal's main search algorithm handle this as we have always done
-    if (   result == TB_RESULT_FAILED
-        || result == TB_RESULT_CHECKMATE
-        || result == TB_RESULT_STALEMATE)
-        return 0;
-
-    // Extract Fathom's score representations
-    wdl = TB_GET_WDL(result);
-    dtz = TB_GET_DTZ(result);
-
-    // Extract Fathom's move representation
-    to    = TB_GET_TO(result);
-    from  = TB_GET_FROM(result);
-    ep    = TB_GET_EP(result);
-    promo = TB_GET_PROMOTES(result);
-
-    // Normal Moves ( Syzygy does not support castling )
-    if (ep == 0u && promo == 0u)
-        *best = MoveMake(from, to, NORMAL_MOVE);
-
-    // Enpass Moves. Fathom returns a to square, but in Ethereal board->epSquare
-    // is not the square of the captured pawn, but the square that the capturing
-    // pawn will be moving to. Thus, we ignore Fathom's to value to be safe
-    else if (ep != 0u)
-        *best = MoveMake(from, board->epSquare, ENPASS_MOVE);
-
-    // Promotion Moves. Fathom has the inverted order of our promotion
-    // flags. Thus, four minus the flag converts to our representation.
-    // Also, we shift by 14 to actually match the flags we use in Ethereal
-    else if (promo != 0u)
-        *best = MoveMake(from, to, PROMOTION_MOVE | ((4 - promo) << 14));
-
-    // Unable to read back the move type. Setting the move to NONE_MOVE
-    // ensures that we will not illegally return the move to the interface
-    else
-        *best = NONE_MOVE, assert(0);
-
-    // Verify the legality of the parsed move as a final safety check
-    size = genAllLegalMoves(board, moves);
-    for (int i = 0; i < size; i++) {
-        if (moves[i] == *best) {
-            uciReportTBRoot(board, *best, wdl, dtz);
-            *ponder = NONE_MOVE;
-            return 1;
-        }
-    }
-
-    // Something went wrong, but as long as we pretend
-    // we failed the probe then nothing is going to break
-    assert(0); return 0;
 }

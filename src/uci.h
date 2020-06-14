@@ -22,7 +22,7 @@
 
 #include "types.h"
 
-#define VERSION_ID "12.24"
+#define VERSION_ID "12.25"
 
 #if defined(USE_PEXT)
     #define ETHEREAL_VERSION VERSION_ID" (PEXT)"
@@ -36,7 +36,7 @@ struct Limits {
     double start, time, inc, mtg, timeLimit;
     int limitedByNone, limitedByTime, limitedBySelf;
     int limitedByDepth, limitedByMoves, depthLimit, multiPV;
-    uint16_t rootMoves[MAX_MOVES];
+    uint16_t searchMoves[MAX_MOVES], excludedMoves[MAX_MOVES];
 };
 
 struct UCIGoStruct {
@@ -51,7 +51,6 @@ void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960);
 void uciPosition(char *str, Board *board, int chess960);
 
 void uciReport(Thread *threads, int alpha, int beta, int value);
-void uciReportTBRoot(Board *board, uint16_t move, unsigned wdl, unsigned dtz);
 void uciReportCurrentMove(Board *board, uint16_t move, int currmove, int depth);
 
 int strEquals(char *str1, char *str2);
