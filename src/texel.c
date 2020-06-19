@@ -73,6 +73,7 @@ extern const int BishopMobility[14];
 extern const int RookFile[2];
 extern const int RookOnSeventh;
 extern const int RookMobility[15];
+extern const int QueenRelativePin;
 extern const int QueenMobility[28];
 extern const int KingDefenders[12];
 extern const int KingPawnFileProximity[8];
