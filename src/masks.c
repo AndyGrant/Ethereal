@@ -155,19 +155,6 @@ int openFileCount(uint64_t pawns) {
     return popcount(~pawns & 0xFF);
 }
 
-// Returns 1 if the queen square is either under direct enemy slider attack
-//           or if there is only one piece (friendly or enemy) blocking the attack.
-int queenIsSliderTarget(int queenSq, uint64_t occupied, uint64_t enemyRooks, uint64_t enemyBishops) {
-
-    uint64_t rookPins = rookAttacks(queenSq, occupied & ~rookAttacks(queenSq, occupied));
-    if (rookPins & enemyRooks) return 1;
-
-    uint64_t bishopPins = bishopAttacks(queenSq, occupied & ~bishopAttacks(queenSq, occupied));
-    if (bishopPins & enemyBishops) return 1;
-
-    return 0;
-}
-
 uint64_t bitsBetweenMasks(int s1, int s2) {
     assert(0 <= s1 && s1 < SQUARE_NB);
     assert(0 <= s2 && s2 < SQUARE_NB);

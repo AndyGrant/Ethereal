@@ -196,7 +196,7 @@ const int RookMobility[15] = {
 
 /* Queen Evaluation Terms */
 
-const int QueenRelativePin = S(  -9, -5);
+const int QueenRelativePin = S( -20, -10);
 
 const int QueenMobility[28] = {
     S( -61,-263), S(-213,-388), S( -60,-200), S( -22,-191),
@@ -322,7 +322,7 @@ const int ThreatMinorAttackedByMajor = S( -27, -46);
 const int ThreatRookAttackedByLesser = S( -49, -22);
 const int ThreatMinorAttackedByKing  = S( -16, -16);
 const int ThreatRookAttackedByKing   = S( -18, -16);
-const int ThreatQueenAttackedByOne   = S( -40, -21);
+const int ThreatQueenAttackedByOne   = S( -49, -26);
 const int ThreatOverloadedPieces     = S(  -8, -13);
 const int ThreatByPawnPush           = S(  14,  24);
 
@@ -737,9 +737,8 @@ int evaluateQueens(EvalInfo *ei, Board *board, int colour) {
         ei->attacked[US]          |= attacks;
         ei->attackedBy[US][QUEEN] |= attacks;
 
-        // Apply a penalty if our queen is the target of a relative pin
-        // or if the queen is under direct slider attack.
-        if (queenIsSliderTarget(sq, occupied, board->pieces[ROOK] & board->colours[THEM], board->pieces[BISHOP] & board->colours[THEM])) {
+        // Apply a penalty if the Queen is at risk for a discovered attack
+        if (discoveredAttacks(board, sq, US)) {
             eval += QueenRelativePin;
             if (TRACE) T.QueenRelativePin[US]++;
         }

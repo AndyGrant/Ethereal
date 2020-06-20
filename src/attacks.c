@@ -97,6 +97,7 @@ static void initSliderAttacks(int sq, Magic *table, uint64_t magic, const int de
     } while (occupied);
 }
 
+
 void initAttacks() {
 
     const int PawnDelta[2][2]   = {{ 1,-1}, { 1, 1}};
@@ -163,6 +164,7 @@ uint64_t kingAttacks(int sq) {
     return KingAttacks[sq];
 }
 
+
 uint64_t pawnLeftAttacks(uint64_t pawns, uint64_t targets, int colour) {
     return targets & (colour == WHITE ? (pawns << 7) & ~FILE_H
                                       : (pawns >> 7) & ~FILE_A);
@@ -190,6 +192,7 @@ uint64_t pawnAdvance(uint64_t pawns, uint64_t occupied, int colour) {
 uint64_t pawnEnpassCaptures(uint64_t pawns, int epsq, int colour) {
     return epsq == -1 ? 0ull : pawnAttacks(!colour, epsq) & pawns;
 }
+
 
 int squareIsAttacked(Board *board, int colour, int sq) {
 
@@ -235,4 +238,19 @@ uint64_t attackersToKingSquare(Board *board) {
     int kingsq = getlsb(board->colours[board->turn] & board->pieces[KING]);
     uint64_t occupied = board->colours[WHITE] | board->colours[BLACK];
     return allAttackersToSquare(board, occupied, kingsq) & board->colours[!board->turn];
+}
+
+uint64_t discoveredAttacks(Board *board, int sq, int US) {
+
+    uint64_t enemy    = board->colours[!US];
+    uint64_t occupied = board->colours[ US] | enemy;
+
+    uint64_t rAttacks = rookAttacks(sq, occupied);
+    uint64_t bAttacks = bishopAttacks(sq, occupied);
+
+    uint64_t rooks   = (enemy & board->pieces[ROOK  ]) & ~rAttacks;
+    uint64_t bishops = (enemy & board->pieces[BISHOP]) & ~bAttacks;
+
+    return (  rooks &   rookAttacks(sq, occupied & ~rAttacks))
+         | (bishops & bishopAttacks(sq, occupied & ~bAttacks));
 }

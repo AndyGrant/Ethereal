@@ -27,7 +27,6 @@ void initMasks();
 int distanceBetween(int sq1, int sq2);
 int kingPawnFileDistance(uint64_t pawns, int ksq);
 int openFileCount(uint64_t pawns);
-int queenIsSliderTarget(int queenSq, uint64_t occupied, uint64_t enemyRooks, uint64_t enemyBishops);
 uint64_t bitsBetweenMasks(int sq1, int sq2);
 uint64_t kingAreaMasks(int colour, int sq);
 uint64_t forwardRanksMasks(int colour, int rank);
