@@ -33,27 +33,20 @@ int ContemptComplexity  = 0;
 
 Thread* createThreadPool(int nthreads) {
 
-    Thread *threads = malloc(sizeof(Thread) * nthreads);
+    Thread *threads = calloc(nthreads, sizeof(Thread));
 
     for (int i = 0; i < nthreads; i++) {
 
         // Offset stacks so the root position may look backwards
-        threads[i].evalStack = &(threads[i]._evalStack[STACK_OFFSET]);
-        threads[i].moveStack = &(threads[i]._moveStack[STACK_OFFSET]);
+        threads[i].evalStack  = &(threads[i]._evalStack[STACK_OFFSET]);
+        threads[i].moveStack  = &(threads[i]._moveStack[STACK_OFFSET]);
         threads[i].pieceStack = &(threads[i]._pieceStack[STACK_OFFSET]);
-
-        // Zero out the stacks, most importantly the first four slots
-        memset(&threads[i]._evalStack, 0, sizeof(int) * STACK_SIZE);
-        memset(&threads[i]._moveStack, 0, sizeof(uint16_t) * STACK_SIZE);
-        memset(&threads[i]._pieceStack, 0, sizeof(int) * STACK_SIZE);
 
         // Threads will know of each other
         threads[i].index = i;
         threads[i].threads = threads;
         threads[i].nthreads = nthreads;
     }
-
-    resetThreadPool(threads);
 
     return threads;
 }

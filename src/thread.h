@@ -38,13 +38,13 @@ struct Thread {
     Limits *limits;
     SearchInfo *info;
 
-    int multiPV;
-    int values[MAX_MOVES];
+    int multiPV, values[MAX_MOVES];
     uint16_t bestMoves[MAX_MOVES];
     uint16_t ponderMoves[MAX_MOVES];
 
     int contempt;
     int depth, seldepth;
+    int failLow, failHigh;
     uint64_t nodes, tbhits;
 
     int *evalStack, _evalStack[STACK_SIZE];

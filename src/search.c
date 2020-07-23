@@ -145,8 +145,10 @@ void aspirationWindow(Thread *thread) {
     int value, depth = thread->depth;
     int alpha = -MATE, beta = MATE, delta = WindowSize;
 
-    // Create an aspiration window after a few depths using
-    // the eval from the bestline from the previous iteration
+    // Reset LMR Aspiration Hueristics
+    thread->failLow = thread->failHigh = 0;
+
+    // After a few depths use a previous result to form a window
     if (thread->depth >= WindowDepth) {
         alpha = MAX(-MATE, thread->values[0] - delta);
         beta  = MIN( MATE, thread->values[0] + delta);
@@ -160,14 +162,17 @@ void aspirationWindow(Thread *thread) {
             || (mainThread && elapsedTime(thread->info) >= WindowTimerMS))
             uciReport(thread->threads, alpha, beta, value);
 
-        // Search returned a result within our window. Save the eval,
-        // best move, and ponder moves. Don't report an illegal PV move
+        // Search returned a result within our window
         if (value > alpha && value < beta) {
             thread->values[multiPV]      = value;
             thread->bestMoves[multiPV]   = pv->line[0];
             thread->ponderMoves[multiPV] = pv->length > 1 ? pv->line[1] : NONE_MOVE;
             return;
         }
+
+        // Set the LMR Aspiration Hueristics
+        thread->failLow  = value >= beta;
+        thread->failHigh = value <= alpha;
 
         // Search failed low, adjust window and reset depth
         if (value <= alpha) {
@@ -503,6 +508,9 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
 
             // Increase for non PV, non improving, and extended nodes
             R += !PvNode + !improving + extension;
+
+            // At the Root, increase on Fail Highs and decrease on Fail Lows
+            R += RootNode ? thread->failHigh - thread->failLow : 0;
 
             // Increase for King moves that evade checks
             R += inCheck && pieceType(board->squares[MoveTo(move)]) == KING;
