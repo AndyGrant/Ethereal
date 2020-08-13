@@ -71,6 +71,24 @@ int main(int argc, char **argv) {
     // Handle any command line requests
     handleCommandLine(argc, argv);
 
+    /*
+    |------------|-----------------------------------------------------------------------|
+    |  Commands  | Response. * denotes that the command blocks until no longer searching |
+    |------------|-----------------------------------------------------------------------|
+    |        uci |           Outputs the engine name, authors, and all available options |
+    |    isready | *           Responds with readyok when no longer searching a position |
+    | ucinewgame | *  Resets the TT and any Hueristics to ensure determinism in searches |
+    |  setoption | *     Sets a given option and reports that the option was set if done |
+    |   position | *  Sets the board position via an optional FEN and optional move list |
+    |         go | *       Searches the current position with the provided time controls |
+    |  ponderhit |          Flags the search to indicate that the ponder move was played |
+    |       stop |            Signals the search threads to finish and report a bestmove |
+    |       quit |             Exits the engine and any searches by killing the UCI loop |
+    |      perft |            Custom command to compute PERFT(N) of the current position |
+    |      print |         Custom command to print an ASCII view of the current position |
+    |------------|-----------------------------------------------------------------------|
+    */
+
     while (getInput(str)) {
 
         if (strEquals(str, "uci")) {
@@ -89,33 +107,45 @@ int main(int argc, char **argv) {
             printf("uciok\n"), fflush(stdout);
         }
 
-        else if (strEquals(str, "isready"))
+        else if (strEquals(str, "isready")) {
+            pthread_mutex_lock(&READYLOCK);
             printf("readyok\n"), fflush(stdout);
+            pthread_mutex_unlock(&READYLOCK);
+        }
 
-        else if (strEquals(str, "ucinewgame"))
+        else if (strEquals(str, "ucinewgame")) {
+            pthread_mutex_lock(&READYLOCK);
             resetThreadPool(threads), clearTT();
+            pthread_mutex_unlock(&READYLOCK);
+        }
 
-        else if (strStartsWith(str, "setoption"))
+        else if (strStartsWith(str, "setoption")) {
+            pthread_mutex_lock(&READYLOCK);
             uciSetOption(str, &threads, &multiPV, &chess960);
+            pthread_mutex_unlock(&READYLOCK);
+        }
 
-        else if (strStartsWith(str, "position"))
+        else if (strStartsWith(str, "position")) {
+            pthread_mutex_lock(&READYLOCK);
             uciPosition(str, &board, chess960);
+            pthread_mutex_unlock(&READYLOCK);
+        }
 
         else if (strStartsWith(str, "go")) {
-            strncpy(uciGoStruct.str, str, 512);
+            pthread_mutex_lock(&READYLOCK);
             uciGoStruct.multiPV = multiPV;
             uciGoStruct.board   = &board;
             uciGoStruct.threads = threads;
+            strncpy(uciGoStruct.str, str, 512);
             pthread_create(&pthreadsgo, NULL, &uciGo, &uciGoStruct);
+            pthread_detach(pthreadsgo);
         }
 
         else if (strEquals(str, "ponderhit"))
             IS_PONDERING = 0;
 
-        else if (strEquals(str, "stop")) {
+        else if (strEquals(str, "stop"))
             ABORT_SIGNAL = 1, IS_PONDERING = 0;
-            pthread_join(pthreadsgo, NULL);
-        }
 
         else if (strEquals(str, "quit"))
             break;
@@ -151,9 +181,6 @@ void *uciGo(void *cargo) {
     uint16_t moves[MAX_MOVES];
     int size = genAllLegalMoves(board, moves);
     int idx = 0, searchmoves = 0;
-
-    // Grab the ready lock, as we cannot be ready until we finish this search
-    pthread_mutex_lock(&READYLOCK);
 
     // Reset global signals
     IS_PONDERING = 0;
