@@ -47,6 +47,7 @@
 int LMRTable[64][64];      // Late Move Reductions
 volatile int ABORT_SIGNAL; // Global ABORT flag for threads
 volatile int IS_PONDERING; // Global PONDER flag for threads
+volatile int ANALYSISMODE; // Whether to make some changes for Analysis
 
 void initSearch() {
 
@@ -63,7 +64,8 @@ void getBestMove(Thread *threads, Board *board, Limits *limits, uint16_t *best, 
 
     // Allow Syzygy to refine the move list for optimal results
     if (!limits->limitedByMoves && limits->multiPV == 1)
-        tablebasesProbeDTZ(board, limits);
+        if (tablebasesProbeDTZ(board, limits, best, ponder))
+            return;
 
     // Minor house keeping for starting a search
     updateTT(); // Table has an age component

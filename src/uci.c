@@ -47,6 +47,7 @@ extern int MoveOverhead;          // Defined by Time.c
 extern unsigned TB_PROBE_DEPTH;   // Defined by Syzygy.c
 extern volatile int ABORT_SIGNAL; // Defined by Search.c
 extern volatile int IS_PONDERING; // Defined by Search.c
+extern volatile int ANALYSISMODE; // Defined by Search.c
 
 pthread_mutex_t READYLOCK = PTHREAD_MUTEX_INITIALIZER;
 const char *StartPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -103,6 +104,7 @@ int main(int argc, char **argv) {
             printf("option name SyzygyPath type string default <empty>\n");
             printf("option name SyzygyProbeDepth type spin default 0 min 0 max 127\n");
             printf("option name Ponder type check default false\n");
+            printf("option name AnalysisMode type check default false\n");
             printf("option name UCI_Chess960 type check default false\n");
             printf("uciok\n"), fflush(stdout);
         }
@@ -304,6 +306,13 @@ void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960) {
     if (strStartsWith(str, "setoption name SyzygyProbeDepth value ")) {
         TB_PROBE_DEPTH = atoi(str + strlen("setoption name SyzygyProbeDepth value "));
         printf("info string set SyzygyProbeDepth to %u\n", TB_PROBE_DEPTH);
+    }
+
+    if (strStartsWith(str, "setoption name AnalysisMode value ")) {
+        if (strStartsWith(str, "setoption name AnalysisMode value true"))
+            printf("info string set AnalysisMode to true\n"), ANALYSISMODE = 1;
+        if (strStartsWith(str, "setoption name AnalysisMode value false"))
+            printf("info string set AnalysisMode to false\n"), ANALYSISMODE = 0;
     }
 
     if (strStartsWith(str, "setoption name UCI_Chess960 value ")) {

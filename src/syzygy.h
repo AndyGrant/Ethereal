@@ -22,5 +22,5 @@
 
 #include <stdint.h>
 
-void tablebasesProbeDTZ(Board *board, Limits *limits);
+int tablebasesProbeDTZ(Board *board, Limits *limits, uint16_t *best, uint16_t *ponder);
 unsigned tablebasesProbeWDL(Board *board, int depth, int height);

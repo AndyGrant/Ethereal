@@ -29,10 +29,11 @@
 #include "types.h"
 #include "uci.h"
 
-unsigned TB_PROBE_DEPTH;    // Set by UCI options
-extern unsigned TB_LARGEST; // Set by Fathom in tb_init()
+unsigned TB_PROBE_DEPTH;          // Set by UCI options
+extern unsigned TB_LARGEST;       // Set by Fathom in tb_init()
+extern volatile int ANALYSISMODE; // Defined by Search.c
 
-static void removeBadWDL(Board *board, uint16_t *move, unsigned result) {
+static uint16_t convertFathomMove(Board *board, unsigned result) {
 
     // Extract Fathom's move representation
     unsigned to    = TB_GET_TO(result);
@@ -41,16 +42,25 @@ static void removeBadWDL(Board *board, uint16_t *move, unsigned result) {
     unsigned promo = TB_GET_PROMOTES(result);
 
     // Convert the move notation. Care that Fathom's promotion flags are inverted
-    if (ep == 0u && promo == 0u) *move = MoveMake(from, to, NORMAL_MOVE);
-    else if (ep != 0u)           *move = MoveMake(from, board->epSquare, ENPASS_MOVE);
-    else if (promo != 0u)        *move = MoveMake(from, to, PROMOTION_MOVE | ((4 - promo) << 14));
-
-    char movestr[6]; moveToString(*move, movestr, board->chess960);
-    printf("info string ignoring %s as per Syzygy\n", movestr);
-    fflush(stdout);
+    if (ep == 0u && promo == 0u) return MoveMake(from, to, NORMAL_MOVE);
+    else if (ep != 0u)           return MoveMake(from, board->epSquare, ENPASS_MOVE);
+    else /* if (promo != 0u) */  return MoveMake(from, to, PROMOTION_MOVE | ((4 - promo) << 14));
 }
 
-void tablebasesProbeDTZ(Board *board, Limits *limits) {
+static void removeBadWDL(Board *board, Limits *limits, unsigned result, unsigned *results) {
+
+    // Remove for any moves that fail to maintain the ideal WDL outcome
+    for (int i = 0; i < MAX_MOVES && results[i] != TB_RESULT_FAILED; i++) {
+        if (TB_GET_WDL(results[i]) != TB_GET_WDL(result)) {
+            limits->excludedMoves[i] = convertFathomMove(board, results[i]);
+            char movestr[6]; moveToString(limits->excludedMoves[i], movestr, board->chess960);
+            printf("info string ignoring %s as per Syzygy\n", movestr);
+            fflush(stdout);
+        }
+    }
+}
+
+int tablebasesProbeDTZ(Board *board, Limits *limits, uint16_t *best, uint16_t *ponder) {
 
     unsigned results[MAX_MOVES];
     uint64_t white = board->colours[WHITE];
@@ -58,7 +68,7 @@ void tablebasesProbeDTZ(Board *board, Limits *limits) {
 
     // Check to make sure we expect to be within the Syzygy tables
     if (board->castleRooks || popcount(white | black) > (int)TB_LARGEST)
-        return;
+        return 0;
 
     // Tap into Fathom's API routines
     unsigned result = tb_probe_root(
@@ -68,27 +78,26 @@ void tablebasesProbeDTZ(Board *board, Limits *limits) {
         board->pieces[KNIGHT],  board->pieces[PAWN  ],
         board->halfMoveCounter, board->castleRooks,
         board->epSquare == -1 ? 0 : board->epSquare,
-        board->turn == WHITE ? 1 : 0,
-        results
+        board->turn == WHITE ? 1 : 0, results
     );
 
     // Probe failed, or we are already in a finished position.
     if (   result == TB_RESULT_FAILED
         || result == TB_RESULT_CHECKMATE
         || result == TB_RESULT_STALEMATE)
-        return;
+        return 0;
 
-    // Search for any bad moves and remove them from Root Moves
-    for (int i = 0; i < MAX_MOVES; i++) {
+    // If doing analysis, remove sub-optimal WDL moves
+    if (ANALYSISMODE)
+        removeBadWDL(board, limits, result, results);
 
-        // Fathom flags the end like this
-        if (results[i] == TB_RESULT_FAILED)
-            break;
-
-        // Move fails to maintain the ideal WDL outcome
-        if (TB_GET_WDL(results[i]) != TB_GET_WDL(result))
-            removeBadWDL(board, &limits->excludedMoves[i], results[i]);
+    // Otherwise, set the best move to any which maintains the WDL
+    else {
+        *best = convertFathomMove(board, result);
+        *ponder = NONE_MOVE;
     }
+
+    return !ANALYSISMODE;
 }
 
 unsigned tablebasesProbeWDL(Board *board, int depth, int height) {
