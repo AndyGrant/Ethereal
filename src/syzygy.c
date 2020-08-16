@@ -30,7 +30,7 @@
 #include "uci.h"
 
 unsigned TB_PROBE_DEPTH;          // Set by UCI options
-extern unsigned TB_LARGEST;       // Set by Pyrrhic in tb_init()
+extern int TB_LARGEST;       // Set by Pyrrhic in tb_init()
 extern volatile int ANALYSISMODE; // Defined by Search.c
 
 static uint16_t convertPyrrhicMove(Board *board, unsigned result) {
@@ -68,7 +68,7 @@ int tablebasesProbeDTZ(Board *board, Limits *limits, uint16_t *best, uint16_t *p
     // We cannot probe when there are castling rights, or when
     // we have more pieces than our largest Tablebase has pieces
     if (   board->castleRooks
-        || popcount(white | black) > (int)TB_LARGEST)
+        || popcount(white | black) > TB_LARGEST)
         return 0;
 
     // Tap into Pyrrhic's API. Pyrrhic takes the board representation and the
@@ -116,7 +116,7 @@ unsigned tablebasesProbeWDL(Board *board, int depth, int height) {
     if (   height == 0
         || board->castleRooks
         || board->halfMoveCounter
-        || popcount(white | black) > (int) TB_LARGEST)
+        || popcount(white | black) > TB_LARGEST)
         return TB_RESULT_FAILED;
 
 
@@ -126,7 +126,7 @@ unsigned tablebasesProbeWDL(Board *board, int depth, int height) {
     // probe the 6man Tablebase if possible, irregardless of TB_PROBE_DEPTH
 
     if (   depth < (int) TB_PROBE_DEPTH
-        && popcount(white | black) == (int) TB_LARGEST)
+        && popcount(white | black) == TB_LARGEST)
         return TB_RESULT_FAILED;
 
 

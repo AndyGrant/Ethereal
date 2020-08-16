@@ -96,7 +96,7 @@
 /*
  * The tablebase can be probed for any position where #pieces <= TB_LARGEST.
  */
-extern unsigned TB_LARGEST;
+extern int TB_LARGEST;
 
 /*
  * Initialize the tablebase.
