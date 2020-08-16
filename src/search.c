@@ -30,7 +30,7 @@
 #include "bitboards.h"
 #include "board.h"
 #include "evaluate.h"
-#include "fathom/tbprobe.h"
+#include "pyrrhic/tbprobe.h"
 #include "history.h"
 #include "move.h"
 #include "movegen.h"
@@ -266,7 +266,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
 
     // Step 5. Probe the Syzygy Tablebases. tablebasesProbeWDL() handles all of
     // the conditions about the board, the existance of tables, the probe depth,
-    // as well as to not probe at the Root. The return is defined by the Fathom API
+    // as well as to not probe at the Root. The return is defined by the Pyrrhic API
     if ((tbresult = tablebasesProbeWDL(board, depth, height)) != TB_RESULT_FAILED) {
 
         thread->tbhits++; // Increment tbhits counter for this thread

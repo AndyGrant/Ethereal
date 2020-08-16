@@ -27,7 +27,7 @@
 #include "board.h"
 #include "cmdline.h"
 #include "evaluate.h"
-#include "fathom/tbprobe.h"
+#include "pyrrhic/tbprobe.h"
 #include "history.h"
 #include "masks.h"
 #include "move.h"
