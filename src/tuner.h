@@ -24,17 +24,19 @@
 
 #define NPARTITIONS  (     64) // Total thread partitions
 #define KPRECISION   (     10) // Iterations for computing K
-#define NTERMS       (      0) // Total terms in the Tuner (659)
+
 #define QSRESOLVE    (      0) // Whether to resolve via a qsearch()
+#define PRETTYIFY    (      1) // Whether to format as if we tune everything
 #define REPORTING    (     50) // How often to print the new parameters
 
 #define LRRATE       (   1.00) // Global Learning rate
 #define LRDROPRATE   (   1.00) // Cut LR by this each LR-step
 #define LRSTEPRATE   (    500) // Cut LR after this many epochs
 
+#define NTERMS       (      0) // Total terms in the Tuner (659)
 #define MAXEPOCHS    (  10000) // Max number of epochs allowed
-#define BATCHSIZE    (9999740) // FENs per mini-batch
-#define NPOSITIONS   (9999740) // Total FENS in the book
+#define BATCHSIZE    (1000000) // FENs per mini-batch
+#define NPOSITIONS   (1000000) // Total FENS in the book
 
 #define STACKSIZE ((int)((double) NPOSITIONS * NTERMS / 32))
 
@@ -253,79 +255,113 @@ void print_3(char *name, TVector params, int i, int A, int B, int C, char *S);
     if (Tune##term) F##_3(term, A, B, C, M, S);                 \
 } while (0)
 
+// Final wrapper just to do some better output formatting for copy pasting
+
+#define COMMENTS(F, X) if (PRETTYIFY && !strcmp(#F, "PRINT")) printf("%s", X)
+#define NEWLINE(F)     if (PRETTYIFY && !strcmp(#F, "PRINT")) printf("\n")
+
 // Configuration for each aspect of the evaluation terms
 
 #define EXECUTE_ON_TERMS(F) do {                                            \
-    ENABLE_0(F, PawnValue, NORMAL, "");                                     \
+                                                                            \
+    COMMENTS(F, "\n/* Material Value Evaluation Terms */\n\n");             \
+    ENABLE_0(F, PawnValue, NORMAL, "  ");                                   \
     ENABLE_0(F, KnightValue, NORMAL, "");                                   \
     ENABLE_0(F, BishopValue, NORMAL, "");                                   \
-    ENABLE_0(F, RookValue, NORMAL, "");                                     \
-    ENABLE_0(F, QueenValue, NORMAL, "");                                    \
+    ENABLE_0(F, RookValue, NORMAL, "  ");                                   \
+    ENABLE_0(F, QueenValue, NORMAL, " ");                                   \
+    COMMENTS(F, "const int KingValue   = S(   0,   0);\n\n");               \
+                                                                            \
+    COMMENTS(F, "/* Piece Square Evaluation Terms */\n\n");                 \
     ENABLE_1(F, PawnPSQT32, 32, NORMAL, "[32]");                            \
     ENABLE_1(F, KnightPSQT32, 32, NORMAL, "[32]");                          \
     ENABLE_1(F, BishopPSQT32, 32, NORMAL, "[32]");                          \
     ENABLE_1(F, RookPSQT32, 32, NORMAL, "[32]");                            \
     ENABLE_1(F, QueenPSQT32, 32, NORMAL, "[32]");                           \
     ENABLE_1(F, KingPSQT32, 32, NORMAL, "[32]");                            \
+                                                                            \
+    COMMENTS(F, "/* Pawn Evaluation Terms */\n\n");                         \
     ENABLE_2(F, PawnCandidatePasser, 2, 8, NORMAL, "[2][RANK_NB]");         \
-    ENABLE_0(F, PawnIsolated, NORMAL, "");                                  \
+    ENABLE_0(F, PawnIsolated, NORMAL, ""); NEWLINE(F);                      \
     ENABLE_1(F, PawnStacked, 2, NORMAL, "[2]");                             \
     ENABLE_2(F, PawnBackwards, 2, 8, NORMAL, "[2][RANK_NB]");               \
     ENABLE_1(F, PawnConnected32, 32, NORMAL, "[32]");                       \
+                                                                            \
+    COMMENTS(F, "/* Knight Evaluation Terms */\n\n");                       \
     ENABLE_2(F, KnightOutpost, 2, 2, NORMAL, "[2][2]");                     \
-    ENABLE_0(F, KnightBehindPawn, NORMAL, "");                              \
+    ENABLE_0(F, KnightBehindPawn, NORMAL, ""); NEWLINE(F);                  \
     ENABLE_1(F, KnightInSiberia, 4, NORMAL, "[4]");                         \
     ENABLE_1(F, KnightMobility, 9, NORMAL, "[9]");                          \
-    ENABLE_0(F, BishopPair, NORMAL, "");                                    \
-    ENABLE_0(F, BishopRammedPawns, NORMAL, "");                             \
+                                                                            \
+    COMMENTS(F, "/* Bishop Evaluation Terms */\n\n");                       \
+    ENABLE_0(F, BishopPair, NORMAL, ""); NEWLINE(F);                        \
+    ENABLE_0(F, BishopRammedPawns, NORMAL, ""); NEWLINE(F);                 \
     ENABLE_2(F, BishopOutpost, 2, 2, NORMAL, "[2][2]");                     \
-    ENABLE_0(F, BishopBehindPawn, NORMAL, "");                              \
-    ENABLE_0(F, BishopLongDiagonal, NORMAL, "");                            \
+    ENABLE_0(F, BishopBehindPawn, NORMAL, ""); NEWLINE(F);                  \
+    ENABLE_0(F, BishopLongDiagonal, NORMAL, ""); NEWLINE(F);                \
     ENABLE_1(F, BishopMobility, 14, NORMAL, "[14]");                        \
+                                                                            \
+    COMMENTS(F, "/* Rook Evaluation Terms */\n\n");                         \
     ENABLE_1(F, RookFile, 2, NORMAL, "[2]");                                \
-    ENABLE_0(F, RookOnSeventh, NORMAL, "");                                 \
+    ENABLE_0(F, RookOnSeventh, NORMAL, ""); NEWLINE(F);                     \
     ENABLE_1(F, RookMobility, 15, NORMAL, "[15]");                          \
-    ENABLE_0(F, QueenRelativePin, NORMAL, "");                              \
+                                                                            \
+    COMMENTS(F, "/* Queen Evaluation Terms */\n\n");                        \
+    ENABLE_0(F, QueenRelativePin, NORMAL, ""); NEWLINE(F);                  \
     ENABLE_1(F, QueenMobility, 28, NORMAL, "[28]");                         \
+                                                                            \
+    COMMENTS(F, "/* King Evaluation Terms */\n\n");                         \
     ENABLE_1(F, KingDefenders, 12, NORMAL, "[12]");                         \
     ENABLE_1(F, KingPawnFileProximity, 8, NORMAL, "[FILE_NB]");             \
     ENABLE_3(F, KingShelter, 2, 8, 8, NORMAL, "[2][FILE_NB][RANK_NB]");     \
     ENABLE_3(F, KingStorm, 2, 4, 8, NORMAL, "[2][FILE_NB/2][RANK_NB]");     \
-    ENABLE_0(F, SafetyKnightWeight, SAFETY, "");                            \
-    ENABLE_0(F, SafetyBishopWeight, SAFETY, "");                            \
-    ENABLE_0(F, SafetyRookWeight, SAFETY, "");                              \
-    ENABLE_0(F, SafetyQueenWeight, SAFETY, "");                             \
-    ENABLE_0(F, SafetyAttackValue, SAFETY, "");                             \
-    ENABLE_0(F, SafetyWeakSquares, SAFETY, "");                             \
-    ENABLE_0(F, SafetyNoEnemyQueens, SAFETY, "");                           \
-    ENABLE_0(F, SafetySafeQueenCheck, SAFETY, "");                          \
-    ENABLE_0(F, SafetySafeRookCheck, SAFETY, "");                           \
+                                                                            \
+    COMMENTS(F, "/* Safety Evaluation Terms */\n\n");                       \
+    ENABLE_0(F, SafetyKnightWeight, SAFETY, "   ");                         \
+    ENABLE_0(F, SafetyBishopWeight, SAFETY, "   ");                         \
+    ENABLE_0(F, SafetyRookWeight, SAFETY, "     ");                         \
+    ENABLE_0(F, SafetyQueenWeight, SAFETY, "    "); NEWLINE(F);             \
+    ENABLE_0(F, SafetyAttackValue, SAFETY, "    ");                         \
+    ENABLE_0(F, SafetyWeakSquares, SAFETY, "    ");                         \
+    ENABLE_0(F, SafetyNoEnemyQueens, SAFETY, "  ");                         \
+    ENABLE_0(F, SafetySafeQueenCheck, SAFETY, " ");                         \
+    ENABLE_0(F, SafetySafeRookCheck, SAFETY, "  ");                         \
     ENABLE_0(F, SafetySafeBishopCheck, SAFETY, "");                         \
     ENABLE_0(F, SafetySafeKnightCheck, SAFETY, "");                         \
-    ENABLE_0(F, SafetyAdjustment, SAFETY, "");                              \
+    ENABLE_0(F, SafetyAdjustment, SAFETY, "     ");                         \
+                                                                            \
+    COMMENTS(F, "\n/* Passed Pawn Evaluation Terms */\n\n");                \
     ENABLE_3(F, PassedPawn, 2, 2, 8, NORMAL, "[2][2][RANK_NB]");            \
     ENABLE_1(F, PassedFriendlyDistance, 8, NORMAL, "[FILE_NB]");            \
     ENABLE_1(F, PassedEnemyDistance, 8, NORMAL, "[FILE_NB]");               \
     ENABLE_0(F, PassedSafePromotionPath, NORMAL, "");                       \
-    ENABLE_0(F, ThreatWeakPawn, NORMAL, "");                                \
-    ENABLE_0(F, ThreatMinorAttackedByPawn, NORMAL, "");                     \
+                                                                            \
+    COMMENTS(F, "\n/* Threat Evaluation Terms */\n\n");                     \
+    ENABLE_0(F, ThreatWeakPawn, NORMAL, "            ");                    \
+    ENABLE_0(F, ThreatMinorAttackedByPawn, NORMAL, " ");                    \
     ENABLE_0(F, ThreatMinorAttackedByMinor, NORMAL, "");                    \
     ENABLE_0(F, ThreatMinorAttackedByMajor, NORMAL, "");                    \
     ENABLE_0(F, ThreatRookAttackedByLesser, NORMAL, "");                    \
-    ENABLE_0(F, ThreatMinorAttackedByKing, NORMAL, "");                     \
-    ENABLE_0(F, ThreatRookAttackedByKing, NORMAL, "");                      \
-    ENABLE_0(F, ThreatQueenAttackedByOne, NORMAL, "");                      \
-    ENABLE_0(F, ThreatOverloadedPieces, NORMAL, "");                        \
-    ENABLE_0(F, ThreatByPawnPush, NORMAL, "");                              \
+    ENABLE_0(F, ThreatMinorAttackedByKing, NORMAL, " ");                    \
+    ENABLE_0(F, ThreatRookAttackedByKing, NORMAL, "  ");                    \
+    ENABLE_0(F, ThreatQueenAttackedByOne, NORMAL, "  ");                    \
+    ENABLE_0(F, ThreatOverloadedPieces, NORMAL, "    ");                    \
+    ENABLE_0(F, ThreatByPawnPush, NORMAL, "          ");                    \
+                                                                            \
+    COMMENTS(F, "\n/* Space Evaluation Terms */\n\n");                      \
     ENABLE_0(F, SpaceRestrictPiece, NORMAL, "");                            \
     ENABLE_0(F, SpaceRestrictEmpty, NORMAL, "");                            \
     ENABLE_0(F, SpaceCenterControl, NORMAL, "");                            \
+                                                                            \
+    COMMENTS(F, "\n/* Closedness Evaluation Terms */\n\n");                 \
     ENABLE_1(F, ClosednessKnightAdjustment, 9, NORMAL, "[9]");              \
     ENABLE_1(F, ClosednessRookAdjustment, 9, NORMAL, "[9]");                \
-    ENABLE_0(F, ComplexityTotalPawns, COMPLEXITY, "");                      \
-    ENABLE_0(F, ComplexityPawnFlanks, COMPLEXITY, "");                      \
+                                                                            \
+    COMMENTS(F, "/* Complexity Evaluation Terms */\n\n");                   \
+    ENABLE_0(F, ComplexityTotalPawns, COMPLEXITY, " ");                     \
+    ENABLE_0(F, ComplexityPawnFlanks, COMPLEXITY, " ");                     \
     ENABLE_0(F, ComplexityPawnEndgame, COMPLEXITY, "");                     \
-    ENABLE_0(F, ComplexityAdjustment, COMPLEXITY, "");                      \
+    ENABLE_0(F, ComplexityAdjustment, COMPLEXITY, " ");                     \
 } while (0)
 
 #endif

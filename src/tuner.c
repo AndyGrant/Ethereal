@@ -505,7 +505,7 @@ void printParameters(TVector params, TVector cparams) {
 
 void print_0(char *name, TVector params, int i, char *S) {
 
-    printf("const int %s%s = S(%4d,%4d);\n\n", name, S, (int) params[i][MG], (int) params[i][EG]);
+    printf("const int %s%s = S(%4d,%4d);\n", name, S, (int) params[i][MG], (int) params[i][EG]);
 
 }
 
