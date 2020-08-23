@@ -277,16 +277,19 @@ const int KingStorm[2][FILE_NB/2][RANK_NB] = {
 
 /* King Safety Evaluation Terms */
 
-const int KSAttackWeight[]  = { 0, 16, 6, 10, 8, 0 };
-const int KSAttackValue     =   44;
-const int KSWeakSquares     =   38;
-const int KSFriendlyPawns   =  -22;
-const int KSNoEnemyQueens   = -276;
-const int KSSafeQueenCheck  =   95;
-const int KSSafeRookCheck   =   94;
-const int KSSafeBishopCheck =   51;
-const int KSSafeKnightCheck =  123;
-const int KSAdjustment      =  -18;
+const int SafetyKnightWeight    = S(  47,  41);
+const int SafetyBishopWeight    = S(  23,  35);
+const int SafetyRookWeight      = S(  35,   8);
+const int SafetyQueenWeight     = S(  29,   6);
+
+const int SafetyAttackValue     = S(  44,  33);
+const int SafetyWeakSquares     = S(  41,  40);
+const int SafetyNoEnemyQueens   = S(-238,-259);
+const int SafetySafeQueenCheck  = S(  92,  83);
+const int SafetySafeRookCheck   = S(  89,  98);
+const int SafetySafeBishopCheck = S(  59,  59);
+const int SafetySafeKnightCheck = S( 111, 117);
+const int SafetyAdjustment      = S( -75, -27);
 
 /* Passed Pawn Evaluation Terms */
 
@@ -382,6 +385,7 @@ int evaluateBoard(Board *board, PKTable *pktable, int contempt) {
 
     // Scale evaluation based on remaining material
     factor = evaluateScaleFactor(board, eval);
+    if (TRACE) T.factor = factor;
 
     // Compute the interpolated and scaled evaluation
     eval = (ScoreMG(eval) * (256 - phase)
@@ -432,7 +436,7 @@ int evaluatePawns(EvalInfo *ei, Board *board, int colour) {
 
     // Update King Safety calculations
     attacks = ei->pawnAttacks[US] & ei->kingAreas[THEM];
-    ei->kingAttacksCount[US] += popcount(attacks);
+    ei->kingAttacksCount[THEM] += popcount(attacks);
 
     // Pawn hash holds the rest of the pawn evaluation
     if (ei->pkentry != NULL) return eval;
@@ -566,9 +570,10 @@ int evaluateKnights(EvalInfo *ei, Board *board, int colour) {
 
         // Update King Safety calculations
         if ((attacks &= ei->kingAreas[THEM] & ~ei->pawnAttacksBy2[THEM])) {
-            ei->kingAttacksCount[US] += popcount(attacks);
-            ei->kingAttackersCount[US] += 1;
-            ei->kingAttackersWeight[US] += KSAttackWeight[KNIGHT];
+            ei->kingAttacksCount[THEM] += popcount(attacks);
+            ei->kingAttackersCount[THEM] += 1;
+            ei->kingAttackersWeight[THEM] += SafetyKnightWeight;
+            if (TRACE) T.SafetyKnightWeight[THEM]++;
         }
     }
 
@@ -643,9 +648,10 @@ int evaluateBishops(EvalInfo *ei, Board *board, int colour) {
 
         // Update King Safety calculations
         if ((attacks &= ei->kingAreas[THEM] & ~ei->pawnAttacksBy2[THEM])) {
-            ei->kingAttacksCount[US] += popcount(attacks);
-            ei->kingAttackersCount[US] += 1;
-            ei->kingAttackersWeight[US] += KSAttackWeight[BISHOP];
+            ei->kingAttacksCount[THEM] += popcount(attacks);
+            ei->kingAttackersCount[THEM] += 1;
+            ei->kingAttackersWeight[THEM] += SafetyBishopWeight;
+            if (TRACE) T.SafetyBishopWeight[THEM]++;
         }
     }
 
@@ -702,9 +708,10 @@ int evaluateRooks(EvalInfo *ei, Board *board, int colour) {
 
         // Update King Safety calculations
         if ((attacks &= ei->kingAreas[THEM] & ~ei->pawnAttacksBy2[THEM])) {
-            ei->kingAttacksCount[US] += popcount(attacks);
-            ei->kingAttackersCount[US] += 1;
-            ei->kingAttackersWeight[US] += KSAttackWeight[ROOK];
+            ei->kingAttacksCount[THEM] += popcount(attacks);
+            ei->kingAttackersCount[THEM] += 1;
+            ei->kingAttackersWeight[THEM] += SafetyRookWeight;
+            if (TRACE) T.SafetyRookWeight[THEM]++;
         }
     }
 
@@ -750,9 +757,10 @@ int evaluateQueens(EvalInfo *ei, Board *board, int colour) {
 
         // Update King Safety calculations
         if ((attacks &= ei->kingAreas[THEM] & ~ei->pawnAttacksBy2[THEM])) {
-            ei->kingAttacksCount[US] += popcount(attacks);
-            ei->kingAttackersCount[US] += 1;
-            ei->kingAttackersWeight[US] += KSAttackWeight[QUEEN];
+            ei->kingAttacksCount[THEM] += popcount(attacks);
+            ei->kingAttackersCount[THEM] += 1;
+            ei->kingAttackersWeight[THEM] += SafetyQueenWeight;
+            if (TRACE) T.SafetyQueenWeight[THEM]++;
         }
     }
 
@@ -763,7 +771,7 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
 
     const int US = colour, THEM = !colour;
 
-    int count, dist, blocked, eval = 0;
+    int count, safety, mg, eg, dist, blocked, eval = 0;
 
     uint64_t myPawns     = board->pieces[PAWN ] & board->colours[  US];
     uint64_t enemyPawns  = board->pieces[PAWN ] & board->colours[THEM];
@@ -784,7 +792,7 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
 
     // Perform King Safety when we have two attackers, or
     // one attacker with a potential for a Queen attacker
-    if (ei->kingAttackersCount[THEM] > 1 - popcount(enemyQueens)) {
+    if (ei->kingAttackersCount[US] > 1 - popcount(enemyQueens)) {
 
         // Weak squares are attacked by the enemy, defended no more
         // than once and only defended by our Queens or our King
@@ -794,7 +802,7 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
 
         // Usually the King Area is 9 squares. Scale are attack counts to account for
         // when the king is in an open area and expects more attacks, or the opposite
-        float scaledAttackCounts = 9.0 * ei->kingAttacksCount[THEM] / popcount(ei->kingAreas[US]);
+        int scaledAttackCounts = 9.0 * ei->kingAttacksCount[US] / popcount(ei->kingAreas[US]);
 
         // Safe target squares are defended or are weak and attacked by two.
         // We exclude squares containing pieces which we cannot capture.
@@ -815,20 +823,37 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
         uint64_t rookChecks   = rookThreats   & safe & ei->attackedBy[THEM][ROOK  ];
         uint64_t queenChecks  = queenThreats  & safe & ei->attackedBy[THEM][QUEEN ];
 
-        count  = ei->kingAttackersCount[THEM] * ei->kingAttackersWeight[THEM];
+        safety  = ei->kingAttackersWeight[US];
 
-        count += KSAttackValue     * scaledAttackCounts
-               + KSWeakSquares     * popcount(weak & ei->kingAreas[US])
-               + KSFriendlyPawns   * popcount(myPawns & ei->kingAreas[US] & ~weak)
-               + KSNoEnemyQueens   * !enemyQueens
-               + KSSafeQueenCheck  * popcount(queenChecks)
-               + KSSafeRookCheck   * popcount(rookChecks)
-               + KSSafeBishopCheck * popcount(bishopChecks)
-               + KSSafeKnightCheck * popcount(knightChecks)
-               + KSAdjustment;
+        safety += SafetyAttackValue     * scaledAttackCounts
+                + SafetyWeakSquares     * popcount(weak & ei->kingAreas[US])
+                + SafetyNoEnemyQueens   * !enemyQueens
+                + SafetySafeQueenCheck  * popcount(queenChecks)
+                + SafetySafeRookCheck   * popcount(rookChecks)
+                + SafetySafeBishopCheck * popcount(bishopChecks)
+                + SafetySafeKnightCheck * popcount(knightChecks)
+                + SafetyAdjustment;
 
-        // Convert safety to an MG and EG score, if we are unsafe
-        if (count > 0) eval -= MakeScore(count * count / 720, count / 20);
+        if (TRACE) T.SafetyAttackValue[US]     = scaledAttackCounts;
+        if (TRACE) T.SafetyWeakSquares[US]     = popcount(weak & ei->kingAreas[US]);
+        if (TRACE) T.SafetyNoEnemyQueens[US]   = !enemyQueens;
+        if (TRACE) T.SafetySafeQueenCheck[US]  = popcount(queenChecks);
+        if (TRACE) T.SafetySafeRookCheck[US]   = popcount(rookChecks);
+        if (TRACE) T.SafetySafeBishopCheck[US] = popcount(bishopChecks);
+        if (TRACE) T.SafetySafeKnightCheck[US] = popcount(knightChecks);
+        if (TRACE) T.SafetyAdjustment[US]      = 1;
+
+        // Convert safety to an MG and EG score
+        mg = ScoreMG(safety), eg = ScoreEG(safety);
+        eval += MakeScore(-mg * MAX(0, mg) / 720, -MAX(0, eg) / 20);
+        if (TRACE) T.safety[US] = safety;
+    }
+
+    else if (TRACE) {
+        T.SafetyKnightWeight[US] = 0;
+        T.SafetyBishopWeight[US] = 0;
+        T.SafetyRookWeight[US]   = 0;
+        T.SafetyQueenWeight[US]  = 0;
     }
 
     // Everything else is stored in the Pawn King Table
@@ -1101,14 +1126,16 @@ int evaluateComplexity(EvalInfo *ei, Board *board, int eval) {
                +  ComplexityPawnEndgame * !(knights | bishops | rooks | queens)
                +  ComplexityAdjustment;
 
-    if (TRACE) T.ComplexityTotalPawns[WHITE]  += sign * popcount(board->pieces[PAWN]);
-    if (TRACE) T.ComplexityPawnFlanks[WHITE]  += sign * pawnsOnBothFlanks;
-    if (TRACE) T.ComplexityPawnEndgame[WHITE] += sign * !(knights | bishops | rooks | queens);
-    if (TRACE) T.ComplexityAdjustment[WHITE]  += sign;
+    if (TRACE) T.ComplexityTotalPawns[WHITE]  += popcount(board->pieces[PAWN]);
+    if (TRACE) T.ComplexityPawnFlanks[WHITE]  += pawnsOnBothFlanks;
+    if (TRACE) T.ComplexityPawnEndgame[WHITE] += !(knights | bishops | rooks | queens);
+    if (TRACE) T.ComplexityAdjustment[WHITE]  += 1;
 
     // Avoid changing which side has the advantage
     int v = sign * MAX(ScoreEG(complexity), -abs(eg));
 
+    if (TRACE) T.eval       = eval;
+    if (TRACE) T.complexity = complexity;
     return MakeScore(0, v);
 }
 
