@@ -22,23 +22,23 @@
 
 #include "types.h"
 
-#define NPARTITIONS  (     64) // Total thread partitions
-#define KPRECISION   (     10) // Iterations for computing K
+#define NPARTITIONS  (      64) // Total thread partitions
+#define KPRECISION   (      10) // Iterations for computing K
 
-#define QSRESOLVE    (      0) // Whether to resolve via a qsearch()
-#define PRETTYIFY    (      1) // Whether to format as if we tune everything
-#define REPORTING    (     50) // How often to print the new parameters
+#define QSRESOLVE    (       0) // Whether to resolve via a qsearch()
+#define PRETTYIFY    (       1) // Whether to format as if we tune everything
+#define REPORTING    (      50) // How often to print the new parameters
 
-#define LRRATE       (   0.01) // Global Learning rate
-#define LRDROPRATE   (   5.00) // Cut LR by this each LR-step
-#define LRSTEPRATE   (   1000) // Cut LR after this many epochs
+#define LRRATE       (    1.00) // Global Learning rate
+#define LRDROPRATE   (    1.00) // Cut LR by this each LR-step
+#define LRSTEPRATE   (     250) // Cut LR after this many epochs
 
-#define NTERMS       (      0) // Total terms in the Tuner (659)
-#define MAXEPOCHS    (  10000) // Max number of epochs allowed
-#define BATCHSIZE    (9999740) // FENs per mini-batch
-#define NPOSITIONS   (9999740) // Total FENS in the book
+#define NTERMS       (       0) // Total terms in the Tuner (659)
+#define MAXEPOCHS    (   10000) // Max number of epochs allowed
+#define BATCHSIZE    (19288162) // FENs per mini-batch
+#define NPOSITIONS   (19288162) // Total FENS in the book
 
-#define STACKSIZE ((int)((double) NPOSITIONS * NTERMS / 32))
+#define STACKSIZE ((int)((double) NPOSITIONS * NTERMS / 64))
 
 #define TunePawnValue                   (0)
 #define TuneKnightValue                 (0)

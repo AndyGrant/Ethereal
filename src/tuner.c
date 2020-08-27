@@ -144,31 +144,21 @@ void runTuner() {
 
     for (int epoch = 0; epoch < MAXEPOCHS; epoch++) {
 
-        if (NPOSITIONS != BATCHSIZE) {
-            for (int i = 0; i < NPOSITIONS; i++) {
-                int A = rand64() % NPOSITIONS;
-                int B = rand64() % NPOSITIONS;
-                TEntry tmp = entries[A];
-                entries[A] = entries[B];
-                entries[B] = tmp;
-            }
-        }
-
         for (int batch = 0; batch < NPOSITIONS / BATCHSIZE; batch++) {
 
             TVector gradient = {0};
             computeGradient(entries, gradient, params, methods, K, batch);
 
             for (int i = 0; i < NTERMS; i++) {
-                adagrad[i][MG] += pow(2.0 * gradient[i][MG] / BATCHSIZE, 2.0);
-                adagrad[i][EG] += pow(2.0 * gradient[i][EG] / BATCHSIZE, 2.0);
-                params[i][MG] += (2.0 / BATCHSIZE) * gradient[i][MG] * (rate / sqrt(1e-8 + adagrad[i][MG]));
-                params[i][EG] += (2.0 / BATCHSIZE) * gradient[i][EG] * (rate / sqrt(1e-8 + adagrad[i][EG]));
+                adagrad[i][MG] += pow((K / 200.0) * gradient[i][MG] / BATCHSIZE, 2.0);
+                adagrad[i][EG] += pow((K / 200.0) * gradient[i][EG] / BATCHSIZE, 2.0);
+                params[i][MG] += (K / 200.0) * (gradient[i][MG] / BATCHSIZE) * (rate / sqrt(1e-8 + adagrad[i][MG]));
+                params[i][EG] += (K / 200.0) * (gradient[i][EG] / BATCHSIZE) * (rate / sqrt(1e-8 + adagrad[i][EG]));
             }
         }
 
         error = tunedEvaluationErrors(entries, params, methods, K);
-        printf("Epoch [%d] Error = [%g], Rate = [%g]\n", epoch, error, rate);
+        printf("Epoch [%d] Error = [%.9f], Rate = [%g]\n", epoch, error, rate);
 
         if (epoch && epoch % LRSTEPRATE == 0) rate = rate / LRDROPRATE;
         if (epoch % REPORTING == 0) printParameters(params, cparams);
@@ -245,7 +235,7 @@ void initTunerEntries(TEntry *entries, Thread *thread, TArray methods) {
 
         // Occasional reporting for total completion
         if ((i + 1) % 10000 == 0 || i == NPOSITIONS - 1)
-            printf("\rSetting up Entries from FENs [%7d of %7d]", i + 1, NPOSITIONS);
+            printf("\rSetting up Entries from FENs [%8d of %8d]", i + 1, NPOSITIONS);
     }
 
     fclose(fin);
