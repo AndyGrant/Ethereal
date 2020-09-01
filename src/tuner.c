@@ -367,7 +367,7 @@ double sigmoid(double K, double E) {
 
 double linearEvaluation(TEntry *entry, TVector params, TArray methods, TGradientData *data) {
 
-    int sign, mixed;
+    double sign, mixed;
     double midgame, endgame, wsafety[2], bsafety[2];
     double normal[PHASE_NB], safety[PHASE_NB], complexity;
     double mg[METHOD_NB][COLOUR_NB] = {0}, eg[METHOD_NB][COLOUR_NB] = {0};
@@ -391,14 +391,14 @@ double linearEvaluation(TEntry *entry, TVector params, TArray methods, TGradient
     bsafety[EG] = (double) ScoreEG(entry->safety[BLACK]) + eg[SAFETY][BLACK];
 
     // Remove the original "safety" evaluation that was double counted into the "normal" evaluation
-    normal[MG] -= MIN(0, -ScoreMG(entry->safety[WHITE]) * fabs(ScoreMG(entry->safety[WHITE])) / 720)
-                - MIN(0, -ScoreMG(entry->safety[BLACK]) * fabs(ScoreMG(entry->safety[BLACK])) / 720);
-    normal[EG] -= MIN(0, -ScoreEG(entry->safety[WHITE]) / 20) - MIN(0, -ScoreEG(entry->safety[BLACK]) / 20);
+    normal[MG] -= MIN(0, -ScoreMG(entry->safety[WHITE]) * fabs(ScoreMG(entry->safety[WHITE])) / 720.0)
+                - MIN(0, -ScoreMG(entry->safety[BLACK]) * fabs(ScoreMG(entry->safety[BLACK])) / 720.0);
+    normal[EG] -= MIN(0, -ScoreEG(entry->safety[WHITE]) / 20.0) - MIN(0, -ScoreEG(entry->safety[BLACK]) / 20.0);
 
     // Compute the new, true "safety" evaluations for each side
-    safety[MG] = MIN(0, -wsafety[MG] * fabs(-wsafety[MG]) / 720)
-               - MIN(0, -bsafety[MG] * fabs(-bsafety[MG]) / 720);
-    safety[EG] = MIN(0, -wsafety[EG] / 20) - MIN(0, -bsafety[EG] / 20);
+    safety[MG] = MIN(0, -wsafety[MG] * fabs(-wsafety[MG]) / 720.0)
+               - MIN(0, -bsafety[MG] * fabs(-bsafety[MG]) / 720.0);
+    safety[EG] = MIN(0, -wsafety[EG] / 20.0) - MIN(0, -bsafety[EG] / 20.0);
 
     // Grab the original "complexity" evaluation and add the modified parameters
     complexity = (double) ScoreEG(entry->complexity) + eg[COMPLEXITY][WHITE];
@@ -414,8 +414,8 @@ double linearEvaluation(TEntry *entry, TVector params, TArray methods, TGradient
     midgame = normal[MG] + safety[MG];
     endgame = normal[EG] + safety[EG] + sign * fmax(-fabs(normal[EG] + safety[EG]), complexity);
 
-    mixed = (midgame * (256 - entry->phase)
-          +  endgame * entry->phase * entry->sfactor) / 256;
+    mixed = (midgame * (256.0 - entry->phase)
+          +  endgame * entry->phase * entry->sfactor) / 256.0;
 
     return mixed + (entry->turn == WHITE ? Tempo : -Tempo);
 }
