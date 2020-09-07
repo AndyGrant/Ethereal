@@ -20,6 +20,7 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdalign.h>
 
 enum { MG, EG };
 
@@ -86,9 +87,8 @@ typedef struct PVariation PVariation;
 typedef struct Thread Thread;
 typedef struct TTEntry TTEntry;
 typedef struct TTBucket TTBucket;
-typedef struct TTable TTable;
 typedef struct PKEntry PKEntry;
-typedef struct PKTable PKTable;
+typedef struct TTable TTable;
 typedef struct Limits Limits;
 typedef struct UCIGoStruct UCIGoStruct;
 
@@ -98,3 +98,7 @@ typedef uint16_t KillerTable[MAX_PLY+1][2];
 typedef uint16_t CounterMoveTable[COLOUR_NB][PIECE_NB][SQUARE_NB];
 typedef int16_t HistoryTable[COLOUR_NB][SQUARE_NB][SQUARE_NB];
 typedef int16_t ContinuationTable[CONT_NB][PIECE_NB][SQUARE_NB][PIECE_NB][SQUARE_NB];
+
+// Trivial alignment macros
+
+#define ALIGN64 alignas(64)

@@ -35,12 +35,6 @@ enum {
     TT_BUCKET_NB  = 3,
 };
 
-enum {
-    PKT_KEY_SIZE   = 16,
-    PKT_SIZE       = 1 << PKT_KEY_SIZE,
-    PKT_HASH_SHIFT = 64 - PKT_KEY_SIZE
-};
-
 struct TTEntry {
     int8_t depth;
     uint8_t generation;
@@ -59,16 +53,6 @@ struct TTable {
     uint8_t generation;
 };
 
-struct PKEntry {
-    uint64_t pkhash;
-    uint64_t passed;
-    int eval;
-};
-
-struct PKTable {
-    PKEntry entries[PKT_SIZE];
-};
-
 void initTT(uint64_t megabytes);
 int hashSizeMBTT();
 void updateTT();
@@ -79,6 +63,3 @@ int valueToTT(int value, int height);
 void prefetchTTEntry(uint64_t hash);
 int getTTEntry(uint64_t hash, uint16_t *move, int *value, int *eval, int *depth, int *bound);
 void storeTTEntry(uint64_t hash, uint16_t move, int value, int eval, int depth, int bound);
-
-PKEntry* getPKEntry(PKTable *pktable, uint64_t pkhash);
-void storePKEntry(PKTable *pktable, uint64_t pkhash, uint64_t passed, int eval);

@@ -28,14 +28,14 @@
 #include "board.h"
 #include "types.h"
 
-uint64_t PawnAttacks[COLOUR_NB][SQUARE_NB];
-uint64_t KnightAttacks[SQUARE_NB];
-uint64_t BishopAttacks[0x1480];
-uint64_t RookAttacks[0x19000];
-uint64_t KingAttacks[SQUARE_NB];
+ALIGN64 uint64_t PawnAttacks[COLOUR_NB][SQUARE_NB];
+ALIGN64 uint64_t KnightAttacks[SQUARE_NB];
+ALIGN64 uint64_t BishopAttacks[0x1480];
+ALIGN64 uint64_t RookAttacks[0x19000];
+ALIGN64 uint64_t KingAttacks[SQUARE_NB];
 
-Magic BishopTable[SQUARE_NB];
-Magic RookTable[SQUARE_NB];
+ALIGN64 Magic BishopTable[SQUARE_NB];
+ALIGN64 Magic RookTable[SQUARE_NB];
 
 static int validCoordinate(int rank, int file) {
     return 0 <= rank && rank < RANK_NB

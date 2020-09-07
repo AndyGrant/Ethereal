@@ -231,7 +231,7 @@ void initTunerEntries(TEntry *entries, Thread *thread, TArray methods) {
         }
 
         // Defer the set to another function
-        initTunerEntry(&entries[i], &thread->board, methods);
+        initTunerEntry(&entries[i], thread, &thread->board, methods);
 
         // Occasional reporting for total completion
         if ((i + 1) % 10000 == 0 || i == NPOSITIONS - 1)
@@ -241,7 +241,7 @@ void initTunerEntries(TEntry *entries, Thread *thread, TArray methods) {
     fclose(fin);
 }
 
-void initTunerEntry(TEntry *entry, Board *board, TArray methods) {
+void initTunerEntry(TEntry *entry, Thread *thread, Board *board, TArray methods) {
 
     // Use the same phase calculation as evaluate()
     int phase = 24 - 4 * popcount(board->pieces[QUEEN ])
@@ -256,7 +256,7 @@ void initTunerEntry(TEntry *entry, Board *board, TArray methods) {
 
     // Save a white POV static evaluation
     TVector coeffs; T = EmptyTrace;
-    entry->seval = evaluateBoard(board, NULL, 0);
+    entry->seval = evaluateBoard(thread, board);
     if (board->turn == BLACK) entry->seval = -entry->seval;
 
     // evaluate() -> [[NTERMS][COLOUR_NB]]

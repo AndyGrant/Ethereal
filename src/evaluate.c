@@ -18,12 +18,15 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "attacks.h"
 #include "bitboards.h"
 #include "board.h"
+#include "evalcache.h"
 #include "evaluate.h"
 #include "masks.h"
+#include "thread.h"
 #include "transposition.h"
 #include "types.h"
 
@@ -362,17 +365,19 @@ const int Tempo = 20;
 
 #undef S
 
-int evaluateBoard(Board *board, PKTable *pktable, int contempt) {
+int evaluateBoard(Thread *thread, Board *board) {
 
     EvalInfo ei;
-    int phase, factor, eval, pkeval;
+    int phase, factor, eval, pkeval, hashed;
 
-    // Setup and perform all evaluations
-    initEvalInfo(&ei, board, pktable);
+    // Check for this evaluation being cached already
+    if (!TRACE && getCachedEvaluation(thread, board, &hashed))
+        return hashed;
+
+    initEvalInfo(thread, board, &ei);
     eval   = evaluatePieces(&ei, board);
     pkeval = ei.pkeval[WHITE] - ei.pkeval[BLACK];
-    eval  += pkeval + board->psqtmat;
-    eval  += contempt;
+    eval  += pkeval + board->psqtmat + thread->contempt;
     eval  += evaluateClosedness(&ei, board);
     eval  += evaluateComplexity(&ei, board, eval);
 
@@ -387,21 +392,19 @@ int evaluateBoard(Board *board, PKTable *pktable, int contempt) {
     factor = evaluateScaleFactor(board, eval);
     if (TRACE) T.factor = factor;
 
-    // Compute the interpolated and scaled evaluation
+    // Compute and store an interpolated evaluation from white's POV
     eval = (ScoreMG(eval) * (256 - phase)
          +  ScoreEG(eval) * phase * factor / SCALE_NORMAL) / 256;
+    storeCachedEvaluation(thread, board, eval);
+
+    // Store a new Pawn King Entry if we did not have one
+    if (!TRACE && ei.pkentry == NULL)
+        storeCachedPawnKingEval(thread, board, ei.passedPawns, pkeval);
 
     // Factor in the Tempo after interpolation and scaling, so that
     // in the search we can assume that if a null move is made, then
     // then `eval = last_eval + 2 * Tempo`
-    eval += board->turn == WHITE ? Tempo : -Tempo;
-
-    // Store a new Pawn King Entry if we did not have one
-    if (ei.pkentry == NULL && pktable != NULL)
-        storePKEntry(pktable, board->pkhash, ei.passedPawns, pkeval);
-
-    // Return the evaluation relative to the side to move
-    return board->turn == WHITE ? eval : -eval;
+    return Tempo + (board->turn == WHITE ? eval : -eval);
 }
 
 int evaluatePieces(EvalInfo *ei, Board *board) {
@@ -1202,7 +1205,7 @@ int evaluateScaleFactor(Board *board, int eval) {
     return SCALE_NORMAL;
 }
 
-void initEvalInfo(EvalInfo *ei, Board *board, PKTable *pktable) {
+void initEvalInfo(Thread *thread, Board *board, EvalInfo *ei) {
 
     uint64_t white   = board->colours[WHITE];
     uint64_t black   = board->colours[BLACK];
@@ -1252,7 +1255,7 @@ void initEvalInfo(EvalInfo *ei, Board *board, PKTable *pktable) {
     ei->kingAttackersWeight[WHITE] = ei->kingAttackersWeight[BLACK] = 0;
 
     // Try to read a hashed Pawn King Eval. Otherwise, start from scratch
-    ei->pkentry       =     pktable == NULL ? NULL : getPKEntry(pktable, board->pkhash);
+    ei->pkentry       = getCachedPawnKingEval(thread, board);
     ei->passedPawns   = ei->pkentry == NULL ? 0ull : ei->pkentry->passed;
     ei->pkeval[WHITE] = ei->pkentry == NULL ? 0    : ei->pkentry->eval;
     ei->pkeval[BLACK] = ei->pkentry == NULL ? 0    : 0;

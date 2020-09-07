@@ -20,6 +20,7 @@
 
 #include <stdint.h>
 
+#include "evalcache.h"
 #include "types.h"
 
 #ifdef TUNE
@@ -134,7 +135,7 @@ struct EvalInfo {
     PKEntry *pkentry;
 };
 
-int evaluateBoard(Board *board, PKTable *pktable, int contempt);
+int evaluateBoard(Thread *thread, Board *board);
 int evaluatePieces(EvalInfo *ei, Board *board);
 int evaluatePawns(EvalInfo *ei, Board *board, int colour);
 int evaluateKnights(EvalInfo *ei, Board *board, int colour);
@@ -148,7 +149,7 @@ int evaluateSpace(EvalInfo *ei, Board *board, int colour);
 int evaluateClosedness(EvalInfo *ei, Board *board);
 int evaluateComplexity(EvalInfo *ei, Board *board, int eval);
 int evaluateScaleFactor(Board *board, int eval);
-void initEvalInfo(EvalInfo *ei, Board *board, PKTable *pktable);
+void initEvalInfo(Thread *thread, Board *board, EvalInfo *ei);
 void initEval();
 
 #define MakeScore(mg, eg) ((int)((unsigned int)(eg) << 16) + (mg))

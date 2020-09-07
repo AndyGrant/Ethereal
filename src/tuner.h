@@ -142,7 +142,7 @@ void initCurrentParameters(TVector cparams);
 void initMethodManager(TArray methods);
 void initCoefficients(TVector coeffs);
 void initTunerEntries(TEntry *entries, Thread *thread, TArray methods);
-void initTunerEntry(TEntry *entry, Board *board, TArray methods);
+void initTunerEntry(TEntry *entry, Thread *thread, Board *board, TArray methods);
 void initTunerTuples(TEntry *entry, TVector coeffs, TArray methods);
 
 double computeOptimalK(TEntry *entries);
