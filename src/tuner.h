@@ -29,14 +29,14 @@
 #define PRETTYIFY    (       1) // Whether to format as if we tune everything
 #define REPORTING    (      50) // How often to print the new parameters
 
-#define LRRATE       (    1.00) // Global Learning rate
+#define LRRATE       (   10.00) // Global Learning rate
 #define LRDROPRATE   (    1.00) // Cut LR by this each LR-step
 #define LRSTEPRATE   (     250) // Cut LR after this many epochs
 
-#define NTERMS       (       0) // Total terms in the Tuner (659)
+#define NTERMS       (       0) // Total terms in the Tuner (851)
 #define MAXEPOCHS    (   10000) // Max number of epochs allowed
-#define BATCHSIZE    ( 2498186) // FENs per mini-batch
-#define NPOSITIONS   ( 2498186) // Total FENS in the book
+#define BATCHSIZE    (19999480) // FENs per mini-batch
+#define NPOSITIONS   (19999480) // Total FENS in the book
 
 #define STACKSIZE ((int)((double) NPOSITIONS * NTERMS / 64))
 
@@ -45,12 +45,12 @@
 #define TuneBishopValue                 (0)
 #define TuneRookValue                   (0)
 #define TuneQueenValue                  (0)
-#define TunePawnPSQT32                  (0)
-#define TuneKnightPSQT32                (0)
-#define TuneBishopPSQT32                (0)
-#define TuneRookPSQT32                  (0)
-#define TuneQueenPSQT32                 (0)
-#define TuneKingPSQT32                  (0)
+#define TunePawnPSQT                    (0)
+#define TuneKnightPSQT                  (0)
+#define TuneBishopPSQT                  (0)
+#define TuneRookPSQT                    (0)
+#define TuneQueenPSQT                   (0)
+#define TuneKingPSQT                    (0)
 #define TunePawnCandidatePasser         (0)
 #define TunePawnIsolated                (0)
 #define TunePawnStacked                 (0)
@@ -273,12 +273,12 @@ void print_3(char *name, TVector params, int i, int A, int B, int C, char *S);
     COMMENTS(F, "const int KingValue   = S(   0,   0);\n\n");               \
                                                                             \
     COMMENTS(F, "/* Piece Square Evaluation Terms */\n\n");                 \
-    ENABLE_1(F, PawnPSQT32, 32, NORMAL, "[32]");                            \
-    ENABLE_1(F, KnightPSQT32, 32, NORMAL, "[32]");                          \
-    ENABLE_1(F, BishopPSQT32, 32, NORMAL, "[32]");                          \
-    ENABLE_1(F, RookPSQT32, 32, NORMAL, "[32]");                            \
-    ENABLE_1(F, QueenPSQT32, 32, NORMAL, "[32]");                           \
-    ENABLE_1(F, KingPSQT32, 32, NORMAL, "[32]");                            \
+    ENABLE_1(F, PawnPSQT, 64, NORMAL, "[SQUARE_NB]");                       \
+    ENABLE_1(F, KnightPSQT, 64, NORMAL, "[SQUARE_NB]");                     \
+    ENABLE_1(F, BishopPSQT, 64, NORMAL, "[SQUARE_NB]");                     \
+    ENABLE_1(F, RookPSQT, 64, NORMAL, "[SQUARE_NB]");                       \
+    ENABLE_1(F, QueenPSQT, 64, NORMAL, "[SQUARE_NB]");                      \
+    ENABLE_1(F, KingPSQT, 64, NORMAL, "[SQUARE_NB]");                       \
                                                                             \
     COMMENTS(F, "/* Pawn Evaluation Terms */\n\n");                         \
     ENABLE_2(F, PawnCandidatePasser, 2, 8, NORMAL, "[2][RANK_NB]");         \

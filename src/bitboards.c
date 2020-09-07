@@ -55,6 +55,12 @@ int square(int rank, int file) {
     return rank * FILE_NB + file;
 }
 
+int relativeSquare(int colour, int sq) {
+    assert(0 <= colour && colour < COLOUR_NB);
+    assert(0 <= sq && sq < SQUARE_NB);
+    return square(relativeRankOf(colour, sq), fileOf(sq));
+}
+
 int relativeSquare32(int colour, int sq) {
     assert(0 <= colour && colour < COLOUR_NB);
     assert(0 <= sq && sq < SQUARE_NB);

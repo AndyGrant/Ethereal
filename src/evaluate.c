@@ -46,70 +46,118 @@ const int KingValue   = S(   0,   0);
 
 /* Piece Square Evaluation Terms */
 
-const int PawnPSQT32[32] = {
+const int PawnPSQT[SQUARE_NB] = {
     S(   0,   0), S(   0,   0), S(   0,   0), S(   0,   0),
-    S( -14,   5), S(  -4,  -1), S( -10,   3), S(  -7,  -2),
-    S( -21,   3), S( -15,   3), S( -13,  -6), S(  -5, -16),
-    S( -15,  10), S( -10,   7), S(   1, -10), S(   7, -26),
-    S(  -9,  15), S(  -7,   7), S( -12,  -9), S(  -7, -23),
-    S( -17,  36), S(   2,  32), S(  -2,  19), S(  16,  -6),
-    S( -19, -61), S( -56, -20), S(   0, -42), S(  46, -51),
+    S(   0,   0), S(   0,   0), S(   0,   0), S(   0,   0),
+    S( -14,  10), S(  -1,   0), S(  -9,   2), S(  -4,  -2),
+    S(  -7,   4), S(   0,   3), S(   4,  -1), S( -11,   5),
+    S( -18,   7), S( -13,   4), S(  -9,  -7), S(  -4, -14),
+    S(   0, -12), S(  -8,  -5), S(  -8,   1), S( -16,   5),
+    S( -12,  16), S(  -6,  10), S(   5, -13), S(   7, -23),
+    S(   9, -24), S(   7,  -8), S(  -7,   7), S( -14,  11),
+    S(  -8,  20), S(  -6,   8), S( -14,  -7), S( -11, -24),
+    S(  -9, -20), S(  -8,  -8), S(  -9,   6), S( -14,  15),
+    S(  -6,  40), S(  -5,  31), S(  -2,  18), S(  19,  -6),
+    S(  18,  -5), S(   0,  20), S(  -6,  31), S( -10,  37),
+    S( -18, -59), S( -53, -20), S(   2, -38), S(  46, -51),
+    S(  46, -49), S(   2, -38), S( -54, -17), S( -17, -56),
+    S(   0,   0), S(   0,   0), S(   0,   0), S(   0,   0),
     S(   0,   0), S(   0,   0), S(   0,   0), S(   0,   0),
 };
 
-const int KnightPSQT32[32] = {
-    S( -36, -31), S(  -1, -34), S( -10, -31), S(  -1, -17),
-    S(   6, -17), S(  -3, -14), S(   3, -32), S(   7, -15),
-    S(  11, -33), S(  14, -20), S(  14, -13), S(  18,  -1),
-    S(  22,   3), S(  21,   9), S(  27,  19), S(  29,  28),
-    S(  18,  10), S(  27,  12), S(  39,  26), S(  32,  42),
-    S( -17,  12), S(   5,  13), S(  28,  31), S(  26,  33),
-    S(  13, -13), S(  -2,  -4), S(  34, -21), S(  39,   3),
-    S(-177, -25), S( -84,  -2), S(-110,  22), S( -32,  -1),
+const int KnightPSQT[SQUARE_NB] = {
+    S( -37, -32), S(   0, -33), S( -13, -31), S(  -1, -16),
+    S(   4, -18), S( -11, -32), S(  -1, -33), S( -37, -31),
+    S(   3, -18), S(   3, -13), S(   4, -33), S(   9, -19),
+    S(   7, -18), S(   1, -33), S(  -2, -15), S(   1, -16),
+    S(  16, -33), S(  18, -19), S(  14, -16), S(  18,  -1),
+    S(  23,  -3), S(  11, -18), S(  15, -21), S(  11, -33),
+    S(  22,   2), S(  20,  11), S(  29,  18), S(  29,  26),
+    S(  25,  28), S(  24,  20), S(  18,   8), S(  16,   6),
+    S(  26,  13), S(  26,  11), S(  36,  28), S(  28,  44),
+    S(  23,  41), S(  35,  31), S(  23,  12), S(  18,  12),
+    S( -17,  11), S(   0,  15), S(  26,  32), S(  20,  32),
+    S(  24,  30), S(  26,  31), S(  -5,  12), S( -15,  11),
+    S(  17, -11), S(  -2,  -3), S(  33, -21), S(  37,   4),
+    S(  38,   3), S(  34, -22), S(  -2,  -3), S(  12, -14),
+    S(-175, -23), S( -84,  -2), S(-110,  22), S( -32,  -1),
+    S( -31,  -1), S(-109,  23), S( -84,  -2), S(-177, -25),
 };
 
-const int BishopPSQT32[32] = {
-    S(   9, -35), S(   7, -16), S(   1, -17), S(   5, -11),
-    S(  22, -36), S(   9, -48), S(  18, -19), S(  13, -10),
-    S(  18, -12), S(  23, -11), S(   2, -21), S(  22,  -1),
-    S(   5,  -8), S(  18,  -5), S(  20,   9), S(  23,  11),
-    S(  -9,  16), S(  17,  11), S(   7,  15), S(  17,  23),
-    S(   0,   9), S(  -1,  21), S(  -5,   5), S(  11,  16),
-    S( -45,  14), S( -47,   3), S(  -5,  12), S( -25,  11),
-    S( -59,  -5), S( -45,   7), S( -87,  16), S( -89,  30),
+const int BishopPSQT[SQUARE_NB] = {
+    S(  12, -33), S(  12, -13), S(  -1,  -8), S(   7, -11),
+    S(  10,  -9), S(  -5, -15), S(   8, -15), S(  10, -34),
+    S(  27, -34), S(   8, -43), S(  21, -20), S(  12, -10),
+    S(  12, -11), S(  18, -23), S(  14, -44), S(  25, -38),
+    S(  14, -13), S(  26, -10), S(   1, -20), S(  21,  -2),
+    S(  21,  -1), S(   1, -23), S(  24, -14), S(  21, -10),
+    S(   8,  -7), S(  18,  -3), S(  18,   9), S(  19,  10),
+    S(  26,  12), S(  15,   8), S(  22,  -3), S(  12,  -7),
+    S( -11,  13), S(  18,  10), S(   4,  16), S(  17,  24),
+    S(   9,  23), S(   9,  16), S(  16,  11), S(  -9,  15),
+    S(  -1,   7), S(  -6,  20), S(  -3,   4), S(   8,  17),
+    S(  11,  16), S(  -6,   8), S(  -3,  21), S(  -1,  10),
+    S( -42,  17), S( -40,   4), S(  -5,   9), S( -23,  14),
+    S( -24,  14), S(  -5,  12), S( -50,   0), S( -48,  15),
+    S( -57,  -3), S( -45,   9), S( -87,  18), S( -89,  32),
+    S( -90,  29), S( -85,  19), S( -44,   7), S( -59,  -5),
 };
 
-const int RookPSQT32[32] = {
-    S( -16, -29), S(  -9, -21), S(  -4, -20), S(   1, -27),
-    S( -68, -19), S( -13, -36), S( -11, -33), S(  -4, -33),
-    S( -28, -22), S(  -7, -12), S( -15, -18), S(  -3, -24),
-    S( -23,  -2), S(  -9,   8), S( -10,   6), S(  -1,  -3),
-    S(  -5,  16), S(  16,   7), S(  22,   7), S(  40,   0),
-    S( -16,  25), S(  30,   7), S(   9,  19), S(  37,   5),
-    S(  -3,  10), S(  -8,  16), S(  12,   6), S(  24,   4),
-    S(  37,  22), S(  29,  28), S(   3,  37), S(  14,  34),
+const int RookPSQT[SQUARE_NB] = {
+    S( -15, -23), S( -13, -19), S(  -6, -19), S(   3, -27),
+    S(   2, -26), S(  -2, -20), S( -10, -22), S(  -9, -34),
+    S( -51, -13), S( -10, -33), S(  -7, -30), S(  -2, -33),
+    S(  -1, -33), S( -10, -34), S(  -7, -34), S( -62, -14),
+    S( -24, -18), S(  -8, -11), S( -15, -15), S(  -2, -23),
+    S(  -2, -21), S( -17, -16), S(  -2, -11), S( -27, -19),
+    S( -17,  -1), S( -11,   8), S( -10,   8), S(   3,   0),
+    S(   3,   1), S( -10,   7), S(  -8,   9), S( -20,   0),
+    S(  -6,  15), S(  12,   9), S(  21,   9), S(  38,   2),
+    S(  36,   3), S(  18,   7), S(  15,   7), S(  -5,  15),
+    S( -18,  26), S(  26,   9), S(   9,  22), S(  35,   6),
+    S(  35,   5), S(   9,  24), S(  30,   7), S( -17,  26),
+    S(  -1,   9), S(  -9,  16), S(  11,   7), S(  25,   9),
+    S(  25,   7), S(  10,   6), S(  -8,  18), S(  -2,  11),
+    S(  37,  21), S(  28,  29), S(   3,  38), S(  11,  32),
+    S(  12,  34), S(   2,  38), S(  30,  29), S(  38,  26),
 };
 
-const int QueenPSQT32[32] = {
-    S(  25, -65), S(   7, -48), S(  13, -62), S(  19, -43),
-    S(  10, -41), S(  20, -55), S(  25, -73), S(  18, -28),
-    S(  11, -30), S(  23, -24), S(   7,   4), S(   6,  -4),
-    S(  12,  -7), S(  17,  15), S(  -1,  20), S( -14,  65),
-    S(  -4,  14), S(  -6,  49), S( -15,  23), S( -23,  78),
-    S( -23,  29), S( -17,  18), S( -21,  24), S(  -8,  28),
-    S(  -4,  26), S( -59,  68), S(  -7,  12), S( -41,  54),
-    S(  -2,  20), S(  22,  12), S(  11,  15), S(   2,  30),
+const int QueenPSQT[SQUARE_NB] = {
+    S(  28, -66), S(   6, -49), S(  14, -62), S(  23, -45),
+    S(  21, -43), S(  12, -63), S(   7, -48), S(  25, -65),
+    S(  12, -41), S(  22, -53), S(  26, -69), S(  17, -27),
+    S(  21, -31), S(  28, -77), S(  30, -56), S(  12, -41),
+    S(  11, -29), S(  25, -21), S(   8,   4), S(   6,  -2),
+    S(   6,  -2), S(   7,   3), S(  27, -23), S(  11, -31),
+    S(  13,  -9), S(  15,  14), S(   1,  22), S( -15,  67),
+    S( -16,  66), S(  -4,  19), S(  19,  14), S(   8,  -7),
+    S(  -2,  13), S(  -6,  47), S( -13,  24), S( -30,  77),
+    S( -30,  78), S( -18,  25), S(  -8,  49), S(  -8,  16),
+    S( -23,  27), S( -16,  18), S( -24,  25), S( -13,  26),
+    S( -12,  27), S( -24,  22), S( -20,  18), S( -32,  28),
+    S(  -5,  26), S( -58,  68), S(  -5,  14), S( -38,  56),
+    S( -41,  56), S(  -9,  11), S( -56,  69), S(   1,  28),
+    S(  -4,  18), S(  20,  10), S(  12,  17), S(   0,  28),
+    S(   0,  29), S(  10,  14), S(  24,  14), S(   1,  21),
 };
 
-const int KingPSQT32[32] = {
-    S(  52, -79), S(  42, -52), S( -10, -16), S( -22, -33),
-    S(  23, -19), S( -18, -15), S( -43,   8), S( -73,  12),
-    S(  -8, -25), S(   4, -25), S(  10,   0), S( -16,  18),
-    S(  -3, -33), S(  90, -35), S(  48,   8), S(  -5,  29),
-    S(  10,  -9), S( 109, -26), S(  57,  19), S(  10,  24),
-    S(  50, -23), S( 135, -11), S( 105,   9), S(  43,   5),
-    S(   7, -57), S(  49,  -7), S(  32,   7), S(   9,  -3),
-    S(   4,-123), S(  73, -64), S( -23, -23), S( -20, -19),
+const int KingPSQT[SQUARE_NB] = {
+    S(  51, -78), S(  47, -56), S(   1, -19), S( -29, -28),
+    S( -13, -34), S( -23, -12), S(  40, -56), S(  50, -81),
+    S(  25, -20), S( -16, -19), S( -42,   7), S( -74,  15),
+    S( -66,  14), S( -51,  10), S( -17, -17), S(  26, -22),
+    S(  -8, -25), S(   4, -25), S(  11,  -1), S( -17,  21),
+    S( -13,  19), S(   8,   0), S(   2, -23), S(  -8, -24),
+    S(  -3, -33), S(  90, -37), S(  49,   6), S(  -7,  32),
+    S(  -4,  30), S(  48,   8), S(  88, -34), S(  -5, -33),
+    S(  10,  -9), S( 109, -27), S(  57,  16), S(   9,  26),
+    S(  10,  25), S(  57,  19), S( 108, -26), S(   9, -11),
+    S(  50, -23), S( 135, -13), S( 105,  10), S(  43,   6),
+    S(  43,   6), S( 105,  10), S( 135, -12), S(  50, -24),
+    S(   7, -57), S(  49,  -6), S(  32,   8), S(   9,  -2),
+    S(   9,  -2), S(  32,   7), S(  49,  -5), S(   7, -57),
+    S(   4,-123), S(  73, -64), S( -23, -23), S( -20, -18),
+    S( -20, -19), S( -23, -23), S(  73, -64), S(   4,-123),
 };
 
 /* Pawn Evaluation Terms */
@@ -454,7 +502,7 @@ int evaluatePawns(EvalInfo *ei, Board *board, int colour) {
         // Pop off the next pawn
         sq = poplsb(&tempPawns);
         if (TRACE) T.PawnValue[US]++;
-        if (TRACE) T.PawnPSQT32[relativeSquare32(US, sq)][US]++;
+        if (TRACE) T.PawnPSQT[relativeSquare(US, sq)][US]++;
 
         uint64_t neighbors   = myPawns    & adjacentFilesMasks(fileOf(sq));
         uint64_t backup      = myPawns    & passedPawnMasks(THEM, sq);
@@ -535,7 +583,7 @@ int evaluateKnights(EvalInfo *ei, Board *board, int colour) {
         // Pop off the next knight
         sq = poplsb(&tempKnights);
         if (TRACE) T.KnightValue[US]++;
-        if (TRACE) T.KnightPSQT32[relativeSquare32(US, sq)][US]++;
+        if (TRACE) T.KnightPSQT[relativeSquare(US, sq)][US]++;
 
         // Compute possible attacks and store off information for king safety
         attacks = knightAttacks(sq);
@@ -607,7 +655,7 @@ int evaluateBishops(EvalInfo *ei, Board *board, int colour) {
         // Pop off the next Bishop
         sq = poplsb(&tempBishops);
         if (TRACE) T.BishopValue[US]++;
-        if (TRACE) T.BishopPSQT32[relativeSquare32(US, sq)][US]++;
+        if (TRACE) T.BishopPSQT[relativeSquare(US, sq)][US]++;
 
         // Compute possible attacks and store off information for king safety
         attacks = bishopAttacks(sq, ei->occupiedMinusBishops[US]);
@@ -680,7 +728,7 @@ int evaluateRooks(EvalInfo *ei, Board *board, int colour) {
         // Pop off the next rook
         sq = poplsb(&tempRooks);
         if (TRACE) T.RookValue[US]++;
-        if (TRACE) T.RookPSQT32[relativeSquare32(US, sq)][US]++;
+        if (TRACE) T.RookPSQT[relativeSquare(US, sq)][US]++;
 
         // Compute possible attacks and store off information for king safety
         attacks = rookAttacks(sq, ei->occupiedMinusRooks[US]);
@@ -739,7 +787,7 @@ int evaluateQueens(EvalInfo *ei, Board *board, int colour) {
         // Pop off the next queen
         sq = poplsb(&tempQueens);
         if (TRACE) T.QueenValue[US]++;
-        if (TRACE) T.QueenPSQT32[relativeSquare32(US, sq)][US]++;
+        if (TRACE) T.QueenPSQT[relativeSquare(US, sq)][US]++;
 
         // Compute possible attacks and store off information for king safety
         attacks = queenAttacks(sq, occupied);
@@ -786,7 +834,7 @@ int evaluateKings(EvalInfo *ei, Board *board, int colour) {
 
     int kingSq = ei->kingSquare[US];
     if (TRACE) T.KingValue[US]++;
-    if (TRACE) T.KingPSQT32[relativeSquare32(US, kingSq)][US]++;
+    if (TRACE) T.KingPSQT[relativeSquare(US, kingSq)][US]++;
 
     // Bonus for our pawns and minors sitting within our king area
     count = popcount(defenders & ei->kingAreas[US]);
@@ -1268,21 +1316,21 @@ void initEval() {
 
     for (int sq = 0; sq < SQUARE_NB; sq++) {
 
-        const int w32 = relativeSquare32(WHITE, sq);
-        const int b32 = relativeSquare32(BLACK, sq);
+        const int sq1 = relativeSquare(WHITE, sq);
+        const int sq2 = relativeSquare(BLACK, sq);
 
-        PSQT[WHITE_PAWN  ][sq] = + PawnValue   +   PawnPSQT32[w32];
-        PSQT[WHITE_KNIGHT][sq] = + KnightValue + KnightPSQT32[w32];
-        PSQT[WHITE_BISHOP][sq] = + BishopValue + BishopPSQT32[w32];
-        PSQT[WHITE_ROOK  ][sq] = + RookValue   +   RookPSQT32[w32];
-        PSQT[WHITE_QUEEN ][sq] = + QueenValue  +  QueenPSQT32[w32];
-        PSQT[WHITE_KING  ][sq] = + KingValue   +   KingPSQT32[w32];
+        PSQT[WHITE_PAWN  ][sq] = + PawnValue   +   PawnPSQT[sq1];
+        PSQT[WHITE_KNIGHT][sq] = + KnightValue + KnightPSQT[sq1];
+        PSQT[WHITE_BISHOP][sq] = + BishopValue + BishopPSQT[sq1];
+        PSQT[WHITE_ROOK  ][sq] = + RookValue   +   RookPSQT[sq1];
+        PSQT[WHITE_QUEEN ][sq] = + QueenValue  +  QueenPSQT[sq1];
+        PSQT[WHITE_KING  ][sq] = + KingValue   +   KingPSQT[sq1];
 
-        PSQT[BLACK_PAWN  ][sq] = - PawnValue   -   PawnPSQT32[b32];
-        PSQT[BLACK_KNIGHT][sq] = - KnightValue - KnightPSQT32[b32];
-        PSQT[BLACK_BISHOP][sq] = - BishopValue - BishopPSQT32[b32];
-        PSQT[BLACK_ROOK  ][sq] = - RookValue   -   RookPSQT32[b32];
-        PSQT[BLACK_QUEEN ][sq] = - QueenValue  -  QueenPSQT32[b32];
-        PSQT[BLACK_KING  ][sq] = - KingValue   -   KingPSQT32[b32];
+        PSQT[BLACK_PAWN  ][sq] = - PawnValue   -   PawnPSQT[sq2];
+        PSQT[BLACK_KNIGHT][sq] = - KnightValue - KnightPSQT[sq2];
+        PSQT[BLACK_BISHOP][sq] = - BishopValue - BishopPSQT[sq2];
+        PSQT[BLACK_ROOK  ][sq] = - RookValue   -   RookPSQT[sq2];
+        PSQT[BLACK_QUEEN ][sq] = - QueenValue  -  QueenPSQT[sq2];
+        PSQT[BLACK_KING  ][sq] = - KingValue   -   KingPSQT[sq2];
     }
 }

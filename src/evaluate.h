@@ -46,12 +46,12 @@ struct EvalTrace {
     int RookValue[COLOUR_NB];
     int QueenValue[COLOUR_NB];
     int KingValue[COLOUR_NB];
-    int PawnPSQT32[32][COLOUR_NB];
-    int KnightPSQT32[32][COLOUR_NB];
-    int BishopPSQT32[32][COLOUR_NB];
-    int RookPSQT32[32][COLOUR_NB];
-    int QueenPSQT32[32][COLOUR_NB];
-    int KingPSQT32[32][COLOUR_NB];
+    int PawnPSQT[SQUARE_NB][COLOUR_NB];
+    int KnightPSQT[SQUARE_NB][COLOUR_NB];
+    int BishopPSQT[SQUARE_NB][COLOUR_NB];
+    int RookPSQT[SQUARE_NB][COLOUR_NB];
+    int QueenPSQT[SQUARE_NB][COLOUR_NB];
+    int KingPSQT[SQUARE_NB][COLOUR_NB];
     int PawnCandidatePasser[2][8][COLOUR_NB];
     int PawnIsolated[COLOUR_NB];
     int PawnStacked[2][COLOUR_NB];

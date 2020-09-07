@@ -63,6 +63,7 @@ int mirrorFile(int file);
 int rankOf(int sq);
 int relativeRankOf(int colour, int sq);
 int square(int rank, int file);
+int relativeSquare(int colour, int sq);
 int relativeSquare32(int colour, int sq);
 uint64_t squaresOfMatchingColour(int sq);
 
