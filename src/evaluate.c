@@ -169,9 +169,17 @@ const int PawnCandidatePasser[2][RANK_NB] = {
     S(  27,  93), S(  39,  63), S(   0,   0), S(   0,   0)},
 };
 
-const int PawnIsolated = S(  -5, -13);
+const int PawnIsolated[FILE_NB] = {
+    S(  -4, -12), S(  -5, -12), S(  -6, -13), S(  -5, -14),
+    S(  -6, -14), S(  -5, -14), S(  -5, -12), S(  -4, -11),
+};
 
-const int PawnStacked[2] = { S(  -1, -22), S(  -5,  -7) };
+const int PawnStacked[2][FILE_NB] = {
+   {S(  -4, -28), S(  -3, -21), S(   1, -22), S(   1, -18),
+    S(   0, -18), S(  -4, -22), S(  -2, -23), S(   3, -30)},
+   {S(  -7, -14), S(  -3, -10), S(  -5,  -8), S(  -7,  -6),
+    S(  -7,  -5), S(  -4,  -9), S(  -2, -11), S(  -5, -16)},
+};
 
 const int PawnBackwards[2][RANK_NB] = {
    {S(   0,   0), S(   4,  -5), S(  10,  -8), S(  10, -17),
@@ -528,8 +536,8 @@ int evaluatePawns(EvalInfo *ei, Board *board, int colour) {
         // are able to capture another pawn to not be isolated, as they may
         // have the potential to deisolate by capturing, or be traded away
         if (!threats && !neighbors) {
-            pkeval += PawnIsolated;
-            if (TRACE) T.PawnIsolated[US]++;
+            pkeval += PawnIsolated[fileOf(sq)];
+            if (TRACE) T.PawnIsolated[fileOf(sq)][US]++;
         }
 
         // Apply a penalty if the pawn is stacked. We adjust the bonus for when
@@ -539,8 +547,8 @@ int evaluatePawns(EvalInfo *ei, Board *board, int colour) {
         if (several(Files[fileOf(sq)] & myPawns)) {
             flag = (stoppers && (threats || neighbors))
                 || (stoppers & ~forwardFileMasks(US, sq));
-            pkeval += PawnStacked[flag];
-            if (TRACE) T.PawnStacked[flag][US]++;
+            pkeval += PawnStacked[flag][fileOf(sq)];
+            if (TRACE) T.PawnStacked[flag][fileOf(sq)][US]++;
         }
 
         // Apply a penalty if the pawn is backward. We follow the usual definition
