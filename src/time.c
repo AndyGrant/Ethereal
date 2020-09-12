@@ -24,7 +24,7 @@
 #include "types.h"
 #include "uci.h"
 
-int MoveOverhead = 250; // Set by UCI options
+int MoveOverhead = 100; // Set by UCI options
 
 double getRealTime() {
 #if defined(_WIN32) || defined(_WIN64)
@@ -56,16 +56,16 @@ void initTimeManagment(SearchInfo *info, Limits *limits) {
 
         // Playing using X / Y + Z time control
         if (limits->mtg >= 0) {
-            info->idealUsage =  0.75 * limits->time / (limits->mtg +  5) + limits->inc;
-            info->maxAlloc   =  4.00 * limits->time / (limits->mtg +  7) + limits->inc;
-            info->maxUsage   = 10.00 * limits->time / (limits->mtg + 10) + limits->inc;
+            info->idealUsage =  0.75 * (limits->time - MoveOverhead) / (limits->mtg +  5) + limits->inc;
+            info->maxAlloc   =  4.00 * (limits->time - MoveOverhead) / (limits->mtg +  7) + limits->inc;
+            info->maxUsage   = 10.00 * (limits->time - MoveOverhead) / (limits->mtg + 10) + limits->inc;
         }
 
         // Playing using X + Y time controls
         else {
-            info->idealUsage =  1.00 * (limits->time + 25 * limits->inc) / 50;
-            info->maxAlloc   =  5.00 * (limits->time + 25 * limits->inc) / 50;
-            info->maxUsage   = 10.00 * (limits->time + 25 * limits->inc) / 50;
+            info->idealUsage =  1.00 * ((limits->time - MoveOverhead) + 25 * limits->inc) / 50;
+            info->maxAlloc   =  5.00 * ((limits->time - MoveOverhead) + 25 * limits->inc) / 50;
+            info->maxUsage   = 10.00 * ((limits->time - MoveOverhead) + 25 * limits->inc) / 50;
         }
 
         // Cap time allocations using the move overhead
