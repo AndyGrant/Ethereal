@@ -58,10 +58,15 @@ void resetThreadPool(Thread *threads) {
     // calls in order to ensure a deterministic behaviour
 
     for (int i = 0; i < threads->nthreads; i++) {
+
+        memset(&threads[i].evtable, 0, sizeof(EvalTable));
         memset(&threads[i].pktable, 0, sizeof(PKTable));
+
         memset(&threads[i].killers, 0, sizeof(KillerTable));
         memset(&threads[i].cmtable, 0, sizeof(CounterMoveTable));
+
         memset(&threads[i].history, 0, sizeof(HistoryTable));
+        memset(&threads[i].chistory, 0, sizeof(CaptureHistoryTable));
         memset(&threads[i].continuation, 0, sizeof(ContinuationTable));
     }
 }

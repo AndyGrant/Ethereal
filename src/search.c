@@ -195,12 +195,13 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
 
     unsigned tbresult;
     int hist = 0, cmhist = 0, fmhist = 0;
-    int quietsSeen = 0, quietsPlayed = 0, played = 0;
+    int quietsSeen = 0, quietsPlayed = 0, capturesPlayed = 0, played = 0;
     int ttHit, ttValue = 0, ttEval = 0, ttDepth = 0, ttBound = 0;
     int R, newDepth, rAlpha, rBeta, oldAlpha = alpha;
     int inCheck, isQuiet, improving, extension, singular, skipQuiets = 0;
     int eval, value = -MATE, best = -MATE, futilityMargin, seeMargin[2];
-    uint16_t move, ttMove = NONE_MOVE, bestMove = NONE_MOVE, quietsTried[MAX_MOVES];
+    uint16_t move, ttMove = NONE_MOVE, bestMove = NONE_MOVE;
+    uint16_t quietsTried[MAX_MOVES], capturesTried[MAX_MOVES];
     MovePicker movePicker;
     PVariation lpv;
 
@@ -459,8 +460,8 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
             continue;
 
         played += 1;
-        if (isQuiet)
-            quietsTried[quietsPlayed++] = move;
+        if (isQuiet) quietsTried[quietsPlayed++] = move;
+        else capturesTried[capturesPlayed++] = move;
 
         // The UCI spec allows us to output information about the current move
         // that we are going to search. We only do this from the main thread,
@@ -571,9 +572,14 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, int h
     // can differentiate between close mates and far away mates from the root
     if (played == 0) return inCheck ? -MATE + height : 0;
 
-    // Step 19 (~760 elo). Update History counters on a fail high for a quiet move
+    // Step 19 (~760 elo). Update History counters on a fail high for a quiet move.
+    // We also update Capture History Heuristics, which augment or replace MVV-LVA.
+
     if (best >= beta && !moveIsTactical(board, bestMove))
         updateHistoryHeuristics(thread, quietsTried, quietsPlayed, height, depth);
+
+    if (best >= beta)
+        updateCaptureHistories(thread, bestMove, capturesTried, capturesPlayed, depth);
 
     // Step 20. Store results of search into the Transposition Table. We do
     // not overwrite the Root entry from the first line of play we examined

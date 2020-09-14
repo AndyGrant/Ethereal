@@ -98,6 +98,58 @@ void updateKillerMoves(Thread *thread, int height, uint16_t move) {
 }
 
 
+void updateCaptureHistories(Thread *thread, uint16_t best, uint16_t *moves, int length, int depth) {
+
+    const int bonus = MIN(depth * depth, HistoryMax);
+
+    for (int i = 0; i < length; i++) {
+
+        const int to = MoveTo(moves[i]);
+        const int from = MoveFrom(moves[i]);
+        const int delta = moves[i] == best ? bonus : -bonus;
+
+        int piece = pieceType(thread->board.squares[from]);
+        int captured = pieceType(thread->board.squares[to]);
+
+        if (MoveType(moves[i]) == ENPASS_MOVE   ) captured = PAWN;
+        if (MoveType(moves[i]) == PROMOTION_MOVE) captured = PAWN;
+
+        assert(PAWN <= piece && piece <= KING);
+        assert(PAWN <= captured && captured <= QUEEN);
+
+        int entry = thread->chistory[piece][to][captured];
+        entry += HistoryMultiplier * delta - entry * abs(delta) / HistoryDivisor;
+        thread->chistory[piece][to][captured] = entry;
+    }
+}
+
+void getCaptureHistories(Thread *thread, uint16_t *moves, int *scores, int start, int length) {
+
+    static const int MVVAugment[] = {0, 2400, 2400, 4800, 9600};
+
+    for (int i = start; i < start + length; i++) {
+
+        const int to = MoveTo(moves[i]);
+        const int from = MoveFrom(moves[i]);
+
+        int piece = pieceType(thread->board.squares[from]);
+        int captured = pieceType(thread->board.squares[to]);
+
+        if (MoveType(moves[i]) == ENPASS_MOVE   ) captured = PAWN;
+        if (MoveType(moves[i]) == PROMOTION_MOVE) captured = PAWN;
+
+        assert(PAWN <= piece && piece <= KING);
+        assert(PAWN <= captured && captured <= QUEEN);
+
+        scores[i] = 64000 + thread->chistory[piece][to][captured];
+        if (MovePromoPiece(moves[i]) == QUEEN) scores[i] += 64000;
+        scores[i] += MVVAugment[captured];
+
+        assert(scores[i] >= 0);
+    }
+}
+
+
 void getHistory(Thread *thread, uint16_t move, int height, int *hist, int *cmhist, int *fmhist) {
 
     // Extract information from this move

@@ -96,8 +96,10 @@ typedef struct UCIGoStruct UCIGoStruct;
 
 typedef uint16_t KillerTable[MAX_PLY+1][2];
 typedef uint16_t CounterMoveTable[COLOUR_NB][PIECE_NB][SQUARE_NB];
+
 typedef int16_t HistoryTable[COLOUR_NB][SQUARE_NB][SQUARE_NB];
 typedef int16_t ContinuationTable[CONT_NB][PIECE_NB][SQUARE_NB][PIECE_NB][SQUARE_NB];
+typedef int16_t CaptureHistoryTable[PIECE_NB][SQUARE_NB][PIECE_NB-1];
 
 // Trivial alignment macros
 
