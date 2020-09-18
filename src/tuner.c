@@ -128,7 +128,7 @@ void runTuner() {
     const int ttupleMB = (int)(STACKSIZE  * sizeof(TTuple) / (1 << 20));
 
     setvbuf(stdout, NULL, _IONBF, 0);
-    printf("Tuner will be tuning %d Terms\n", NTERMS);
+    printf("Tuner will be tuning 2x%d Terms\n", NTERMS);
     printf("Allocating Memory for Tuner Entries [%dMB]\n", tentryMB);
     printf("Allocating Memory for Tuner Tuple Stack [%dMB]\n", ttupleMB);
     printf("Saving the current value for each Term as a starting point\n");
@@ -158,10 +158,10 @@ void runTuner() {
         }
 
         error = tunedEvaluationErrors(entries, params, methods, K);
-        printf("Epoch [%d] Error = [%.9f], Rate = [%g]\n", epoch, error, rate);
-
         if (epoch && epoch % LRSTEPRATE == 0) rate = rate / LRDROPRATE;
         if (epoch % REPORTING == 0) printParameters(params, cparams);
+
+        printf("\rEpoch [%d] Error = [%.9f], Rate = [%g]", epoch, error, rate);
     }
 }
 

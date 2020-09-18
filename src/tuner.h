@@ -22,101 +22,105 @@
 
 #include "types.h"
 
-#define NPARTITIONS  (      64) // Total thread partitions
-#define KPRECISION   (      10) // Iterations for computing K
+#define NPARTITIONS     (      64) // Total thread partitions
+#define KPRECISION      (      10) // Iterations for computing K
 
-#define QSRESOLVE    (       0) // Whether to resolve via a qsearch()
-#define PRETTYIFY    (       1) // Whether to format as if we tune everything
-#define REPORTING    (      50) // How often to print the new parameters
+#define QSRESOLVE       (       0) // Whether to resolve via a qsearch()
+#define PRETTYIFY       (       1) // Whether to format as if we tune everything
+#define REPORTING       (      50) // How often to print the new parameters
 
-#define LRRATE       (    0.10) // Global Learning rate
-#define LRDROPRATE   (    1.00) // Cut LR by this each LR-step
-#define LRSTEPRATE   (     250) // Cut LR after this many epochs
+#define LRRATE          (    0.10) // Global Learning rate
+#define LRDROPRATE      (    1.00) // Cut LR by this each LR-step
+#define LRSTEPRATE      (     250) // Cut LR after this many epochs
 
-#define NTERMS       (       0) // Total terms in the Tuner (872)
-#define MAXEPOCHS    (   10000) // Max number of epochs allowed
-#define BATCHSIZE    (   16384) // FENs per mini-batch
-#define NPOSITIONS   (32488736) // Total FENS in the book
+#define TuneNormal     (        0) // Flag to enable tuning on all Normals
+#define TuneSafety     (        0) // Flag to enable tuning on all Safeties
+#define TuneComplexity (        0) // Flag to enable tuning on all Complexities
+
+#define NTERMS         (       0) // Total terms in the Tuner (872)
+#define MAXEPOCHS      (   10000) // Max number of epochs allowed
+#define BATCHSIZE      (   16384) // FENs per mini-batch
+#define NPOSITIONS     ( 9999740) // Total FENS in the book
 
 #define STACKSIZE ((int)((double) NPOSITIONS * NTERMS / 64))
 
-#define TunePawnValue                   (0)
-#define TuneKnightValue                 (0)
-#define TuneBishopValue                 (0)
-#define TuneRookValue                   (0)
-#define TuneQueenValue                  (0)
-#define TunePawnPSQT                    (0)
-#define TuneKnightPSQT                  (0)
-#define TuneBishopPSQT                  (0)
-#define TuneRookPSQT                    (0)
-#define TuneQueenPSQT                   (0)
-#define TuneKingPSQT                    (0)
-#define TunePawnCandidatePasser         (0)
-#define TunePawnIsolated                (0)
-#define TunePawnStacked                 (0)
-#define TunePawnBackwards               (0)
-#define TunePawnConnected32             (0)
-#define TuneKnightOutpost               (0)
-#define TuneKnightBehindPawn            (0)
-#define TuneKnightInSiberia             (0)
-#define TuneKnightMobility              (0)
-#define TuneBishopPair                  (0)
-#define TuneBishopRammedPawns           (0)
-#define TuneBishopOutpost               (0)
-#define TuneBishopBehindPawn            (0)
-#define TuneBishopLongDiagonal          (0)
-#define TuneBishopMobility              (0)
-#define TuneRookFile                    (0)
-#define TuneRookOnSeventh               (0)
-#define TuneRookMobility                (0)
-#define TuneQueenRelativePin            (0)
-#define TuneQueenMobility               (0)
-#define TuneKingDefenders               (0)
-#define TuneKingPawnFileProximity       (0)
-#define TuneKingShelter                 (0)
-#define TuneKingStorm                   (0)
-#define TuneSafetyKnightWeight          (0)
-#define TuneSafetyBishopWeight          (0)
-#define TuneSafetyRookWeight            (0)
-#define TuneSafetyQueenWeight           (0)
-#define TuneSafetyAttackValue           (0)
-#define TuneSafetyWeakSquares           (0)
-#define TuneSafetyNoEnemyQueens         (0)
-#define TuneSafetySafeQueenCheck        (0)
-#define TuneSafetySafeRookCheck         (0)
-#define TuneSafetySafeBishopCheck       (0)
-#define TuneSafetySafeKnightCheck       (0)
-#define TuneSafetyAdjustment            (0)
-#define TunePassedPawn                  (0)
-#define TunePassedFriendlyDistance      (0)
-#define TunePassedEnemyDistance         (0)
-#define TunePassedSafePromotionPath     (0)
-#define TuneThreatWeakPawn              (0)
-#define TuneThreatMinorAttackedByPawn   (0)
-#define TuneThreatMinorAttackedByMinor  (0)
-#define TuneThreatMinorAttackedByMajor  (0)
-#define TuneThreatRookAttackedByLesser  (0)
-#define TuneThreatMinorAttackedByKing   (0)
-#define TuneThreatRookAttackedByKing    (0)
-#define TuneThreatQueenAttackedByOne    (0)
-#define TuneThreatOverloadedPieces      (0)
-#define TuneThreatByPawnPush            (0)
-#define TuneSpaceRestrictPiece          (0)
-#define TuneSpaceRestrictEmpty          (0)
-#define TuneSpaceCenterControl          (0)
-#define TuneClosednessKnightAdjustment  (0)
-#define TuneClosednessRookAdjustment    (0)
-#define TuneComplexityTotalPawns        (0)
-#define TuneComplexityPawnFlanks        (0)
-#define TuneComplexityPawnEndgame       (0)
-#define TuneComplexityAdjustment        (0)
+#define TunePawnValue                   (0 || TuneNormal)
+#define TuneKnightValue                 (0 || TuneNormal)
+#define TuneBishopValue                 (0 || TuneNormal)
+#define TuneRookValue                   (0 || TuneNormal)
+#define TuneQueenValue                  (0 || TuneNormal)
+#define TunePawnPSQT                    (0 || TuneNormal)
+#define TuneKnightPSQT                  (0 || TuneNormal)
+#define TuneBishopPSQT                  (0 || TuneNormal)
+#define TuneRookPSQT                    (0 || TuneNormal)
+#define TuneQueenPSQT                   (0 || TuneNormal)
+#define TuneKingPSQT                    (0 || TuneNormal)
+#define TunePawnCandidatePasser         (0 || TuneNormal)
+#define TunePawnIsolated                (0 || TuneNormal)
+#define TunePawnStacked                 (0 || TuneNormal)
+#define TunePawnBackwards               (0 || TuneNormal)
+#define TunePawnConnected32             (0 || TuneNormal)
+#define TuneKnightOutpost               (0 || TuneNormal)
+#define TuneKnightBehindPawn            (0 || TuneNormal)
+#define TuneKnightInSiberia             (0 || TuneNormal)
+#define TuneKnightMobility              (0 || TuneNormal)
+#define TuneBishopPair                  (0 || TuneNormal)
+#define TuneBishopRammedPawns           (0 || TuneNormal)
+#define TuneBishopOutpost               (0 || TuneNormal)
+#define TuneBishopBehindPawn            (0 || TuneNormal)
+#define TuneBishopLongDiagonal          (0 || TuneNormal)
+#define TuneBishopMobility              (0 || TuneNormal)
+#define TuneRookFile                    (0 || TuneNormal)
+#define TuneRookOnSeventh               (0 || TuneNormal)
+#define TuneRookMobility                (0 || TuneNormal)
+#define TuneQueenRelativePin            (0 || TuneNormal)
+#define TuneQueenMobility               (0 || TuneNormal)
+#define TuneKingDefenders               (0 || TuneNormal)
+#define TuneKingPawnFileProximity       (0 || TuneNormal)
+#define TuneKingShelter                 (0 || TuneNormal)
+#define TuneKingStorm                   (0 || TuneNormal)
+#define TuneSafetyKnightWeight          (0 || TuneSafety)
+#define TuneSafetyBishopWeight          (0 || TuneSafety)
+#define TuneSafetyRookWeight            (0 || TuneSafety)
+#define TuneSafetyQueenWeight           (0 || TuneSafety)
+#define TuneSafetyAttackValue           (0 || TuneSafety)
+#define TuneSafetyWeakSquares           (0 || TuneSafety)
+#define TuneSafetyNoEnemyQueens         (0 || TuneSafety)
+#define TuneSafetySafeQueenCheck        (0 || TuneSafety)
+#define TuneSafetySafeRookCheck         (0 || TuneSafety)
+#define TuneSafetySafeBishopCheck       (0 || TuneSafety)
+#define TuneSafetySafeKnightCheck       (0 || TuneSafety)
+#define TuneSafetyAdjustment            (0 || TuneSafety)
+#define TunePassedPawn                  (0 || TuneNormal)
+#define TunePassedFriendlyDistance      (0 || TuneNormal)
+#define TunePassedEnemyDistance         (0 || TuneNormal)
+#define TunePassedSafePromotionPath     (0 || TuneNormal)
+#define TuneThreatWeakPawn              (0 || TuneNormal)
+#define TuneThreatMinorAttackedByPawn   (0 || TuneNormal)
+#define TuneThreatMinorAttackedByMinor  (0 || TuneNormal)
+#define TuneThreatMinorAttackedByMajor  (0 || TuneNormal)
+#define TuneThreatRookAttackedByLesser  (0 || TuneNormal)
+#define TuneThreatMinorAttackedByKing   (0 || TuneNormal)
+#define TuneThreatRookAttackedByKing    (0 || TuneNormal)
+#define TuneThreatQueenAttackedByOne    (0 || TuneNormal)
+#define TuneThreatOverloadedPieces      (0 || TuneNormal)
+#define TuneThreatByPawnPush            (0 || TuneNormal)
+#define TuneSpaceRestrictPiece          (0 || TuneNormal)
+#define TuneSpaceRestrictEmpty          (0 || TuneNormal)
+#define TuneSpaceCenterControl          (0 || TuneNormal)
+#define TuneClosednessKnightAdjustment  (0 || TuneNormal)
+#define TuneClosednessRookAdjustment    (0 || TuneNormal)
+#define TuneComplexityTotalPawns        (0 || TuneComplexity)
+#define TuneComplexityPawnFlanks        (0 || TuneComplexity)
+#define TuneComplexityPawnEndgame       (0 || TuneComplexity)
+#define TuneComplexityAdjustment        (0 || TuneComplexity)
 
 enum { NORMAL, COMPLEXITY, SAFETY, METHOD_NB };
 
 typedef struct TTuple {
     uint16_t index;
-    int16_t wcoeff;
-    int16_t bcoeff;
+    int8_t wcoeff;
+    int8_t bcoeff;
 } TTuple;
 
 typedef struct TEntry {
@@ -264,7 +268,7 @@ void print_3(char *name, TVector params, int i, int A, int B, int C, char *S);
 
 #define EXECUTE_ON_TERMS(F) do {                                            \
                                                                             \
-    COMMENTS(F, "\n/* Material Value Evaluation Terms */\n\n");             \
+    COMMENTS(F, "\n\n/* Material Value Evaluation Terms */\n\n");           \
     ENABLE_0(F, PawnValue, NORMAL, "  ");                                   \
     ENABLE_0(F, KnightValue, NORMAL, "");                                   \
     ENABLE_0(F, BishopValue, NORMAL, "");                                   \
@@ -282,7 +286,7 @@ void print_3(char *name, TVector params, int i, int A, int B, int C, char *S);
                                                                             \
     COMMENTS(F, "/* Pawn Evaluation Terms */\n\n");                         \
     ENABLE_2(F, PawnCandidatePasser, 2, 8, NORMAL, "[2][RANK_NB]");         \
-    ENABLE_1(F, PawnIsolated, 8, NORMAL, "[FILE_NB]"); NEWLINE(F);          \
+    ENABLE_1(F, PawnIsolated, 8, NORMAL, "[FILE_NB]");                      \
     ENABLE_2(F, PawnStacked, 2, 8, NORMAL, "[2][FILE_NB]");                 \
     ENABLE_2(F, PawnBackwards, 2, 8, NORMAL, "[2][RANK_NB]");               \
     ENABLE_1(F, PawnConnected32, 32, NORMAL, "[32]");                       \
