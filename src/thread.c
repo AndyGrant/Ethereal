@@ -81,9 +81,16 @@ void newSearchThreadPool(Thread *threads, Board *board, Limits *limits, SearchIn
     int contempt = MakeScore(ContemptDrawPenalty + ContemptComplexity, ContemptDrawPenalty);
 
     for (int i = 0; i < threads->nthreads; i++) {
+
         threads[i].limits = limits;
-        threads[i].info = info;
-        threads[i].nodes = threads[i].tbhits = 0ull;
+        threads[i].info   = info;
+
+        threads[i].height    = 0;
+        threads[i].pknndepth = 0;
+
+        threads[i].nodes     = 0ull;
+        threads[i].tbhits    = 0ull;
+
         memcpy(&threads[i].board, board, sizeof(Board));
         threads[i].contempt = board->turn == WHITE ? contempt : -contempt;
     }

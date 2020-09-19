@@ -45,26 +45,25 @@ static int getBestMoveIndex(MovePicker *mp, int start, int end) {
 }
 
 
-void initMovePicker(MovePicker *mp, Thread *thread, uint16_t ttMove, int height) {
+void initMovePicker(MovePicker *mp, Thread *thread, uint16_t ttMove) {
 
     // Start with the table move
     mp->stage = STAGE_TABLE;
     mp->tableMove = ttMove;
 
     // Lookup our refutations (killers and counter moves)
-    getRefutationMoves(thread, height, &mp->killer1, &mp->killer2, &mp->counter);
+    getRefutationMoves(thread, &mp->killer1, &mp->killer2, &mp->counter);
 
     // General housekeeping
     mp->threshold = 0;
     mp->thread = thread;
-    mp->height = height;
     mp->type = NORMAL_PICKER;
 }
 
-void initSingularMovePicker(MovePicker *mp, Thread *thread, uint16_t ttMove, int height) {
+void initSingularMovePicker(MovePicker *mp, Thread *thread, uint16_t ttMove) {
 
     // Simply skip over the TT move
-    initMovePicker(mp, thread, ttMove, height);
+    initMovePicker(mp, thread, ttMove);
     mp->stage = STAGE_GENERATE_NOISY;
 
 }
@@ -80,7 +79,6 @@ void initNoisyMovePicker(MovePicker *mp, Thread *thread, int threshold) {
     // General housekeeping
     mp->threshold = threshold;
     mp->thread = thread;
-    mp->height = 0;
     mp->type = NOISY_PICKER;
 }
 
@@ -194,7 +192,7 @@ uint16_t selectNextMove(MovePicker *mp, Board *board, int skipQuiets) {
             // Generate and evaluate all quiet moves when not skipping them
             if (!skipQuiets) {
                 mp->quietSize = genAllQuietMoves(board, mp->moves + mp->split);
-                getHistoryScores(mp->thread, mp->moves, mp->values, mp->split, mp->quietSize, mp->height);
+                getHistoryScores(mp->thread, mp->moves, mp->values, mp->split, mp->quietSize);
             }
 
             mp->stage = STAGE_QUIET;

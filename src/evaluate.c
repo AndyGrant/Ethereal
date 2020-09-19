@@ -25,11 +25,14 @@
 #include "board.h"
 #include "evalcache.h"
 #include "evaluate.h"
+#include "move.h"
 #include "masks.h"
+#include "network.h"
 #include "thread.h"
 #include "transposition.h"
 #include "types.h"
 
+extern PKNetwork PKNN;
 EvalTrace T, EmptyTrace;
 int PSQT[32][SQUARE_NB];
 
@@ -426,16 +429,24 @@ int evaluateBoard(Thread *thread, Board *board) {
     EvalInfo ei;
     int phase, factor, eval, pkeval, hashed;
 
+    // We can recognize positions we just evaluated
+    if (thread->moveStack[thread->height-1] == NULL_MOVE)
+        return -thread->evalStack[thread->height-1] + 2 * Tempo;
+
     // Check for this evaluation being cached already
     if (!TRACE && getCachedEvaluation(thread, board, &hashed))
         return hashed;
 
     initEvalInfo(thread, board, &ei);
-    eval   = evaluatePieces(&ei, board);
+    eval = evaluatePieces(&ei, board);
+
     pkeval = ei.pkeval[WHITE] - ei.pkeval[BLACK];
-    eval  += pkeval + board->psqtmat + thread->contempt;
-    eval  += evaluateClosedness(&ei, board);
-    eval  += evaluateComplexity(&ei, board, eval);
+    if (ei.pkentry == NULL)
+        pkeval += partiallyComputePKNetwork(thread);
+
+    eval += pkeval + board->psqtmat + thread->contempt;
+    eval += evaluateClosedness(&ei, board);
+    eval += evaluateComplexity(&ei, board, eval);
 
     // Calculate the game phase based on remaining material (Fruit Method)
     phase = 24 - 4 * popcount(board->pieces[QUEEN ])
@@ -458,8 +469,7 @@ int evaluateBoard(Thread *thread, Board *board) {
         storeCachedPawnKingEval(thread, board, ei.passedPawns, pkeval);
 
     // Factor in the Tempo after interpolation and scaling, so that
-    // in the search we can assume that if a null move is made, then
-    // then `eval = last_eval + 2 * Tempo`
+    // if a null move is made, then we know eval = last_eval + 2 * Tempo
     return Tempo + (board->turn == WHITE ? eval : -eval);
 }
 
