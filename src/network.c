@@ -69,7 +69,7 @@ void initPKNetwork() {
     for (int i = 0; i < PKNETWORK_LAYER1; i++) {
 
         // Grab the next line and tokenize it
-        char weights[strlen(PKWeights[i])];
+        char weights[strlen(PKWeights[i]) + 1];
         strcpy(weights, PKWeights[i]);
         strtok(weights, " ");
 
@@ -81,7 +81,7 @@ void initPKNetwork() {
     for (int i = 0; i < PKNETWORK_OUTPUTS; i++) {
 
         // Grab the next line and tokenize it
-        char weights[strlen(PKWeights[i + PKNETWORK_LAYER1])];
+        char weights[strlen(PKWeights[i + PKNETWORK_LAYER1]) + 1];
         strcpy(weights, PKWeights[i + PKNETWORK_LAYER1]);
         strtok(weights, " ");
 
