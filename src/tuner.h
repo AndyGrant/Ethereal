@@ -37,7 +37,7 @@
 #define TuneSafety     (        0) // Flag to enable tuning on all Safeties
 #define TuneComplexity (        0) // Flag to enable tuning on all Complexities
 
-#define NTERMS         (       0) // Total terms in the Tuner (872)
+#define NTERMS         (       0) // Total terms in the Tuner (904)
 #define MAXEPOCHS      (   10000) // Max number of epochs allowed
 #define BATCHSIZE      (   16384) // FENs per mini-batch
 #define NPOSITIONS     ( 9999740) // Total FENS in the book
@@ -91,6 +91,8 @@
 #define TuneSafetySafeBishopCheck       (0 || TuneSafety)
 #define TuneSafetySafeKnightCheck       (0 || TuneSafety)
 #define TuneSafetyAdjustment            (0 || TuneSafety)
+#define TuneSafetyShelter               (0 || TuneSafety)
+#define TuneSafetyStorm                 (0 || TuneSafety)
 #define TunePassedPawn                  (0 || TuneNormal)
 #define TunePassedFriendlyDistance      (0 || TuneNormal)
 #define TunePassedEnemyDistance         (0 || TuneNormal)
@@ -333,6 +335,8 @@ void print_3(char *name, TVector params, int i, int A, int B, int C, char *S);
     ENABLE_0(F, SafetySafeBishopCheck, SAFETY, "");                         \
     ENABLE_0(F, SafetySafeKnightCheck, SAFETY, "");                         \
     ENABLE_0(F, SafetyAdjustment, SAFETY, "     ");                         \
+    ENABLE_2(F, SafetyShelter, 2, 8, SAFETY, "[2][RANK_NB]");               \
+    ENABLE_2(F, SafetyStorm, 2, 8, SAFETY, "[2][RANK_NB]");                 \
                                                                             \
     COMMENTS(F, "\n/* Passed Pawn Evaluation Terms */\n\n");                \
     ENABLE_3(F, PassedPawn, 2, 2, 8, NORMAL, "[2][2][RANK_NB]");            \

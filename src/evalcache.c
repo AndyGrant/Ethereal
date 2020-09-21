@@ -47,7 +47,8 @@ PKEntry* getCachedPawnKingEval(Thread *thread, Board *board) {
     return pke->pkhash == board->pkhash ? pke : NULL;
 }
 
-void storeCachedPawnKingEval(Thread *thread, Board *board, uint64_t passed, int eval) {
+void storeCachedPawnKingEval(Thread *thread, Board *board, uint64_t passed, int eval, int safetyw, int safetyb) {
     PKEntry *pke = &thread->pktable[board->pkhash & PK_CACHE_MASK];
-    *pke = (PKEntry) {board->pkhash, passed, eval};
+    *pke = (PKEntry) {board->pkhash, passed, eval, safetyw, safetyb};
 }
+
