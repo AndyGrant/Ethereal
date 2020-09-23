@@ -33,6 +33,8 @@ ARMV8FLAGS  = -O3 $(WFLAGS) -DNDEBUG -flto -march=armv8-a -m64
 ARMV7FLAGS  = -O3 $(WFLAGS) -DNDEBUG -flto -march=armv7-a -m32
 ARMV7FLAGS += -mfloat-abi=softfp -mfpu=vfpv3-d16 -mthumb -Wl,--fix-cortex-a8
 
+RPIFLAGS = -O3 $(WFLAGS) -DNDEBUG -flto -march=armv8-a
+
 popcnt:
 	$(CC) $(CFLAGS) $(SRC) $(LIBS) $(POPCNTFLAGS) -o $(EXE)
 
@@ -62,3 +64,6 @@ armv8:
 
 armv7:
 	$(CC) $(ARMV7FLAGS) $(SRC) -lm -o $(EXE)
+
+rpi:
+	$(CC) $(RPIFLAGS) $(SRC) $(LIBS) -o $(EXE)
