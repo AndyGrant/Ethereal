@@ -35,10 +35,10 @@
 #define TuneSafety     (       0) // Flag to enable all Safeties     ( 44)
 #define TuneComplexity (       0) // Flag to enable all Complexities (  4)
 
-#define NTERMS         (      0) // Total terms in the Tuner (904)
+#define NTERMS         (       0) // Total terms in the Tuner (904)
 #define MAXEPOCHS      (  100000) // Max number of epochs allowed
 #define BATCHSIZE      (   16384) // Training samples per mini-batch
-#define NPOSITIONS     ( 9999740) // Total Training samples in the book
+#define NPOSITIONS     (42487498) // Total Training samples in the book
 
 #define STACKSIZE ((int)((double) NPOSITIONS * NTERMS / 64))
 
