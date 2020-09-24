@@ -205,12 +205,9 @@ void initCoefficients(TVector coeffs) {
 
 void initTunerEntries(TEntry *entries, Thread *thread, TArray methods) {
 
-    Undo undo;
     char line[256];
-    Limits limits = {0};
-    thread->limits = &limits; thread->depth  = 0;
-
     FILE *fin = fopen("FENS", "r");
+
     for (int i = 0; i < NPOSITIONS; i++) {
 
         if (fgets(line, 256, fin) == NULL)
@@ -225,14 +222,7 @@ void initTunerEntries(TEntry *entries, Thread *thread, TArray methods) {
         // Set the board with the current FEN
         boardFromFEN(&thread->board, line, 0);
 
-        // Resolve the position to mitigate tactics
-        if (QSRESOLVE) {
-            qsearch(thread, &thread->pv, -MATE, MATE, 0);
-            for (int pvidx = 0; pvidx < thread->pv.length; pvidx++)
-                applyMove(&thread->board, thread->pv.line[pvidx], &undo);
-        }
-
-        // Defer the set to another function
+        // Defer the setup to another function
         initTunerEntry(&entries[i], thread, &thread->board, methods);
 
         // Occasional reporting for total completion
@@ -324,12 +314,14 @@ double computeOptimalK(TEntry *entries) {
                 best = error, start = curr;
         }
 
-        printf("Epoch [%d] K = %f E = %f\n", i, start, best);
+        printf("Epoch [%d] K = [%.9f] E = [%.9f]\n", i, start, best);
 
         end   = start + step;
         start = start - step;
         step  = step  / 10.0;
     }
+
+    printf("\n");
 
     return start;
 }
