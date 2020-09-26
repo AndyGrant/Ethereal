@@ -149,8 +149,26 @@ void getCaptureHistories(Thread *thread, uint16_t *moves, int *scores, int start
     }
 }
 
+int getCaptureHistory(Thread *thread, uint16_t move) {
 
-void getHistory(Thread *thread, uint16_t move, int *hist, int *cmhist, int *fmhist) {
+    const int to   = MoveTo(move);
+    const int from = MoveFrom(move);
+
+    int piece = pieceType(thread->board.squares[from]);
+    int captured = pieceType(thread->board.squares[to]);
+
+    if (MoveType(move) == ENPASS_MOVE   ) captured = PAWN;
+    if (MoveType(move) == PROMOTION_MOVE) captured = PAWN;
+
+    assert(PAWN <= piece && piece <= KING);
+    assert(PAWN <= captured && captured <= QUEEN);
+
+    return thread->chistory[piece][to][captured]
+         + 64000 * (MovePromoPiece(move) == QUEEN);
+}
+
+
+int getHistory(Thread *thread, uint16_t move, int *cmhist, int *fmhist) {
 
     // Extract information from this move
     int to = MoveTo(move);
@@ -167,9 +185,6 @@ void getHistory(Thread *thread, uint16_t move, int *hist, int *cmhist, int *fmhi
     int fmPiece = thread->pieceStack[thread->height-2];
     int fmTo = MoveTo(follow);
 
-    // Set basic Butterfly history
-    *hist = thread->history[thread->board.turn][from][to];
-
     // Set Counter Move History if it exists
     if (counter == NONE_MOVE || counter == NULL_MOVE) *cmhist = 0;
     else *cmhist = thread->continuation[0][cmPiece][cmTo][piece][to];
@@ -177,6 +192,9 @@ void getHistory(Thread *thread, uint16_t move, int *hist, int *cmhist, int *fmhi
     // Set Followup Move History if it exists
     if (follow == NONE_MOVE || follow == NULL_MOVE) *fmhist = 0;
     else *fmhist = thread->continuation[1][fmPiece][fmTo][piece][to];
+
+    // Return CMHist + FMHist + ButterflyHist
+    return *cmhist + *fmhist + thread->history[thread->board.turn][from][to];
 }
 
 void getHistoryScores(Thread *thread, uint16_t *moves, int *scores, int start, int length) {

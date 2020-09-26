@@ -396,11 +396,12 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         if (RootNode && moveExaminedByMultiPV(thread, move)) continue;
         if (RootNode &&    !moveIsInRootMoves(thread, move)) continue;
 
-        // For quiet moves we fetch various history scores
-        if ((isQuiet = !moveIsTactical(board, move))) {
-            getHistory(thread, move, &hist, &cmhist, &fmhist);
-            quietsSeen++;
-        }
+        // Track Quiets Seen for Late Move Pruning
+        quietsSeen += (isQuiet = !moveIsTactical(board, move));
+
+        // All moves have one or more History scores
+        hist = !isQuiet ? getCaptureHistory(thread, move)
+             : getHistory(thread, move, &cmhist, &fmhist);
 
         // Step 11 (~175 elo). Quiet Move Pruning. Prune any quiet move that meets one
         // of the criteria below, only after proving a non mated line exists
@@ -413,7 +414,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
             // and we don't expect anything from this move, we can skip all other quiets
             if (   depth <= FutilityPruningDepth
                 && eval + futilityMargin <= alpha
-                && hist + cmhist + fmhist < FutilityPruningHistoryLimit[improving])
+                && hist < FutilityPruningHistoryLimit[improving])
                 skipQuiets = 1;
 
             // Step 11B (~2.5 elo). Futility Pruning. If our score is not only far
@@ -494,8 +495,9 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
             return MAX(ttValue - depth, -MATE);
         }
 
-        // Step 15 (~249 elo). Late Move Reductions. Compute the reduction,
-        // allow the later steps to perform the reduced searches
+        // Step 15A (~249 elo). Quiet Late Move Reductions. Reduce the search depth
+        // of Quiet moves after we've explored the main line. If a reduced search
+        // manages to beat alpha, against our expectations, we perform a research
         if (isQuiet && depth > 2 && played > 1) {
 
             /// Use the LMR Formula as a starting point
@@ -511,12 +513,19 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
             R -= movePicker.stage < STAGE_QUIET;
 
             // Adjust based on history scores
-            R -= MAX(-2, MIN(2, (hist + cmhist + fmhist) / 5000));
+            R -= MAX(-2, MIN(2, hist / 5000));
 
             // Don't extend or drop into QS
-            R  = MIN(depth - 1, MAX(R, 1));
+            R = MIN(depth - 1, MAX(R, 1));
+        }
 
-        } else R = 1;
+        // Step 15B (~2 elo). Noisy Late Move Reductions. The same as Step 15A, but
+        // only applied to Tactical moves with unusually poor Capture History scores
+        else if (!isQuiet && depth > 2 && played > 1)
+            R = MIN(depth - 1, 1 + (hist <= 0));
+
+        // No LMR conditions were met. Use a Standard Reduction
+        else R = 1;
 
         // Step 16A. If we triggered the LMR conditions (which we know by the value of R),
         // then we will perform a reduced search on the null alpha window, as we have no
