@@ -25,13 +25,13 @@
 
 #define PKNETWORK_INPUTS  (224)
 #define PKNETWORK_LAYER1  ( 32)
-#define PKNETWORK_OUTPUTS (  1)
+#define PKNETWORK_OUTPUTS (  2)
 
 typedef struct PKNetwork {
 
     // PKNetworks are of the form [Input, Hidden Layer 1, Output Layer]
     // Our current Network is [224x32, 32x1]. The Network is trained to
-    // output a Score in CentiPawns for the Midgame only.
+    // output a Score in CentiPawns for the Midgame and Endgame
 
     ALIGN64 float inputWeights[PKNETWORK_LAYER1][PKNETWORK_INPUTS];
     ALIGN64 float inputBiases[PKNETWORK_LAYER1];

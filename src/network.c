@@ -33,7 +33,7 @@
 PKNetwork PKNN;
 
 static char *PKWeights[] = {
-    #include "weights/pknet_224x32x1.net"
+    #include "weights/pknet_224x32x2.net"
     ""
 };
 
@@ -113,7 +113,8 @@ int fullyComputePKNetwork(Thread *thread) {
                 outputNeurons[i] += layer1Neurons[j] * PKNN.layer1Weights[i][j];
     }
 
-    return MakeScore((int) outputNeurons[0], 0);
+    assert(PKNETWORK_OUTPUTS == PHASE_NB);
+    return MakeScore((int) outputNeurons[MG], (int) outputNeurons[EG]);
 }
 
 int partiallyComputePKNetwork(Thread *thread) {
@@ -130,7 +131,8 @@ int partiallyComputePKNetwork(Thread *thread) {
                 outputNeurons[i] += layer1Neurons[j] * PKNN.layer1Weights[i][j];
     }
 
-    return MakeScore((int) outputNeurons[0], 0);
+    assert(PKNETWORK_OUTPUTS == PHASE_NB);
+    return MakeScore((int) outputNeurons[MG], (int) outputNeurons[EG]);
 }
 
 
