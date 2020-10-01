@@ -72,9 +72,6 @@ int apply(Thread *thread, Board *board, uint16_t move) {
     // Advance the Stack before updating
     thread->height++;
 
-    // Update the collected [PKNETWORK_LAYERS1] Neurons
-    updatePKNetworkAfterMove(thread, move);
-
     return 1;
 }
 
@@ -90,9 +87,6 @@ void applyLegal(Thread *thread, Board *board, uint16_t move) {
 
     // Advance the Stack before updating
     thread->height++;
-
-    // Update the collected [PKNETWORK_LAYERS1] Neurons
-    updatePKNetworkAfterMove(thread, move);
 }
 
 void applyMove(Board *board, uint16_t move, Undo *undo) {
@@ -352,9 +346,6 @@ void revert(Thread *thread, Board *board, uint16_t move) {
         revertNullMove(board, &thread->undoStack[--thread->height]);
     else
         revertMove(board, move, &thread->undoStack[--thread->height]);
-
-    if (thread->pknnchanged[thread->height])
-        thread->pknndepth -= 1;
 }
 
 void revertMove(Board *board, uint16_t move, Undo *undo) {

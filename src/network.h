@@ -33,7 +33,11 @@ typedef struct PKNetwork {
     // Our current Network is [224x32, 32x1]. The Network is trained to
     // output a Score in CentiPawns for the Midgame and Endgame
 
-    ALIGN64 float inputWeights[PKNETWORK_LAYER1][PKNETWORK_INPUTS];
+    // We transpose the Input Weights matrix in order to get better
+    // caching and memory lookups, since when computing we iterate
+    // over only the ~20 Inputs set out of the 224 possible Inputs
+
+    ALIGN64 float inputWeights[PKNETWORK_INPUTS][PKNETWORK_LAYER1];
     ALIGN64 float inputBiases[PKNETWORK_LAYER1];
 
     ALIGN64 float layer1Weights[PKNETWORK_OUTPUTS][PKNETWORK_LAYER1];
@@ -42,9 +46,4 @@ typedef struct PKNetwork {
 } PKNetwork;
 
 void initPKNetwork();
-int fullyComputePKNetwork(Thread *thread);
-int partiallyComputePKNetwork(Thread *thread);
-
-void initPKNetworkCollector(Thread *thread);
-void updatePKNetworkIndices(Thread *thread, int changes, int indexes[3], int signs[3]);
-void updatePKNetworkAfterMove(Thread *thread, uint16_t move);
+int computePKNetwork(Thread *thread);

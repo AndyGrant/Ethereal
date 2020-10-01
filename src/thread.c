@@ -86,8 +86,6 @@ void newSearchThreadPool(Thread *threads, Board *board, Limits *limits, SearchIn
         threads[i].info   = info;
 
         threads[i].height    = 0;
-        threads[i].pknndepth = 0;
-
         threads[i].nodes     = 0ull;
         threads[i].tbhits    = 0ull;
 

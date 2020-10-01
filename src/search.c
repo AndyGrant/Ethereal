@@ -98,9 +98,6 @@ void* iterativeDeepening(void *vthread) {
     Limits *const limits   = thread->limits;
     const int mainThread   = thread->index == 0;
 
-    // Begin tracking incremental NN updates
-    initPKNetworkCollector(thread);
-
     // Bind when we expect to deal with NUMA
     if (thread->nthreads > 8)
         bindThisThread(thread->index);
