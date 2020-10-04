@@ -197,7 +197,7 @@ int genAllQuietMoves(Board *board, uint16_t *moves) {
 
     // When checked, we must block the checker with non-King pieces
     destinations = !board->kingAttackers ? ~occupied
-                 : ~occupied & bitsBetweenMasks(getlsb(kings), getlsb(board->kingAttackers));
+                 : bitsBetweenMasks(getlsb(kings), getlsb(board->kingAttackers));
 
     // Compute bitboards for each type of Pawn movement
     pawnForwardOne = pawnAdvance(pawns, occupied, board->turn) & ~PROMOTION_RANKS;
