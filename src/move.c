@@ -440,9 +440,7 @@ void revertMove(Board *board, uint16_t move, Undo *undo) {
 void revertNullMove(Board *board, Undo *undo) {
 
     // Revert information which is hard to recompute
-    // We may, and have to, zero out the king attacks
     board->hash            = undo->hash;
-    board->kingAttackers   = 0ull;
     board->epSquare        = undo->epSquare;
     board->halfMoveCounter = undo->halfMoveCounter;
 
