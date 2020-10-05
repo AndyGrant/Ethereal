@@ -33,6 +33,7 @@
 #include "move.h"
 #include "movegen.h"
 #include "network.h"
+#include "nneval.h"
 #include "search.h"
 #include "thread.h"
 #include "time.h"
@@ -67,7 +68,7 @@ int main(int argc, char **argv) {
     // Initialize core components of Ethereal
     initAttacks(); initMasks(); initEval();
     initSearch(); initZobrist(); initTT(16);
-    initPKNetwork(&PKNN);
+    initPKNetwork(&PKNN); initEndgameNNs();
 
     // Create the UCI-board and our threads
     threads = createThreadPool(1);

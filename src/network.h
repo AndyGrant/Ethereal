@@ -46,4 +46,4 @@ typedef struct PKNetwork {
 } PKNetwork;
 
 void initPKNetwork();
-int computePKNetwork(Thread *thread);
+int computePKNetwork(Board *board);

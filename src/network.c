@@ -68,11 +68,11 @@ void initPKNetwork() {
     }
 }
 
-int computePKNetwork(Thread *thread) {
+int computePKNetwork(Board *board) {
 
-    uint64_t pawns = thread->board.pieces[PAWN];
-    uint64_t kings = thread->board.pieces[KING];
-    uint64_t black = thread->board.colours[BLACK];
+    uint64_t pawns = board->pieces[PAWN];
+    uint64_t kings = board->pieces[KING];
+    uint64_t black = board->colours[BLACK];
 
     float layer1Neurons[PKNETWORK_LAYER1];
     float outputNeurons[PKNETWORK_OUTPUTS];
