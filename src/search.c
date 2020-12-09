@@ -195,7 +195,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
 
     unsigned tbresult;
     int hist = 0, cmhist = 0, fmhist = 0;
-    int quietsSeen = 0, quietsPlayed = 0, capturesPlayed = 0, played = 0;
+    int movesSeen = 0, quietsPlayed = 0, capturesPlayed = 0, played = 0;
     int ttHit, ttValue = 0, ttEval = VALUE_NONE, ttDepth = 0, ttBound = 0;
     int R, newDepth, rAlpha, rBeta, oldAlpha = alpha;
     int inCheck, isQuiet, improving, extension, singular, skipQuiets = 0;
@@ -393,49 +393,50 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         if (RootNode && moveExaminedByMultiPV(thread, move)) continue;
         if (RootNode &&    !moveIsInRootMoves(thread, move)) continue;
 
-        // Track Quiets Seen for Late Move Pruning
-        quietsSeen += (isQuiet = !moveIsTactical(board, move));
+        // Track Moves Seen for Late Move Pruning
+        movesSeen += 1;
+        isQuiet = !moveIsTactical(board, move);
 
         // All moves have one or more History scores
         hist = !isQuiet ? getCaptureHistory(thread, move)
              : getHistory(thread, move, &cmhist, &fmhist);
 
-        // Step 11 (~175 elo). Quiet Move Pruning. Prune any quiet move that meets one
+        // Step 11 (~80 elo). Late Move Pruning / Move Count Pruning. If we
+        // have seen many moves in this position already, and we don't expect
+        // anything from this move, we can skip all the remaining quiets
+        if (   best > -MATE_IN_MAX
+            && depth <= LateMovePruningDepth
+            && movesSeen >= LateMovePruningCounts[improving][depth])
+            skipQuiets = 1;
+
+        // Step 12 (~175 elo). Quiet Move Pruning. Prune any quiet move that meets one
         // of the criteria below, only after proving a non mated line exists
         if (isQuiet && best > -MATE_IN_MAX) {
-
             // Base LMR value that we expect to use later
             R = LMRTable[MIN(depth, 63)][MIN(played, 63)];
 
-            // Step 11A (~3 elo). Futility Pruning. If our score is far below alpha,
+            // Step 12A (~3 elo). Futility Pruning. If our score is far below alpha,
             // and we don't expect anything from this move, we can skip all other quiets
             if (   depth <= FutilityPruningDepth
                 && eval + futilityMargin <= alpha
                 && hist < FutilityPruningHistoryLimit[improving])
                 skipQuiets = 1;
 
-            // Step 11B (~2.5 elo). Futility Pruning. If our score is not only far
+            // Step 12B (~2.5 elo). Futility Pruning. If our score is not only far
             // below alpha but still far below alpha after adding the FutilityMargin,
             // we can somewhat safely skip all quiet moves after this one
             if (   depth <= FutilityPruningDepth
                 && eval + futilityMargin + FutilityMarginNoHistory <= alpha)
                 skipQuiets = 1;
 
-            // Step 11C (~77 elo). Late Move Pruning / Move Count Pruning. If we
-            // have tried many quiets in this position already, and we don't expect
-            // anything from this move, we can skip all the remaining quiets
-            if (   depth <= LateMovePruningDepth
-                && quietsSeen >= LateMovePruningCounts[improving][depth])
-                skipQuiets = 1;
-
-            // Step 11D (~8 elo). Counter Move Pruning. Moves with poor counter
+            // Step 12D (~8 elo). Counter Move Pruning. Moves with poor counter
             // move history are pruned at near leaf nodes of the search.
             if (   movePicker.stage > STAGE_COUNTER_MOVE
                 && cmhist < CounterMoveHistoryLimit[improving]
                 && depth - R <= CounterMovePruningDepth[improving])
                 continue;
 
-            // Step 11E (~1.5 elo). Follow Up Move Pruning. Moves with poor
+            // Step 12E (~1.5 elo). Follow Up Move Pruning. Moves with poor
             // follow up move history are pruned at near leaf nodes of the search.
             if (   movePicker.stage > STAGE_COUNTER_MOVE
                 && fmhist < FollowUpMoveHistoryLimit[improving]
@@ -443,7 +444,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
                 continue;
         }
 
-        // Step 12 (~42 elo). Static Exchange Evaluation Pruning. Prune moves which fail
+        // Step 13 (~42 elo). Static Exchange Evaluation Pruning. Prune moves which fail
         // to beat a depth dependent SEE threshold. The use of movePicker.stage
         // is a speedup, which assumes that good noisy moves have a positive SEE
         if (    best > -MATE_IN_MAX
@@ -473,7 +474,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
                  &&  ttDepth >= depth - 2
                  && (ttBound & BOUND_LOWER);
 
-        // Step 13 (~60 elo). Extensions. Search an additional ply when the move comes from the
+        // Step 14 (~60 elo). Extensions. Search an additional ply when the move comes from the
         // Transposition Table and appears to beat all other moves by a fair margin. Otherwise,
         // extend for any position where our King is checked. We also selectivly extend moves
         // with very strong continuation histories, so long as they are along the PV line
@@ -483,7 +484,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
 
         newDepth = depth + (extension && !RootNode);
 
-        // Step 14. MultiCut. Sometimes candidate Singular moves are shown to be non-Singular.
+        // Step 15. MultiCut. Sometimes candidate Singular moves are shown to be non-Singular.
         // If this happens, and the rBeta used is greater than beta, then we have multiple moves
         // which appear to beat beta at a reduced depth. singularity() sets the stage to STAGE_DONE
 
@@ -492,7 +493,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
             return MAX(ttValue - depth, -MATE);
         }
 
-        // Step 15A (~249 elo). Quiet Late Move Reductions. Reduce the search depth
+        // Step 16A (~249 elo). Quiet Late Move Reductions. Reduce the search depth
         // of Quiet moves after we've explored the main line. If a reduced search
         // manages to beat alpha, against our expectations, we perform a research
         if (isQuiet && depth > 2 && played > 1) {
@@ -516,7 +517,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
             R = MIN(depth - 1, MAX(R, 1));
         }
 
-        // Step 15B (~2 elo). Noisy Late Move Reductions. The same as Step 15A, but
+        // Step 16B (~2 elo). Noisy Late Move Reductions. The same as Step 15A, but
         // only applied to Tactical moves with unusually poor Capture History scores
         else if (!isQuiet && depth > 2 && played > 1)
             R = MIN(depth - 1, MAX(1, MIN(3, 3 - (hist + 4000) / 2000)));
@@ -524,19 +525,19 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         // No LMR conditions were met. Use a Standard Reduction
         else R = 1;
 
-        // Step 16A. If we triggered the LMR conditions (which we know by the value of R),
+        // Step 17A. If we triggered the LMR conditions (which we know by the value of R),
         // then we will perform a reduced search on the null alpha window, as we have no
         // expectation that this move will be worth looking into deeper
         if (R != 1) value = -search(thread, &lpv, -alpha-1, -alpha, newDepth-R);
 
-        // Step 16B. There are two situations in which we will search again on a null window,
+        // Step 17B. There are two situations in which we will search again on a null window,
         // but without a depth reduction R. First, if the LMR search happened, and failed
         // high, secondly, if we did not try an LMR search, and this is not the first move
         // we have tried in a PvNode, we will research with the normally reduced depth
         if ((R != 1 && value > alpha) || (R == 1 && !(PvNode && played == 1)))
             value = -search(thread, &lpv, -alpha-1, -alpha, newDepth-1);
 
-        // Step 16C. Finally, if we are in a PvNode and a move beat alpha while being
+        // Step 17C. Finally, if we are in a PvNode and a move beat alpha while being
         // search on a reduced depth, we will search again on the normal window. Also,
         // if we did not perform Step 15B, we will search for the first time on the
         // normal window. This happens only for the first move in a PvNode
@@ -546,7 +547,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         // Revert the board state
         revert(thread, board, move);
 
-        // Step 17. Update search stats for the best move and its value. Update
+        // Step 18. Update search stats for the best move and its value. Update
         // our lower bound (alpha) if exceeded, and also update the PV in that case
         if (value > best) {
 
@@ -570,14 +571,14 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     // Prefetch TT for store
     prefetchTTEntry(board->hash);
 
-    // Step 18. Stalemate and Checkmate detection. If no moves were found to
+    // Step 19. Stalemate and Checkmate detection. If no moves were found to
     // be legal (search makes sure to play at least one legal move, if any),
     // then we are either mated or stalemated, which we can tell by the inCheck
     // flag. For mates, return a score based on the distance from root, so we
     // can differentiate between close mates and far away mates from the root
     if (played == 0) return inCheck ? -MATE + thread->height : 0;
 
-    // Step 19 (~760 elo). Update History counters on a fail high for a quiet move.
+    // Step 20 (~760 elo). Update History counters on a fail high for a quiet move.
     // We also update Capture History Heuristics, which augment or replace MVV-LVA.
 
     if (best >= beta && !moveIsTactical(board, bestMove))
@@ -586,7 +587,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     if (best >= beta)
         updateCaptureHistories(thread, bestMove, capturesTried, capturesPlayed, depth);
 
-    // Step 20. Store results of search into the Transposition Table. We do
+    // Step 21. Store results of search into the Transposition Table. We do
     // not overwrite the Root entry from the first line of play we examined
     if (!RootNode || !thread->multiPV) {
         ttBound = best >= beta    ? BOUND_LOWER
