@@ -412,6 +412,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         // Step 12 (~175 elo). Quiet Move Pruning. Prune any quiet move that meets one
         // of the criteria below, only after proving a non mated line exists
         if (isQuiet && best > -MATE_IN_MAX) {
+
             // Base LMR value that we expect to use later
             R = LMRTable[MIN(depth, 63)][MIN(played, 63)];
 
@@ -506,9 +507,6 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
 
             // Increase for King moves that evade checks
             R += inCheck && pieceType(board->squares[MoveTo(move)]) == KING;
-
-            // Reduce for moves that give check
-            R -= !!board->kingAttackers;
 
             // Reduce for Killers and Counters
             R -= movePicker.stage < STAGE_QUIET;
