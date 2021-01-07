@@ -236,15 +236,15 @@ void initTunerEntries(TEntry *entries, Thread *thread, TArray methods) {
 void initTunerEntry(TEntry *entry, Thread *thread, Board *board, TArray methods) {
 
     // Use the same phase calculation as evaluate()
-    int phase = 24 - 4 * popcount(board->pieces[QUEEN ])
-                   - 2 * popcount(board->pieces[ROOK  ])
-                   - 1 * popcount(board->pieces[BISHOP])
-                   - 1 * popcount(board->pieces[KNIGHT]);
+    int phase = 4 * popcount(board->pieces[QUEEN ])
+              + 2 * popcount(board->pieces[ROOK  ])
+              + 1 * popcount(board->pieces[BISHOP])
+              + 1 * popcount(board->pieces[KNIGHT]);
 
     // Save time by computing phase scalars now
-    entry->pfactors[MG] = 1 - phase / 24.0;
-    entry->pfactors[EG] = 0 + phase / 24.0;
-    entry->phase = (phase * 256 + 12) / 24;
+    entry->pfactors[MG] = 0 + phase / 24.0;
+    entry->pfactors[EG] = 1 - phase / 24.0;
+    entry->phase = phase;
 
     // Save a white POV static evaluation
     TVector coeffs; T = EmptyTrace;
@@ -408,8 +408,8 @@ double linearEvaluation(TEntry *entry, TVector params, TArray methods, TGradient
     midgame = normal[MG] + safety[MG];
     endgame = normal[EG] + safety[EG] + sign * fmax(-fabs(normal[EG] + safety[EG]), complexity);
 
-    mixed = (midgame * (256.0 - entry->phase)
-          +  endgame * entry->phase * entry->sfactor) / 256.0;
+    mixed = (midgame * entry->phase
+          +  endgame * (24.0 - entry->phase) * entry->sfactor) / 24.0;
 
     return mixed + (entry->turn == WHITE ? Tempo : -Tempo);
 }
