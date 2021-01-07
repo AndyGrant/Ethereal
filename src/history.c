@@ -25,9 +25,13 @@
 #include "thread.h"
 #include "types.h"
 
+static void updateHistoryWithDecay(int16_t *current, int delta) {
+    *current += HistoryMultiplier * delta - *current * abs(delta) / HistoryDivisor;
+}
+
 void updateHistoryHeuristics(Thread *thread, uint16_t *moves, int length, int depth) {
 
-    int entry, bonus, colour = thread->board.turn;
+    int bonus, colour = thread->board.turn;
     uint16_t bestMove = moves[length-1];
 
     // Extract information from last move
@@ -68,23 +72,15 @@ void updateHistoryHeuristics(Thread *thread, uint16_t *moves, int length, int de
         int piece = pieceType(thread->board.squares[from]);
 
         // Update Butterfly History
-        entry = thread->history[colour][from][to];
-        entry += HistoryMultiplier * delta - entry * abs(delta) / HistoryDivisor;
-        thread->history[colour][from][to] = entry;
+        updateHistoryWithDecay(&thread->history[colour][from][to], delta);
 
         // Update Counter Move History
-        if (counter != NONE_MOVE && counter != NULL_MOVE) {
-            entry = thread->continuation[0][cmPiece][cmTo][piece][to];
-            entry += HistoryMultiplier * delta - entry * abs(delta) / HistoryDivisor;
-            thread->continuation[0][cmPiece][cmTo][piece][to] = entry;
-        }
+        if (counter != NONE_MOVE && counter != NULL_MOVE)
+            updateHistoryWithDecay(&thread->continuation[0][cmPiece][cmTo][piece][to], delta);
 
         // Update Followup Move History
-        if (follow != NONE_MOVE && follow != NULL_MOVE) {
-            entry = thread->continuation[1][fmPiece][fmTo][piece][to];
-            entry += HistoryMultiplier * delta - entry * abs(delta) / HistoryDivisor;
-            thread->continuation[1][fmPiece][fmTo][piece][to] = entry;
-        }
+        if (follow != NONE_MOVE && follow != NULL_MOVE)
+            updateHistoryWithDecay(&thread->continuation[1][fmPiece][fmTo][piece][to], delta);
     }
 }
 
@@ -117,9 +113,7 @@ void updateCaptureHistories(Thread *thread, uint16_t best, uint16_t *moves, int 
         assert(PAWN <= piece && piece <= KING);
         assert(PAWN <= captured && captured <= QUEEN);
 
-        int entry = thread->chistory[piece][to][captured];
-        entry += HistoryMultiplier * delta - entry * abs(delta) / HistoryDivisor;
-        thread->chistory[piece][to][captured] = entry;
+        updateHistoryWithDecay(&thread->chistory[piece][to][captured], delta);
     }
 }
 
