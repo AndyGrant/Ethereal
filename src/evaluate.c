@@ -464,19 +464,17 @@ int evaluateBoard(Thread *thread, Board *board) {
     eval += evaluateComplexity(&ei, board, eval);
 
     // Calculate the game phase based on remaining material (Fruit Method)
-    phase = 24 - 4 * popcount(board->pieces[QUEEN ])
-               - 2 * popcount(board->pieces[ROOK  ])
-               - 1 * popcount(board->pieces[KNIGHT]
-                             |board->pieces[BISHOP]);
-    phase = (phase * 256 + 12) / 24;
+    phase = 4 * popcount(board->pieces[QUEEN ])
+          + 2 * popcount(board->pieces[ROOK  ])
+          + 1 * popcount(board->pieces[KNIGHT]|board->pieces[BISHOP]);
 
     // Scale evaluation based on remaining material
     factor = evaluateScaleFactor(board, eval);
     if (TRACE) T.factor = factor;
 
     // Compute and store an interpolated evaluation from white's POV
-    eval = (ScoreMG(eval) * (256 - phase)
-         +  ScoreEG(eval) * phase * factor / SCALE_NORMAL) / 256;
+    eval = (ScoreMG(eval) * phase
+         +  ScoreEG(eval) * (24 - phase) * factor / SCALE_NORMAL) / 24;
     storeCachedEvaluation(thread, board, eval);
 
     // Store a new Pawn King Entry if we did not have one
