@@ -22,7 +22,7 @@
 
 #include "types.h"
 
-#define VERSION_ID "12.87"
+#define VERSION_ID "12.88"
 
 #if defined(USE_PEXT)
     #define ETHEREAL_VERSION VERSION_ID" (PEXT)"
@@ -41,13 +41,14 @@ struct Limits {
 
 struct UCIGoStruct {
     int multiPV;
+    int skill;
     char str[512];
     Board *board;
     Thread *threads;
 };
 
 void *uciGo(void *cargo);
-void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960);
+void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960, int *skill);
 void uciPosition(char *str, Board *board, int chess960);
 
 void uciReport(Thread *threads, int alpha, int beta, int value);

@@ -64,6 +64,7 @@ int main(int argc, char **argv) {
 
     int chess960 = 0;
     int multiPV  = 1;
+    int skill = 100;
 
     // Initialize core components of Ethereal
     initAttacks(); initMasks(); initEval();
@@ -111,6 +112,7 @@ int main(int argc, char **argv) {
             printf("option name Ponder type check default false\n");
             printf("option name AnalysisMode type check default false\n");
             printf("option name UCI_Chess960 type check default false\n");
+            printf("option name SkillLevel type spin default 100 min 1 max 100\n");
             printf("uciok\n"), fflush(stdout);
         }
 
@@ -128,7 +130,7 @@ int main(int argc, char **argv) {
 
         else if (strStartsWith(str, "setoption")) {
             pthread_mutex_lock(&READYLOCK);
-            uciSetOption(str, &threads, &multiPV, &chess960);
+            uciSetOption(str, &threads, &multiPV, &chess960, &skill);
             pthread_mutex_unlock(&READYLOCK);
         }
 
@@ -141,6 +143,7 @@ int main(int argc, char **argv) {
         else if (strStartsWith(str, "go")) {
             pthread_mutex_lock(&READYLOCK);
             uciGoStruct.multiPV = multiPV;
+            uciGoStruct.skill = skill;
             uciGoStruct.board   = &board;
             uciGoStruct.threads = threads;
             strncpy(uciGoStruct.str, str, 512);
@@ -181,6 +184,7 @@ void *uciGo(void *cargo) {
     double winc = 0, binc = 0, mtg = -1;
 
     int multiPV     = ((UCIGoStruct*)cargo)->multiPV;
+    int skill       = ((UCIGoStruct*)cargo)->skill;
     char *str       = ((UCIGoStruct*)cargo)->str;
     Board *board    = ((UCIGoStruct*)cargo)->board;
     Thread *threads = ((UCIGoStruct*)cargo)->threads;
@@ -234,6 +238,9 @@ void *uciGo(void *cargo) {
     // Cap our MultiPV search based on the suggested or legal moves
     limits.multiPV = MIN(multiPV, searchmoves ? idx : size);
 
+    // Set the skill level on the main thread
+    threads[0].skill = skill;
+
     // Execute search, return best and ponder moves
     getBestMove(threads, board, &limits, &bestMove, &ponderMove);
 
@@ -259,7 +266,7 @@ void *uciGo(void *cargo) {
     return NULL;
 }
 
-void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960) {
+void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960, int *skill) {
 
     // Handle setting UCI options in Ethereal. Options include:
     //  Hash                : Size of the Transposition Table in Megabyes
@@ -325,6 +332,20 @@ void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960) {
             printf("info string set UCI_Chess960 to true\n"), *chess960 = 1;
         if (strStartsWith(str, "setoption name UCI_Chess960 value false"))
             printf("info string set UCI_Chess960 to false\n"), *chess960 = 0;
+    }
+
+    if (strStartsWith(str, "setoption name SkillLevel value ")) {
+        *skill = atoi(str + strlen("setoption name SkillLevel value "));
+        printf("info string set SkillLevel to %d\n", *skill);
+        // Skill value of 100 means play at full strength with SkillLevel disabled
+        if (*skill < 100) {
+            *multiPV = 256;
+            printf("info string set MultiPV to %d\n", *multiPV);
+        }
+        else {
+            *multiPV = 1;
+            printf("info string set MultiPV to %d\n", *multiPV);
+        }
     }
 
     fflush(stdout);

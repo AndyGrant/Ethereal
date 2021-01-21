@@ -42,6 +42,9 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth);
 int qsearch(Thread *thread, PVariation *pv, int alpha, int beta);
 int staticExchangeEvaluation(Board *board, uint16_t move, int threshold);
 int singularity(Thread *thread, MovePicker *mp, int ttValue, int depth, int beta);
+void applySkillVariation(Thread *thread, int multiPV);
+void sortMoves(Thread *thread, int lo, int hi);
+int partition(Thread *thread, int lo, int hi);
 
 static const int WindowDepth   = 5;
 static const int WindowSize    = 10;

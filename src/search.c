@@ -43,6 +43,7 @@
 #include "types.h"
 #include "uci.h"
 #include "windows.h"
+#include "zobrist.h"
 
 int LMRTable[64][64];      // Late Move Reductions
 volatile int ABORT_SIGNAL; // Global ABORT flag for threads
@@ -133,6 +134,13 @@ void* iterativeDeepening(void *vthread) {
             || (limits->limitedByTime  && elapsedTime(info) > limits->timeLimit)
             || (limits->limitedByDepth && thread->depth >= limits->depthLimit))
             break;
+    }
+
+    // Adjust the bestmove to the Skill Level
+    if (mainThread && thread->skill < 100) {
+        applySkillVariation(thread, limits->multiPV);
+        info->values[info->depth] = thread->values[0];
+        info->bestMoves[info->depth] = thread->bestMoves[0];
     }
 
     return NULL;
@@ -855,4 +863,73 @@ int singularity(Thread *thread, MovePicker *mp, int ttValue, int depth, int beta
 
     // Move is singular if all other moves failed low
     return value <= rBeta;
+}
+
+void applySkillVariation(Thread *thread, int multiPV) {
+    // Each PV gets a random adjustment to its value
+    // The magnitude of the adjustment depends on the Skill Level
+    // The bestMoves of the PVs are then resorted by the new PV value rankings
+    //
+    // Formula for calculating magnitude of the adjustment window, in centipawns:
+    // f(x) = 1000**(-(x - 99)/100) + (-6 * x + 594)
+    //
+    // The formula follows the format f(x) = exponential + linear
+    // The linear term is required so there is an actual difference between skills when skill > 90
+    // The exponential term is required so Ethereal will approach a random mover at low skill
+    //
+    // The above formula has the following cp variances at the below skills:
+    // 99 -> 1 cp
+    // 95 -> 25 cp
+    // 80 -> 118 cp
+    // 60 -> 249 cp
+    // 40 -> 413 cp
+    // 20 -> 708 cp
+    // 5  -> 1225 cp
+    // 1  -> 1459 cp
+    //
+    // The average online player should find Skill Level 50 a decent challenge
+    
+    int variances[99] = {1459,1395,1335,1278,1225,1175,1127,1083,1041,1002,965,929,896,865,835,807,780,755,731,708,687,666,647,628,610,593,577,561,546,531,518,504,491,479,467,456,444,434,423,413,403,393,384,375,366,357,348,340,332,324,316,308,300,292,285,277,270,263,256,249,242,235,228,221,214,208,201,195,188,181,175,168,162,156,149,143,137,130,124,118,111,105,99,93,87,80,74,68,62,56,50,44,38,31,25,19,13,7,1};
+    int maxVariance = variances[thread->skill - 1];
+
+    for (int i = 0; i < multiPV; i++) {
+        int variance = (rand64() % (2 * maxVariance)) - maxVariance;
+        thread->values[i] += variance;
+    }
+
+    sortMoves(thread, 0, multiPV - 1);
+}
+
+// Using Hoare partition scheme
+// https://en.wikipedia.org/wiki/Quicksort
+void sortMoves(Thread *thread, int lo, int hi) {
+    if (lo < hi) {
+        int p = partition(thread, lo, hi);
+        sortMoves(thread, lo, p);
+        sortMoves(thread, p + 1, hi);
+    }
+}
+
+int partition(Thread *thread, int lo, int hi) {
+    // Take the middle pivot since we know the input is mostly sorted
+    int pivot = thread->values[(lo + hi) / 2];
+    int i = lo - 1;
+    int j = hi + 1;
+    while (true) {
+        do {
+            i += 1;
+        } while (thread->values[i] > pivot);
+        do {
+            j -= 1;
+        } while (thread->values[j] < pivot);
+        if (i >= j) {
+            return j;
+        }
+        int valTemp = thread->values[i];
+        thread->values[i] = thread->values[j];
+        thread->values[j] = valTemp;
+        uint16_t movTemp = thread->bestMoves[i];
+        thread->bestMoves[i] = thread->bestMoves[j];
+        thread->bestMoves[j] = movTemp;
+    }
 }
