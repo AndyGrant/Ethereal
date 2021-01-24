@@ -871,7 +871,7 @@ void applySkillVariation(Thread *thread, int multiPV) {
     // The bestMoves of the PVs are then resorted by the new PV value rankings
     //
     // Formula for calculating magnitude of the adjustment window, in centipawns:
-    // f(x) = 1000**(-(x - 99)/100) + (-6 * x + 594)
+    // f(x) = 500**(-(x - 99)/100) + (-3 * x + 297)
     //
     // The formula follows the format f(x) = exponential + linear
     // The linear term is required so there is an actual difference between skills when skill > 90
@@ -879,17 +879,18 @@ void applySkillVariation(Thread *thread, int multiPV) {
     //
     // The above formula has the following cp variances at the below skills:
     // 99 -> 1 cp
-    // 95 -> 25 cp
-    // 80 -> 118 cp
-    // 60 -> 249 cp
-    // 40 -> 413 cp
-    // 20 -> 708 cp
-    // 5  -> 1225 cp
-    // 1  -> 1459 cp
+    // 95 -> 13 cp   -> Top Human
+    // 80 -> 60 cp   -> Master
+    // 60 -> 128 cp  -> Strong online player
+    // 40 -> 216 cp  -> Average online player
+    // 20 -> 373 cp  -> Beginner
+    // 5  -> 626 cp
+    // 1  -> 736 cp  -> Monkey
     //
-    // The average online player should find Skill Level 50 a decent challenge
+    // These cp variances allow Ethereal to make positional blunders.  A search-related depth handicap is
+    // enforced based on skillLevel elsewhere to account for tactical blunders.
     
-    int variances[99] = {1459,1395,1335,1278,1225,1175,1127,1083,1041,1002,965,929,896,865,835,807,780,755,731,708,687,666,647,628,610,593,577,561,546,531,518,504,491,479,467,456,444,434,423,413,403,393,384,375,366,357,348,340,332,324,316,308,300,292,285,277,270,263,256,249,242,235,228,221,214,208,201,195,188,181,175,168,162,156,149,143,137,130,124,118,111,105,99,93,87,80,74,68,62,56,50,44,38,31,25,19,13,7,1};
+    int variances[99] = {736,706,678,651,626,603,580,559,539,519,501,484,467,452,437,423,409,397,384,373,361,351,341,331,321,312,304,295,287,280,272,265,258,252,245,239,233,227,222,216,211,206,200,196,191,186,181,177,172,168,164,160,155,151,147,143,140,136,132,128,125,121,117,114,110,107,103,100,96,93,90,86,83,80,76,73,70,67,63,60,57,54,51,48,44,41,38,35,32,29,26,23,19,16,13,10,7,4,1};
     int maxVariance = variances[thread->skill - 1];
 
     for (int i = 0; i < multiPV; i++) {

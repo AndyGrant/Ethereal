@@ -241,6 +241,13 @@ void *uciGo(void *cargo) {
     // Set the skill level on the main thread
     threads[0].skill = skill;
 
+    // Restrict depth searched based on skill level
+    // Depth increase is linear and increases every 10 levels
+    if (skill < 100) {
+        limits.limitedByDepth = true;
+        limits.depthLimit = skill / 10 + 2;
+    }
+
     // Execute search, return best and ponder moves
     getBestMove(threads, board, &limits, &bestMove, &ponderMove);
 
