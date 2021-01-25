@@ -44,7 +44,9 @@
 #include "uci.h"
 #include "windows.h"
 
-int LMRTable[64][64];      // Late Move Reductions
+int LMRTable[64][64];
+int LateMovePruningCounts[2][9];
+
 volatile int ABORT_SIGNAL; // Global ABORT flag for threads
 volatile int IS_PONDERING; // Global PONDER flag for threads
 volatile int ANALYSISMODE; // Whether to make some changes for Analysis
@@ -55,6 +57,11 @@ void initSearch() {
     for (int depth = 1; depth < 64; depth++)
         for (int played = 1; played < 64; played++)
             LMRTable[depth][played] = 0.75 + log(depth) * log(played) / 2.25;
+
+    for (int depth = 1; depth < 9; depth++) {
+        LateMovePruningCounts[0][depth] = roundf(2.5 + 2 * depth * depth / 4.5);
+        LateMovePruningCounts[1][depth] = roundf(4.0 + 4 * depth * depth / 4.5);
+    }
 }
 
 void getBestMove(Thread *threads, Board *board, Limits *limits, uint16_t *best, uint16_t *ponder) {
