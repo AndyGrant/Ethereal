@@ -42,6 +42,7 @@ struct Thread {
     SearchInfo *info;
 
     int multiPV, values[MAX_MOVES];
+    int skill;
     uint16_t bestMoves[MAX_MOVES];
     uint16_t ponderMoves[MAX_MOVES];
 
