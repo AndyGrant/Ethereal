@@ -33,7 +33,11 @@ int ContemptComplexity  = 0;
 
 Thread* createThreadPool(int nthreads) {
 
+#if defined(_WIN32) || defined(_WIN64)
+    Thread *threads = _aligned_malloc(nthreads * sizeof(Thread), 64);
+#else
     Thread *threads = aligned_alloc(64, nthreads * sizeof(Thread));
+#endif
 
     memset(threads, 0, nthreads * sizeof(Thread));
 
