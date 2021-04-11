@@ -33,7 +33,9 @@ int ContemptComplexity  = 0;
 
 Thread* createThreadPool(int nthreads) {
 
-    Thread *threads = calloc(nthreads, sizeof(Thread));
+    Thread *threads = aligned_alloc(64, nthreads * sizeof(Thread));
+
+    memset(threads, 0, nthreads * sizeof(Thread));
 
     for (int i = 0; i < nthreads; i++) {
 
