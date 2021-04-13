@@ -1313,7 +1313,17 @@ int evaluateScaleFactor(Board *board, int eval) {
         &&  popcount(strong & pawns) - popcount(weak & pawns) > 2)
         return SCALE_LARGE_PAWN_ADV;
 
-    return SCALE_NORMAL;
+    // Avoid the King + 2 Knights vs lone King draw
+    if (   !queens
+        && !rooks
+        && !bishops
+        && !pawns
+        && !several(pieces & weak)
+        && popcount(knights) == 2)
+        return SCALE_DRAW;
+
+    // Scale down as the number of pawns of the strong side reduces
+    return MIN(SCALE_NORMAL, 96 + popcount(pawns & strong) * 8);
 }
 
 void initEvalInfo(Thread *thread, Board *board, EvalInfo *ei) {
