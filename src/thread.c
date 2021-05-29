@@ -27,9 +27,14 @@
 #include "transposition.h"
 #include "types.h"
 
+#include "nnue/types.h"
+#include "nnue/accumulator.h"
+#include "nnue/utils.h"
+
 // Default contempt values, UCI options can set them to other values
 int ContemptDrawPenalty = 0;
 int ContemptComplexity  = 0;
+
 
 Thread* createThreadPool(int nthreads) {
 
@@ -38,9 +43,12 @@ Thread* createThreadPool(int nthreads) {
     for (int i = 0; i < nthreads; i++) {
 
         // Offset stacks so the root position may look backwards
-        threads[i].evalStack  = &(threads[i]._evalStack[STACK_OFFSET]);
-        threads[i].moveStack  = &(threads[i]._moveStack[STACK_OFFSET]);
+        threads[i].evalStack  = &(threads[i]._evalStack [STACK_OFFSET]);
+        threads[i].moveStack  = &(threads[i]._moveStack [STACK_OFFSET]);
         threads[i].pieceStack = &(threads[i]._pieceStack[STACK_OFFSET]);
+
+        // Must dynamically allocate for the ALIGNs needed
+        threads[i].nnueStack  = nnue_create_accumulators();
 
         // Threads will know of each other
         threads[i].index = i;
@@ -50,6 +58,15 @@ Thread* createThreadPool(int nthreads) {
 
     return threads;
 }
+
+void deleteThreadPool(Thread *threads) {
+
+    for (int i = 0; i < threads->nthreads; i++)
+        nnue_delete_accumulators(threads[i].nnueStack);
+
+    free(threads);
+}
+
 
 void resetThreadPool(Thread *threads) {
 
@@ -84,15 +101,18 @@ void newSearchThreadPool(Thread *threads, Board *board, Limits *limits, SearchIn
 
         threads[i].limits = limits;
         threads[i].info   = info;
-
-        threads[i].height    = 0;
-        threads[i].nodes     = 0ull;
-        threads[i].tbhits    = 0ull;
+        threads[i].height = 0;
+        threads[i].nodes  = 0ull;
+        threads[i].tbhits = 0ull;
 
         memcpy(&threads[i].board, board, sizeof(Board));
+        threads[i].board.thread = &threads[i];
+        threads[i].nnueStack[0].accurate = 0;
+
         threads[i].contempt = board->turn == WHITE ? contempt : -contempt;
     }
 }
+
 
 uint64_t nodesSearchedThreadPool(Thread *threads) {
 

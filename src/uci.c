@@ -27,13 +27,13 @@
 #include "board.h"
 #include "cmdline.h"
 #include "evaluate.h"
-#include "pyrrhic/tbprobe.h"
 #include "history.h"
 #include "masks.h"
 #include "move.h"
 #include "movegen.h"
 #include "network.h"
-#include "nneval.h"
+#include "nnue/nnue.h"
+#include "pyrrhic/tbprobe.h"
 #include "search.h"
 #include "thread.h"
 #include "time.h"
@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
     // Initialize core components of Ethereal
     initAttacks(); initMasks(); initEval();
     initSearch(); initZobrist(); initTT(16);
-    initPKNetwork(&PKNN); initEndgameNNs();
+    initPKNetwork(&PKNN); nnue_incbin_init();
 
     // Create the UCI-board and our threads
     threads = createThreadPool(1);
@@ -102,6 +102,7 @@ int main(int argc, char **argv) {
             printf("id author Andrew Grant, Alayan & Laldon\n");
             printf("option name Hash type spin default 16 min 2 max 131072\n");
             printf("option name Threads type spin default 1 min 1 max 2048\n");
+            printf("option name EvalFile type string default <empty>\n");
             printf("option name MultiPV type spin default 1 min 1 max 256\n");
             printf("option name ContemptDrawPenalty type spin default 0 min -300 max 300\n");
             printf("option name ContemptComplexity type spin default 0 min -100 max 100\n");
@@ -264,6 +265,7 @@ void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960) {
     // Handle setting UCI options in Ethereal. Options include:
     //  Hash                : Size of the Transposition Table in Megabyes
     //  Threads             : Number of search threads to use
+    //  EvalFile            : Network weights for Ethereal's NNUE evaluation
     //  MultiPV             : Number of search lines to report per iteration
     //  ContemptDrawPenalty : Evaluation bonus in internal units to avoid forced draws
     //  ContemptComplexity  : Evaluation bonus for keeping a position with more non-pawn material
@@ -279,8 +281,13 @@ void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960) {
 
     if (strStartsWith(str, "setoption name Threads value ")) {
         int nthreads = atoi(str + strlen("setoption name Threads value "));
-        free(*threads); *threads = createThreadPool(nthreads);
+        deleteThreadPool(*threads); *threads = createThreadPool(nthreads);
         printf("info string set Threads to %d\n", nthreads);
+    }
+
+    if (strStartsWith(str, "setoption name EvalFile value ")) {
+        char *ptr = str + strlen("setoption name EvalFile value ");
+        nnue_init(ptr); printf("info string set EvalFile to %s\n", ptr);
     }
 
     if (strStartsWith(str, "setoption name MultiPV value ")) {

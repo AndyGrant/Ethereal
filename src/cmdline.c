@@ -122,7 +122,7 @@ void runBenchmark(int argc, char **argv) {
     for (int i = 0; strcmp(Benchmarks[i], ""); i++) totalNodes += nodes[i];
     printf("OVERALL: %53d nodes %8d nps\n", (int)totalNodes, (int)(1000.0f * totalNodes / (time + 1)));
 
-    free(threads);
+    deleteThreadPool(threads);
 }
 
 void runEvalBook(int argc, char **argv) {

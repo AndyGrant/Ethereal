@@ -29,6 +29,8 @@
 #include "transposition.h"
 #include "types.h"
 
+#include "nnue/types.h"
+
 enum {
     STACK_OFFSET = 4,
     STACK_SIZE = MAX_PLY + STACK_OFFSET
@@ -53,14 +55,14 @@ struct Thread {
     uint16_t *moveStack, _moveStack[STACK_SIZE];
     int *pieceStack, _pieceStack[STACK_SIZE];
 
+    NNUEAccumulator *nnueStack;
+
     Undo undoStack[STACK_SIZE];
 
     ALIGN64 EvalTable evtable;
     ALIGN64 PKTable pktable;
-
     ALIGN64 KillerTable killers;
     ALIGN64 CounterMoveTable cmtable;
-
     ALIGN64 HistoryTable history;
     ALIGN64 CaptureHistoryTable chistory;
     ALIGN64 ContinuationTable continuation;
@@ -72,7 +74,10 @@ struct Thread {
 
 
 Thread* createThreadPool(int nthreads);
+void deleteThreadPool(Thread *threads);
+
 void resetThreadPool(Thread *threads);
 void newSearchThreadPool(Thread *threads, Board *board, Limits *limits, SearchInfo *info);
+
 uint64_t nodesSearchedThreadPool(Thread *threads);
 uint64_t tbhitsThreadPool(Thread *threads);

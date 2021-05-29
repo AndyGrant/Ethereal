@@ -28,7 +28,7 @@
 #include "move.h"
 #include "masks.h"
 #include "network.h"
-#include "nneval.h"
+#include "nnue/nnue.h"
 #include "thread.h"
 #include "transposition.h"
 #include "types.h"
@@ -449,7 +449,16 @@ int evaluateBoard(Thread *thread, Board *board) {
 
     // Check for this evaluation being cached already
     if (!TRACE && getCachedEvaluation(thread, board, &hashed))
-        return hashed;
+        return hashed + Tempo;
+
+    // On some-what balanced positions, use just NNUE
+    if (   !board->kingAttackers
+        &&  abs(ScoreEG(board->psqtmat)) <= 400) {
+        eval = nnue_evaluate(thread, board);
+        hashed = board->turn == WHITE ? eval : -eval;
+        storeCachedEvaluation(thread, board, hashed);
+        return eval + Tempo;
+    }
 
     initEvalInfo(thread, board, &ei);
     eval = evaluatePieces(&ei, board);
@@ -459,7 +468,6 @@ int evaluateBoard(Thread *thread, Board *board) {
         pkeval += computePKNetwork(board);
 
     eval += pkeval + board->psqtmat + thread->contempt;
-    eval += evaluateEndgames(board);
     eval += evaluateClosedness(&ei, board);
     eval += evaluateComplexity(&ei, board, eval);
 

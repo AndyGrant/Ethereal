@@ -59,8 +59,8 @@ void initSearch() {
             LMRTable[depth][played] = 0.75 + log(depth) * log(played) / 2.25;
 
     for (int depth = 1; depth < 9; depth++) {
-        LateMovePruningCounts[0][depth] = roundf(2.5 + 2 * depth * depth / 4.5);
-        LateMovePruningCounts[1][depth] = roundf(4.0 + 4 * depth * depth / 4.5);
+        LateMovePruningCounts[0][depth] = 2.5 + 2 * depth * depth / 4.5;
+        LateMovePruningCounts[1][depth] = 4.0 + 4 * depth * depth / 4.5;
     }
 }
 
@@ -113,7 +113,11 @@ void* iterativeDeepening(void *vthread) {
     for (thread->depth = 1; thread->depth < MAX_PLY; thread->depth++) {
 
         // If we abort to here, we stop searching
+        #if defined(_WIN32) || defined(_WIN64)
+        if (_setjmp(thread->jbuffer, NULL)) break;
+        #else
         if (setjmp(thread->jbuffer)) break;
+        #endif
 
         // Perform a search for the current depth for each requested line of play
         for (thread->multiPV = 0; thread->multiPV < limits->multiPV; thread->multiPV++)

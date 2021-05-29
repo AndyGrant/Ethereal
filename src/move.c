@@ -34,6 +34,9 @@
 #include "uci.h"
 #include "zobrist.h"
 
+#include "nnue/accumulator.h"
+#include "nnue/types.h"
+
 static void updateCastleZobrist(Board *board, uint64_t oldRooks, uint64_t newRooks) {
     uint64_t diff = oldRooks ^ newRooks;
     while (diff)
@@ -185,6 +188,10 @@ void applyNormalMove(Board *board, uint16_t move, Undo *undo) {
             board->hash ^= ZobristEnpassKeys[fileOf(from)];
         }
     }
+
+    nnue_push(board);
+    nnue_move_piece(board, fromPiece, from, to);
+    nnue_remove_piece(board, toPiece, to);
 }
 
 void applyCastleMove(Board *board, uint16_t move, Undo *undo) {
@@ -232,6 +239,10 @@ void applyCastleMove(Board *board, uint16_t move, Undo *undo) {
     assert(pieceType(fromPiece) == KING);
 
     undo->capturePiece = EMPTY;
+
+    nnue_push(board);
+    if (from != to) nnue_move_piece(board, fromPiece, from, to); // FRC
+    nnue_move_piece(board, rFromPiece, rFrom, rTo);
 }
 
 void applyEnpassMove(Board *board, uint16_t move, Undo *undo) {
@@ -271,6 +282,10 @@ void applyEnpassMove(Board *board, uint16_t move, Undo *undo) {
 
     assert(pieceType(fromPiece) == PAWN);
     assert(pieceType(enpassPiece) == PAWN);
+
+    nnue_push(board);
+    nnue_move_piece(board, fromPiece, from, to);
+    nnue_remove_piece(board, enpassPiece, ep);
 }
 
 void applyPromotionMove(Board *board, uint16_t move, Undo *undo) {
@@ -316,6 +331,11 @@ void applyPromotionMove(Board *board, uint16_t move, Undo *undo) {
     assert(pieceType(fromPiece) == PAWN);
     assert(pieceType(toPiece) != PAWN);
     assert(pieceType(toPiece) != KING);
+
+    nnue_push(board);
+    nnue_remove_piece(board, fromPiece, from);
+    nnue_remove_piece(board, toPiece, to);
+    nnue_add_piece(board, promoPiece, to);
 }
 
 void applyNullMove(Board *board, Undo *undo) {
@@ -337,6 +357,8 @@ void applyNullMove(Board *board, Undo *undo) {
         board->hash ^= ZobristEnpassKeys[fileOf(board->epSquare)];
         board->epSquare = -1;
     }
+
+    nnue_push(board);
 }
 
 
@@ -447,6 +469,7 @@ void revertNullMove(Board *board, Undo *undo) {
     // NULL moves simply swap the turn only
     board->turn = !board->turn;
     board->numMoves--;
+    board->fullMoveCounter--;
 }
 
 
