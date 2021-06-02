@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
             printf("option name MultiPV type spin default 1 min 1 max 256\n");
             printf("option name ContemptDrawPenalty type spin default 0 min -300 max 300\n");
             printf("option name ContemptComplexity type spin default 0 min -100 max 100\n");
-            printf("option name MoveOverhead type spin default 100 min 0 max 10000\n");
+            printf("option name MoveOverhead type spin default 300 min 0 max 10000\n");
             printf("option name SyzygyPath type string default <empty>\n");
             printf("option name SyzygyProbeDepth type spin default 0 min 0 max 127\n");
             printf("option name Ponder type check default false\n");

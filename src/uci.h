@@ -22,7 +22,7 @@
 
 #include "types.h"
 
-#define VERSION_ID "12.96"
+#define VERSION_ID "12.97"
 
 #if USE_NNUE
     #define ETHEREAL_VERSION VERSION_ID" (PRO)"

@@ -81,8 +81,6 @@ static const int SEEPieceValues[] = {
     1300,    0,    0,    0,
 };
 
-static const int HistexLimit = 10000;
-
 static const int QSSeeMargin = 110;
 static const int QSDeltaMargin = 150;
 
