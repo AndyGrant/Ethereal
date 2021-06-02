@@ -20,7 +20,9 @@ LIBS = -lpthread -lm
 EXE  = Ethereal
 
 ifdef EVALFILE
-    NN = -DEVALFILE=\"$(EVALFILE)\" -DUSE_NNUE
+    NN = -DUSE_NNUE=1 -DEVALFILE=\"$(EVALFILE)\"
+else
+    NN = -DUSE_NNUE=0
 endif
 
 WFLAGS   = -std=gnu11 -Wall -Wextra -Wshadow

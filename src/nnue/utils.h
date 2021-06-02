@@ -14,7 +14,7 @@
 /*    GNU General Public License for more details.                            */
 /*                                                                            */
 /*    You should have received a copy of the GNU General Public License       */
-/*    along with this program.  If not, see <http://www.gnu.org/licenses/>.   */
+/*    along with this program.  If not, see <http://www.gnu.org/licenses/>    */
 /*                                                                            */
 /******************************************************************************/
 
@@ -26,8 +26,6 @@
 
 #if defined(_WIN32) || defined(_WIN64)
 
-#include <windows.h>
-
 INLINE void* align_malloc(size_t size) {
     return _mm_malloc(size, 64);
 }
@@ -37,8 +35,6 @@ INLINE void align_free(void *ptr) {
 }
 
 #else
-
-#include <sys/time.h>
 
 INLINE void* align_malloc(size_t size) {
     void *mem; return posix_memalign(&mem, 64, size) ? NULL : mem;

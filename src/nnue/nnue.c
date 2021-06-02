@@ -14,7 +14,7 @@
 /*    GNU General Public License for more details.                            */
 /*                                                                            */
 /*    You should have received a copy of the GNU General Public License       */
-/*    along with this program.  If not, see <http://www.gnu.org/licenses/>.   */
+/*    along with this program.  If not, see <http://www.gnu.org/licenses/>    */
 /*                                                                            */
 /******************************************************************************/
 
@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdalign.h>
 
 #include "accumulator.h"
 #include "nnue.h"
@@ -34,6 +35,8 @@
 #include "../thread.h"
 
 #include "../incbin/incbin.h"
+
+#define SHIFT 6
 
 #ifdef EVALFILE
 const char *NNUEDefault = EVALFILE;
@@ -188,8 +191,8 @@ INLINE void quant_affine_relu(int16_t *weights, int32_t *biases, int16_t *inputs
 
         acc0 = _mm256_inserti128_si256(_mm256_castsi128_si256(sumabcd1), sumefgh1, 1);
 
-        const __m256i biased  = _mm256_add_epi32(bia[i], acc0);
-        const __m256i relu    = _mm256_max_epi32(zero, biased);
+        const __m256i biased = _mm256_add_epi32(bia[i], acc0);
+        const __m256i relu   = _mm256_max_epi32(zero, biased);
 
         out[i] = _mm256_cvtepi32_ps(relu);
     }
@@ -360,15 +363,17 @@ int nnue_evaluate(Thread *thread, Board *board) {
     const uint64_t black = board->colours[BLACK];
     const uint64_t kings = board->pieces[KING];
 
-    board->ksquares[WHITE] = getlsb(white & kings);
-    board->ksquares[BLACK] = getlsb(black & kings);
-
     // For optimizations, auto-flag KvK as drawn
     if (kings == (white | black)) return 0;
 
+    // Optimized computation of various input indices
+    int wkingidx = 640 * relativeSquare(WHITE, getlsb(white & kings));
+    int bkingidx = 640 * relativeSquare(BLACK, getlsb(black & kings));
+
     // Large enough to handle layer computations
     ALIGN64 int16_t out16[L1SIZE];
-    ALIGN64 float outN1[L1SIZE], outN2[L1SIZE];
+    ALIGN64 float outN1[L1SIZE];
+    ALIGN64 float outN2[L1SIZE];
 
     NNUEAccumulator *accum = &thread->nnueStack[thread->height];
 
@@ -376,11 +381,11 @@ int nnue_evaluate(Thread *thread, Board *board) {
 
         // Possible to recurse and incrementally update each
         if (nnue_can_update(accum, board))
-            nnue_update_accumulator(accum, board);
+            nnue_update_accumulator(accum, board, wkingidx, bkingidx);
 
         // History is missing, we must refresh completely
         else
-            nnue_refresh_accumulators(accum, board);
+            nnue_refresh_accumulators(accum, board, wkingidx, bkingidx);
     }
 
     // Feed-forward the entire evaluation function

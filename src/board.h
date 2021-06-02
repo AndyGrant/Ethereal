@@ -28,7 +28,7 @@ struct Board {
     uint64_t hash, pkhash, kingAttackers;
     uint64_t castleRooks, castleMasks[SQUARE_NB];
     int turn, epSquare, halfMoveCounter, fullMoveCounter;
-    int psqtmat, numMoves, chess960, ksquares[COLOUR_NB];
+    int psqtmat, numMoves, chess960;
     uint64_t history[512];
     Thread *thread;
 };

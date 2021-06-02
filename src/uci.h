@@ -22,9 +22,11 @@
 
 #include "types.h"
 
-#define VERSION_ID "12.94"
+#define VERSION_ID "12.95"
 
-#if defined(USE_PEXT)
+#if USE_NNUE
+    #define ETHEREAL_VERSION VERSION_ID" (PRO)"
+#elif defined(USE_PEXT)
     #define ETHEREAL_VERSION VERSION_ID" (PEXT)"
 #elif defined(USE_POPCNT)
     #define ETHEREAL_VERSION VERSION_ID" (POPCNT)"

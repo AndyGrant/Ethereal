@@ -241,8 +241,8 @@ void applyCastleMove(Board *board, uint16_t move, Undo *undo) {
     undo->capturePiece = EMPTY;
 
     nnue_push(board);
-    if (from != to) nnue_move_piece(board, fromPiece, from, to); // FRC
-    nnue_move_piece(board, rFromPiece, rFrom, rTo);
+    if (from != to) nnue_move_piece(board, fromPiece, from, to);
+    if (rFrom != rTo) nnue_move_piece(board, rFromPiece, rFrom, rTo);
 }
 
 void applyEnpassMove(Board *board, uint16_t move, Undo *undo) {

@@ -14,7 +14,7 @@
 /*    GNU General Public License for more details.                            */
 /*                                                                            */
 /*    You should have received a copy of the GNU General Public License       */
-/*    along with this program.  If not, see <http://www.gnu.org/licenses/>.   */
+/*    along with this program.  If not, see <http://www.gnu.org/licenses/>    */
 /*                                                                            */
 /******************************************************************************/
 
@@ -61,6 +61,6 @@ INLINE void nnue_remove_piece(Board *board, int piece, int sq) {
 }
 
 int nnue_can_update(NNUEAccumulator *accum, Board *board);
-void nnue_refresh_accumulators(NNUEAccumulator *accum, Board *board);
-void nnue_refresh_accumulator(NNUEAccumulator *accum, Board *board, int colour);
-void nnue_update_accumulator(NNUEAccumulator *accum, Board *board);
+void nnue_refresh_accumulators(NNUEAccumulator *accum, Board *board, int wkingidx, int bkingidx);
+void nnue_refresh_accumulator(NNUEAccumulator *accum, Board *board, int colour, int kingidx);
+void nnue_update_accumulator(NNUEAccumulator *accum, Board *board, int wkingidx, int bkingidx);
