@@ -128,6 +128,10 @@ int terminateSearchEarly(Thread *thread) {
 
     const Limits *limits = thread->limits;
 
+    if (limits->limitedByNodes)
+        return thread->depth > 1
+            && thread->nodes >= limits->nodeLimit / thread->nthreads;
+
     return  thread->depth > 1
         && (thread->nodes & 1023) == 1023
         && (limits->limitedBySelf || limits->limitedByTime)

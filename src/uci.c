@@ -177,6 +177,7 @@ void *uciGo(void *cargo) {
     uint16_t bestMove, ponderMove;
     char moveStr[6];
 
+    uint64_t nodes = 0;
     int depth = 0, infinite = 0;
     double wtime = 0, btime = 0, movetime = 0;
     double winc = 0, binc = 0, mtg = -1;
@@ -206,6 +207,7 @@ void *uciGo(void *cargo) {
         if (strEquals(ptr, "movestogo"  )) mtg      = atoi(strtok(NULL, " "));
         if (strEquals(ptr, "depth"      )) depth    = atoi(strtok(NULL, " "));
         if (strEquals(ptr, "movetime"   )) movetime = atoi(strtok(NULL, " "));
+        if (strEquals(ptr, "nodes"      )) nodes    = atof(strtok(NULL, " "));
 
         if (strEquals(ptr, "infinite"   )) infinite = 1;
         if (strEquals(ptr, "searchmoves")) searchmoves = 1;
@@ -221,10 +223,12 @@ void *uciGo(void *cargo) {
     limits.limitedByNone  = infinite != 0;
     limits.limitedByTime  = movetime != 0;
     limits.limitedByDepth = depth    != 0;
-    limits.limitedBySelf  = !depth && !movetime && !infinite;
+    limits.limitedByNodes = nodes    != 0;
+    limits.limitedBySelf  = !depth && !movetime && !infinite && !nodes;
     limits.limitedByMoves = searchmoves;
     limits.timeLimit      = movetime;
     limits.depthLimit     = depth;
+    limits.nodeLimit      = nodes;
 
     // Pick the time values for the colour we are playing as
     limits.start = (board->turn == WHITE) ? start : start;

@@ -22,7 +22,7 @@
 
 #include "types.h"
 
-#define VERSION_ID "12.95"
+#define VERSION_ID "12.96"
 
 #if USE_NNUE
     #define ETHEREAL_VERSION VERSION_ID" (PRO)"
@@ -37,7 +37,8 @@
 struct Limits {
     double start, time, inc, mtg, timeLimit;
     int limitedByNone, limitedByTime, limitedBySelf;
-    int limitedByDepth, limitedByMoves, depthLimit, multiPV;
+    int limitedByDepth, limitedByMoves, limitedByNodes;
+    int multiPV, depthLimit; uint64_t nodeLimit;
     uint16_t searchMoves[MAX_MOVES], excludedMoves[MAX_MOVES];
 };
 
