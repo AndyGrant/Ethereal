@@ -36,7 +36,7 @@ INLINE void nnue_delete_accumulators(NNUEAccumulator* ptr) {
 }
 
 INLINE void nnue_push(Board *board) {
-    if (board->thread != NULL) {
+    if (USE_NNUE && board->thread != NULL) {
         const int height = board->thread->height;
         NNUEAccumulator *accum = &board->thread->nnueStack[height+1];
         accum->accurate = 0; accum->changes = 0;
@@ -44,7 +44,7 @@ INLINE void nnue_push(Board *board) {
 }
 
 INLINE void nnue_move_piece(Board *board, int piece, int from, int to) {
-    if (board->thread != NULL) {
+    if (USE_NNUE && board->thread != NULL) {
         const int height = board->thread->height;
         NNUEAccumulator *accum = &board->thread->nnueStack[height+1];
         accum->deltas[accum->changes++] = (NNUEDelta) { piece, from, to };

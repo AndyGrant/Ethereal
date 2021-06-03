@@ -15,19 +15,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 CC   = gcc
-SRC  = *.c pyrrhic/tbprobe.c nnue/*.c
+SRC  = *.c pyrrhic/tbprobe.c
 LIBS = -lpthread -lm
 EXE  = Ethereal
 
 ifdef EVALFILE
     NN = -DUSE_NNUE=1 -DEVALFILE=\"$(EVALFILE)\"
+    SRC += nnue/*.c
 else
     NN = -DUSE_NNUE=0
 endif
 
 WFLAGS   = -std=gnu11 -Wall -Wextra -Wshadow
-CFLAGS   = -O3 $(WFLAGS) $(NN) -DNDEBUG -flto -march=native
 RFLAGS   = -O3 $(WFLAGS) $(NN) -DNDEBUG -flto -static
+CFLAGS   = -O3 $(WFLAGS) $(NN) -DNDEBUG -flto -march=native
 TFLAGS   = -O3 $(WFLAGS) $(NN) -DNDEBUG -flto -march=native -fopenmp -DTUNE
 PGOFLAGS = -O3 $(WFLAGS) $(NN) -DNDEBUG -flto -march=native -fno-asynchronous-unwind-tables
 

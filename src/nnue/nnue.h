@@ -22,6 +22,24 @@
 
 #include "../types.h"
 
+#if USE_NNUE
+
 void nnue_init(const char* fname);
 void nnue_incbin_init();
 int nnue_evaluate(Thread *thread, Board *board);
+
+#else
+
+INLINE void nnue_init(const char* fname) {
+    (void) fname; printf("info string Error: NNUE is disabled for this binary\n");
+}
+
+INLINE void nnue_incbin_init() {
+    (void) 0;
+};
+
+INLINE int nnue_evaluate(Thread *thread, Board * board) {
+    (void) thread; (void) board; return 0;
+}
+
+#endif
