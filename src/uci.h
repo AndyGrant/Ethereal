@@ -24,6 +24,8 @@
 
 #define VERSION_ID "12.99"
 
+#define LICENSE_OWNER "Unlicensed"
+
 #if USE_NNUE
     #define ETHEREAL_VERSION VERSION_ID" (NNUE)"
 #elif defined(USE_PEXT)
