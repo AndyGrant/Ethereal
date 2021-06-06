@@ -83,8 +83,8 @@ void nnue_refresh_accumulator(NNUEAccumulator *accum, Board *board, int colour, 
 
     uint64_t pieces = (white | black) & ~kings;
 
-    __m256i* biases  = (__m256i*) &in_biases[0];
-    __m256i* outputs = (__m256i*) &accum->values[colour][0];
+    vepi16* biases  = (vepi16*) &in_biases[0];
+    vepi16* outputs = (vepi16*) &accum->values[colour][0];
 
     // We can assert that this position is not KvK, and therefore to
     // slightly optimize the AVX code, we can seperate out the very
@@ -92,13 +92,13 @@ void nnue_refresh_accumulator(NNUEAccumulator *accum, Board *board, int colour, 
 
     {
         int index = nnue_index(board, kingidx, colour, poplsb(&pieces));
-        __m256i* inputs  = (__m256i*) &in_weights[index * KPSIZE];
+        vepi16* inputs  = (vepi16*) &in_weights[index * KPSIZE];
 
-        for (int i = 0; i < KPSIZE / 16; i += 4) {
-            outputs[i+0] = _mm256_add_epi16(biases[i+0], inputs[i+0]);
-            outputs[i+1] = _mm256_add_epi16(biases[i+1], inputs[i+1]);
-            outputs[i+2] = _mm256_add_epi16(biases[i+2], inputs[i+2]);
-            outputs[i+3] = _mm256_add_epi16(biases[i+3], inputs[i+3]);
+        for (int i = 0; i < KPSIZE / vepi16_cnt; i += 4) {
+            outputs[i+0] = vepi16_add(biases[i+0], inputs[i+0]);
+            outputs[i+1] = vepi16_add(biases[i+1], inputs[i+1]);
+            outputs[i+2] = vepi16_add(biases[i+2], inputs[i+2]);
+            outputs[i+3] = vepi16_add(biases[i+3], inputs[i+3]);
         }
     }
 
@@ -108,13 +108,13 @@ void nnue_refresh_accumulator(NNUEAccumulator *accum, Board *board, int colour, 
     while (pieces) {
 
         int index = nnue_index(board, kingidx, colour, poplsb(&pieces));
-        __m256i* inputs  = (__m256i*) &in_weights[index * KPSIZE];
+        vepi16* inputs  = (vepi16*) &in_weights[index * KPSIZE];
 
-        for (int i = 0; i < KPSIZE / 16; i += 4) {
-            outputs[i+0] = _mm256_add_epi16(outputs[i+0], inputs[i+0]);
-            outputs[i+1] = _mm256_add_epi16(outputs[i+1], inputs[i+1]);
-            outputs[i+2] = _mm256_add_epi16(outputs[i+2], inputs[i+2]);
-            outputs[i+3] = _mm256_add_epi16(outputs[i+3], inputs[i+3]);
+        for (int i = 0; i < KPSIZE / vepi16_cnt; i += 4) {
+            outputs[i+0] = vepi16_add(outputs[i+0], inputs[i+0]);
+            outputs[i+1] = vepi16_add(outputs[i+1], inputs[i+1]);
+            outputs[i+2] = vepi16_add(outputs[i+2], inputs[i+2]);
+            outputs[i+3] = vepi16_add(outputs[i+3], inputs[i+3]);
         }
     }
 }
@@ -178,44 +178,44 @@ void nnue_update_accumulator(NNUEAccumulator *accum, Board *board, int wkingidx,
         if (refreshed[colour])
             continue;
 
-        __m256i* outputs = (__m256i*) &accum->values[colour][0];
-        __m256i* priors  = (__m256i*) &(accum-1)->values[colour][0];
+        vepi16* outputs = (vepi16*) &accum->values[colour][0];
+        vepi16* priors  = (vepi16*) &(accum-1)->values[colour][0];
 
         {
             const int index = remove_list[colour][0];
-            __m256i* inputs  = (__m256i*) &in_weights[index * KPSIZE];
+            vepi16* inputs  = (vepi16*) &in_weights[index * KPSIZE];
 
-            for (int j = 0; j < KPSIZE / 16; j += 4) {
-                outputs[j+0] = _mm256_sub_epi16(priors[j+0], inputs[j+0]);
-                outputs[j+1] = _mm256_sub_epi16(priors[j+1], inputs[j+1]);
-                outputs[j+2] = _mm256_sub_epi16(priors[j+2], inputs[j+2]);
-                outputs[j+3] = _mm256_sub_epi16(priors[j+3], inputs[j+3]);
+            for (int j = 0; j < KPSIZE / vepi16_cnt; j += 4) {
+                outputs[j+0] = vepi16_sub(priors[j+0], inputs[j+0]);
+                outputs[j+1] = vepi16_sub(priors[j+1], inputs[j+1]);
+                outputs[j+2] = vepi16_sub(priors[j+2], inputs[j+2]);
+                outputs[j+3] = vepi16_sub(priors[j+3], inputs[j+3]);
             }
         }
 
         for (int i = 1; i < remove; i++) {
 
             const int index = remove_list[colour][i];
-            __m256i* inputs  = (__m256i*) &in_weights[index * KPSIZE];
+            vepi16* inputs  = (vepi16*) &in_weights[index * KPSIZE];
 
-            for (int j = 0; j < KPSIZE / 16; j += 4) {
-                outputs[j+0] = _mm256_sub_epi16(outputs[j+0], inputs[j+0]);
-                outputs[j+1] = _mm256_sub_epi16(outputs[j+1], inputs[j+1]);
-                outputs[j+2] = _mm256_sub_epi16(outputs[j+2], inputs[j+2]);
-                outputs[j+3] = _mm256_sub_epi16(outputs[j+3], inputs[j+3]);
+            for (int j = 0; j < KPSIZE / vepi16_cnt; j += 4) {
+                outputs[j+0] = vepi16_sub(outputs[j+0], inputs[j+0]);
+                outputs[j+1] = vepi16_sub(outputs[j+1], inputs[j+1]);
+                outputs[j+2] = vepi16_sub(outputs[j+2], inputs[j+2]);
+                outputs[j+3] = vepi16_sub(outputs[j+3], inputs[j+3]);
             }
         }
 
         for (int i = 0; i < add; i++) {
 
             const int index = add_list[colour][i];
-            __m256i* inputs  = (__m256i*) &in_weights[index * KPSIZE];
+            vepi16* inputs  = (vepi16*) &in_weights[index * KPSIZE];
 
-            for (int j = 0; j < KPSIZE / 16; j += 4) {
-                outputs[j+0] = _mm256_add_epi16(outputs[j+0], inputs[j+0]);
-                outputs[j+1] = _mm256_add_epi16(outputs[j+1], inputs[j+1]);
-                outputs[j+2] = _mm256_add_epi16(outputs[j+2], inputs[j+2]);
-                outputs[j+3] = _mm256_add_epi16(outputs[j+3], inputs[j+3]);
+            for (int j = 0; j < KPSIZE / vepi16_cnt; j += 4) {
+                outputs[j+0] = vepi16_add(outputs[j+0], inputs[j+0]);
+                outputs[j+1] = vepi16_add(outputs[j+1], inputs[j+1]);
+                outputs[j+2] = vepi16_add(outputs[j+2], inputs[j+2]);
+                outputs[j+3] = vepi16_add(outputs[j+3], inputs[j+3]);
             }
         }
     }

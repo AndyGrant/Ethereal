@@ -109,26 +109,26 @@ INLINE void halfkp_relu(NNUEAccumulator *accum, int16_t *outputs, int turn) {
 
     assert(KPSIZE % 64 == 0);
 
-    const __m256i zero = _mm256_setzero_si256();
+    const vepi16 zero = vepi16_zero();
 
-    __m256i *in_white  = (__m256i *) &accum->values[WHITE];
-    __m256i *in_black  = (__m256i *) &accum->values[BLACK];
+    vepi16 *in_white  = (vepi16 *) &accum->values[WHITE];
+    vepi16 *in_black  = (vepi16 *) &accum->values[BLACK];
 
-    __m256i *out_white = (__m256i *) (turn == WHITE ? outputs : &outputs[KPSIZE]);
-    __m256i *out_black = (__m256i *) (turn == BLACK ? outputs : &outputs[KPSIZE]);
+    vepi16 *out_white = (vepi16 *) (turn == WHITE ? outputs : &outputs[KPSIZE]);
+    vepi16 *out_black = (vepi16 *) (turn == BLACK ? outputs : &outputs[KPSIZE]);
 
-    for (int i = 0; i < KPSIZE / 16; i += 4) {
-        out_white[i+0] = _mm256_max_epi16(zero, in_white[i+0]);
-        out_white[i+1] = _mm256_max_epi16(zero, in_white[i+1]);
-        out_white[i+2] = _mm256_max_epi16(zero, in_white[i+2]);
-        out_white[i+3] = _mm256_max_epi16(zero, in_white[i+3]);
+    for (int i = 0; i < KPSIZE / vepi16_cnt; i += 4) {
+        out_white[i+0] = vepi16_max(zero, in_white[i+0]);
+        out_white[i+1] = vepi16_max(zero, in_white[i+1]);
+        out_white[i+2] = vepi16_max(zero, in_white[i+2]);
+        out_white[i+3] = vepi16_max(zero, in_white[i+3]);
     }
 
-    for (int i = 0; i < KPSIZE / 16; i += 4) {
-        out_black[i+0] = _mm256_max_epi16(zero, in_black[i+0]);
-        out_black[i+1] = _mm256_max_epi16(zero, in_black[i+1]);
-        out_black[i+2] = _mm256_max_epi16(zero, in_black[i+2]);
-        out_black[i+3] = _mm256_max_epi16(zero, in_black[i+3]);
+    for (int i = 0; i < KPSIZE / vepi16_cnt; i += 4) {
+        out_black[i+0] = vepi16_max(zero, in_black[i+0]);
+        out_black[i+1] = vepi16_max(zero, in_black[i+1]);
+        out_black[i+2] = vepi16_max(zero, in_black[i+2]);
+        out_black[i+3] = vepi16_max(zero, in_black[i+3]);
     }
 }
 
@@ -136,50 +136,52 @@ INLINE void quant_affine_relu(int16_t *weights, int32_t *biases, int16_t *inputs
 
     assert(L1SIZE % 16 == 0 && L2SIZE % 8 == 0);
 
-    const int InChunks  = L1SIZE / 16;
+    const int InChunks  = L1SIZE / vepi16_cnt;
     const int OutChunks = L2SIZE / 8;
 
-    const __m256i zero = _mm256_setzero_si256();
+    const vepi32 zero = vepi32_zero();
 
-    const __m256i *inp = (__m256i *) inputs;
-    const __m256i *bia = (__m256i *) biases;
-    const __m256i *wgt = (__m256i *) weights;
+    const vepi16 *inp = (vepi16*) inputs;
+    const vepi32 *bia = (vepi32*) biases;
+    const vepi16 *wgt = (vepi16*) weights;
 
     __m256 *out  = (__m256*) outputs;
 
     for (int i = 0; i < OutChunks; i++) {
 
-        __m256i acc0 = _mm256_madd_epi16(wgt[InChunks * (i * 8 + 0) + 0], inp[0]);
-        __m256i acc1 = _mm256_madd_epi16(wgt[InChunks * (i * 8 + 1) + 0], inp[0]);
-        __m256i acc2 = _mm256_madd_epi16(wgt[InChunks * (i * 8 + 2) + 0], inp[0]);
-        __m256i acc3 = _mm256_madd_epi16(wgt[InChunks * (i * 8 + 3) + 0], inp[0]);
+        vepi32 acc0 = vepi16_madd(wgt[InChunks * (i * 8 + 0) + 0], inp[0]);
+        vepi32 acc1 = vepi16_madd(wgt[InChunks * (i * 8 + 1) + 0], inp[0]);
+        vepi32 acc2 = vepi16_madd(wgt[InChunks * (i * 8 + 2) + 0], inp[0]);
+        vepi32 acc3 = vepi16_madd(wgt[InChunks * (i * 8 + 3) + 0], inp[0]);
 
         for (int j = 1; j < InChunks; j++) {
-            acc0 = _mm256_add_epi32(acc0, _mm256_madd_epi16(wgt[InChunks * (i * 8 + 0) + j], inp[j]));
-            acc1 = _mm256_add_epi32(acc1, _mm256_madd_epi16(wgt[InChunks * (i * 8 + 1) + j], inp[j]));
-            acc2 = _mm256_add_epi32(acc2, _mm256_madd_epi16(wgt[InChunks * (i * 8 + 2) + j], inp[j]));
-            acc3 = _mm256_add_epi32(acc3, _mm256_madd_epi16(wgt[InChunks * (i * 8 + 3) + j], inp[j]));
+            acc0 = vepi32_add(acc0, vepi16_madd(wgt[InChunks * (i * 8 + 0) + j], inp[j]));
+            acc1 = vepi32_add(acc1, vepi16_madd(wgt[InChunks * (i * 8 + 1) + j], inp[j]));
+            acc2 = vepi32_add(acc2, vepi16_madd(wgt[InChunks * (i * 8 + 2) + j], inp[j]));
+            acc3 = vepi32_add(acc3, vepi16_madd(wgt[InChunks * (i * 8 + 3) + j], inp[j]));
         }
 
-        __m256i acc4 = _mm256_madd_epi16(wgt[InChunks * (i * 8 + 4) + 0], inp[0]);
-        __m256i acc5 = _mm256_madd_epi16(wgt[InChunks * (i * 8 + 5) + 0], inp[0]);
-        __m256i acc6 = _mm256_madd_epi16(wgt[InChunks * (i * 8 + 6) + 0], inp[0]);
-        __m256i acc7 = _mm256_madd_epi16(wgt[InChunks * (i * 8 + 7) + 0], inp[0]);
+        acc0 = vepi32_hadd(acc0, acc1);
+        acc2 = vepi32_hadd(acc2, acc3);
+        acc0 = vepi32_hadd(acc0, acc2);
+
+        vepi32 acc4 = vepi16_madd(wgt[InChunks * (i * 8 + 4) + 0], inp[0]);
+        vepi32 acc5 = vepi16_madd(wgt[InChunks * (i * 8 + 5) + 0], inp[0]);
+        vepi32 acc6 = vepi16_madd(wgt[InChunks * (i * 8 + 6) + 0], inp[0]);
+        vepi32 acc7 = vepi16_madd(wgt[InChunks * (i * 8 + 7) + 0], inp[0]);
 
         for (int j = 1; j < InChunks; j++) {
-            acc4 = _mm256_add_epi32(acc4, _mm256_madd_epi16(wgt[InChunks * (i * 8 + 4) + j], inp[j]));
-            acc5 = _mm256_add_epi32(acc5, _mm256_madd_epi16(wgt[InChunks * (i * 8 + 5) + j], inp[j]));
-            acc6 = _mm256_add_epi32(acc6, _mm256_madd_epi16(wgt[InChunks * (i * 8 + 6) + j], inp[j]));
-            acc7 = _mm256_add_epi32(acc7, _mm256_madd_epi16(wgt[InChunks * (i * 8 + 7) + j], inp[j]));
+            acc4 = vepi32_add(acc4, vepi16_madd(wgt[InChunks * (i * 8 + 4) + j], inp[j]));
+            acc5 = vepi32_add(acc5, vepi16_madd(wgt[InChunks * (i * 8 + 5) + j], inp[j]));
+            acc6 = vepi32_add(acc6, vepi16_madd(wgt[InChunks * (i * 8 + 6) + j], inp[j]));
+            acc7 = vepi32_add(acc7, vepi16_madd(wgt[InChunks * (i * 8 + 7) + j], inp[j]));
         }
 
-        acc0 = _mm256_hadd_epi32(acc0, acc1);
-        acc2 = _mm256_hadd_epi32(acc2, acc3);
-        acc4 = _mm256_hadd_epi32(acc4, acc5);
-        acc6 = _mm256_hadd_epi32(acc6, acc7);
+        acc4 = vepi32_hadd(acc4, acc5);
+        acc6 = vepi32_hadd(acc6, acc7);
+        acc4 = vepi32_hadd(acc4, acc6);
 
-        acc0 = _mm256_hadd_epi32(acc0, acc2);
-        acc4 = _mm256_hadd_epi32(acc4, acc6);
+        #if USE_AVX2
 
         __m128i sumabcd1 = _mm256_extracti128_si256(acc0, 0);
         __m128i sumabcd2 = _mm256_extracti128_si256(acc0, 1);
@@ -190,11 +192,17 @@ INLINE void quant_affine_relu(int16_t *weights, int32_t *biases, int16_t *inputs
         sumefgh1 = _mm_add_epi32(sumefgh1, sumefgh2);
 
         acc0 = _mm256_inserti128_si256(_mm256_castsi128_si256(sumabcd1), sumefgh1, 1);
+        out[i] = _mm256_cvtepi32_ps(vepi32_max(zero, vepi32_add(bia[i], acc0)));
 
-        const __m256i biased = _mm256_add_epi32(bia[i], acc0);
-        const __m256i relu   = _mm256_max_epi32(zero, biased);
+        #elif USE_AVX
 
-        out[i] = _mm256_cvtepi32_ps(relu);
+        __m128 ps0 = _mm_cvtepi32_ps(vepi32_max(zero, vepi32_add(bia[i * 2 + 0], acc0)));
+        __m128 ps1 = _mm_cvtepi32_ps(vepi32_max(zero, vepi32_add(bia[i * 2 + 1], acc4)));
+
+        out[i] = _mm256_insertf128_ps(out[i], ps0, 0);
+        out[i] = _mm256_insertf128_ps(out[i], ps1, 1);
+
+        #endif
     }
 }
 
@@ -224,14 +232,14 @@ INLINE void float_affine_relu(float *weights, float *biases, float *inputs, floa
         __m256 acc7 = _mm256_mul_ps(wgt[InChunks * (i * 8 + 7) + 0], inp[0]);
 
         for (int j = 1; j < InChunks; j++) {
-            acc0 = _mm256_fmadd_ps(wgt[InChunks * (i * 8 + 0) + j], inp[j], acc0);
-            acc1 = _mm256_fmadd_ps(wgt[InChunks * (i * 8 + 1) + j], inp[j], acc1);
-            acc2 = _mm256_fmadd_ps(wgt[InChunks * (i * 8 + 2) + j], inp[j], acc2);
-            acc3 = _mm256_fmadd_ps(wgt[InChunks * (i * 8 + 3) + j], inp[j], acc3);
-            acc4 = _mm256_fmadd_ps(wgt[InChunks * (i * 8 + 4) + j], inp[j], acc4);
-            acc5 = _mm256_fmadd_ps(wgt[InChunks * (i * 8 + 5) + j], inp[j], acc5);
-            acc6 = _mm256_fmadd_ps(wgt[InChunks * (i * 8 + 6) + j], inp[j], acc6);
-            acc7 = _mm256_fmadd_ps(wgt[InChunks * (i * 8 + 7) + j], inp[j], acc7);
+            acc0 = vps32_fma(wgt[InChunks * (i * 8 + 0) + j], inp[j], acc0);
+            acc1 = vps32_fma(wgt[InChunks * (i * 8 + 1) + j], inp[j], acc1);
+            acc2 = vps32_fma(wgt[InChunks * (i * 8 + 2) + j], inp[j], acc2);
+            acc3 = vps32_fma(wgt[InChunks * (i * 8 + 3) + j], inp[j], acc3);
+            acc4 = vps32_fma(wgt[InChunks * (i * 8 + 4) + j], inp[j], acc4);
+            acc5 = vps32_fma(wgt[InChunks * (i * 8 + 5) + j], inp[j], acc5);
+            acc6 = vps32_fma(wgt[InChunks * (i * 8 + 6) + j], inp[j], acc6);
+            acc7 = vps32_fma(wgt[InChunks * (i * 8 + 7) + j], inp[j], acc7);
         }
 
         acc0 = _mm256_hadd_ps(acc0, acc1);
@@ -266,7 +274,7 @@ INLINE void output_transform(float *weights, float *biases, float *inputs, float
 
     __m256 acc = _mm256_mul_ps(wgt[0], inp[0]);
     for (int i = 1; i < InChunks; i++)
-        acc = _mm256_fmadd_ps(wgt[i], inp[i], acc);
+        acc = vps32_fma(wgt[i], inp[i], acc);
 
     const __m128 hiQuad  = _mm256_extractf128_ps(acc, 1);
     const __m128 loQuad  = _mm256_castps256_ps128(acc);

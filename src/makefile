@@ -34,31 +34,34 @@ PGOFLAGS = -O3 $(WFLAGS) $(NN) -DNDEBUG -flto -march=native -fno-asynchronous-un
 
 POPCNTFLAGS = -DUSE_POPCNT -msse3 -mpopcnt
 PEXTFLAGS   = $(POPCNTFLAGS) -DUSE_PEXT -mbmi2
-AVX2FLAGS   = -msse -msse3 -mpopcnt -mavx2 -msse4.1 -mssse3 -msse2
+
+SSSE3FLAGS  = -DUSE_SSSE3 -msse -msse2 -mssse3
+AVXFLAGS    = -DUSE_AVX $(SSSE3FLAGS) -msse4.1 -mavx
+AVX2FLAGS   = -DUSE_AVX2 $(AVXFLAGS) -mavx2 -mfma
 
 ARMV8FLAGS  = -O3 $(WFLAGS) -DNDEBUG -flto -march=armv8-a -m64
 ARMV7FLAGS  = -O3 $(WFLAGS) -DNDEBUG -flto -march=armv7-a -m32
 ARMV7FLAGS += -mfloat-abi=softfp -mfpu=vfpv3-d16 -mthumb -Wl,--fix-cortex-a8
 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+PROPS = $(shell echo | $(CC) -march=native -E -dM -)
+
+ifneq ($(findstring __AVX2__, $(PROPS)),)
+	CFLAGS += -DUSE_AVX2
+endif
+
+ifneq ($(findstring __AVX__, $(PROPS)),)
+	CFLAGS += -DUSE_AVX
+endif
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
 popcnt:
 	$(CC) $(CFLAGS) $(SRC) $(LIBS) $(POPCNTFLAGS) -o $(EXE)
 
-nopopcnt:
-	$(CC) $(CFLAGS) $(SRC) $(LIBS) -o $(EXE)
-
 pext:
 	$(CC) $(CFLAGS) $(SRC) $(LIBS) $(PEXTFLAGS) -o $(EXE)
-
-release:
-	mkdir ../dist
-	$(CC) $(RFLAGS) $(SRC) $(LIBS) -o ../dist/$(EXE)$(VER)-x64-nopopcnt.exe
-	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(POPCNTFLAGS) -o ../dist/$(EXE)$(VER)-x64-popcnt.exe
-	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(PEXTFLAGS) -o ../dist/$(EXE)$(VER)-x64-pext.exe
-	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(AVX2FLAGS) $(POPCNTFLAGS) -o ../dist/$(EXE)$(VER)-x64-popcnt-avx2.exe
-	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(AVX2FLAGS) $(PEXTFLAGS) -o ../dist/$(EXE)$(VER)-x64-pext-avx2.exe
-
-tune:
-	$(CC) $(TFLAGS) $(SRC) $(LIBS) $(POPCNT) -o $(EXE)
 
 pgo:
 	rm -f *.gcda pyrrhic/*.gcda nnue/*.gcda
@@ -79,3 +82,14 @@ armv8:
 
 armv7:
 	$(CC) $(ARMV7FLAGS) $(SRC) -lm -o $(EXE)
+
+release:
+	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(POPCNTFLAGS) $(AVXFLAGS) -o $(EXE)$(VER)-popcnt-avx
+	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(PEXTFLAGS) $(AVXFLAGS) -o $(EXE)$(VER)-pext-avx
+	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(POPCNTFLAGS) $(AVX2FLAGS) -o $(EXE)$(VER)-popcnt-avx2
+	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(PEXTFLAGS) $(AVX2FLAGS) -o $(EXE)$(VER)-pext-avx2
+
+tune:
+	$(CC) $(TFLAGS) $(SRC) $(LIBS) $(POPCNT) -o $(EXE)
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
