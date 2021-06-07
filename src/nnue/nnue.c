@@ -139,13 +139,17 @@ INLINE void quant_affine_relu(int16_t *weights, int32_t *biases, int16_t *inputs
     const int InChunks  = L1SIZE / vepi16_cnt;
     const int OutChunks = L2SIZE / 8;
 
+    #if defined(USE_AVX2) || defined(USE_AVX)
     const vepi32 zero = vepi32_zero();
+    #elif defined(USE_SSSE3)
+    const vps32  zero = vps32_zero();
+    #endif
 
     const vepi16 *inp = (vepi16*) inputs;
     const vepi32 *bia = (vepi32*) biases;
     const vepi16 *wgt = (vepi16*) weights;
 
-    __m256 *out  = (__m256*) outputs;
+    vps32 *out  = (vps32*) outputs;
 
     for (int i = 0; i < OutChunks; i++) {
 
@@ -181,7 +185,7 @@ INLINE void quant_affine_relu(int16_t *weights, int32_t *biases, int16_t *inputs
         acc6 = vepi32_hadd(acc6, acc7);
         acc4 = vepi32_hadd(acc4, acc6);
 
-        #if USE_AVX2
+        #if defined(USE_AVX2)
 
         __m128i sumabcd1 = _mm256_extracti128_si256(acc0, 0);
         __m128i sumabcd2 = _mm256_extracti128_si256(acc0, 1);
@@ -194,13 +198,18 @@ INLINE void quant_affine_relu(int16_t *weights, int32_t *biases, int16_t *inputs
         acc0 = _mm256_inserti128_si256(_mm256_castsi128_si256(sumabcd1), sumefgh1, 1);
         out[i] = _mm256_cvtepi32_ps(vepi32_max(zero, vepi32_add(bia[i], acc0)));
 
-        #elif USE_AVX
+        #elif defined(USE_AVX)
 
         __m128 ps0 = _mm_cvtepi32_ps(vepi32_max(zero, vepi32_add(bia[i * 2 + 0], acc0)));
         __m128 ps1 = _mm_cvtepi32_ps(vepi32_max(zero, vepi32_add(bia[i * 2 + 1], acc4)));
 
         out[i] = _mm256_insertf128_ps(out[i], ps0, 0);
         out[i] = _mm256_insertf128_ps(out[i], ps1, 1);
+
+        #elif defined (USE_SSSE3)
+
+        out[i * 2 + 0] = vps32_max(zero, _mm_cvtepi32_ps(vepi32_add(bia[i * 2 + 0], acc0)));
+        out[i * 2 + 1] = vps32_max(zero, _mm_cvtepi32_ps(vepi32_add(bia[i * 2 + 1], acc4)));
 
         #endif
     }
@@ -210,26 +219,26 @@ INLINE void float_affine_relu(float *weights, float *biases, float *inputs, floa
 
     assert(L2SIZE % 8 == 0 && L3SIZE % 8 == 0);
 
-    const int InChunks  = L2SIZE / 8;
+    const int InChunks  = L2SIZE / vps32_cnt;
     const int OutChunks = L3SIZE / 8;
 
-    const __m256 zero = _mm256_setzero_ps();
+    const vps32 zero = vps32_zero();
 
-    const __m256 *inp = (__m256 *) inputs;
-    const __m256 *bia = (__m256 *) biases;
-    const __m256 *wgt = (__m256 *) weights;
-    __m256 *const out = (__m256 *) outputs;
+    const vps32 *inp = (vps32 *) inputs;
+    const vps32 *bia = (vps32 *) biases;
+    const vps32 *wgt = (vps32 *) weights;
+    vps32 *const out = (vps32 *) outputs;
 
     for (int i = 0; i < OutChunks; i++) {
 
-        __m256 acc0 = _mm256_mul_ps(wgt[InChunks * (i * 8 + 0) + 0], inp[0]);
-        __m256 acc1 = _mm256_mul_ps(wgt[InChunks * (i * 8 + 1) + 0], inp[0]);
-        __m256 acc2 = _mm256_mul_ps(wgt[InChunks * (i * 8 + 2) + 0], inp[0]);
-        __m256 acc3 = _mm256_mul_ps(wgt[InChunks * (i * 8 + 3) + 0], inp[0]);
-        __m256 acc4 = _mm256_mul_ps(wgt[InChunks * (i * 8 + 4) + 0], inp[0]);
-        __m256 acc5 = _mm256_mul_ps(wgt[InChunks * (i * 8 + 5) + 0], inp[0]);
-        __m256 acc6 = _mm256_mul_ps(wgt[InChunks * (i * 8 + 6) + 0], inp[0]);
-        __m256 acc7 = _mm256_mul_ps(wgt[InChunks * (i * 8 + 7) + 0], inp[0]);
+        vps32 acc0 = vps32_mul(wgt[InChunks * (i * 8 + 0) + 0], inp[0]);
+        vps32 acc1 = vps32_mul(wgt[InChunks * (i * 8 + 1) + 0], inp[0]);
+        vps32 acc2 = vps32_mul(wgt[InChunks * (i * 8 + 2) + 0], inp[0]);
+        vps32 acc3 = vps32_mul(wgt[InChunks * (i * 8 + 3) + 0], inp[0]);
+        vps32 acc4 = vps32_mul(wgt[InChunks * (i * 8 + 4) + 0], inp[0]);
+        vps32 acc5 = vps32_mul(wgt[InChunks * (i * 8 + 5) + 0], inp[0]);
+        vps32 acc6 = vps32_mul(wgt[InChunks * (i * 8 + 6) + 0], inp[0]);
+        vps32 acc7 = vps32_mul(wgt[InChunks * (i * 8 + 7) + 0], inp[0]);
 
         for (int j = 1; j < InChunks; j++) {
             acc0 = vps32_fma(wgt[InChunks * (i * 8 + 0) + j], inp[j], acc0);
@@ -242,13 +251,15 @@ INLINE void float_affine_relu(float *weights, float *biases, float *inputs, floa
             acc7 = vps32_fma(wgt[InChunks * (i * 8 + 7) + j], inp[j], acc7);
         }
 
-        acc0 = _mm256_hadd_ps(acc0, acc1);
-        acc2 = _mm256_hadd_ps(acc2, acc3);
-        acc4 = _mm256_hadd_ps(acc4, acc5);
-        acc6 = _mm256_hadd_ps(acc6, acc7);
+        acc0 = vps32_hadd(acc0, acc1);
+        acc2 = vps32_hadd(acc2, acc3);
+        acc4 = vps32_hadd(acc4, acc5);
+        acc6 = vps32_hadd(acc6, acc7);
 
-        acc0 = _mm256_hadd_ps(acc0, acc2);
-        acc4 = _mm256_hadd_ps(acc4, acc6);
+        acc0 = vps32_hadd(acc0, acc2);
+        acc4 = vps32_hadd(acc4, acc6);
+
+        #if defined(USE_AVX2) || defined(USE_AVX)
 
         __m128 sumabcd1 = _mm256_extractf128_ps(acc0, 0);
         __m128 sumabcd2 = _mm256_extractf128_ps(acc0, 1);
@@ -260,6 +271,13 @@ INLINE void float_affine_relu(float *weights, float *biases, float *inputs, floa
 
         acc0 = _mm256_insertf128_ps(_mm256_castps128_ps256(sumabcd1), sumefgh1, 1);
         out[i] = _mm256_max_ps(zero, _mm256_add_ps(bia[i], acc0));
+
+        #elif defined(USE_SSSE3)
+
+        out[i * 2 + 0] = vps32_max(zero, vps32_add(bia[i * 2 + 0], acc0));
+        out[i * 2 + 1] = vps32_max(zero, vps32_add(bia[i * 2 + 1], acc4));
+
+        #endif
     }
 }
 
@@ -267,18 +285,26 @@ INLINE void output_transform(float *weights, float *biases, float *inputs, float
 
     assert(L3SIZE % 8 == 0);
 
-    const int InChunks = L3SIZE / 8;
+    const int InChunks = L3SIZE / vps32_cnt;
 
-    const __m256 *inp  = (__m256 *) inputs;
-    const __m256 *wgt  = (__m256 *) weights;
+    const vps32 *inp  = (vps32 *) inputs;
+    const vps32 *wgt  = (vps32 *) weights;
 
-    __m256 acc = _mm256_mul_ps(wgt[0], inp[0]);
+    vps32 acc = vps32_mul(wgt[0], inp[0]);
     for (int i = 1; i < InChunks; i++)
         acc = vps32_fma(wgt[i], inp[i], acc);
+
+    #if defined(USE_AVX) || defined(USE_AVX2)
 
     const __m128 hiQuad  = _mm256_extractf128_ps(acc, 1);
     const __m128 loQuad  = _mm256_castps256_ps128(acc);
     const __m128 sumQuad = _mm_add_ps(loQuad, hiQuad);
+
+    #elif defined(USE_SSSE3)
+
+    const __m128 sumQuad = acc;
+
+    #endif
 
     const __m128 hiDual  = _mm_movehl_ps(sumQuad, sumQuad);
     const __m128 sumDual = _mm_add_ps(sumQuad, hiDual);

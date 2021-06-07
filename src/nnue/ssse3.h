@@ -20,31 +20,29 @@
 
 #pragma once
 
-#include <stdlib.h>
+#define vepi16 __m128i
+#define vepi32 __m128i
+#define vps32  __m128
 
-#include "../types.h"
+#define vepi16_cnt 8
+#define vepi32_cnt 4
+#define vps32_cnt  4
 
-#if defined(USE_AVX2)
-    #include "avx2.h"
-#elif defined(USE_AVX)
-    #include "avx.h"
-#elif defined(USE_SSSE3)
-    #include "ssse3.h"
-#endif
+#define vepi16_add  _mm_add_epi16
+#define vepi16_sub  _mm_sub_epi16
+#define vepi16_max  _mm_max_epi16
+#define vepi16_madd _mm_madd_epi16
+#define vepi16_zero _mm_setzero_si128
 
-#define INSIZE  40960
-#define KPSIZE  256
-#define L1SIZE  512
-#define L2SIZE  32
-#define L3SIZE  32
-#define OUTSIZE 1
+#define vepi32_add  _mm_add_epi32
+#define vepi32_max  (void)
+#define vepi32_hadd _mm_hadd_epi32
+#define vepi32_zero _mm_setzero_si128
 
-typedef struct NNUEDelta {
-    int piece, from, to;
-} NNUEDelta;
+#define vps32_add  _mm_add_ps
+#define vps32_mul  _mm_mul_ps
+#define vps32_max  _mm_max_ps
+#define vps32_hadd _mm_hadd_ps
+#define vps32_zero _mm_setzero_ps
 
-typedef struct NNUEAccumulator {
-    int accurate, changes;
-    NNUEDelta deltas[3];
-    ALIGN64 int16_t values[2][KPSIZE];
-} NNUEAccumulator;
+#define vps32_fma(A, B, C) _mm_add_ps(_mm_mul_ps(A, B), C)

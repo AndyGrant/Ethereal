@@ -20,27 +20,27 @@ LIBS = -lpthread -lm
 EXE  = Ethereal
 
 ifdef EVALFILE
-    NN = -DUSE_NNUE=1 -DEVALFILE=\"$(EVALFILE)\"
+    NN   = -DUSE_NNUE=1 -DEVALFILE=\"$(EVALFILE)\"
     SRC += nnue/*.c
 else
-    NN = -DUSE_NNUE=0
+    NN   = -DUSE_NNUE=0
 endif
 
 WFLAGS   = -std=gnu11 -Wall -Wextra -Wshadow
-RFLAGS   = -O3 $(WFLAGS) $(NN) -DNDEBUG -flto -static
-CFLAGS   = -O3 $(WFLAGS) $(NN) -DNDEBUG -flto -march=native
-TFLAGS   = -O3 $(WFLAGS) $(NN) -DNDEBUG -flto -march=native -fopenmp -DTUNE
-PGOFLAGS = -O3 $(WFLAGS) $(NN) -DNDEBUG -flto -march=native -fno-asynchronous-unwind-tables
+RFLAGS   = -O3 $(WFLAGS) -DNDEBUG -flto -DUSE_NNUE=1 nnue/*.c -static
+CFLAGS   = -O3 $(WFLAGS) -DNDEBUG -flto $(NN) -march=native
+TFLAGS   = -O3 $(WFLAGS) -DNDEBUG -flto $(NN) -march=native -fopenmp -DTUNE
+PGOFLAGS = -fno-asynchronous-unwind-tables
 
-POPCNTFLAGS = -DUSE_POPCNT -msse3 -mpopcnt
-PEXTFLAGS   = $(POPCNTFLAGS) -DUSE_PEXT -mbmi2
+POPCNTFLAGS = -DUSE_POPCNT -mpopcnt
+PEXTFLAGS   = -DUSE_PEXT -mbmi2 $(POPCNTFLAGS)
 
-SSSE3FLAGS  = -DUSE_SSSE3 -msse -msse2 -mssse3
-AVXFLAGS    = -DUSE_AVX $(SSSE3FLAGS) -msse4.1 -mavx
-AVX2FLAGS   = -DUSE_AVX2 $(AVXFLAGS) -mavx2 -mfma
+SSSE3FLAGS  = -DUSE_SSSE3 -msse -msse2 -msse3 -mssse3
+AVXFLAGS    = -DUSE_AVX -mavx -msse4.1 $(SSSE3FLAGS)
+AVX2FLAGS   = -DUSE_AVX2 -mavx2 -mfma $(AVXFLAGS)
 
-ARMV8FLAGS  = -O3 $(WFLAGS) -DNDEBUG -flto -march=armv8-a -m64
-ARMV7FLAGS  = -O3 $(WFLAGS) -DNDEBUG -flto -march=armv7-a -m32
+ARMV8FLAGS  = -O3 $(WFLAGS) -DNDEBUG -flto -DUSE_NNUE=0 -march=armv8-a -m64
+ARMV7FLAGS  = -O3 $(WFLAGS) -DNDEBUG -flto -DUSE_NNUE=0 -march=armv7-a -m32
 ARMV7FLAGS += -mfloat-abi=softfp -mfpu=vfpv3-d16 -mthumb -Wl,--fix-cortex-a8
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -55,6 +55,10 @@ ifneq ($(findstring __AVX__, $(PROPS)),)
 	CFLAGS += -DUSE_AVX
 endif
 
+ifneq ($(findstring __SSSE3__, $(PROPS)),)
+	CFLAGS += -DUSE_SSSE3
+endif
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 popcnt:
@@ -65,16 +69,16 @@ pext:
 
 pgo:
 	rm -f *.gcda pyrrhic/*.gcda nnue/*.gcda
-	$(CC) -fprofile-generate $(PGOFLAGS) $(SRC) $(LIBS) $(POPCNTFLAGS) -o $(EXE)
+	$(CC) -fprofile-generate $(CFLAGS) $(PGOFLAGS) $(SRC) $(LIBS) $(POPCNTFLAGS) -o $(EXE)
 	./$(EXE) bench
-	$(CC) -fprofile-use $(PGOFLAGS) $(SRC) $(LIBS) $(POPCNTFLAGS) -o $(EXE)
+	$(CC) -fprofile-use $(CFLAGS) $(PGOFLAGS) $(SRC) $(LIBS) $(POPCNTFLAGS) -o $(EXE)
 	rm -f *.gcda pyrrhic/*.gcda nnue/*.gcda
 
 pgopext:
 	rm -f *.gcda pyrrhic/*.gcda nnue/*.gcda
-	$(CC) -fprofile-generate $(PGOFLAGS) $(SRC) $(LIBS) $(PEXTFLAGS) -o $(EXE)
+	$(CC) -fprofile-generate $(CFLAGS) $(PGOFLAGS) $(SRC) $(LIBS) $(PEXTFLAGS) -o $(EXE)
 	./$(EXE) bench
-	$(CC) -fprofile-use $(PGOFLAGS) $(SRC) $(LIBS) $(PEXTFLAGS) -o $(EXE)
+	$(CC) -fprofile-use $(CFLAGS) $(PGOFLAGS) $(SRC) $(LIBS) $(PEXTFLAGS) -o $(EXE)
 	rm -f *.gcda pyrrhic/*.gcda nnue/*.gcda
 
 armv8:
@@ -83,13 +87,15 @@ armv8:
 armv7:
 	$(CC) $(ARMV7FLAGS) $(SRC) -lm -o $(EXE)
 
-release:
-	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(POPCNTFLAGS) $(AVXFLAGS) -o $(EXE)$(VER)-popcnt-avx
-	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(PEXTFLAGS) $(AVXFLAGS) -o $(EXE)$(VER)-pext-avx
-	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(POPCNTFLAGS) $(AVX2FLAGS) -o $(EXE)$(VER)-popcnt-avx2
-	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(PEXTFLAGS) $(AVX2FLAGS) -o $(EXE)$(VER)-pext-avx2
-
 tune:
 	$(CC) $(TFLAGS) $(SRC) $(LIBS) $(POPCNT) -o $(EXE)
+
+release:
+	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(POPCNTFLAGS) $(SSSE3FLAGS) -o $(EXE)$(VER)-ssse3
+	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(PEXTFLAGS)   $(SSSE3FLAGS) -o $(EXE)$(VER)-pext-ssse3
+	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(POPCNTFLAGS) $(AVXFLAGS)   -o $(EXE)$(VER)-avx
+	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(PEXTFLAGS)   $(AVXFLAGS)   -o $(EXE)$(VER)-pext-avx
+	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(POPCNTFLAGS) $(AVX2FLAGS)  -o $(EXE)$(VER)-avx2
+	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(PEXTFLAGS)   $(AVX2FLAGS)  -o $(EXE)$(VER)-pext-avx2
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

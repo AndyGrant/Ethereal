@@ -30,10 +30,12 @@
 #include "tuner.h"
 #include "uci.h"
 
+#include "nnue/nnue.h"
+
 void handleCommandLine(int argc, char **argv) {
 
     // Benchmarker is being run from the command line
-    // USAGE: ./Ethereal bench <depth> <threads> <hash>
+    // USAGE: ./Ethereal bench <depth> <threads> <hash> <evalfile>
     if (argc > 1 && strEquals(argv[1], "bench")) {
         runBenchmark(argc, argv);
         exit(EXIT_SUCCESS);
@@ -76,6 +78,11 @@ void runBenchmark(int argc, char **argv) {
     int depth     = argc > 2 ? atoi(argv[2]) : 13;
     int nthreads  = argc > 3 ? atoi(argv[3]) :  1;
     int megabytes = argc > 4 ? atoi(argv[4]) : 16;
+
+    if (argc > 5) {
+        nnue_init(argv[5]);
+        printf("info string set EvalFile to %s\n", argv[5]);
+    }
 
     initTT(megabytes);
     time = getRealTime();
