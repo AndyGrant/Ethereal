@@ -629,9 +629,9 @@ int qsearch(Thread *thread, PVariation *pv, int alpha, int beta) {
 
     Board *const board = &thread->board;
 
-    int eval, value, best;
+    int eval, value, best, oldAlpha = alpha;
     int ttHit, ttValue = 0, ttEval = VALUE_NONE, ttDepth = 0, ttBound = 0;
-    uint16_t move, ttMove = NONE_MOVE;
+    uint16_t move, ttMove = NONE_MOVE, bestMove = NONE_MOVE;
     MovePicker movePicker;
     PVariation lpv;
 
@@ -701,7 +701,9 @@ int qsearch(Thread *thread, PVariation *pv, int alpha, int beta) {
 
         // Improved current value
         if (value > best) {
+
             best = value;
+            bestMove = move;
 
             // Improved current lower bound
             if (value > alpha) {
@@ -712,12 +714,17 @@ int qsearch(Thread *thread, PVariation *pv, int alpha, int beta) {
                 pv->line[0] = move;
                 memcpy(pv->line + 1, lpv.line, sizeof(uint16_t) * lpv.length);
             }
-        }
 
-        // Search has failed high
-        if (alpha >= beta)
-            return best;
+            // Search has failed high
+            if (alpha >= beta)
+                break;
+        }
     }
+
+    // Step 8. Store results of search into the Transposition Table.
+    ttBound = best >= beta    ? BOUND_LOWER
+            : best > oldAlpha ? BOUND_EXACT : BOUND_UPPER;
+    storeTTEntry(board->hash, bestMove, valueToTT(best, thread->height), eval, 0, ttBound);
 
     return best;
 }
