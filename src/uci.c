@@ -52,6 +52,7 @@ extern volatile int ANALYSISMODE; // Defined by search.c
 extern PKNetwork PKNN;            // Defined by network.c
 
 pthread_mutex_t READYLOCK = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t PONDERLOCK = PTHREAD_MUTEX_INITIALIZER;
 const char *StartPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 int main(int argc, char **argv) {
@@ -142,6 +143,7 @@ int main(int argc, char **argv) {
 
         else if (strStartsWith(str, "go")) {
             pthread_mutex_lock(&READYLOCK);
+            pthread_mutex_lock(&PONDERLOCK);
             uciGoStruct.multiPV = multiPV;
             uciGoStruct.board   = &board;
             uciGoStruct.threads = threads;
@@ -150,8 +152,12 @@ int main(int argc, char **argv) {
             pthread_detach(pthreadsgo);
         }
 
-        else if (strEquals(str, "ponderhit"))
+        else if (strEquals(str, "ponderhit")) {
+            pthread_mutex_lock(&PONDERLOCK);
             IS_PONDERING = 0;
+            pthread_mutex_unlock(&PONDERLOCK);
+            printf("test");
+        }
 
         else if (strEquals(str, "stop"))
             ABORT_SIGNAL = 1, IS_PONDERING = 0;
@@ -239,6 +245,9 @@ void *uciGo(void *cargo) {
 
     // Cap our MultiPV search based on the suggested or legal moves
     limits.multiPV = MIN(multiPV, searchmoves ? idx : size);
+
+    // Allow the main thread to respond to ponderhit
+    pthread_mutex_unlock(&PONDERLOCK);
 
     // Execute search, return best and ponder moves
     getBestMove(threads, board, &limits, &bestMove, &ponderMove);
