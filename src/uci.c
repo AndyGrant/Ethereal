@@ -156,7 +156,6 @@ int main(int argc, char **argv) {
             pthread_mutex_lock(&PONDERLOCK);
             IS_PONDERING = 0;
             pthread_mutex_unlock(&PONDERLOCK);
-            printf("test");
         }
 
         else if (strEquals(str, "stop"))
