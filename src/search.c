@@ -249,7 +249,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
 
         // Check to see if we have exceeded the maxiumum search draft
         if (thread->height >= MAX_PLY)
-            return evaluateBoard(thread, board);
+            return board->kingAttackers ? 0 : evaluateBoard(thread, board);
 
         // Mate Distance Pruning. Check to see if this line is so
         // good, or so bad, that being mated in the ply, or  mating in
@@ -309,9 +309,9 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     // We can grab in check based on the already computed king attackers bitboard
     inCheck = !!board->kingAttackers;
 
-    // Save a history of the static evaluations
-    eval = thread->evalStack[thread->height]
-         = ttEval != VALUE_NONE ? ttEval : evaluateBoard(thread, board);
+    // Save a history of the static evaluations when not checked
+    eval = thread->evalStack[thread->height] = inCheck ? VALUE_NONE
+         : ttEval != VALUE_NONE ? ttEval : evaluateBoard(thread, board);
 
     // Futility Pruning Margin
     futilityMargin = FutilityMargin * depth;
@@ -321,7 +321,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     seeMargin[1] = SEEQuietMargin * depth;
 
     // Improving if our static eval increased in the last move
-    improving = thread->height >= 2 && eval > thread->evalStack[thread->height-2];
+    improving = !inCheck && eval > thread->evalStack[thread->height-2];
 
     // Reset Killer moves for our children
     thread->killers[thread->height+1][0] = NONE_MOVE;
@@ -376,31 +376,33 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     // with an adjusted beta value at a reduced search depth, we expect that it will
     // cause a similar cutoff at this search depth, with a normal beta value
     if (   !PvNode
+        && !inCheck
         &&  depth >= ProbCutDepth
         &&  abs(beta) < MATE_IN_MAX
         && (eval >= beta || eval + moveBestCaseValue(board) >= beta + ProbCutMargin)) {
 
-        // Try tactical moves which maintain rBeta
+        // Try tactical moves which maintain rBeta.
         rBeta = MIN(beta + ProbCutMargin, MATE - MAX_PLY - 1);
         initNoisyMovePicker(&movePicker, thread, rBeta - eval);
         while ((move = selectNextMove(&movePicker, board, 1)) != NONE_MOVE) {
 
             // Apply move, skip if move is illegal
-            if (!apply(thread, board, move)) continue;
+            if (apply(thread, board, move)) {
 
-            // For high depths, verify the move first with a depth one search
-            if (depth >= 2 * ProbCutDepth)
-                value = -qsearch(thread, &lpv, -rBeta, -rBeta+1);
+                // For high depths, verify the move first with a qsearch
+                if (depth >= 2 * ProbCutDepth)
+                    value = -qsearch(thread, &lpv, -rBeta, -rBeta+1);
 
-            // For low depths, or after the above, verify with a reduced search
-            if (depth < 2 * ProbCutDepth || value >= rBeta)
-                value = -search(thread, &lpv, -rBeta, -rBeta+1, depth-4);
+                // For low depths, or after the above, verify with a reduced search
+                if (depth < 2 * ProbCutDepth || value >= rBeta)
+                    value = -search(thread, &lpv, -rBeta, -rBeta+1, depth-4);
 
-            // Revert the board state
-            revert(thread, board, move);
+                // Revert the board state
+                revert(thread, board, move);
 
-            // Probcut failed high verifying the cutoff
-            if (value >= rBeta) return value;
+                // Probcut failed high verifying the cutoff
+                if (value >= rBeta) return value;
+            }
         }
     }
 
@@ -438,16 +440,18 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
 
             // Step 13A (~3 elo). Futility Pruning. If our score is far below alpha,
             // and we don't expect anything from this move, we can skip all other quiets
-            if (   depth <= FutilityPruningDepth
-                && eval + futilityMargin <= alpha
-                && hist < FutilityPruningHistoryLimit[improving])
+            if (   !inCheck
+                &&  depth <= FutilityPruningDepth
+                &&  eval + futilityMargin <= alpha
+                &&  hist < FutilityPruningHistoryLimit[improving])
                 skipQuiets = 1;
 
             // Step 13B (~2.5 elo). Futility Pruning. If our score is not only far
             // below alpha but still far below alpha after adding the FutilityMargin,
             // we can somewhat safely skip all quiet moves after this one
-            if (   depth <= FutilityPruningDepth
-                && eval + futilityMargin + FutilityMarginNoHistory <= alpha)
+            if (   !inCheck
+                &&  depth <= FutilityPruningDepth
+                &&  eval + futilityMargin + FutilityMarginNoHistory <= alpha)
                 skipQuiets = 1;
 
             // Step 13C (~8 elo). Counter Move Pruning. Moves with poor counter
@@ -598,14 +602,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     // Prefetch TT for store
     prefetchTTEntry(board->hash);
 
-    // Step 20. Stalemate and Checkmate detection. If no moves were found to
-    // be legal (search makes sure to play at least one legal move, if any),
-    // then we are either mated or stalemated, which we can tell by the inCheck
-    // flag. For mates, return a score based on the distance from root, so we
-    // can differentiate between close mates and far away mates from the root
-    if (played == 0) return inCheck ? -MATE + thread->height : 0;
-
-    // Step 21 (~760 elo). Update History counters on a fail high for a quiet move.
+    // Step 20 (~760 elo). Update History counters on a fail high for a quiet move.
     // We also update Capture History Heuristics, which augment or replace MVV-LVA.
 
     if (best >= beta && !moveIsTactical(board, bestMove))
@@ -613,6 +610,11 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
 
     if (best >= beta)
         updateCaptureHistories(thread, bestMove, capturesTried, capturesPlayed, depth);
+
+    // Step 21. Stalemate and Checkmate detection. If no moves were found to
+    // be legal then we are either mated or stalemated, For mates, return a
+    // score based on how far or close the mate is to the root position
+    if (played == 0) return inCheck ? -MATE + thread->height : 0;
 
     // Step 22. Store results of search into the Transposition Table. We do
     // not overwrite the Root entry from the first line of play we examined
