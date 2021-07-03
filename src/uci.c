@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
 
     // Initialize core components of Ethereal
     initAttacks(); initMasks(); initEval();
-    initSearch(); initZobrist(); initTT(16);
+    initSearch(); initZobrist(); init_TT(16);
     initPKNetwork(&PKNN); nnue_incbin_init();
 
     // Create the UCI-board and our threads
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
 
         else if (strEquals(str, "ucinewgame")) {
             pthread_mutex_lock(&READYLOCK);
-            resetThreadPool(threads), clearTT();
+            resetThreadPool(threads), clear_TT();
             pthread_mutex_unlock(&READYLOCK);
         }
 
@@ -289,7 +289,7 @@ void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960) {
 
     if (strStartsWith(str, "setoption name Hash value ")) {
         int megabytes = atoi(str + strlen("setoption name Hash value "));
-        initTT(megabytes); printf("info string set Hash to %dMB\n", hashSizeMBTT());
+        printf("info string set Hash to %dMB\n", init_TT(megabytes));
     }
 
     if (strStartsWith(str, "setoption name Threads value ")) {

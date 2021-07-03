@@ -84,7 +84,7 @@ void runBenchmark(int argc, char **argv) {
         printf("info string set EvalFile to %s\n", argv[5]);
     }
 
-    initTT(megabytes);
+    init_TT(megabytes);
     time = getRealTime();
     threads = createThreadPool(nthreads);
 
@@ -105,7 +105,7 @@ void runBenchmark(int argc, char **argv) {
         times[i] = getRealTime() - limits.start;
         nodes[i] = nodesSearchedThreadPool(threads);
 
-        clearTT(); // Reset TT between searches
+        clear_TT(); // Reset TT between searches
     }
 
     printf("\n=================================================================================\n");
@@ -150,13 +150,13 @@ void runEvalBook(int argc, char **argv) {
     limits.multiPV = 1;
     limits.limitedByDepth = 1;
     limits.depthLimit = depth;
-    initTT(megabytes);
+    init_TT(megabytes);
 
     while ((fgets(line, 256, book)) != NULL) {
         limits.start = getRealTime();
         boardFromFEN(&board, line, 0);
         getBestMove(threads, &board, &limits, &best, &ponder);
-        resetThreadPool(threads); clearTT();
+        resetThreadPool(threads); clear_TT();
         printf("FEN: %s", line);
     }
 

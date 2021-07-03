@@ -22,12 +22,7 @@
 
 #include "types.h"
 
-enum {
-    BOUND_NONE  = 0,
-    BOUND_LOWER = 1,
-    BOUND_UPPER = 2,
-    BOUND_EXACT = 3,
-};
+enum { BOUND_NONE, BOUND_LOWER, BOUND_UPPER, BOUND_EXACT };
 
 enum {
     TT_MASK_BOUND = 0x03,
@@ -53,13 +48,10 @@ struct TTable {
     uint8_t generation;
 };
 
-void initTT(uint64_t megabytes);
-int hashSizeMBTT();
-void updateTT();
-void clearTT();
+int init_TT(int megabytes);
 int hashfullTT();
-int valueFromTT(int value, int height);
-int valueToTT(int value, int height);
+void update_TT();
+void clear_TT();
 void prefetchTTEntry(uint64_t hash);
-int getTTEntry(uint64_t hash, uint16_t *move, int *value, int *eval, int *depth, int *bound);
-void storeTTEntry(uint64_t hash, uint16_t move, int value, int eval, int depth, int bound);
+int getTTEntry(uint64_t hash, int height, uint16_t *move, int *value, int *eval, int *depth, int *bound);
+void storeTTEntry(uint64_t hash, int height, uint16_t move, int value, int eval, int depth, int bound);

@@ -29,27 +29,44 @@
 #include "types.h"
 
 TTable Table; // Global Transposition Table
-static const uint64_t MB = 1ull << 20;
 
-void initTT(uint64_t megabytes) {
+static int value_from_TT(int value, int height) {
+
+    // When storing MATE/TB scores we factor in the search height
+    return value >=  TBWIN_IN_MAX ? value - height
+         : value <= -TBWIN_IN_MAX ? value + height : value;
+}
+
+static int value_to_TT(int value, int height) {
+
+    // When storing MATE/TB scores we factor in the search height
+    return value >=  TBWIN_IN_MAX ? value + height
+         : value <= -TBWIN_IN_MAX ? value - height : value;
+}
+
+
+int init_TT(int megabytes) {
+
+    const uint64_t MB = 1ull << 20;
+    uint64_t keySize = 16ull;
 
     // Cleanup memory when resizing the table
     if (Table.hashMask) free(Table.buckets);
 
-    // Use a default keysize of 16 bits, which should be equal to
-    // the smallest possible hash table size, which is 2 megabytes
+    // Default keysize of 16 bits maps to a 2MB TTable
     assert((1ull << 16ull) * sizeof(TTBucket) == 2 * MB);
-    uint64_t keySize = 16ull;
 
     // Find the largest keysize that is still within our given megabytes
     while ((1ull << keySize) * sizeof(TTBucket) <= megabytes * MB / 2) keySize++;
     assert((1ull << keySize) * sizeof(TTBucket) <= megabytes * MB);
 
 #if defined(__linux__) && !defined(__ANDROID__)
+
     // On Linux systems we align on 2MB boundaries and request Huge Pages
     Table.buckets = aligned_alloc(2 * MB, (1ull << keySize) * sizeof(TTBucket));
     madvise(Table.buckets, (1ull << keySize) * sizeof(TTBucket), MADV_HUGEPAGE);
 #else
+
     // Otherwise, we simply allocate as usual and make no requests
     Table.buckets = malloc((1ull << keySize) * sizeof(TTBucket));
 #endif
@@ -57,29 +74,21 @@ void initTT(uint64_t megabytes) {
     // Save the lookup mask
     Table.hashMask = (1ull << keySize) - 1u;
 
-    clearTT(); // Clear the table and load everything into the cache
-}
+    clear_TT(); // Clear the table and load everything into the cache
 
-int hashSizeMBTT() {
+    // Return the number of MB actually allocated for the TTable
     return ((Table.hashMask + 1) * sizeof(TTBucket)) / MB;
 }
 
-void updateTT() {
+void update_TT() {
 
-    // The two LSBs are used for storing the entry bound
-    // types, and the six MSBs are for storing the entry
-    // age. Therefore add TT_MASK_BOUND + 1 to increment
-
+    // Age is only stored in the upper 6 MSBs
     Table.generation += TT_MASK_BOUND + 1;
-    assert(!(Table.generation & TT_MASK_BOUND));
-
 }
 
-void clearTT() {
+void clear_TT() {
 
-    // Wipe the Table in preperation for a new game. The
-    // Hash Mask is known to be one less than the size
-
+    // Wipe the Table in preperation for a new game
     memset(Table.buckets, 0, sizeof(TTBucket) * (Table.hashMask + 1u));
 }
 
@@ -101,31 +110,13 @@ int hashfullTT() {
     return used / TT_BUCKET_NB;
 }
 
-int valueFromTT(int value, int height) {
-
-    // When probing MATE scores into the table
-    // we must factor in the search height
-
-    return value >=  TBWIN_IN_MAX ? value - height
-         : value <= -TBWIN_IN_MAX ? value + height : value;
-}
-
-int valueToTT(int value, int height) {
-
-    // When storing MATE scores into the table
-    // we must factor in the search height
-
-    return value >=  TBWIN_IN_MAX ? value + height
-         : value <= -TBWIN_IN_MAX ? value - height : value;
-}
-
 void prefetchTTEntry(uint64_t hash) {
 
     TTBucket *bucket = &Table.buckets[hash & Table.hashMask];
     __builtin_prefetch(bucket);
 }
 
-int getTTEntry(uint64_t hash, uint16_t *move, int *value, int *eval, int *depth, int *bound) {
+int getTTEntry(uint64_t hash, int height, uint16_t *move, int *value, int *eval, int *depth, int *bound) {
 
     const uint16_t hash16 = hash >> 48;
     TTEntry *slots = Table.buckets[hash & Table.hashMask].slots;
@@ -139,7 +130,7 @@ int getTTEntry(uint64_t hash, uint16_t *move, int *value, int *eval, int *depth,
 
             // Copy over the TTEntry and signal success
             *move  = slots[i].move;
-            *value = slots[i].value;
+            *value = value_from_TT(slots[i].value, height);
             *eval  = slots[i].eval;
             *depth = slots[i].depth;
             *bound = slots[i].generation & TT_MASK_BOUND;
@@ -150,7 +141,7 @@ int getTTEntry(uint64_t hash, uint16_t *move, int *value, int *eval, int *depth,
     return 0;
 }
 
-void storeTTEntry(uint64_t hash, uint16_t move, int value, int eval, int depth, int bound) {
+void storeTTEntry(uint64_t hash, int height, uint16_t move, int value, int eval, int depth, int bound) {
 
     int i;
     const uint16_t hash16 = hash >> 48;
@@ -171,14 +162,14 @@ void storeTTEntry(uint64_t hash, uint16_t move, int value, int eval, int depth, 
     // an exact bound or depth that is nearly as good as the old one
     if (   bound != BOUND_EXACT
         && hash16 == replace->hash16
-        && depth < replace->depth - 3)
+        && depth < replace->depth - 2)
         return;
 
     // Finally, copy the new data into the replaced slot
-    replace->depth      = (int8_t)depth;
-    replace->generation = (uint8_t)bound | Table.generation;
-    replace->value      = (int16_t)value;
-    replace->eval       = (int16_t)eval;
-    replace->move       = (uint16_t)move;
-    replace->hash16     = (uint16_t)hash16;
+    replace->depth      = (int8_t  ) depth;
+    replace->generation = (uint8_t ) bound | Table.generation;
+    replace->value      = (int16_t ) value_to_TT(value, height);
+    replace->eval       = (int16_t ) eval;
+    replace->move       = (uint16_t) move;
+    replace->hash16     = (uint16_t) hash16;
 }
