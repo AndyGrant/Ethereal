@@ -29,14 +29,6 @@ Number of threads given to Ethereal while moving. Typically the more threads the
 
 The number of lines to output for each search iteration. For best performance, MultiPV should be left at the default value of 1 in all cases. This option should only be used for analysis.
 
-### ContemptDrawPenalty
-
-The number of centipawns added to the evaluation of the side to move. A positive value incentivizes preferring slightly negative evaluations to forced draws and leads to more decisive games. A small positive value is recommended in most situations.
-
-### ContemptComplexity
-
-The number of centipawns added to the evaluation of the side to move when all minor and major pieces are on the board, progressively reduced to zero with less pieces. A positive value incentivizes Ethereal to favor lines where the opponent cannot force simplifications as easily and leads to more decisive games. It is expected to hurt performance against significantly stronger engines, but to help against weaker engines. The optimal value for best results thus depends on conditions.
-
 ### MoveOverhead
 
 The time buffer when playing games under time constraints. If you notice any time losses you should increase the move overhead. Additionally when playing with Syzygy Table bases a larger than default overhead is recommended.

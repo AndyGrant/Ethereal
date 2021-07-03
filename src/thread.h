@@ -47,7 +47,6 @@ struct Thread {
     uint16_t bestMoves[MAX_MOVES];
     uint16_t ponderMoves[MAX_MOVES];
 
-    int contempt;
     int depth, seldepth, height;
     uint64_t nodes, tbhits;
 

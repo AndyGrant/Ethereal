@@ -20,7 +20,6 @@
 #include <string.h>
 
 #include "board.h"
-#include "evaluate.h"
 #include "history.h"
 #include "search.h"
 #include "thread.h"
@@ -30,11 +29,6 @@
 #include "nnue/types.h"
 #include "nnue/accumulator.h"
 #include "nnue/utils.h"
-
-// Default contempt values, UCI options can set them to other values
-int ContemptDrawPenalty = 0;
-int ContemptComplexity  = 0;
-
 
 Thread* createThreadPool(int nthreads) {
 
@@ -67,7 +61,6 @@ void deleteThreadPool(Thread *threads) {
     free(threads);
 }
 
-
 void resetThreadPool(Thread *threads) {
 
     // Reset the per-thread tables, used for move ordering
@@ -95,8 +88,6 @@ void newSearchThreadPool(Thread *threads, Board *board, Limits *limits, SearchIn
     // somewhere to store the results of each iteration by the main, and
     // our own copy of the board. Also, we reset the seach statistics
 
-    int contempt = MakeScore(ContemptDrawPenalty + ContemptComplexity, ContemptDrawPenalty);
-
     for (int i = 0; i < threads->nthreads; i++) {
 
         threads[i].limits = limits;
@@ -108,11 +99,8 @@ void newSearchThreadPool(Thread *threads, Board *board, Limits *limits, SearchIn
         memcpy(&threads[i].board, board, sizeof(Board));
         threads[i].board.thread = &threads[i];
         threads[i].nnueStack[0].accurate = 0;
-
-        threads[i].contempt = board->turn == WHITE ? contempt : -contempt;
     }
 }
-
 
 uint64_t nodesSearchedThreadPool(Thread *threads) {
 
