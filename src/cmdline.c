@@ -16,6 +16,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -184,6 +185,8 @@ static void buildPSQBBBook(int argc, char **argv) {
     (void) argc;
 
     char line[256];
+    uint64_t positions = 0;
+    double start = getRealTime(), elapsed;
     FILE *fin = fopen(argv[2], "r");
     FILE *fout = fopen(argv[3], "wb");
 
@@ -199,7 +202,16 @@ static void buildPSQBBBook(int argc, char **argv) {
         packBitboard(sample.packed, &board, sample.occupied);
 
         fwrite(&sample, sizeof(PSQBBSample), 1, fout);
+
+        if (positions++ % (1024 * 1024) == 0) {
+            elapsed = (getRealTime() - start) / 1000.0;
+            printf("\r[%.3fs] %" PRIu64 " Positions", elapsed, positions);
+            fflush(stdout);
+        }
     }
+
+    elapsed = (getRealTime() - start) / 1000.0;
+    printf("\r[%.3fs] %" PRIu64 " Positions\n", elapsed, positions);
 
     fclose(fin);
     fclose(fout);
@@ -210,8 +222,11 @@ static void buildHalfKPBook(int argc, char **argv) {
     (void) argc;
 
     char line[256];
+    uint64_t positions = 0;
+    double start = getRealTime(), elapsed;
     FILE *fin = fopen(argv[2], "r");
     FILE *fout = fopen(argv[3], "wb");
+
 
     while (fgets(line, 256, fin) != NULL) {
 
@@ -235,7 +250,16 @@ static void buildHalfKPBook(int argc, char **argv) {
         sample.result = sample.turn ? 2u - sample.result : sample.result;
 
         fwrite(&sample, sizeof(HalfKPSample), 1, fout);
+
+        if (positions++ % (1024 * 1024) == 0) {
+            elapsed = (getRealTime() - start) / 1000.0;
+            printf("\r[%.3fs] %" PRIu64 " Positions", elapsed, positions);
+            fflush(stdout);
+        }
     }
+
+    elapsed = (getRealTime() - start) / 1000.0;
+    printf("\r[%.3fs] %" PRIu64 " Positions\n", elapsed, positions);
 
     fclose(fin);
     fclose(fout);
