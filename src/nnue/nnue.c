@@ -393,6 +393,7 @@ void nnue_incbin_init() {
 
 int nnue_evaluate(Thread *thread, Board *board) {
 
+    int eval;
     const uint64_t white = board->colours[WHITE];
     const uint64_t black = board->colours[BLACK];
     const uint64_t kings = board->pieces[KING];
@@ -429,5 +430,6 @@ int nnue_evaluate(Thread *thread, Board *board) {
     output_transform(l3_weights, l3_biases, outN2, outN1);
 
     // Perform the dequantization step and multiply by 1.10
-    return 110 * ((int)(outN1[0]) >> (2 * SHIFT)) / 100;
+    eval = 110 * ((int)(outN1[0]) >> (2 * SHIFT)) / 100;
+    return MAX(-1000, MIN(1000, eval));
 }
