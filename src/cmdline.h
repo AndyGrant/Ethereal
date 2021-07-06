@@ -19,5 +19,3 @@
 #pragma once
 
 void handleCommandLine(int argc, char **argv);
-void runBenchmark(int argc, char **argv);
-void runEvalBook(int argc, char **argv);

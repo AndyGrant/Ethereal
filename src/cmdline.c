@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bitboards.h"
 #include "board.h"
 #include "cmdline.h"
 #include "move.h"
@@ -32,30 +33,45 @@
 
 #include "nnue/nnue.h"
 
-void handleCommandLine(int argc, char **argv) {
+typedef struct PSQBBSample {
+    uint64_t occupied;   // 8-byte occupancy bitboard ( All Pieces )
+    int16_t  eval;       // 2-byte int for the target evaluation
+    uint8_t  result;     // 1-byte int for result. { L=0, D=1, W=2 }
+    uint8_t  packed[16]; // 1-byte int per two pieces
+} PSQBBSample;
 
-    // Benchmarker is being run from the command line
-    // USAGE: ./Ethereal bench <depth> <threads> <hash> <evalfile>
-    if (argc > 1 && strEquals(argv[1], "bench")) {
-        runBenchmark(argc, argv);
-        exit(EXIT_SUCCESS);
+typedef struct HalfKPSample {
+    uint64_t occupied;   // 8-byte occupancy bitboard ( No Kings )
+    int16_t  eval;       // 2-byte int for the target evaluation
+    uint8_t  result;     // 1-byte int for result. { L=0, D=1, W=2 }
+    uint8_t  turn;       // 1-byte int for the side-to-move flag
+    uint8_t  wking;      // 1-byte int for the White King Square
+    uint8_t  bking;      // 1-byte int for the Black King Square
+    uint8_t  packed[15]; // 1-byte int per two non-King pieces
+} HalfKPSample;
+
+static void packBitboard(uint8_t *packed, Board* board, uint64_t pieces) {
+
+    #define encode_piece(p) (8 * pieceColour(p) + pieceType(p))
+    #define pack_pieces(p1, p2) (((p1) << 4) | (p2))
+
+    uint8_t types[32] = {0};
+    int N = (1 + popcount(pieces)) / 2;
+
+    for (int i = 0; pieces; i++) {
+        int sq = poplsb(&pieces);
+        types[i] = encode_piece(board->squares[sq]);
     }
 
-    // Bench is being run from the command line
-    // USAGE: ./Ethereal evalbook <book> <depth> <threads> <hash>
-    if (argc > 2 && strEquals(argv[1], "evalbook")) {
-        runEvalBook(argc, argv);
-        exit(EXIT_SUCCESS);
-    }
+    for (int i = 0; i < N; i++)
+        packed[i] = pack_pieces(types[i*2], types[i*2+1]);
 
-    // Tuner is being run from the command line
-    #ifdef TUNE
-        runTuner();
-        exit(EXIT_SUCCESS);
-    #endif
+    #undef encode_piece
+    #undef pack_pieces
 }
 
-void runBenchmark(int argc, char **argv) {
+
+static void runBenchmark(int argc, char **argv) {
 
     static const char *Benchmarks[] = {
         #include "bench.csv"
@@ -132,7 +148,7 @@ void runBenchmark(int argc, char **argv) {
     deleteThreadPool(threads);
 }
 
-void runEvalBook(int argc, char **argv) {
+static void runEvalBook(int argc, char **argv) {
 
     Board board;
     char line[256];
@@ -161,4 +177,119 @@ void runEvalBook(int argc, char **argv) {
     }
 
     printf("Time %dms\n", (int)(getRealTime() - start));
+}
+
+static void buildPSQBBBook(int argc, char **argv) {
+
+    (void) argc;
+
+    char line[256];
+    FILE *fin = fopen(argv[2], "r");
+    FILE *fout = fopen(argv[3], "wb");
+
+    while (fgets(line, 256, fin) != NULL) {
+
+        Board board;
+        PSQBBSample sample = {0};
+        boardFromFEN(&board, line, 0);
+
+        sample.occupied = board.colours[WHITE] | board.colours[BLACK];
+        sample.eval     = atoi(strstr(line, "] ") + strlen("] "));
+        sample.result   = strstr(line, "[0.0]") ? 0u : strstr(line, "[0.5]") ? 1u : 2u;
+        packBitboard(sample.packed, &board, sample.occupied);
+
+        fwrite(&sample, sizeof(PSQBBSample), 1, fout);
+    }
+
+    fclose(fin);
+    fclose(fout);
+}
+
+static void buildHalfKPBook(int argc, char **argv) {
+
+    (void) argc;
+
+    char line[256];
+    FILE *fin = fopen(argv[2], "r");
+    FILE *fout = fopen(argv[3], "wb");
+
+    while (fgets(line, 256, fin) != NULL) {
+
+        Board board;
+        HalfKPSample sample = {0};
+        boardFromFEN(&board, line, 0);
+
+        uint64_t white  = board.colours[WHITE];
+        uint64_t black  = board.colours[BLACK];
+        uint64_t pieces = (white | black);
+
+        sample.occupied = pieces & ~board.pieces[KING];
+        sample.eval     = atoi(strstr(line, "] ") + strlen("] "));
+        sample.result   = strstr(line, "[0.0]") ? 0u : strstr(line, "[0.5]") ? 1u : 2u;
+        sample.turn     = board.turn;
+        sample.wking    = getlsb(white & board.pieces[KING]);
+        sample.bking    = getlsb(black & board.pieces[KING]);
+        packBitboard(sample.packed, &board, sample.occupied);
+
+        sample.eval   = sample.turn ? -sample.eval : sample.eval;
+        sample.result = sample.turn ? 2u - sample.result : sample.result;
+
+        fwrite(&sample, sizeof(HalfKPSample), 1, fout);
+    }
+
+    fclose(fin);
+    fclose(fout);
+}
+
+
+void handleCommandLine(int argc, char **argv) {
+
+    // Output all the wonderful things we can do from the Command Line
+    if (argc > 1 && strEquals(argv[1], "--help")) {
+        printf("\nbench       [depth=13] [threads=1] [hash=16] [NNUE=None]");
+        printf("\n            Run searches on a set of positions to compute a hash\n");
+        printf("\nevalbook    [input-file] [depth=12] [threads=1] [hash=2]");
+        printf("\n            Evaluate all positions in a FEN file using various options\n");
+        printf("\npsqbb       [input-file] [output-file]");
+        printf("\n            Build an nndata file for the NNTrainer with PSQBB Architecture");
+        printf("\n            Format: [FEN] [RESULT] [EVAL]. Result = { [0.0], [0.5], [1.0] }\n");
+        printf("\nhalfkp      [input-file] [output-file]");
+        printf("\n            Build an nndata file for the NNTrainer with HalfKP Architecture");
+        printf("\n            Format: [FEN] [RESULT] [EVAL]. Result = { [0.0], [0.5], [1.0] }\n");
+        exit(EXIT_SUCCESS);
+    }
+
+    // Benchmark is being run from the command line
+    // USAGE: ./Ethereal bench <depth> <threads> <hash> <evalfile>
+    if (argc > 1 && strEquals(argv[1], "bench")) {
+        runBenchmark(argc, argv);
+        exit(EXIT_SUCCESS);
+    }
+
+    // Evaluate all positions in a datafile to a given depth
+    // USAGE: ./Ethereal evalbook <book> <depth> <threads> <hash>
+    if (argc > 2 && strEquals(argv[1], "evalbook")) {
+        runEvalBook(argc, argv);
+        exit(EXIT_SUCCESS);
+    }
+
+    // Build a .nndata file using the PSQBB Architecture
+    // USAGE: ./Ethereal psqbb <input> <output>
+    if (argc > 3 && strEquals(argv[1], "psqbb")) {
+        buildPSQBBBook(argc, argv);
+        exit(EXIT_SUCCESS);
+    }
+
+    // Build a .nndata file using the HalfKP Architecture
+    // USAGE: ./Ethereal halfkp <input> <output>
+    if (argc > 3 && strEquals(argv[1], "halfkp")) {
+        buildHalfKPBook(argc, argv);
+        exit(EXIT_SUCCESS);
+    }
+
+    // Tuner is being run from the command line
+    #ifdef TUNE
+        runTuner();
+        exit(EXIT_SUCCESS);
+    #endif
 }
