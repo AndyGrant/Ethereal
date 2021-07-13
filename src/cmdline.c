@@ -25,6 +25,7 @@
 #include "board.h"
 #include "cmdline.h"
 #include "move.h"
+#include "pgn.h"
 #include "search.h"
 #include "thread.h"
 #include "time.h"
@@ -280,6 +281,9 @@ void handleCommandLine(int argc, char **argv) {
         printf("\nhalfkp      [input-file] [output-file]");
         printf("\n            Build an nndata file for the NNTrainer with HalfKP Architecture");
         printf("\n            Format: [FEN] [RESULT] [EVAL]. Result = { [0.0], [0.5], [1.0] }\n");
+        printf("\npgnfen      [input-file]");
+        printf("\n            Build an FEN file to be processed later by Ethereal's psqbb or halfkp");
+        printf("\n            Format: [FEN] [RESULT] [EVAL]. Result = { [0.0], [0.5], [1.0] }\n");
         exit(EXIT_SUCCESS);
     }
 
@@ -308,6 +312,13 @@ void handleCommandLine(int argc, char **argv) {
     // USAGE: ./Ethereal halfkp <input> <output>
     if (argc > 3 && strEquals(argv[1], "halfkp")) {
         buildHalfKPBook(argc, argv);
+        exit(EXIT_SUCCESS);
+    }
+
+    // Convert a PGN file to a list of FENs with results and evals
+    // USAGE: ./Ethereal pgnfen <input>
+    if (argc > 2 && strEquals(argv[1], "pgnfen")) {
+        process_pgn(argv[2]);
         exit(EXIT_SUCCESS);
     }
 
