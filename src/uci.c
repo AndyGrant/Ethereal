@@ -33,6 +33,7 @@
 #include "movegen.h"
 #include "network.h"
 #include "nnue/nnue.h"
+#include "pgn.h"
 #include "pyrrhic/tbprobe.h"
 #include "search.h"
 #include "thread.h"
@@ -75,6 +76,11 @@ int main(int argc, char **argv) {
 
     // Handle any command line requests
     handleCommandLine(argc, argv);
+
+    // process_pgn("../../Training/Stage9_PGN/stripped.pgn.0");
+    process_pgn("test.pgn");
+
+    exit(EXIT_SUCCESS);
 
     /*
     |------------|-----------------------------------------------------------------------|

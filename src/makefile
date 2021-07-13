@@ -28,7 +28,7 @@ endif
 
 WFLAGS   = -std=gnu11 -Wall -Wextra -Wshadow
 RFLAGS   = -O3 $(WFLAGS) -DNDEBUG -flto -DUSE_NNUE=1 nnue/*.c -static
-CFLAGS   = -O3 $(WFLAGS) -DNDEBUG -flto $(NN) -march=native
+CFLAGS   = -O0 -p -g -pg $(WFLAGS) -flto $(NN) -march=native
 TFLAGS   = -O3 $(WFLAGS) -DNDEBUG -flto $(NN) -march=native -fopenmp -DTUNE
 PGOFLAGS = -fno-asynchronous-unwind-tables
 

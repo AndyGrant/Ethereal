@@ -567,12 +567,18 @@ int moveBestCaseValue(Board *board) {
     return value;
 }
 
-int moveWasLegal(Board *board) {
+int moveIsLegal(Board *board, uint16_t move) {
 
-    // Grab the last player's King's square and verify safety
-    int sq = getlsb(board->colours[!board->turn] & board->pieces[KING]);
-    assert(board->squares[sq] == makePiece(KING, !board->turn));
-    return !squareIsAttacked(board, !board->turn, sq);
+    int legal; Undo undo;
+
+    if (!moveIsPseudoLegal(board, move))
+        return 0;
+
+    applyMove(board, move, &undo);
+    legal = moveWasLegal(board);
+    revertMove(board, move, &undo);
+
+    return legal;
 }
 
 int moveIsPseudoLegal(Board *board, uint16_t move) {
@@ -689,6 +695,20 @@ int moveIsPseudoLegal(Board *board, uint16_t move) {
     }
 
     return 0;
+}
+
+int moveWasLegal(Board *board) {
+
+    // Grab the last player's King's square and verify safety
+    int sq = getlsb(board->colours[!board->turn] & board->pieces[KING]);
+    assert(board->squares[sq] == makePiece(KING, !board->turn));
+    return !squareIsAttacked(board, !board->turn, sq);
+}
+
+
+void printMove(uint16_t move, int chess960) {
+    char str[6]; moveToString(move, str, chess960);
+    printf("%s\n", str);
 }
 
 void moveToString(uint16_t move, char *str, int chess960) {
