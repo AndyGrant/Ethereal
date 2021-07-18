@@ -429,7 +429,7 @@ int nnue_evaluate(Thread *thread, Board *board) {
     float_affine_relu(l2_weights, l2_biases, outN1, outN2);
     output_transform(l3_weights, l3_biases, outN2, outN1);
 
-    // Perform the dequantization step and multiply by 1.10
-    eval = 110 * ((int)(outN1[0]) >> (2 * SHIFT)) / 100;
+    // Perform the dequantization step and multiply by 1.20
+    eval = 120 * ((int)(outN1[0]) >> (2 * SHIFT)) / 100;
     return MAX(-1000, MIN(1000, eval));
 }
