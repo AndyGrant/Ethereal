@@ -293,7 +293,7 @@ static void pgn_read_moves(FILE *pgn, PGNData *data, Board *board) {
 
         // Otherwise, assume we had a mate score like -MABC
         else {
-            int plies = atoi(data->buffer + index + 2);
+            int plies = atoi(data->buffer + index + 3);
             eval = data->buffer[index] == '+' ? MATE - plies : -MATE + plies;
         }
 
