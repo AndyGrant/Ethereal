@@ -82,28 +82,27 @@ void initTimeManagment(SearchInfo *info, Limits *limits) {
     }
 }
 
-void updateTimeManagment(SearchInfo *info, Limits *limits) {
+void update_time_manager(Thread *thread, SearchInfo *info, Limits *limits) {
 
-    const int thisValue = info->values[info->depth];
-    const int lastValue = info->values[info->depth-1];
+    const int this_depth = thread->completed;
+    const int this_value = thread->pvs[this_depth].score;
+    const int last_value = thread->pvs[this_depth-1].score;
 
-    // Don't adjust time when we are at low depths, or if
-    // we simply are not in control of our own time usage
-    if (!limits->limitedBySelf || info->depth < 4) return;
+    // Don't update the self-clock at low depths
+    if (!limits->limitedBySelf || this_depth < 4) return;
 
     // Increase our time if the score suddenly dropped
-    if (lastValue > thisValue + 10) info->idealUsage *= 1.050;
-    if (lastValue > thisValue + 20) info->idealUsage *= 1.050;
-    if (lastValue > thisValue + 40) info->idealUsage *= 1.050;
+    if (last_value > this_value + 10) info->idealUsage *= 1.050;
+    if (last_value > this_value + 20) info->idealUsage *= 1.050;
+    if (last_value > this_value + 40) info->idealUsage *= 1.050;
 
     // Increase our time if the score suddenly jumped
-    if (lastValue + 15 < thisValue) info->idealUsage *= 1.025;
-    if (lastValue + 30 < thisValue) info->idealUsage *= 1.050;
+    if (last_value + 15 < this_value) info->idealUsage *= 1.025;
+    if (last_value + 30 < this_value) info->idealUsage *= 1.050;
 
-    // Always scale back the PV time factor, but also look
-    // to reset the PV time factor if the best move changed
+    // Scale back the PV time factor, but reset if the move changed
     info->pvFactor = MAX(0, info->pvFactor - 1);
-    if (info->bestMoves[info->depth] != info->bestMoves[info->depth-1])
+    if (thread->pvs[this_depth].line[0] != thread->pvs[this_depth-1].line[0])
         info->pvFactor = PVFactorCount;
 }
 

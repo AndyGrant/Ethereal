@@ -51,6 +51,51 @@ volatile int ABORT_SIGNAL; // Global ABORT flag for threads
 volatile int IS_PONDERING; // Global PONDER flag for threads
 volatile int ANALYSISMODE; // Whether to make some changes for Analysis
 
+
+static void select_from_threads(Thread *threads, uint16_t *best, uint16_t *ponder, int *score) {
+
+    // A thread is better than another if any are true:
+    // [1] The thread has an equal depth and greater score.
+    // [2] The thread has a mate score and is closer to mate.
+    // [3] The thread has a greater depth without replacing a closer mate
+
+    Thread *best_thread = &threads[0];
+
+    for (int i = 1; i < threads->nthreads; i++) {
+
+        const int best_depth = best_thread->completed;
+        const int best_score = best_thread->pvs[best_depth].score;
+
+        const int this_depth = threads[i].completed;
+        const int this_score = threads[i].pvs[this_depth].score;
+
+        if (   (this_depth == best_depth && this_score > best_score)
+            || (this_score > MATE_IN_MAX && this_score > best_score))
+            best_thread = &threads[i];
+
+        if (    this_depth > best_depth
+            && (this_score > best_score || best_score < MATE_IN_MAX))
+            best_thread = &threads[i];
+    }
+
+    // Best and Ponder moves are simply the PV moves
+    *best   = best_thread->pvs[best_thread->completed].line[0];
+    *ponder = best_thread->pvs[best_thread->completed].line[1];
+    *score  = best_thread->pvs[best_thread->completed].score;
+
+    // Incomplete searches or low depth ones may result in a short PV
+    if (best_thread->pvs[best_thread->completed].length < 2)
+        *ponder = NONE_MOVE;
+
+    // Report via UCI when our best thread is not the main thread
+    if (best_thread != &threads[0]) {
+        const int best_depth = best_thread->completed;
+        const int best_score = best_thread->pvs[best_depth].score;
+        uciReport(best_thread, &best_thread->pvs[best_depth], -MATE, MATE, best_score);
+    }
+}
+
+
 void initSearch() {
 
     // Init Late Move Reductions Table
@@ -64,7 +109,7 @@ void initSearch() {
     }
 }
 
-void getBestMove(Thread *threads, Board *board, Limits *limits, uint16_t *best, uint16_t *ponder) {
+void getBestMove(Thread *threads, Board *board, Limits *limits, uint16_t *best, uint16_t *ponder, int *score) {
 
     SearchInfo info = {0};
     pthread_t pthreads[threads->nthreads];
@@ -93,9 +138,8 @@ void getBestMove(Thread *threads, Board *board, Limits *limits, uint16_t *best, 
     for (int i = 1; i < threads->nthreads; i++)
         pthread_join(pthreads[i], NULL);
 
-    // The main thread will update SearchInfo with results
-    *best = info.bestMoves[info.depth];
-    *ponder = info.ponderMoves[info.depth];
+    // Pick the best of our completed threads
+    select_from_threads(threads, best, ponder, score);
 }
 
 void* iterativeDeepening(void *vthread) {
@@ -123,17 +167,14 @@ void* iterativeDeepening(void *vthread) {
         for (thread->multiPV = 0; thread->multiPV < limits->multiPV; thread->multiPV++)
             aspirationWindow(thread);
 
+        // Signal we've finish this depth completely
+        thread->completed = thread->depth;
+
         // Helper threads need not worry about time and search info updates
         if (!mainThread) continue;
 
-        // Update SearchInfo and report some results
-        info->depth                    = thread->depth;
-        info->values[info->depth]      = thread->values[0];
-        info->bestMoves[info->depth]   = thread->bestMoves[0];
-        info->ponderMoves[info->depth] = thread->ponderMoves[0];
-
-        // Update time allocation based on score and pv changes
-        updateTimeManagment(info, limits);
+        // Update clock based on score and pv changes
+        update_time_manager(thread, info, limits);
 
         // Don't want to exit while pondering
         if (IS_PONDERING) continue;
@@ -151,12 +192,13 @@ void* iterativeDeepening(void *vthread) {
 
 void aspirationWindow(Thread *thread) {
 
-    PVariation *const pv = &thread->pv;
-    const int multiPV    = thread->multiPV;
-    const int mainThread = thread->index == 0;
+    PVariation localpv;
+    PVariation *pv = thread->multiPV ? &localpv : &thread->pvs[thread->depth];
 
-    int value, depth = thread->depth;
-    int alpha = -MATE, beta = MATE, delta = WindowSize;
+    int depth      = thread->depth;
+    int multiPV    = thread->multiPV;
+    int mainThread = thread->index == 0;
+    int value, alpha = -MATE, beta = MATE, delta = WindowSize;
 
     // After a few depths use a previous result to form a window
     if (thread->depth >= WindowDepth) {
@@ -170,11 +212,11 @@ void aspirationWindow(Thread *thread) {
         value = search(thread, pv, alpha, beta, MAX(1, depth));
         if (   (mainThread && value > alpha && value < beta)
             || (mainThread && elapsedTime(thread->info) >= WindowTimerMS))
-            uciReport(thread->threads, alpha, beta, value);
+            uciReport(thread->threads, pv, alpha, beta, value);
 
         // Search returned a result within our window
         if (value > alpha && value < beta) {
-            thread->values[multiPV]      = value;
+            thread->values[multiPV]      = pv->score = value;
             thread->bestMoves[multiPV]   = pv->line[0];
             thread->ponderMoves[multiPV] = pv->length > 1 ? pv->line[1] : NONE_MOVE;
             return;
@@ -236,7 +278,8 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
 
     // Step 2. Abort Check. Exit the search if signaled by main thread or the
     // UCI thread, or if the search time has expired outside pondering mode
-    if (ABORT_SIGNAL || (terminateSearchEarly(thread) && !IS_PONDERING))
+    if (   (ABORT_SIGNAL && thread->depth > 1)
+        || (terminateSearchEarly(thread) && !IS_PONDERING))
         longjmp(thread->jbuffer, 1);
 
     // Step 3. Check for early exit conditions. Don't take early exits in
@@ -645,7 +688,8 @@ int qsearch(Thread *thread, PVariation *pv, int alpha, int beta) {
 
     // Step 1. Abort Check. Exit the search if signaled by main thread or the
     // UCI thread, or if the search time has expired outside pondering mode
-    if (ABORT_SIGNAL || (terminateSearchEarly(thread) && !IS_PONDERING))
+    if (   (ABORT_SIGNAL && thread->depth > 1)
+        || (terminateSearchEarly(thread) && !IS_PONDERING))
         longjmp(thread->jbuffer, 1);
 
     // Step 2. Draw Detection. Check for the fifty move rule, repetition, or insufficient

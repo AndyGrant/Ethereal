@@ -110,7 +110,7 @@ uint64_t nodesSearchedThreadPool(Thread *threads) {
     uint64_t nodes = 0ull;
 
     for (int i = 0; i < threads->nthreads; i++)
-        nodes += threads[i].nodes;
+        nodes += threads->threads[i].nodes;
 
     return nodes;
 }
@@ -123,7 +123,7 @@ uint64_t tbhitsThreadPool(Thread *threads) {
     uint64_t tbhits = 0ull;
 
     for (int i = 0; i < threads->nthreads; i++)
-        tbhits += threads[i].tbhits;
+        tbhits += threads->threads[i].tbhits;
 
     return tbhits;
 }

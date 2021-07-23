@@ -178,6 +178,7 @@ void *uciGo(void *cargo) {
     Limits limits = {0};
     uint16_t bestMove, ponderMove;
     char moveStr[6];
+    int score;
 
     uint64_t nodes = 0;
     int depth = 0, infinite = 0;
@@ -245,7 +246,7 @@ void *uciGo(void *cargo) {
     pthread_mutex_unlock(&PONDERLOCK);
 
     // Execute search, return best and ponder moves
-    getBestMove(threads, board, &limits, &bestMove, &ponderMove);
+    getBestMove(threads, board, &limits, &bestMove, &ponderMove, &score);
 
     // UCI spec does not want reports until out of pondering
     while (IS_PONDERING);
@@ -385,7 +386,7 @@ void uciPosition(char *str, Board *board, int chess960) {
     }
 }
 
-void uciReport(Thread *threads, int alpha, int beta, int value) {
+void uciReport(Thread *threads, PVariation *pv, int alpha, int beta, int value) {
 
     // Gather all of the statistics that the UCI protocol would be
     // interested in. Also, bound the value passed by alpha and
@@ -417,9 +418,9 @@ void uciReport(Thread *threads, int alpha, int beta, int value) {
            depth, seldepth, multiPV, type, score, bound, elapsed, nodes, nps, tbhits, hashfull);
 
     // Iterate over the PV and print each move
-    for (int i = 0; i < threads->pv.length; i++) {
+    for (int i = 0; i < pv->length; i++) {
         char moveStr[6];
-        moveToString(threads->pv.line[i], moveStr, threads->board.chess960);
+        moveToString(pv->line[i], moveStr, threads->board.chess960);
         printf("%s ", moveStr);
     }
 

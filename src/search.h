@@ -23,19 +23,17 @@
 #include "types.h"
 
 struct SearchInfo {
-    int depth, values[MAX_PLY];
-    uint16_t bestMoves[MAX_PLY], ponderMoves[MAX_PLY];
     double startTime, idealUsage, maxAlloc, maxUsage;
     int pvFactor;
 };
 
 struct PVariation {
+    int length, score;
     uint16_t line[MAX_PLY];
-    int length;
 };
 
 void initSearch();
-void getBestMove(Thread *threads, Board *board, Limits *limits, uint16_t *best, uint16_t *ponder);
+void getBestMove(Thread *threads, Board *board, Limits *limits, uint16_t *best, uint16_t *ponder, int *score);
 void* iterativeDeepening(void *vthread);
 void aspirationWindow(Thread *thread);
 int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth);

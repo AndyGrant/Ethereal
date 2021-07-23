@@ -39,16 +39,16 @@ enum {
 struct Thread {
 
     Board board;
-    PVariation pv;
     Limits *limits;
     SearchInfo *info;
+    PVariation pvs[MAX_PLY];
 
     int multiPV, values[MAX_MOVES];
     uint16_t bestMoves[MAX_MOVES];
     uint16_t ponderMoves[MAX_MOVES];
 
-    int depth, seldepth, height;
     uint64_t nodes, tbhits;
+    int depth, seldepth, height, completed;
 
     int *evalStack, _evalStack[STACK_SIZE];
     uint16_t *moveStack, _moveStack[STACK_SIZE];

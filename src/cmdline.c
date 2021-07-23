@@ -116,17 +116,16 @@ static void runBenchmark(int argc, char **argv) {
         // Perform the search on the position
         limits.start = getRealTime();
         boardFromFEN(&board, Benchmarks[i], 0);
-        getBestMove(threads, &board, &limits, &bestMoves[i], &ponderMoves[i]);
+        getBestMove(threads, &board, &limits, &bestMoves[i], &ponderMoves[i], &scores[i]);
 
         // Stat collection for later printing
-        scores[i] = threads->info->values[depth];
         times[i] = getRealTime() - limits.start;
         nodes[i] = nodesSearchedThreadPool(threads);
 
         clear_TT(); // Reset TT between searches
     }
 
-    printf("\n=================================================================================\n");
+    printf("\n===============================================================================\n");
 
     for (int i = 0; strcmp(Benchmarks[i], ""); i++) {
 
@@ -136,22 +135,23 @@ static void runBenchmark(int argc, char **argv) {
         moveToString(ponderMoves[i], ponderStr, 0);
 
         // Log all collected information for the current position
-        printf("Bench [# %2d] %5d cp  Best:%6s  Ponder:%6s %12d nodes %8d nps\n", i + 1, scores[i],
+        printf("[# %2d] %5d cp  Best:%6s  Ponder:%6s %12d nodes %12d nps\n", i + 1, scores[i],
             bestStr, ponderStr, (int)nodes[i], (int)(1000.0f * nodes[i] / (times[i] + 1)));
     }
 
-    printf("=================================================================================\n");
+    printf("===============================================================================\n");
 
     // Report the overall statistics
     time = getRealTime() - time;
     for (int i = 0; strcmp(Benchmarks[i], ""); i++) totalNodes += nodes[i];
-    printf("OVERALL: %53d nodes %8d nps\n", (int)totalNodes, (int)(1000.0f * totalNodes / (time + 1)));
+    printf("OVERALL: %47d nodes %12d nps\n", (int)totalNodes, (int)(1000.0f * totalNodes / (time + 1)));
 
     deleteThreadPool(threads);
 }
 
 static void runEvalBook(int argc, char **argv) {
 
+    int score;
     Board board;
     char line[256];
     Limits limits = {0};
@@ -173,7 +173,7 @@ static void runEvalBook(int argc, char **argv) {
     while ((fgets(line, 256, book)) != NULL) {
         limits.start = getRealTime();
         boardFromFEN(&board, line, 0);
-        getBestMove(threads, &board, &limits, &best, &ponder);
+        getBestMove(threads, &board, &limits, &best, &ponder, &score);
         resetThreadPool(threads); clear_TT();
         printf("FEN: %s", line);
     }
