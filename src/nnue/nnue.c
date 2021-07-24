@@ -53,6 +53,7 @@ ALIGN64 int32_t l1_biases[L2SIZE ];
 ALIGN64 float   l2_biases[L3SIZE ];
 ALIGN64 float   l3_biases[OUTSIZE];
 
+static int NNUE_LOADED = 0;
 
 static void scale_weights() {
 
@@ -98,6 +99,11 @@ static void float_transpose(float *matrix, int rows, int cols) {
 
     memcpy(matrix, cpy, sizeof(float) * rows * cols);
     free(cpy);
+}
+
+static void abort_nnue(const char *reason) {
+    printf("info string %s\n", reason);
+    fflush(stdout); exit(EXIT_FAILURE);
 }
 
 
@@ -326,24 +332,26 @@ void nnue_init(const char* fname) {
 
     if (   fread(in_biases, sizeof(int16_t), KPSIZE, fin) != (size_t) KPSIZE
         || fread(in_weights, sizeof(int16_t), INSIZE * KPSIZE, fin) != (size_t) INSIZE * KPSIZE)
-        printf("info string Unable to read NNUE file\n"), exit(EXIT_FAILURE);
+        abort_nnue("Unable to read NNUE File");
 
     if (   fread(l1_biases, sizeof(int32_t), L2SIZE, fin) != (size_t) L2SIZE
         || fread(l1_weights, sizeof(int16_t), L1SIZE * L2SIZE, fin) != (size_t) L1SIZE * L2SIZE)
-        printf("info string Unable to read NNUE file\n"), exit(EXIT_FAILURE);
+        abort_nnue("Unable to read NNUE File");
 
     if (   fread(l2_biases, sizeof(float), L3SIZE, fin) != (size_t) L3SIZE
         || fread(l2_weights, sizeof(float), L2SIZE * L3SIZE, fin) != (size_t) L2SIZE * L3SIZE)
-        printf("info string Unable to read NNUE file\n"), exit(EXIT_FAILURE);
+        abort_nnue("Unable to read NNUE File");
 
     if (   fread(l3_biases, sizeof(float), OUTSIZE, fin) != (size_t) OUTSIZE
         || fread(l3_weights, sizeof(float), L3SIZE * OUTSIZE, fin) != (size_t) L3SIZE * OUTSIZE)
-        printf("info string Unable to read NNUE file\n"), exit(EXIT_FAILURE);
+        abort_nnue("Unable to read NNUE File");
 
     scale_weights();
     quant_transpose(l1_weights, L1SIZE, L2SIZE);
     float_transpose(l2_weights, L2SIZE, L3SIZE);
     fclose(fin);
+
+    NNUE_LOADED = 1;
 }
 
 void nnue_incbin_init() {
@@ -388,6 +396,8 @@ void nnue_incbin_init() {
     quant_transpose(l1_weights, L1SIZE, L2SIZE);
     float_transpose(l2_weights, L2SIZE, L3SIZE);
 
+    NNUE_LOADED = 1;
+
     #endif
 }
 
@@ -397,6 +407,9 @@ int nnue_evaluate(Thread *thread, Board *board) {
     const uint64_t white = board->colours[WHITE];
     const uint64_t black = board->colours[BLACK];
     const uint64_t kings = board->pieces[KING];
+
+    if (!NNUE_LOADED)
+        abort_nnue("NNUE File was not provided");
 
     // For optimizations, auto-flag KvK as drawn
     if (kings == (white | black)) return 0;
