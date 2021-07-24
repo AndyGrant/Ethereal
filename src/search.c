@@ -195,44 +195,40 @@ void aspirationWindow(Thread *thread) {
     PVariation localpv;
     PVariation *pv = thread->multiPV ? &localpv : &thread->pvs[thread->depth];
 
-    int depth      = thread->depth;
-    int multiPV    = thread->multiPV;
-    int mainThread = thread->index == 0;
-    int value, alpha = -MATE, beta = MATE, delta = WindowSize;
+    int depth = thread->depth;
+    int alpha = -MATE, beta = MATE, delta = WindowSize;
 
     // After a few depths use a previous result to form a window
     if (thread->depth >= WindowDepth) {
-        alpha = MAX(-MATE, thread->values[0] - delta);
-        beta  = MIN( MATE, thread->values[0] + delta);
+        alpha = MAX(-MATE, thread->pvs[thread->completed].score - delta);
+        beta  = MIN( MATE, thread->pvs[thread->completed].score + delta);
     }
 
     while (1) {
 
         // Perform a search and consider reporting results
-        value = search(thread, pv, alpha, beta, MAX(1, depth));
-        if (   (mainThread && value > alpha && value < beta)
-            || (mainThread && elapsedTime(thread->info) >= WindowTimerMS))
-            uciReport(thread->threads, pv, alpha, beta, value);
+        pv->score = search(thread, pv, alpha, beta, MAX(1, depth));
+        if (   (!thread->index && pv->score > alpha && pv->score < beta)
+            || (!thread->index && elapsedTime(thread->info) >= WindowTimerMS))
+            uciReport(thread->threads, pv, alpha, beta, pv->score);
 
         // Search returned a result within our window
-        if (value > alpha && value < beta) {
-            thread->values[multiPV]      = pv->score = value;
-            thread->bestMoves[multiPV]   = pv->line[0];
-            thread->ponderMoves[multiPV] = pv->length > 1 ? pv->line[1] : NONE_MOVE;
+        if (pv->score > alpha && pv->score < beta) {
+            thread->bestMoves[thread->multiPV] = pv->line[0];
             return;
         }
 
         // Search failed low, adjust window and reset depth
-        if (value <= alpha) {
+        if (pv->score <= alpha) {
             beta  = (alpha + beta) / 2;
             alpha = MAX(-MATE, alpha - delta);
             depth = thread->depth;
         }
 
         // Search failed high, adjust window and reduce depth
-        else if (value >= beta) {
+        else if (pv->score >= beta) {
             beta = MIN(MATE, beta + delta);
-            depth = depth - (abs(value) <= MATE / 2);
+            depth = depth - (abs(pv->score) <= MATE / 2);
         }
 
         // Expand the search window

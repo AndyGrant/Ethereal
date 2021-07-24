@@ -45,7 +45,6 @@ struct Thread {
 
     int multiPV, values[MAX_MOVES];
     uint16_t bestMoves[MAX_MOVES];
-    uint16_t ponderMoves[MAX_MOVES];
 
     uint64_t nodes, tbhits;
     int depth, seldepth, height, completed;
