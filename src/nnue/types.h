@@ -25,11 +25,11 @@
 #include "../types.h"
 
 #if defined(USE_AVX2)
-    #include "avx2.h"
+    #include "archs/avx2.h"
 #elif defined(USE_AVX)
-    #include "avx.h"
+    #include "archs/avx.h"
 #elif defined(USE_SSSE3)
-    #include "ssse3.h"
+    #include "archs/ssse3.h"
 #endif
 
 #define INSIZE  40960
