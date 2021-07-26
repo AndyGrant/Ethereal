@@ -295,7 +295,8 @@ void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960) {
 
     if (strStartsWith(str, "setoption name EvalFile value ")) {
         char *ptr = str + strlen("setoption name EvalFile value ");
-        nnue_init(ptr); printf("info string set EvalFile to %s\n", ptr);
+        if (!strStartsWith(ptr, "<empty>")) nnue_init(ptr);
+        printf("info string set EvalFile to %s\n", ptr);
     }
 
     if (strStartsWith(str, "setoption name MultiPV value ")) {
@@ -310,7 +311,8 @@ void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960) {
 
     if (strStartsWith(str, "setoption name SyzygyPath value ")) {
         char *ptr = str + strlen("setoption name SyzygyPath value ");
-        tb_init(ptr); printf("info string set SyzygyPath to %s\n", ptr);
+        if (!strStartsWith(ptr, "<empty>")) tb_init(ptr);
+        printf("info string set SyzygyPath to %s\n", ptr);
     }
 
     if (strStartsWith(str, "setoption name SyzygyProbeDepth value ")) {
