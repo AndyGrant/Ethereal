@@ -49,7 +49,6 @@ extern volatile int IS_PONDERING; // Defined by search.c
 extern volatile int ANALYSISMODE; // Defined by search.c
 extern PKNetwork PKNN;            // Defined by network.c
 
-pthread_mutex_t READYLOCK = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t PONDERLOCK = PTHREAD_MUTEX_INITIALIZER;
 const char *StartPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -113,32 +112,19 @@ int main(int argc, char **argv) {
             printf("uciok\n"), fflush(stdout);
         }
 
-        else if (strEquals(str, "isready")) {
-            pthread_mutex_lock(&READYLOCK);
+        else if (strEquals(str, "isready"))
             printf("readyok\n"), fflush(stdout);
-            pthread_mutex_unlock(&READYLOCK);
-        }
 
-        else if (strEquals(str, "ucinewgame")) {
-            pthread_mutex_lock(&READYLOCK);
+        else if (strEquals(str, "ucinewgame"))
             resetThreadPool(threads), clear_TT();
-            pthread_mutex_unlock(&READYLOCK);
-        }
 
-        else if (strStartsWith(str, "setoption")) {
-            pthread_mutex_lock(&READYLOCK);
+        else if (strStartsWith(str, "setoption"))
             uciSetOption(str, &threads, &multiPV, &chess960);
-            pthread_mutex_unlock(&READYLOCK);
-        }
 
-        else if (strStartsWith(str, "position")) {
-            pthread_mutex_lock(&READYLOCK);
+        else if (strStartsWith(str, "position"))
             uciPosition(str, &board, chess960);
-            pthread_mutex_unlock(&READYLOCK);
-        }
 
         else if (strStartsWith(str, "go")) {
-            pthread_mutex_lock(&READYLOCK);
             pthread_mutex_lock(&PONDERLOCK);
             uciGoStruct.multiPV = multiPV;
             uciGoStruct.board   = &board;
@@ -263,9 +249,6 @@ void *uciGo(void *cargo) {
 
     // Make sure this all gets reported
     printf("\n"); fflush(stdout);
-
-    // Drop the ready lock, as we are prepared to handle a new search
-    pthread_mutex_unlock(&READYLOCK);
 
     return NULL;
 }
