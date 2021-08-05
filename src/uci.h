@@ -22,9 +22,11 @@
 
 #include "types.h"
 
-#define VERSION_ID "13.27"
+#define VERSION_ID "13.28"
 
-#define LICENSE_OWNER "Unlicensed"
+#ifndef LICENSE_OWNER
+    #define LICENSE_OWNER "Unlicensed"
+#endif
 
 #if USE_NNUE
     #define ETHEREAL_VERSION VERSION_ID" (NNUE)"
