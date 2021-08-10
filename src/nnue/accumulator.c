@@ -33,17 +33,26 @@
 extern ALIGN64 int16_t in_weights[INSIZE * KPSIZE];
 extern ALIGN64 int16_t in_biases[KPSIZE];
 
-static int nnue_index_delta(int piece, int relkingidx, int colour, int sq) {
+
+static int sq64_to_sq32(int sq) {
+    static const int Mirror[] = { 3, 2, 1, 0, 0, 1, 2, 3 };
+    return ((sq >> 1) & ~0x3) + Mirror[sq & 0x7];
+}
+
+static int nnue_index_delta(int piece, int relksq, int colour, int sq) {
 
     const int ptype   = pieceType(piece);
     const int pcolour = pieceColour(piece);
-    const int relsq   = relativeSquare(colour, sq);
+    const int relpsq  = relativeSquare(colour, sq);
 
-    return relkingidx + (64 * (5 * (colour == pcolour) + ptype)) + relsq;
+    const int mksq = testBit(LEFT_FLANK, relksq) ? (relksq ^ 0x7) : relksq;
+    const int mpsq = testBit(LEFT_FLANK, relksq) ? (relpsq ^ 0x7) : relpsq;
+
+    return 640 * sq64_to_sq32(mksq) + (64 * (5 * (colour == pcolour) + ptype)) + mpsq;
 }
 
-static int nnue_index(Board *board, int relkingidx, int colour, int sq) {
-    return nnue_index_delta(board->squares[sq], relkingidx, colour, sq);
+static int nnue_index(Board *board, int relksq, int colour, int sq) {
+    return nnue_index_delta(board->squares[sq], relksq, colour, sq);
 }
 
 
@@ -69,13 +78,13 @@ int nnue_can_update(NNUEAccumulator *accum, Board *board) {
     return 0;
 }
 
-void nnue_refresh_accumulators(NNUEAccumulator *accum, Board *board, int wkingidx, int bkingidx) {
-    nnue_refresh_accumulator(accum, board, WHITE, wkingidx);
-    nnue_refresh_accumulator(accum, board, BLACK, bkingidx);
+void nnue_refresh_accumulators(NNUEAccumulator *accum, Board *board, int wrelksq, int brelksq) {
+    nnue_refresh_accumulator(accum, board, WHITE, wrelksq);
+    nnue_refresh_accumulator(accum, board, BLACK, brelksq);
     accum->accurate = 1;
 }
 
-void nnue_refresh_accumulator(NNUEAccumulator *accum, Board *board, int colour, int kingidx) {
+void nnue_refresh_accumulator(NNUEAccumulator *accum, Board *board, int colour, int relsq) {
 
     const uint64_t white = board->colours[WHITE];
     const uint64_t black = board->colours[BLACK];
@@ -88,10 +97,10 @@ void nnue_refresh_accumulator(NNUEAccumulator *accum, Board *board, int colour, 
 
     // We can assert that this position is not KvK, and therefore to
     // slightly optimize the AVX code, we can seperate out the very
-    // first piece and use it to initialize the outpt with the biases
+    // first piece and use it to initialize the output with the biases
 
     {
-        int index = nnue_index(board, kingidx, colour, poplsb(&pieces));
+        int index = nnue_index(board, relsq, colour, poplsb(&pieces));
         vepi16* inputs  = (vepi16*) &in_weights[index * KPSIZE];
 
         for (int i = 0; i < KPSIZE / vepi16_cnt; i += 4) {
@@ -107,7 +116,7 @@ void nnue_refresh_accumulator(NNUEAccumulator *accum, Board *board, int colour, 
 
     while (pieces) {
 
-        int index = nnue_index(board, kingidx, colour, poplsb(&pieces));
+        int index = nnue_index(board, relsq, colour, poplsb(&pieces));
         vepi16* inputs  = (vepi16*) &in_weights[index * KPSIZE];
 
         for (int i = 0; i < KPSIZE / vepi16_cnt; i += 4) {
@@ -119,11 +128,11 @@ void nnue_refresh_accumulator(NNUEAccumulator *accum, Board *board, int colour, 
     }
 }
 
-void nnue_update_accumulator(NNUEAccumulator *accum, Board *board, int wkingidx, int bkingidx) {
+void nnue_update_accumulator(NNUEAccumulator *accum, Board *board, int wrelksq, int brelksq) {
 
     // Recurse and update all out of date children
     if (!(accum-1)->accurate)
-        nnue_update_accumulator((accum-1), board, wkingidx, bkingidx);
+        nnue_update_accumulator((accum-1), board, wrelksq, brelksq);
 
     // The last move was a NULL move so we can cheat and copy
     if (!accum->changes) {
@@ -144,22 +153,22 @@ void nnue_update_accumulator(NNUEAccumulator *accum, Board *board, int wkingidx,
         // Fully recompute a colour if its King has moved
         if (pieceType(delta->piece) == KING) {
             int colour = pieceColour(delta->piece);
-            int relkingidx = colour == WHITE ? wkingidx : bkingidx;
-            nnue_refresh_accumulator(accum, board, colour, relkingidx);
+            int relksq = colour == WHITE ? wrelksq : brelksq;
+            nnue_refresh_accumulator(accum, board, colour, relksq);
             refreshed[colour] = 1;
             continue;
         }
 
         // Moving or placing a Piece to a Square
         if (delta->to != SQUARE_NB) {
-            add_list[WHITE][add  ] = nnue_index_delta(delta->piece, wkingidx, WHITE, delta->to);
-            add_list[BLACK][add++] = nnue_index_delta(delta->piece, bkingidx, BLACK, delta->to);
+            add_list[WHITE][add  ] = nnue_index_delta(delta->piece, wrelksq, WHITE, delta->to);
+            add_list[BLACK][add++] = nnue_index_delta(delta->piece, brelksq, BLACK, delta->to);
         }
 
         // Moving or deleting a Piece from a Square
         if (delta->from != SQUARE_NB) {
-            remove_list[WHITE][remove  ] = nnue_index_delta(delta->piece, wkingidx, WHITE, delta->from);
-            remove_list[BLACK][remove++] = nnue_index_delta(delta->piece, bkingidx, BLACK, delta->from);
+            remove_list[WHITE][remove  ] = nnue_index_delta(delta->piece, wrelksq, WHITE, delta->from);
+            remove_list[BLACK][remove++] = nnue_index_delta(delta->piece, brelksq, BLACK, delta->from);
         }
     }
 
@@ -223,4 +232,3 @@ void nnue_update_accumulator(NNUEAccumulator *accum, Board *board, int wkingidx,
     accum->accurate = 1;
     return;
 }
-

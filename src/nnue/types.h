@@ -32,7 +32,7 @@
     #include "archs/ssse3.h"
 #endif
 
-#define INSIZE  40960
+#define INSIZE  20480
 #define KPSIZE  256
 #define L1SIZE  512
 #define L2SIZE  32
