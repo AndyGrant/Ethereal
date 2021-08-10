@@ -33,8 +33,8 @@ ifdef EVALFILE
     SRC += nnue/*.c
 endif
 
-ifdef USER
-    NN   = -DUSE_NNUE=1 -DLICENSE_OWNER=\"$(USER)\"
+ifdef OWNER
+    NN   = -DUSE_NNUE=1 -DLICENSE_OWNER=\"$(OWNER)\"
     SRC += nnue/*.c
 endif
 
@@ -103,11 +103,11 @@ tune:
 	$(CC) $(TFLAGS) $(SRC) $(LIBS) -o $(EXE)
 
 ### =========================================================================
-### Section 4. Release Build Targets [ make release USER= OS= EXE= EXT= ]
+### Section 4. Release Build Targets [ make release OWNER= OS= EXE= EXT= ]
 ### =========================================================================
 
 builddir:
-	mkdir -p ../$(USER)/$(OS)
+	mkdir -p ../$(OWNER)/$(OS)
 
 ssse3-popcnt: builddir
 	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(POPCNTFLAGS) $(SSSE3FLAGS) -o $(EXE)-ssse3$(EXT)
