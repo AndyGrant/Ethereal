@@ -32,6 +32,7 @@
 
 #include "../bitboards.h"
 #include "../board.h"
+#include "../evaluate.h"
 #include "../thread.h"
 
 #include "../incbin/incbin.h"
@@ -473,7 +474,7 @@ void nnue_incbin_init() {
 
 int nnue_evaluate(Thread *thread, Board *board) {
 
-    int eval;
+    int mg_eval, eg_eval;
     const uint64_t white = board->colours[WHITE];
     const uint64_t black = board->colours[BLACK];
     const uint64_t kings = board->pieces[KING];
@@ -512,7 +513,12 @@ int nnue_evaluate(Thread *thread, Board *board) {
     float_affine_relu(l2_weights, l2_biases, outN1, outN2);
     output_transform(l3_weights, l3_biases, outN2, outN1);
 
-    // Perform the dequantization step and multiply by 1.20
-    eval = 120 * ((int)(outN1[0]) >> SHIFT_L1) / 100;
-    return MAX(-1000, MIN(1000, eval));
+    // Perform the dequantization step and upscale the Midgame
+    mg_eval = 140 * ((int)(outN1[0]) >> SHIFT_L1) / 100;
+    eg_eval = 100 * ((int)(outN1[0]) >> SHIFT_L1) / 100;
+
+    // Cap the NNUE evaluation within [-1000, 1000]
+    mg_eval = MAX(-1000, MIN(1000, mg_eval));
+    eg_eval = MAX(-1000, MIN(1000, eg_eval));
+    return MakeScore(mg_eval, eg_eval);
 }

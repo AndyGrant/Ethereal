@@ -440,8 +440,8 @@ const int Tempo = 20;
 
 int evaluateBoard(Thread *thread, Board *board) {
 
-    EvalInfo ei;
-    int phase, factor, eval, pkeval, hashed;
+    int factor = SCALE_NORMAL;
+    int phase, eval, pkeval, hashed;
 
     // We can recognize positions we just evaluated
     if (thread->moveStack[thread->height-1] == NULL_MOVE)
@@ -455,40 +455,42 @@ int evaluateBoard(Thread *thread, Board *board) {
     if (    USE_NNUE
         && !board->kingAttackers
         &&  abs(ScoreEG(board->psqtmat)) <= 400) {
+
         eval = nnue_evaluate(thread, board);
-        hashed = board->turn == WHITE ? eval : -eval;
-        storeCachedEvaluation(thread, board, hashed);
-        return eval + Tempo;
+        eval = board->turn == WHITE  ? eval : -eval;
     }
 
-    initEvalInfo(thread, board, &ei);
-    eval = evaluatePieces(&ei, board);
+    else {
 
-    pkeval = ei.pkeval[WHITE] - ei.pkeval[BLACK];
-    if (ei.pkentry == NULL)
-        pkeval += computePKNetwork(board);
+        EvalInfo ei;
+        initEvalInfo(thread, board, &ei);
+        eval = evaluatePieces(&ei, board);
 
-    eval += pkeval + board->psqtmat;
-    eval += evaluateClosedness(&ei, board);
-    eval += evaluateComplexity(&ei, board, eval);
+        pkeval = ei.pkeval[WHITE] - ei.pkeval[BLACK];
+        if (ei.pkentry == NULL) pkeval += computePKNetwork(board);
+
+        eval += pkeval + board->psqtmat;
+        eval += evaluateClosedness(&ei, board);
+        eval += evaluateComplexity(&ei, board, eval);
+
+        // Store a new Pawn King Entry if we did not have one
+        if (!TRACE && ei.pkentry == NULL)
+            storeCachedPawnKingEval(thread, board, ei.passedPawns, pkeval, ei.pksafety[WHITE], ei.pksafety[BLACK]);
+
+        // Scale evaluation based on remaining material
+        factor = evaluateScaleFactor(board, eval);
+        if (TRACE) T.factor = factor;
+    }
 
     // Calculate the game phase based on remaining material (Fruit Method)
     phase = 4 * popcount(board->pieces[QUEEN ])
           + 2 * popcount(board->pieces[ROOK  ])
           + 1 * popcount(board->pieces[KNIGHT]|board->pieces[BISHOP]);
 
-    // Scale evaluation based on remaining material
-    factor = evaluateScaleFactor(board, eval);
-    if (TRACE) T.factor = factor;
-
     // Compute and store an interpolated evaluation from white's POV
     eval = (ScoreMG(eval) * phase
          +  ScoreEG(eval) * (24 - phase) * factor / SCALE_NORMAL) / 24;
     storeCachedEvaluation(thread, board, eval);
-
-    // Store a new Pawn King Entry if we did not have one
-    if (!TRACE && ei.pkentry == NULL)
-        storeCachedPawnKingEval(thread, board, ei.passedPawns, pkeval, ei.pksafety[WHITE], ei.pksafety[BLACK]);
 
     // Factor in the Tempo after interpolation and scaling, so that
     // if a null move is made, then we know eval = last_eval + 2 * Tempo
