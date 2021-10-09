@@ -23,7 +23,7 @@ The size of the hash table in megabytes. For analysis the more hash given the be
 
 ### Threads
 
-Number of threads given to Ethereal while moving. Typically the more threads the better. There is some debate as to whether using hyper-threads provides an elo gain. I firmly believe that for Ethereal the answer is yes, and recommend all users make use of the maximum number of threads.
+Number of threads given to Ethereal while moving. Typically the more threads the better. There is some debate as to whether using hyper-threads provide an elo gain. I firmly believe that for Ethereal the answer is yes, and recommend all users make use of the maximum number of threads.
 
 ### MultiPV
 
