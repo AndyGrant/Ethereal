@@ -233,13 +233,8 @@ static int pgn_read_until_move(char *buffer, int index) {
     return index;
 }
 
-static int pgn_read_until_begin_comment(char *buffer, int index) {
-    for (; buffer[index] != '{' && buffer[index] != '\0'; index++);
-    return index;
-}
-
-static int pgn_read_until_end_comment(char *buffer, int index) {
-    for (; buffer[index] != '}' && buffer[index] != '\0'; index++);
+static int pgn_read_until_space(char *buffer, int index) {
+    for (; buffer[index] != ' ' && buffer[index] != '\0'; index++);
     return index;
 }
 
@@ -249,16 +244,16 @@ static bool pgn_read_headers(FILE *pgn, PGNData *data) {
     if (fgets(data->buffer, 65536, pgn) == NULL)
         return false;
 
-    if (strstr(data->buffer, "[Result \"0-1\"]\0") == data->buffer)
+    if (strstr(data->buffer, "[Result \"0-1\"]") == data->buffer)
         data->result = PGN_LOSS;
 
-    if (strstr(data->buffer, "[Result \"1/2-1/2\"]") == data->buffer)
+    else if (strstr(data->buffer, "[Result \"1/2-1/2\"]") == data->buffer)
         data->result = PGN_DRAW;
 
-    if (strstr(data->buffer, "[Result \"1-0\"]") == data->buffer)
+    else if (strstr(data->buffer, "[Result \"1-0\"]") == data->buffer)
         data->result = PGN_WIN;
 
-    if (strstr(data->buffer, "[FEN \"") == data->buffer) {
+    else if (strstr(data->buffer, "[FEN \"") == data->buffer) {
         *strstr(data->buffer, "\"]") = '\0';
         data->startpos = strdup(data->buffer + strlen("[FEN \""));
     }
@@ -285,18 +280,13 @@ static void pgn_read_moves(FILE *pgn, PGNData *data, Board *board) {
         if (data->buffer[index] == '\0') return;
         move = parse_san(board, data->buffer + index);
 
-        // Assume that each move has an associated comment
-        index = pgn_read_until_begin_comment(data->buffer, index);
+        // Assume that each move has an associated score
+        index = pgn_read_until_space(data->buffer, index);
 
-        // Scan for a floating point eval like +A.BC
+        // Scan for an eval and ignore Mate scores
         if (sscanf(data->buffer + index + 1, "%lf", &feval) == 1)
             eval = round(100.0 * feval);
-
-        // Otherwise, assume we had a mate score like -MABC
-        else {
-            int plies = atoi(data->buffer + index + 3);
-            eval = data->buffer[index] == '+' ? MATE - plies : -MATE + plies;
-        }
+        else eval = MATE;
 
         // Use White's POV for all evaluations
         if (board->turn == BLACK) eval = -eval;
@@ -308,7 +298,7 @@ static void pgn_read_moves(FILE *pgn, PGNData *data, Board *board) {
         }
 
         // Skip head to the end of this comment to prepare for the next Move
-        index = pgn_read_until_end_comment(data->buffer, index); data->plies++;
+        index = pgn_read_until_space(data->buffer, index+1); data->plies++;
         applyMove(board, move, &undo);
     }
 }
