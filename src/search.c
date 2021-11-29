@@ -347,7 +347,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     inCheck = !!board->kingAttackers;
 
     // Save a history of the static evaluations when not checked
-    eval = thread->evalStack[thread->height] = inCheck ? VALUE_NONE
+    eval = thread->states[thread->height].eval = inCheck ? VALUE_NONE
          : ttEval != VALUE_NONE ? ttEval : evaluateBoard(thread, board);
 
     // Static Exchange Evaluation Pruning Margins
@@ -355,7 +355,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     seeMargin[1] = SEEQuietMargin * depth;
 
     // Improving if our static eval increased in the last move
-    improving = !inCheck && eval > thread->evalStack[thread->height-2];
+    improving = !inCheck && eval > thread->states[thread->height-2].eval;
 
     // Reset Killer moves for our children
     thread->killers[thread->height+1][0] = NONE_MOVE;
@@ -392,8 +392,8 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         && !inCheck
         &&  eval >= beta
         &&  depth >= NullMovePruningDepth
-        &&  thread->moveStack[thread->height-1] != NULL_MOVE
-        &&  thread->moveStack[thread->height-2] != NULL_MOVE
+        &&  thread->states[thread->height-1].move != NULL_MOVE
+        &&  thread->states[thread->height-2].move != NULL_MOVE
         &&  boardHasNonPawnMaterial(board, board->turn)
         && (!ttHit || !(ttBound & BOUND_UPPER) || ttValue >= beta)) {
 
@@ -707,7 +707,7 @@ int qsearch(Thread *thread, PVariation *pv, int alpha, int beta) {
     }
 
     // Save a history of the static evaluations
-    eval = thread->evalStack[thread->height]
+    eval = thread->states[thread->height].eval
          = ttEval != VALUE_NONE ? ttEval : evaluateBoard(thread, board);
 
     // Step 5. Eval Pruning. If a static evaluation of the board will

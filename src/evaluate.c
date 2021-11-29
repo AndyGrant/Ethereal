@@ -444,8 +444,8 @@ int evaluateBoard(Thread *thread, Board *board) {
     int phase, eval, pkeval, hashed;
 
     // We can recognize positions we just evaluated
-    if (thread->moveStack[thread->height-1] == NULL_MOVE)
-        return -thread->evalStack[thread->height-1] + 2 * Tempo;
+    if (thread->states[thread->height-1].move == NULL_MOVE)
+        return -thread->states[thread->height-1].eval + 2 * Tempo;
 
     // Check for this evaluation being cached already
     if (!TRACE && getCachedEvaluation(thread, board, &hashed))

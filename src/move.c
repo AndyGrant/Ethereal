@@ -54,18 +54,25 @@ int castleRookTo(int king, int rook) {
 
 int apply(Thread *thread, Board *board, uint16_t move) {
 
+    NodeState *const ns = &thread->states[thread->height];
+
     // NULL moves are only tried when legal
     if (move == NULL_MOVE) {
-        thread->moveStack[thread->height] = NULL_MOVE;
+
+        ns->movedPiece    = EMPTY;
+        ns->tactical      = false;
+        ns->continuations = NULL;
+        ns->move          = NULL_MOVE;
+
         applyNullMove(board, &thread->undoStack[thread->height]);
     }
 
     else {
 
-        // Track some move information for history lookups
-        thread->moveStack[thread->height] = move;
-        thread->pieceStack[thread->height] = pieceType(board->squares[MoveFrom(move)]);
-        thread->moveTypeStack[thread->height] = moveIsTactical(board, move);
+        ns->movedPiece    = pieceType(board->squares[MoveFrom(move)]);
+        ns->tactical      = moveIsTactical(board, move);
+        ns->continuations = &thread->continuation[ns->tactical][ns->movedPiece][MoveTo(move)];
+        ns->move          = move;
 
         // Apply the move and reject if illegal
         applyMove(board, move, &thread->undoStack[thread->height]);
@@ -81,10 +88,12 @@ int apply(Thread *thread, Board *board, uint16_t move) {
 
 void applyLegal(Thread *thread, Board *board, uint16_t move) {
 
-    // Track some move information for history lookups
-    thread->moveStack[thread->height] = move;
-    thread->pieceStack[thread->height] = pieceType(board->squares[MoveFrom(move)]);
-    thread->moveTypeStack[thread->height] = moveIsTactical(board, move);
+    NodeState *const ns = &thread->states[thread->height];
+
+    ns->movedPiece    = pieceType(board->squares[MoveFrom(move)]);
+    ns->tactical      = moveIsTactical(board, move);
+    ns->continuations = &thread->continuation[ns->tactical][ns->movedPiece][MoveTo(move)];
+    ns->move          = move;
 
     // Assumed that this move is legal
     applyMove(board, move, &thread->undoStack[thread->height]);

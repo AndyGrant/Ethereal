@@ -36,6 +36,17 @@ enum {
     STACK_SIZE = MAX_PLY + STACK_OFFSET
 };
 
+struct NodeState {
+
+    int eval;       // Static evaluation of the Node
+    int movedPiece; // Moving piece, otherwise UB
+    bool tactical;  // Cached moveIsTactical()
+    uint16_t move;  // Move applied at the Node
+
+    // Fast reference for future use for History lookups
+    int16_t (*continuations)[CONT_NB][PIECE_NB][SQUARE_NB];
+};
+
 struct Thread {
 
     Board board;
@@ -49,13 +60,8 @@ struct Thread {
     uint64_t nodes, tbhits;
     int depth, seldepth, height, completed;
 
-    int *evalStack, _evalStack[STACK_SIZE];
-    int *pieceStack, _pieceStack[STACK_SIZE];
-    int *moveTypeStack, _moveTypeStack[STACK_SIZE];
-    uint16_t *moveStack, _moveStack[STACK_SIZE];
-
+    NodeState *states, nodeStates[STACK_SIZE];
     NNUEAccumulator *nnueStack;
-
     Undo undoStack[STACK_SIZE];
 
     ALIGN64 EvalTable evtable;

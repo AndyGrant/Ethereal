@@ -84,6 +84,7 @@ typedef struct EvalInfo EvalInfo;
 typedef struct MovePicker MovePicker;
 typedef struct SearchInfo SearchInfo;
 typedef struct PVariation PVariation;
+typedef struct NodeState NodeState;
 typedef struct Thread Thread;
 typedef struct TTEntry TTEntry;
 typedef struct TTBucket TTBucket;
@@ -98,8 +99,8 @@ typedef uint16_t KillerTable[MAX_PLY+1][2];
 typedef uint16_t CounterMoveTable[COLOUR_NB][PIECE_NB][SQUARE_NB];
 
 typedef int16_t HistoryTable[COLOUR_NB][SQUARE_NB][SQUARE_NB];
-typedef int16_t ContinuationTable[CONT_NB][2][PIECE_NB][SQUARE_NB][PIECE_NB][SQUARE_NB];
 typedef int16_t CaptureHistoryTable[PIECE_NB][SQUARE_NB][PIECE_NB-1];
+typedef int16_t ContinuationTable[2][PIECE_NB][SQUARE_NB][CONT_NB][PIECE_NB][SQUARE_NB];
 
 // Trivial alignment macros
 
