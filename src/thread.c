@@ -37,9 +37,10 @@ Thread* createThreadPool(int nthreads) {
     for (int i = 0; i < nthreads; i++) {
 
         // Offset stacks so the root position may look backwards
-        threads[i].evalStack  = &(threads[i]._evalStack [STACK_OFFSET]);
-        threads[i].moveStack  = &(threads[i]._moveStack [STACK_OFFSET]);
-        threads[i].pieceStack = &(threads[i]._pieceStack[STACK_OFFSET]);
+        threads[i].evalStack     = &(threads[i]._evalStack    [STACK_OFFSET]);
+        threads[i].pieceStack    = &(threads[i]._pieceStack   [STACK_OFFSET]);
+        threads[i].moveTypeStack = &(threads[i]._moveTypeStack[STACK_OFFSET]);
+        threads[i].moveStack     = &(threads[i]._moveStack    [STACK_OFFSET]);
 
         // Must dynamically allocate for the ALIGNs needed
         threads[i].nnueStack  = nnue_create_accumulators();

@@ -50,8 +50,9 @@ struct Thread {
     int depth, seldepth, height, completed;
 
     int *evalStack, _evalStack[STACK_SIZE];
-    uint16_t *moveStack, _moveStack[STACK_SIZE];
     int *pieceStack, _pieceStack[STACK_SIZE];
+    int *moveTypeStack, _moveTypeStack[STACK_SIZE];
+    uint16_t *moveStack, _moveStack[STACK_SIZE];
 
     NNUEAccumulator *nnueStack;
 

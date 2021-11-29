@@ -65,6 +65,7 @@ int apply(Thread *thread, Board *board, uint16_t move) {
         // Track some move information for history lookups
         thread->moveStack[thread->height] = move;
         thread->pieceStack[thread->height] = pieceType(board->squares[MoveFrom(move)]);
+        thread->moveTypeStack[thread->height] = moveIsTactical(board, move);
 
         // Apply the move and reject if illegal
         applyMove(board, move, &thread->undoStack[thread->height]);
@@ -83,6 +84,7 @@ void applyLegal(Thread *thread, Board *board, uint16_t move) {
     // Track some move information for history lookups
     thread->moveStack[thread->height] = move;
     thread->pieceStack[thread->height] = pieceType(board->squares[MoveFrom(move)]);
+    thread->moveTypeStack[thread->height] = moveIsTactical(board, move);
 
     // Assumed that this move is legal
     applyMove(board, move, &thread->undoStack[thread->height]);
