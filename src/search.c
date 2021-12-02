@@ -383,11 +383,10 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         &&  eval + AlphaMargin <= alpha)
         return eval;
 
-    // Step 9 (~93 elo). Null Move Pruning. If our position is so good that giving
-    // our opponent back-to-back moves is still not enough for them to
-    // gain control of the game, we can be somewhat safe in saying that
-    // our position is too good to be true. We avoid NMP when we have
-    // information from the Transposition Table which suggests it will fail
+    // Step 9 (~93 elo). Null Move Pruning. If our position is so strong
+    // that giving our opponent a double move still allows us to maintain
+    // beta, then we can prune early with some safety. Do not try NMP when
+    // it appears that a TT entry suggests it will fail immediately
     if (   !PvNode
         && !inCheck
         &&  eval >= beta
@@ -398,6 +397,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         && (!ttHit || !(ttBound & BOUND_UPPER) || ttValue >= beta)) {
 
         R = 4 + depth / 6 + MIN(3, (eval - beta) / 200);
+        R += thread->states[thread->height-1].tactical;
 
         apply(thread, board, NULL_MOVE);
         value = -search(thread, &lpv, -beta, -beta+1, depth-R);
