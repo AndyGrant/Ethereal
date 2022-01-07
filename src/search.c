@@ -548,10 +548,8 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         // If this happens, and the rBeta used is greater than beta, then we have multiple moves
         // which appear to beat beta at a reduced depth. singularity() sets the stage to STAGE_DONE
 
-        if (movePicker.stage == STAGE_DONE) {
-            revert(thread, board, move);
+        if (movePicker.stage == STAGE_DONE)
             return MAX(ttValue - depth, -MATE);
-        }
 
         // Step 17A (~249 elo). Quiet Late Move Reductions. Reduce the search depth
         // of Quiet moves after we've explored the main line. If a reduced search
@@ -918,7 +916,8 @@ int singularity(Thread *thread, MovePicker *mp, int ttValue, int depth, int beta
     }
 
     // Reapply the table move we took off
-    applyLegal(thread, board, mp->tableMove);
+    else
+        applyLegal(thread, board, mp->tableMove);
 
     // Move is singular if all other moves failed low
     return value <= rBeta;
