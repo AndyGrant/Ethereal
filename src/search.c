@@ -391,9 +391,8 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         && !inCheck
         &&  eval >= beta
         &&  depth >= NullMovePruningDepth
-        &&  thread->states[thread->height-1].move != NULL_MOVE
-        &&  thread->states[thread->height-2].move != NULL_MOVE
         &&  boardHasNonPawnMaterial(board, board->turn)
+        &&  thread->states[thread->height-1].move != NULL_MOVE
         && (!ttHit || !(ttBound & BOUND_UPPER) || ttValue >= beta)) {
 
         R = 4 + depth / 6 + MIN(3, (eval - beta) / 200);
