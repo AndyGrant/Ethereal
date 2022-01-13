@@ -54,7 +54,7 @@ struct Thread {
     SearchInfo *info;
     PVariation pvs[MAX_PLY];
 
-    int multiPV, values[MAX_MOVES];
+    int multiPV;
     uint16_t bestMoves[MAX_MOVES];
 
     uint64_t nodes, tbhits;
