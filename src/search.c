@@ -90,8 +90,8 @@ static void select_from_threads(Thread *threads, uint16_t *best, uint16_t *ponde
     // Report via UCI when our best thread is not the main thread
     if (best_thread != &threads[0]) {
         const int best_depth = best_thread->completed;
-        const int best_score = best_thread->pvs[best_depth].score;
-        uciReport(best_thread, &best_thread->pvs[best_depth], -MATE, MATE, best_score);
+        best_thread->multiPV = 0;
+        uciReport(best_thread, &best_thread->pvs[best_depth], -MATE, MATE);
     }
 }
 
@@ -99,7 +99,7 @@ static void update_best_line(Thread *thread, PVariation *pv) {
 
     /// Upon finishing a depth, or reaching a fail-high, we update
     /// this Thread's line of best play for the newly completed depth.
-    /// We do not overwrite better lines found earlier during MultiPV.
+    /// We store seperately the lines that we explore in multipv searches
 
     if (  !thread->multiPV
         || pv->score > thread->pvs[thread->completed].score) {
@@ -107,6 +107,8 @@ static void update_best_line(Thread *thread, PVariation *pv) {
         thread->completed = thread->depth;
         memcpy(&thread->pvs[thread->depth], pv, sizeof(PVariation));
     }
+
+    memcpy(&thread->mpvs[thread->multiPV], pv, sizeof(PVariation));
 }
 
 static void revert_best_line(Thread *thread) {
@@ -117,6 +119,30 @@ static void revert_best_line(Thread *thread) {
 
     if (!thread->multiPV)
         thread->completed = thread->depth - 1;
+}
+
+static void report_multipv_lines(Thread *thread) {
+
+    /// We've just finished a depth during a MultiPV search. Now we will
+    /// once again report the lines, but this time ordering them based on
+    /// their scores. It is possible, although generally unusual, for a
+    /// move searched later to have a better score than an earlier move.
+
+    for (int i = 0; i < thread->limits->multiPV; i++) {
+
+        for (int j = i + 1; j < thread->limits->multiPV; j++) {
+
+            if (thread->mpvs[j].score > thread->mpvs[i].score) {
+                PVariation localpv;
+                memcpy(&localpv,         &thread->mpvs[i], sizeof(PVariation));
+                memcpy(&thread->mpvs[i], &thread->mpvs[j], sizeof(PVariation));
+                memcpy(&thread->mpvs[j], &localpv        , sizeof(PVariation));
+            }
+        }
+    }
+
+    for (thread->multiPV = 0; thread->multiPV < thread->limits->multiPV; thread->multiPV++)
+        uciReport(thread->threads, &thread->mpvs[thread->multiPV], -MATE, MATE);
 }
 
 
@@ -194,6 +220,9 @@ void* iterativeDeepening(void *vthread) {
         // Helper threads need not worry about time and search info updates
         if (!mainThread) continue;
 
+        // We delay reporting during MultiPV searches
+        if (limits->multiPV > 1) report_multipv_lines(thread);
+
         // Update clock based on score and pv changes
         update_time_manager(thread, info, limits);
 
@@ -214,8 +243,9 @@ void* iterativeDeepening(void *vthread) {
 void aspirationWindow(Thread *thread) {
 
     PVariation pv;
-    int depth = thread->depth;
-    int alpha = -MATE, beta = MATE, delta = WindowSize;
+    int depth  = thread->depth;
+    int alpha  = -MATE, beta = MATE, delta = WindowSize;
+    int report = !thread->index && thread->limits->multiPV == 1;
 
     // After a few depths use a previous result to form a window
     if (thread->depth >= WindowDepth) {
@@ -227,9 +257,9 @@ void aspirationWindow(Thread *thread) {
 
         // Perform a search and consider reporting results
         pv.score = search(thread, &pv, alpha, beta, MAX(1, depth));
-        if (   (!thread->index && pv.score > alpha && pv.score < beta)
-            || (!thread->index && elapsedTime(thread->info) >= WindowTimerMS))
-            uciReport(thread->threads, &pv, alpha, beta, pv.score);
+        if (   (report && pv.score > alpha && pv.score < beta)
+            || (report && elapsedTime(thread->info) >= WindowTimerMS))
+            uciReport(thread->threads, &pv, alpha, beta);
 
         // Search returned a result within our window
         if (pv.score > alpha && pv.score < beta) {

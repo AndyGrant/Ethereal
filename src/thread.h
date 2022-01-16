@@ -53,6 +53,7 @@ struct Thread {
     Limits *limits;
     SearchInfo *info;
     PVariation pvs[MAX_PLY];
+    PVariation mpvs[MAX_MOVES];
 
     int multiPV;
     uint16_t bestMoves[MAX_MOVES];

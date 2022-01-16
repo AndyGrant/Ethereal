@@ -371,7 +371,7 @@ void uciPosition(char *str, Board *board, int chess960) {
     }
 }
 
-void uciReport(Thread *threads, PVariation *pv, int alpha, int beta, int value) {
+void uciReport(Thread *threads, PVariation *pv, int alpha, int beta) {
 
     // Gather all of the statistics that the UCI protocol would be
     // interested in. Also, bound the value passed by alpha and
@@ -382,7 +382,7 @@ void uciReport(Thread *threads, PVariation *pv, int alpha, int beta, int value) 
     int seldepth    = threads->seldepth;
     int multiPV     = threads->multiPV + 1;
     int elapsed     = elapsedTime(threads->info);
-    int bounded     = MAX(alpha, MIN(value, beta));
+    int bounded     = MAX(alpha, MIN(pv->score, beta));
     uint64_t nodes  = nodesSearchedThreadPool(threads);
     uint64_t tbhits = tbhitsThreadPool(threads);
     int nps         = (int)(1000 * (nodes / (1 + elapsed)));
