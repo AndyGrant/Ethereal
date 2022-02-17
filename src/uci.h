@@ -22,7 +22,7 @@
 
 #include "types.h"
 
-#define VERSION_ID "13.52"
+#define VERSION_ID "13.53"
 
 #ifndef LICENSE_OWNER
     #define LICENSE_OWNER "Unlicensed"
