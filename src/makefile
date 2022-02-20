@@ -19,7 +19,7 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 ### =========================================================================
-### Section 1. Flag Declarations. Detect NNUE/Classis and Release vs Native
+### Section 1. Flag Declarations. Detect NNUE/Classic and Release/Native
 ### =========================================================================
 
 CC   = gcc
@@ -29,19 +29,21 @@ NN   = -DUSE_NNUE=0
 EXE  = Ethereal
 
 ifdef EVALFILE
-    NN   = -DUSE_NNUE=1 -DEVALFILE=\"$(EVALFILE)\"
-    SRC += nnue/*.c
+	NN       = -DUSE_NNUE=1
+	NNFLAGS += -DEVALFILE=\"$(EVALFILE)\"
+	SRC      = *.c nnue/*.c pyrrhic/tbprobe.c
 endif
 
 ifdef OWNER
-    NN   = -DUSE_NNUE=1 -DLICENSE_OWNER=\"$(OWNER)\"
-    SRC += nnue/*.c
+	NN       = -DUSE_NNUE=1
+	NNFLAGS += -DLICENSE_OWNER=\"$(OWNER)\"
+	SRC      = *.c nnue/*.c pyrrhic/tbprobe.c
 endif
 
 WFLAGS   = -std=gnu11 -Wall -Wextra -Wshadow
-RFLAGS   = -O3 $(WFLAGS) -DNDEBUG -flto $(NN) -static
-CFLAGS   = -O3 $(WFLAGS) -DNDEBUG -flto $(NN) -march=native
-TFLAGS   = -O3 $(WFLAGS) -DNDEBUG -flto $(NN) -march=native -fopenmp -DTUNE
+RFLAGS   = -O3 $(WFLAGS) -DNDEBUG -flto $(NN) $(NNFLAGS) -static
+CFLAGS   = -O3 $(WFLAGS) -DNDEBUG -flto $(NN) $(NNFLAGS) -march=native
+TFLAGS   = -O3 $(WFLAGS) -DNDEBUG -flto $(NN) $(NNFLAGS) -march=native -fopenmp -DTUNE
 PGOFLAGS = -fno-asynchronous-unwind-tables
 
 POPCNTFLAGS = -DUSE_POPCNT -mpopcnt
@@ -112,16 +114,16 @@ builddir:
 ssse3-popcnt: builddir
 	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(POPCNTFLAGS) $(SSSE3FLAGS) -o $(EXE)-ssse3$(EXT)
 
-avx-popcnt: builddir
+ssse3-pext: builddir
 	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(PEXTFLAGS)	  $(SSSE3FLAGS) -o $(EXE)-pext-ssse3$(EXT)
 
-avx2-popcnt: builddir
+avx-popcnt: builddir
 	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(POPCNTFLAGS) $(AVXFLAGS)	-o $(EXE)-avx$(EXT)
 
-ssse3-pext: builddir
+avx-pext: builddir
 	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(PEXTFLAGS)	  $(AVXFLAGS)	-o $(EXE)-pext-avx$(EXT)
 
-avx-pext: builddir
+avx2-popcnt: builddir
 	$(CC) $(RFLAGS) $(SRC) $(LIBS) $(POPCNTFLAGS) $(AVX2FLAGS)	-o $(EXE)-avx2$(EXT)
 
 avx2-pext: builddir
