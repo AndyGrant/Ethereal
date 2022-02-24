@@ -413,6 +413,10 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     thread->killers[thread->height+1][0] = NONE_MOVE;
     thread->killers[thread->height+1][1] = NONE_MOVE;
 
+    // Toss the static evaluation into the TT if we won't overwrite something
+    if (!ttHit && !inCheck)
+        storeTTEntry(board->hash, thread->height, NONE_MOVE, VALUE_NONE, eval, 0, BOUND_NONE);
+
     // ------------------------------------------------------------------------
     // All elo estimates as of Ethereal 11.80, @ 12s+0.12 @ 1.275mnps
     // ------------------------------------------------------------------------
