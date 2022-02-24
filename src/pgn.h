@@ -28,4 +28,9 @@ typedef struct PGNData {
     char buffer[65536];
 } PGNData;
 
+typedef struct PGNEntry {
+    char fen[128];
+    int eval, use, ply;
+} PGNEntry;
+
 void process_pgn(const char *fname);

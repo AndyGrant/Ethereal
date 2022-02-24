@@ -261,14 +261,15 @@ static bool pgn_read_headers(FILE *pgn, PGNData *data) {
     return data->buffer[0] == '[';
 }
 
-static void pgn_read_moves(FILE *pgn, PGNData *data, Board *board) {
+static void pgn_read_moves(FILE *pgn, PGNData *data, PGNEntry *entries, Board *board) {
 
     Undo undo;
     double feval;
     uint16_t move;
-    int eval, index = 0;
+    int eval, placed = 0, index = 0;
 
-    char fen[128], *lookup[3] = { "0.0", "0.5", "1.0" };
+    const char *format = "%s [%s] %d %d %d\n";
+    const char *lookup[3] = { "0.0", "0.5", "1.0" };
 
     if (fgets(data->buffer, 65536, pgn) == NULL)
         return;
@@ -277,7 +278,7 @@ static void pgn_read_moves(FILE *pgn, PGNData *data, Board *board) {
 
         // Read and Apply the next move if there is one
         index = pgn_read_until_move(data->buffer, index);
-        if (data->buffer[index] == '\0') return;
+        if (data->buffer[index] == '\0') break;
         move = parse_san(board, data->buffer + index);
 
         // Assume that each move has an associated score
@@ -291,19 +292,23 @@ static void pgn_read_moves(FILE *pgn, PGNData *data, Board *board) {
         // Use White's POV for all evaluations
         if (board->turn == BLACK) eval = -eval;
 
-        // Ethereal NNUE data formatting to build FENs
-        if (-1000 <= eval && eval <= 1000 && !board->kingAttackers) {
-            boardToFEN(board, fen);
-            printf("%s [%s] %d\n", fen, lookup[data->result], eval);
-        }
+        // Save each potential position for later
+        entries[placed].eval = eval;
+        entries[placed].ply  = data->plies;
+        entries[placed].use  = !board->kingAttackers && !moveIsTactical(board, move);
+        boardToFEN(board, entries[placed++].fen);
 
         // Skip head to the end of this comment to prepare for the next Move
         index = pgn_read_until_space(data->buffer, index+1); data->plies++;
         applyMove(board, move, &undo);
     }
+
+    for (int i = 0; i < placed; i++)
+        if (entries[i].use && abs(entries[i].eval) <= 2000)
+            printf(format, entries[i].fen, lookup[data->result], entries[i].eval, entries[i].ply, data->plies);
 }
 
-static bool process_next_pgn(FILE *pgn, PGNData *data, Board *board) {
+static bool process_next_pgn(FILE *pgn, PGNData *data, PGNEntry *entries, Board *board) {
 
     // Make sure to cleanup previous PGNs
     if (data->startpos != NULL)
@@ -325,19 +330,23 @@ static bool process_next_pgn(FILE *pgn, PGNData *data, Board *board) {
     boardFromFEN(board, data->startpos, 0);
 
     // Read Result & Fen and skip to Moves
-    pgn_read_moves(pgn, data, board);
+    pgn_read_moves(pgn, data, entries, board);
 
     // Skip the trailing Newline of each PGN
-    fgets(data->buffer, 65536, pgn);
+    if (fgets(data->buffer, 65536, pgn) == NULL)
+        return false;
 
     return true;
 }
 
 
 void process_pgn(const char *fname) {
+
+    FILE *pgn         = fopen(fname, "r");
+    PGNData *data     = calloc(1, sizeof(PGNData));
+    PGNEntry *entries = calloc(1024, sizeof(PGNEntry));
+
     Board board;
-    FILE *pgn = fopen(fname, "r");
-    PGNData *data = calloc(1, sizeof(PGNData));
-    while (process_next_pgn(pgn, data, &board));
+    while (process_next_pgn(pgn, data, entries, &board));
     fclose(pgn); free(data);
 }

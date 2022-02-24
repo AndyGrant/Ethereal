@@ -45,12 +45,19 @@ typedef struct PSQBBSample {
 typedef struct HalfKPSample {
     uint64_t occupied;   // 8-byte occupancy bitboard ( No Kings )
     int16_t  eval;       // 2-byte int for the target evaluation
+    uint8_t  ply;        // 1-byte int for the current move ply
+    uint8_t  plies;      // 1-byte int for the total game length
     uint8_t  result;     // 1-byte int for result. { L=0, D=1, W=2 }
     uint8_t  turn;       // 1-byte int for the side-to-move flag
     uint8_t  wking;      // 1-byte int for the White King Square
     uint8_t  bking;      // 1-byte int for the Black King Square
     uint8_t  packed[15]; // 1-byte int per two non-King pieces
 } HalfKPSample;
+
+
+static uint8_t cap_ply_value(int value) {
+    return (uint8_t) MIN(value, 255);
+}
 
 static void packBitboard(uint8_t *packed, Board* board, uint64_t pieces) {
 
@@ -222,12 +229,12 @@ static void buildHalfKPBook(int argc, char **argv) {
 
     (void) argc;
 
-    char line[256];
+    char line[256], *token, sep[] = " ";
     uint64_t positions = 0;
     double start = getRealTime(), elapsed;
-    FILE *fin = fopen(argv[2], "r");
-    FILE *fout = fopen(argv[3], "wb");
 
+    FILE *fin  = fopen(argv[2], "r");
+    FILE *fout = fopen(argv[3], "wb");
 
     while (fgets(line, 256, fin) != NULL) {
 
@@ -240,12 +247,25 @@ static void buildHalfKPBook(int argc, char **argv) {
         uint64_t pieces = (white | black);
 
         sample.occupied = pieces & ~board.pieces[KING];
-        sample.eval     = atoi(strstr(line, "] ") + strlen("] "));
         sample.result   = strstr(line, "[0.0]") ? 0u : strstr(line, "[0.5]") ? 1u : 2u;
         sample.turn     = board.turn;
         sample.wking    = getlsb(white & board.pieces[KING]);
         sample.bking    = getlsb(black & board.pieces[KING]);
         packBitboard(sample.packed, &board, sample.occupied);
+
+        token = strtok(line, sep); // Board Encoding
+        token = strtok(NULL, sep); // Side-to-move
+        token = strtok(NULL, sep); // Castle Rights
+        token = strtok(NULL, sep); // Enpass Square
+        token = strtok(NULL, sep); // Half-move Counter
+        token = strtok(NULL, sep); // Full-move Counter
+        token = strtok(NULL, sep); // Game Result
+
+        sample.eval  = atoi(strtok(NULL, sep));
+        sample.ply   = cap_ply_value(atoi(strtok(NULL, sep)));
+        sample.plies = cap_ply_value(atoi(strtok(NULL, sep)));
+
+        (void) token; // Silence compiler warnings
 
         sample.eval   = sample.turn ? -sample.eval : sample.eval;
         sample.result = sample.turn ? 2u - sample.result : sample.result;
