@@ -413,6 +413,9 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     thread->killers[thread->height+1][0] = NONE_MOVE;
     thread->killers[thread->height+1][1] = NONE_MOVE;
 
+    // Beta value for ProbCut Pruning
+    rBeta = MIN(beta + ProbCutMargin, MATE - MAX_PLY - 1);
+
     // Toss the static evaluation into the TT if we won't overwrite something
     if (!ttHit && !inCheck)
         storeTTEntry(board->hash, thread->height, NONE_MOVE, VALUE_NONE, eval, 0, BOUND_NONE);
@@ -467,11 +470,11 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     if (   !PvNode
         && !inCheck
         &&  depth >= ProbCutDepth
-        &&  abs(beta) < TBWIN_IN_MAX) {
+        &&  abs(beta) < TBWIN_IN_MAX
+        && (!ttHit || ttValue >= rBeta || ttDepth < depth - 3)) {
 
         // Try tactical moves which maintain rBeta.
-        rBeta = MIN(beta + ProbCutMargin, MATE - MAX_PLY - 1);
-        initNoisyMovePicker(&movePicker, thread, rBeta - eval);
+        initNoisyMovePicker(&movePicker, thread, ttMove, rBeta - eval);
         while ((move = selectNextMove(&movePicker, board, 1)) != NONE_MOVE) {
 
             // Apply move, skip if move is illegal
@@ -783,7 +786,7 @@ int qsearch(Thread *thread, PVariation *pv, int alpha, int beta) {
     // Step 7. Move Generation and Looping. Generate all tactical moves
     // and return those which are winning via SEE, and also strong enough
     // to beat the margin computed in the Delta Pruning step found above
-    initNoisyMovePicker(&movePicker, thread, MAX(1, alpha - eval - QSSeeMargin));
+    initNoisyMovePicker(&movePicker, thread, NONE_MOVE, MAX(1, alpha - eval - QSSeeMargin));
     while ((move = selectNextMove(&movePicker, board, 1)) != NONE_MOVE) {
 
         // Worst case which assumes we lose our piece immediately

@@ -47,8 +47,8 @@ static int getBestMoveIndex(MovePicker *mp, int start, int end) {
 
 void initMovePicker(MovePicker *mp, Thread *thread, uint16_t ttMove) {
 
-    // Start with the table move
-    mp->stage = STAGE_TABLE;
+    // Start with the tt-move
+    mp->stage     = STAGE_TABLE;
     mp->tableMove = ttMove;
 
     // Lookup our refutations (killers and counter moves)
@@ -56,31 +56,48 @@ void initMovePicker(MovePicker *mp, Thread *thread, uint16_t ttMove) {
 
     // General housekeeping
     mp->threshold = 0;
-    mp->thread = thread;
-    mp->type = NORMAL_PICKER;
+    mp->thread    = thread;
+    mp->type      = NORMAL_PICKER;
+
+    // Skip over the TT-move if it is illegal
+    mp->stage += !moveIsPseudoLegal(&thread->board, ttMove);
 }
 
 void initSingularMovePicker(MovePicker *mp, Thread *thread, uint16_t ttMove) {
 
-    // Simply skip over the TT move
-    initMovePicker(mp, thread, ttMove);
-    mp->stage = STAGE_GENERATE_NOISY;
+    // Skip straight passed the tt-move
+    mp->stage     = STAGE_GENERATE_NOISY;
+    mp->tableMove = ttMove;
 
+    // Lookup our refutations (killers and counter moves)
+    getRefutationMoves(thread, &mp->killer1, &mp->killer2, &mp->counter);
+
+    // General housekeeping
+    mp->threshold = 0;
+    mp->thread    = thread;
+    mp->type      = NORMAL_PICKER;
 }
 
-void initNoisyMovePicker(MovePicker *mp, Thread *thread, int threshold) {
+void initNoisyMovePicker(MovePicker *mp, Thread *thread, uint16_t ttMove, int threshold) {
 
-    // Start with just the noisy moves
-    mp->stage = STAGE_GENERATE_NOISY;
+    // Start with the tt-move potentially
+    mp->stage     = STAGE_TABLE;
+    mp->tableMove = ttMove;
 
-    // Skip all of the special (refutation and table) moves
-    mp->tableMove = mp->killer1 = mp->killer2 = mp->counter = NONE_MOVE;
+    // Skip all of the refutation moves
+    mp->killer1 = mp->killer2 = mp->counter = NONE_MOVE;
 
     // General housekeeping
     mp->threshold = threshold;
-    mp->thread = thread;
-    mp->type = NOISY_PICKER;
+    mp->thread    = thread;
+    mp->type      = NOISY_PICKER;
+
+    // Skip over the TT-move unless its a threshold-winning capture
+    mp->stage += !moveIsTactical(&thread->board, ttMove)
+              || !moveIsPseudoLegal(&thread->board, ttMove)
+              || !staticExchangeEvaluation(&thread->board, ttMove, threshold);
 }
+
 
 uint16_t selectNextMove(MovePicker *mp, Board *board, int skipQuiets) {
 
@@ -90,12 +107,9 @@ uint16_t selectNextMove(MovePicker *mp, Board *board, int skipQuiets) {
 
         case STAGE_TABLE:
 
-            // Play table move if it is pseudo legal
+            // Play table move ( Already shown to be legal )
             mp->stage = STAGE_GENERATE_NOISY;
-            if (moveIsPseudoLegal(board, mp->tableMove))
-                return mp->tableMove;
-
-            /* fallthrough */
+            return mp->tableMove;
 
         case STAGE_GENERATE_NOISY:
 
