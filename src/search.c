@@ -937,16 +937,14 @@ int singularity(Thread *thread, MovePicker *mp, int ttValue, int depth, int beta
     int skipQuiets = 0, quiets = 0, tacticals = 0;
     int value = -MATE, rBeta = MAX(ttValue - depth, -MATE);
 
-    MovePicker movePicker;
     PVariation lpv; lpv.length = 0;
     Board *const board = &thread->board;
 
     // Table move was already applied
     revert(thread, board, mp->tableMove);
 
-    // Iterate over each move, except for the table move
-    initSingularMovePicker(&movePicker, thread, mp->tableMove);
-    while ((move = selectNextMove(&movePicker, board, skipQuiets)) != NONE_MOVE) {
+    // Iterate over the remaining moves in the Move Picker
+    while ((move = selectNextMove(mp, board, skipQuiets)) != NONE_MOVE) {
 
         assert(move != mp->tableMove); // Skip the table move
 
@@ -965,6 +963,9 @@ int singularity(Thread *thread, MovePicker *mp, int ttValue, int depth, int beta
         // Start skipping bad captures after a few have been tried
         if (skipQuiets && tacticals >= SingularTacticalLimit) break;
     }
+
+    // We reused the Move Picker, so make sure we cleanup
+    mp->stage = STAGE_TABLE + 1;
 
     // MultiCut. We signal the Move Picker to terminate the search
     if (value > rBeta && rBeta >= beta) {

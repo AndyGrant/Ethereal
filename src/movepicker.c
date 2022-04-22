@@ -63,21 +63,6 @@ void initMovePicker(MovePicker *mp, Thread *thread, uint16_t ttMove) {
     mp->stage += !moveIsPseudoLegal(&thread->board, ttMove);
 }
 
-void initSingularMovePicker(MovePicker *mp, Thread *thread, uint16_t ttMove) {
-
-    // Skip straight passed the tt-move
-    mp->stage     = STAGE_GENERATE_NOISY;
-    mp->tableMove = ttMove;
-
-    // Lookup our refutations (killers and counter moves)
-    getRefutationMoves(thread, &mp->killer1, &mp->killer2, &mp->counter);
-
-    // General housekeeping
-    mp->threshold = 0;
-    mp->thread    = thread;
-    mp->type      = NORMAL_PICKER;
-}
-
 void initNoisyMovePicker(MovePicker *mp, Thread *thread, uint16_t ttMove, int threshold) {
 
     // Start with the tt-move potentially
