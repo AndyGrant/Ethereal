@@ -32,14 +32,13 @@ enum {
 };
 
 struct MovePicker {
-    int split, noisySize, quietSize;
+    int split, noisy_size, quiet_size;
     int stage, type, threshold;
     int values[MAX_MOVES];
     uint16_t moves[MAX_MOVES];
-    uint16_t tableMove, killer1, killer2, counter;
-    Thread *thread;
+    uint16_t tt_move, killer1, killer2, counter;
 };
 
-void initMovePicker(MovePicker *mp, Thread *thread, uint16_t ttMove);
-void initNoisyMovePicker(MovePicker *mp, Thread *thread, uint16_t ttMove, int threshold);
-uint16_t selectNextMove(MovePicker *mp, Board *board, int skipQuiets);
+void     init_picker       (MovePicker *mp, Thread *thread, uint16_t tt_move);
+void     init_noisy_picker (MovePicker *mp, Thread *thread, uint16_t tt_move, int threshold);
+uint16_t select_next       (MovePicker *mp, Thread *thread, int skip_quiets);

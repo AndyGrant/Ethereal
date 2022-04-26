@@ -290,9 +290,11 @@ void aspirationWindow(Thread *thread) {
 
 int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
 
-    const int PvNode   = (alpha != beta - 1);
-    const int RootNode = (thread->height == 0);
-    Board *const board = &thread->board;
+    Board *const board   = &thread->board;
+    NodeState *const ns  = &thread->states[thread->height];
+
+    const int PvNode     = (alpha != beta - 1);
+    const int RootNode   = (thread->height == 0);
 
     unsigned tbresult;
     int hist = 0, cmhist = 0, fmhist = 0;
@@ -303,7 +305,6 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     int eval, value = -MATE, best = -MATE, seeMargin[2];
     uint16_t move, ttMove = NONE_MOVE, bestMove = NONE_MOVE;
     uint16_t quietsTried[MAX_MOVES], capturesTried[MAX_MOVES];
-    MovePicker movePicker;
     PVariation lpv;
 
     // Step 1. Quiescence Search. Perform a search using mostly tactical
@@ -399,7 +400,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     inCheck = !!board->kingAttackers;
 
     // Save a history of the static evaluations when not checked
-    eval = thread->states[thread->height].eval = inCheck ? VALUE_NONE
+    eval = ns->eval = inCheck ? VALUE_NONE
          : ttEval != VALUE_NONE ? ttEval : evaluateBoard(thread, board);
 
     // Static Exchange Evaluation Pruning Margins
@@ -407,7 +408,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     seeMargin[1] = SEEQuietMargin * depth;
 
     // Improving if our static eval increased in the last move
-    improving = !inCheck && eval > thread->states[thread->height-2].eval;
+    improving = !inCheck && eval > (ns-2)->eval;
 
     // Reset Killer moves for our children
     thread->killers[thread->height+1][0] = NONE_MOVE;
@@ -449,13 +450,13 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     if (   !PvNode
         && !inCheck
         &&  eval >= beta
+        && (ns-1)->move != NULL_MOVE
         &&  depth >= NullMovePruningDepth
         &&  boardHasNonPawnMaterial(board, board->turn)
-        &&  thread->states[thread->height-1].move != NULL_MOVE
         && (!ttHit || !(ttBound & BOUND_UPPER) || ttValue >= beta)) {
 
-        R = 4 + depth / 6 + MIN(3, (eval - beta) / 200);
-        R += thread->states[thread->height-1].tactical;
+        // Dynamic R based on Depth, Eval, and Tactical state
+        R = 4 + depth / 6 + MIN(3, (eval - beta) / 200) + (ns-1)->tactical;
 
         apply(thread, board, NULL_MOVE);
         value = -search(thread, &lpv, -beta, -beta+1, depth-R);
@@ -474,8 +475,8 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         && (!ttHit || ttValue >= rBeta || ttDepth < depth - 3)) {
 
         // Try tactical moves which maintain rBeta.
-        initNoisyMovePicker(&movePicker, thread, ttMove, rBeta - eval);
-        while ((move = selectNextMove(&movePicker, board, 1)) != NONE_MOVE) {
+        init_noisy_picker(&ns->mp, thread, ttMove, rBeta - eval);
+        while ((move = select_next(&ns->mp, thread, 1)) != NONE_MOVE) {
 
             // Apply move, skip if move is illegal
             if (apply(thread, board, move)) {
@@ -503,8 +504,8 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
 
     // Step 11. Initialize the Move Picker and being searching through each
     // move one at a time, until we run out or a move generates a cutoff
-    initMovePicker(&movePicker, thread, ttMove);
-    while ((move = selectNextMove(&movePicker, board, skipQuiets)) != NONE_MOVE) {
+    init_picker(&ns->mp, thread, ttMove);
+    while ((move = select_next(&ns->mp, thread, skipQuiets)) != NONE_MOVE) {
 
         // MultiPV and searchmoves may limit our search options
         if (RootNode && moveExaminedByMultiPV(thread, move)) continue;
@@ -552,25 +553,25 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
 
             // Step 13C (~8 elo). Counter Move Pruning. Moves with poor counter
             // move history are pruned at near leaf nodes of the search.
-            if (   movePicker.stage > STAGE_COUNTER_MOVE
+            if (   ns->mp.stage > STAGE_COUNTER_MOVE
                 && cmhist < CounterMoveHistoryLimit[improving]
                 && lmrDepth <= CounterMovePruningDepth[improving])
                 continue;
 
             // Step 13D (~1.5 elo). Follow Up Move Pruning. Moves with poor
             // follow up move history are pruned at near leaf nodes of the search.
-            if (   movePicker.stage > STAGE_COUNTER_MOVE
+            if (   ns->mp.stage > STAGE_COUNTER_MOVE
                 && fmhist < FollowUpMoveHistoryLimit[improving]
                 && lmrDepth <= FollowUpMovePruningDepth[improving])
                 continue;
         }
 
         // Step 14 (~42 elo). Static Exchange Evaluation Pruning. Prune moves which fail
-        // to beat a depth dependent SEE threshold. The use of movePicker.stage
+        // to beat a depth dependent SEE threshold. The use of the Move Picker's stage
         // is a speedup, which assumes that good noisy moves have a positive SEE
         if (    best > -TBWIN_IN_MAX
             &&  depth <= SEEPruningDepth
-            &&  movePicker.stage > STAGE_GOOD_NOISY
+            &&  ns->mp.stage > STAGE_GOOD_NOISY
             && !staticExchangeEvaluation(board, move, seeMargin[isQuiet]))
             continue;
 
@@ -599,14 +600,14 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         // Transposition Table and appears to beat all other moves by a fair margin. Otherwise,
         // extend for any position where our King is checked.
 
-        extension = singular ? singularity(thread, &movePicker, ttValue, depth, beta) : inCheck;
+        extension = singular ? singularity(thread, ttMove, ttValue, depth, beta) : inCheck;
         newDepth = depth + (extension && !RootNode);
 
         // Step 16. MultiCut. Sometimes candidate Singular moves are shown to be non-Singular.
         // If this happens, and the rBeta used is greater than beta, then we have multiple moves
         // which appear to beat beta at a reduced depth. singularity() sets the stage to STAGE_DONE
 
-        if (movePicker.stage == STAGE_DONE)
+        if (ns->mp.stage == STAGE_DONE)
             return MAX(ttValue - depth, -MATE);
 
         // Step 17A (~249 elo). Quiet Late Move Reductions. Reduce the search depth
@@ -624,7 +625,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
             R += inCheck && pieceType(board->squares[MoveTo(move)]) == KING;
 
             // Reduce for Killers and Counters
-            R -= movePicker.stage < STAGE_QUIET;
+            R -= ns->mp.stage < STAGE_QUIET;
 
             // Adjust based on history scores
             R -= MAX(-2, MIN(2, hist / 5000));
@@ -723,12 +724,12 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
 
 int qsearch(Thread *thread, PVariation *pv, int alpha, int beta) {
 
-    Board *const board = &thread->board;
+    Board *const board  = &thread->board;
+    NodeState *const ns = &thread->states[thread->height];
 
     int eval, value, best, oldAlpha = alpha;
     int ttHit, ttValue = 0, ttEval = VALUE_NONE, ttDepth = 0, ttBound = 0;
     uint16_t move, ttMove = NONE_MOVE, bestMove = NONE_MOVE;
-    MovePicker movePicker;
     PVariation lpv;
 
     // Prefetch TT as early as reasonable
@@ -767,8 +768,8 @@ int qsearch(Thread *thread, PVariation *pv, int alpha, int beta) {
     }
 
     // Save a history of the static evaluations
-    eval = thread->states[thread->height].eval
-         = ttEval != VALUE_NONE ? ttEval : evaluateBoard(thread, board);
+    eval = ns->eval = ttEval != VALUE_NONE
+                    ? ttEval : evaluateBoard(thread, board);
 
     // Step 5. Eval Pruning. If a static evaluation of the board will
     // exceed beta, then we can stop the search here. Also, if the static
@@ -786,8 +787,8 @@ int qsearch(Thread *thread, PVariation *pv, int alpha, int beta) {
     // Step 7. Move Generation and Looping. Generate all tactical moves
     // and return those which are winning via SEE, and also strong enough
     // to beat the margin computed in the Delta Pruning step found above
-    initNoisyMovePicker(&movePicker, thread, NONE_MOVE, MAX(1, alpha - eval - QSSeeMargin));
-    while ((move = selectNextMove(&movePicker, board, 1)) != NONE_MOVE) {
+    init_noisy_picker(&ns->mp, thread, NONE_MOVE, MAX(1, alpha - eval - QSSeeMargin));
+    while ((move = select_next(&ns->mp, thread, 1)) != NONE_MOVE) {
 
         // Worst case which assumes we lose our piece immediately
         int pessimism = moveEstimatedValue(board, move)
@@ -856,8 +857,7 @@ int staticExchangeEvaluation(Board *board, uint16_t move, int threshold) {
     // call takes care for Enpass, Promotion and Castling moves.
     balance = moveEstimatedValue(board, move) - threshold;
 
-    // If the move doesn't gain enough to beat the threshold, don't look any
-    // further. This is only relevant for movepicker SEE calls.
+    // Best case still fails to beat the threshold
     if (balance < 0) return 0;
 
     // Worst case is losing the moved piece
@@ -931,29 +931,30 @@ int staticExchangeEvaluation(Board *board, uint16_t move, int threshold) {
     return board->turn != colour;
 }
 
-int singularity(Thread *thread, MovePicker *mp, int ttValue, int depth, int beta) {
+int singularity(Thread *thread, uint16_t ttMove, int ttValue, int depth, int beta) {
+
+    Board *const board  = &thread->board;
+    NodeState *const ns = &thread->states[thread->height-1];
 
     uint16_t move;
     int skipQuiets = 0, quiets = 0, tacticals = 0;
     int value = -MATE, rBeta = MAX(ttValue - depth, -MATE);
-
     PVariation lpv; lpv.length = 0;
-    Board *const board = &thread->board;
 
     // Table move was already applied
-    revert(thread, board, mp->tableMove);
+    revert(thread, board, ttMove);
 
     // Iterate over the remaining moves in the Move Picker
-    while ((move = selectNextMove(mp, board, skipQuiets)) != NONE_MOVE) {
+    while ((move = select_next(&ns->mp, thread, skipQuiets)) != NONE_MOVE) {
 
-        assert(move != mp->tableMove); // Skip the table move
+        assert(move != ttMove); // Skip the table move
 
         // Perform a reduced depth search on a null rbeta window
         if (!apply(thread, board, move)) continue;
         value = -search(thread, &lpv, -rBeta-1, -rBeta, depth / 2 - 1);
         revert(thread, board, move);
 
-        // Move failed high, thus mp->tableMove is not singular
+        // Move failed high, thus ttMove is not singular
         if (value > rBeta) break;
 
         // Start skipping quiets after a few have been tried
@@ -965,18 +966,18 @@ int singularity(Thread *thread, MovePicker *mp, int ttValue, int depth, int beta
     }
 
     // We reused the Move Picker, so make sure we cleanup
-    mp->stage = STAGE_TABLE + 1;
+    ns->mp.stage = STAGE_TABLE + 1;
 
     // MultiCut. We signal the Move Picker to terminate the search
     if (value > rBeta && rBeta >= beta) {
         if (!moveIsTactical(board, move))
             updateKillerMoves(thread, move);
-        mp->stage = STAGE_DONE;
+        ns->mp.stage = STAGE_DONE;
     }
 
     // Reapply the table move we took off
     else
-        applyLegal(thread, board, mp->tableMove);
+        applyLegal(thread, board, ttMove);
 
     // Move is singular if all other moves failed low
     return value <= rBeta;

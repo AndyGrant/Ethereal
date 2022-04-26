@@ -24,6 +24,7 @@
 
 #include "board.h"
 #include "evalcache.h"
+#include "movepicker.h"
 #include "network.h"
 #include "search.h"
 #include "transposition.h"
@@ -42,6 +43,7 @@ struct NodeState {
     int movedPiece; // Moving piece, otherwise UB
     bool tactical;  // Cached moveIsTactical()
     uint16_t move;  // Move applied at the Node
+    MovePicker mp;  // Move Picker at each ply
 
     // Fast reference for future use for History lookups
     int16_t (*continuations)[CONT_NB][PIECE_NB][SQUARE_NB];
