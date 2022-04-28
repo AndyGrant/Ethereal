@@ -601,7 +601,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         // extend for any position where our King is checked.
 
         extension = singular ? singularity(thread, ttMove, ttValue, depth, beta) : inCheck;
-        newDepth = depth + (extension && !RootNode);
+        newDepth = depth + (!RootNode ? extension : 0);
 
         // Step 16. MultiCut. Sometimes candidate Singular moves are shown to be non-Singular.
         // If this happens, and the rBeta used is greater than beta, then we have multiple moves
@@ -976,9 +976,9 @@ int singularity(Thread *thread, uint16_t ttMove, int ttValue, int depth, int bet
     }
 
     // Reapply the table move we took off
-    else
-        applyLegal(thread, board, ttMove);
+    else applyLegal(thread, board, ttMove);
 
-    // Move is singular if all other moves failed low
-    return value <= rBeta;
+    return value <= rBeta   ?  1 // Singular due to no cutoffs produced
+         : ttValue >=  beta ? -1 // Potential multi-cut even at current depth
+         : 0;                    // Not singular, and unlikely to produce a cutoff
 }
