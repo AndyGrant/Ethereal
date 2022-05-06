@@ -22,17 +22,16 @@
 
 #include "types.h"
 
-static const int HistoryMax = 400;
-static const int HistoryMultiplier = 32;
-static const int HistoryDivisor = 512;
+static const int HistoryDivisor = 16384;
 
-void updateHistoryHeuristics(Thread *thread, uint16_t *moves, int length, int depth);
-void updateKillerMoves(Thread *thread, uint16_t move);
+void update_history_heuristics(Thread *thread, uint16_t *moves, int length, int depth);
+void update_killer_moves(Thread *thread, uint16_t move);
+void get_refutation_moves(Thread *thread, uint16_t *killer1, uint16_t *killer2, uint16_t *counter);
 
-void updateCaptureHistories(Thread *thread, uint16_t best, uint16_t *moves, int length, int depth);
-void getCaptureHistories(Thread *thread, uint16_t *moves, int *scores, int start, int length);
-int getCaptureHistory(Thread *thread, uint16_t move);
+int  get_capture_history(Thread *thread, uint16_t move);
+void get_capture_histories(Thread *thread, uint16_t *moves, int *scores, int start, int length);
+void update_capture_histories(Thread *thread, uint16_t best, uint16_t *moves, int length, int depth);
 
-int getHistory(Thread *thread, uint16_t move, int *cmhist, int *fmhist);
-void getHistoryScores(Thread *thread, uint16_t *moves, int *scores, int start, int length);
-void getRefutationMoves(Thread *thread, uint16_t *killer1, uint16_t *killer2, uint16_t *counter);
+int  get_quiet_history(Thread *thread, uint16_t move, int *cmhist, int *fmhist);
+void get_quiet_histories(Thread *thread, uint16_t *moves, int *scores, int start, int length);
+void update_quiet_histories(Thread *thread, uint16_t *moves, int length, int depth);

@@ -516,8 +516,8 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         isQuiet = !moveIsTactical(board, move);
 
         // All moves have one or more History scores
-        hist = !isQuiet ? getCaptureHistory(thread, move)
-             : getHistory(thread, move, &cmhist, &fmhist);
+        hist = !isQuiet ? get_capture_history(thread, move)
+             : get_quiet_history(thread, move, &cmhist, &fmhist);
 
         // Step 12 (~80 elo). Late Move Pruning / Move Count Pruning. If we
         // have seen many moves in this position already, and we don't expect
@@ -701,10 +701,10 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     // We also update Capture History Heuristics, which augment or replace MVV-LVA.
 
     if (best >= beta && !moveIsTactical(board, bestMove))
-        updateHistoryHeuristics(thread, quietsTried, quietsPlayed, depth);
+        update_history_heuristics(thread, quietsTried, quietsPlayed, depth);
 
     if (best >= beta)
-        updateCaptureHistories(thread, bestMove, capturesTried, capturesPlayed, depth);
+        update_capture_histories(thread, bestMove, capturesTried, capturesPlayed, depth);
 
     // Step 21. Stalemate and Checkmate detection. If no moves were found to
     // be legal then we are either mated or stalemated, For mates, return a
@@ -971,7 +971,7 @@ int singularity(Thread *thread, uint16_t ttMove, int ttValue, int depth, int bet
     // MultiCut. We signal the Move Picker to terminate the search
     if (value > rBeta && rBeta >= beta) {
         if (!moveIsTactical(board, move))
-            updateKillerMoves(thread, move);
+            update_killer_moves(thread, move);
         ns->mp.stage = STAGE_DONE;
     }
 

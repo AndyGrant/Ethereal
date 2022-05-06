@@ -50,7 +50,7 @@ void init_picker(MovePicker *mp, Thread *thread, uint16_t tt_move) {
     mp->tt_move = tt_move;
 
     // Lookup our refutations (killers and counter moves)
-    getRefutationMoves(thread, &mp->killer1, &mp->killer2, &mp->counter);
+    get_refutation_moves(thread, &mp->killer1, &mp->killer2, &mp->counter);
 
     // General housekeeping
     mp->threshold = 0;
@@ -99,7 +99,7 @@ uint16_t select_next(MovePicker *mp, Thread *thread, int skip_quiets) {
             // to seperate the noisy from the quiet moves, so that we can skip
             // some of the noisy moves during STAGE_GOOD_NOISY and return later
             mp->noisy_size = mp->split = genAllNoisyMoves(board, mp->moves);
-            getCaptureHistories(thread, mp->moves, mp->values, 0, mp->noisy_size);
+            get_capture_histories(thread, mp->moves, mp->values, 0, mp->noisy_size);
             mp->stage = STAGE_GOOD_NOISY;
 
             /* fallthrough */
@@ -188,7 +188,7 @@ uint16_t select_next(MovePicker *mp, Thread *thread, int skip_quiets) {
             // Generate and evaluate all quiet moves when not skipping them
             if (!skip_quiets) {
                 mp->quiet_size = genAllQuietMoves(board, mp->moves + mp->split);
-                getHistoryScores(thread, mp->moves, mp->values, mp->split, mp->quiet_size);
+                get_quiet_histories(thread, mp->moves, mp->values, mp->split, mp->quiet_size);
             }
 
             mp->stage = STAGE_QUIET;
