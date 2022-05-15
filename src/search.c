@@ -462,7 +462,9 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         value = -search(thread, &lpv, -beta, -beta+1, depth-R);
         revert(thread, board, NULL_MOVE);
 
-        if (value >= beta) return beta;
+        // Don't return unproven TB-Wins or Mates
+        if (value >= beta)
+            return (value > TBWIN_IN_MAX) ? beta : value;
     }
 
     // Step 10 (~9 elo). Probcut Pruning. If we have a good capture that causes a
