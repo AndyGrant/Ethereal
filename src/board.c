@@ -171,6 +171,9 @@ void boardFromFEN(Board *board, const char *fen, int chess960) {
     // Need king attackers for move generation
     board->kingAttackers = attackersToKingSquare(board);
 
+    // Need squares attacked by the opposing player
+    board->threats = allAttackedSquares(board, !board->turn);
+
     // We save the game mode in order to comply with the UCI rules for printing
     // moves. If chess960 is not enabled, but we have detected an unconventional
     // castle setup, then we set chess960 to be true on our own. Currently, this

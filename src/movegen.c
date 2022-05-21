@@ -30,7 +30,7 @@
 typedef uint64_t (*JumperFunc)(int);
 typedef uint64_t (*SliderFunc)(int, uint64_t);
 
-uint16_t * buildEnpassMoves(uint16_t *moves, uint64_t attacks, int epsq) {
+uint16_t* buildEnpassMoves(uint16_t *moves, uint64_t attacks, int epsq) {
 
     while (attacks)
         *(moves++) = MoveMake(poplsb(&attacks), epsq, ENPASS_MOVE);
@@ -38,7 +38,7 @@ uint16_t * buildEnpassMoves(uint16_t *moves, uint64_t attacks, int epsq) {
     return moves;
 }
 
-uint16_t * buildPawnMoves(uint16_t *moves, uint64_t attacks, int delta) {
+uint16_t* buildPawnMoves(uint16_t *moves, uint64_t attacks, int delta) {
 
     while (attacks) {
         int sq = poplsb(&attacks);
@@ -48,7 +48,7 @@ uint16_t * buildPawnMoves(uint16_t *moves, uint64_t attacks, int delta) {
     return moves;
 }
 
-uint16_t * buildPawnPromotions(uint16_t *moves, uint64_t attacks, int delta) {
+uint16_t* buildPawnPromotions(uint16_t *moves, uint64_t attacks, int delta) {
 
     while (attacks) {
         int sq = poplsb(&attacks);
@@ -61,7 +61,7 @@ uint16_t * buildPawnPromotions(uint16_t *moves, uint64_t attacks, int delta) {
     return moves;
 }
 
-uint16_t * buildNormalMoves(uint16_t *moves, uint64_t attacks, int sq) {
+uint16_t* buildNormalMoves(uint16_t *moves, uint64_t attacks, int sq) {
 
     while (attacks)
         *(moves++) = MoveMake(sq, poplsb(&attacks), NORMAL_MOVE);
@@ -69,7 +69,7 @@ uint16_t * buildNormalMoves(uint16_t *moves, uint64_t attacks, int sq) {
     return moves;
 }
 
-uint16_t * buildJumperMoves(JumperFunc F, uint16_t *moves, uint64_t pieces, uint64_t targets) {
+uint16_t* buildJumperMoves(JumperFunc F, uint16_t *moves, uint64_t pieces, uint64_t targets) {
 
     while (pieces) {
         int sq = poplsb(&pieces);
@@ -79,7 +79,7 @@ uint16_t * buildJumperMoves(JumperFunc F, uint16_t *moves, uint64_t pieces, uint
     return moves;
 }
 
-uint16_t * buildSliderMoves(SliderFunc F, uint16_t *moves, uint64_t pieces, uint64_t targets, uint64_t occupied) {
+uint16_t* buildSliderMoves(SliderFunc F, uint16_t *moves, uint64_t pieces, uint64_t targets, uint64_t occupied) {
 
     while (pieces) {
         int sq = poplsb(&pieces);

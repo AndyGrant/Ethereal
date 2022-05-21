@@ -114,6 +114,7 @@ void applyMove(Board *board, uint16_t move, Undo *undo) {
     undo->hash            = board->hash;
     undo->pkhash          = board->pkhash;
     undo->kingAttackers   = board->kingAttackers;
+    undo->threats         = board->threats;
     undo->castleRooks     = board->castleRooks;
     undo->epSquare        = board->epSquare;
     undo->halfMoveCounter = board->halfMoveCounter;
@@ -137,8 +138,11 @@ void applyMove(Board *board, uint16_t move, Undo *undo) {
     // No function updates this so we do it here
     board->turn = !board->turn;
 
-    // Need king attackers to verify move legality
+    // Need king attackers for move generation
     board->kingAttackers = attackersToKingSquare(board);
+
+    // Need squares attacked by the opposing player
+    board->threats = allAttackedSquares(board, !board->turn);
 }
 
 void applyNormalMove(Board *board, uint16_t move, Undo *undo) {
@@ -352,8 +356,8 @@ void applyPromotionMove(Board *board, uint16_t move, Undo *undo) {
 void applyNullMove(Board *board, Undo *undo) {
 
     // Save information which is hard to recompute
-    // Some information is certain to stay the same
     undo->hash            = board->hash;
+    undo->threats         = board->threats;
     undo->epSquare        = board->epSquare;
     undo->halfMoveCounter = board->halfMoveCounter++;
 
@@ -368,6 +372,8 @@ void applyNullMove(Board *board, Undo *undo) {
         board->hash ^= ZobristEnpassKeys[fileOf(board->epSquare)];
         board->epSquare = -1;
     }
+
+    board->threats = allAttackedSquares(board, !board->turn);
 
     nnue_push(board);
 }
@@ -390,6 +396,7 @@ void revertMove(Board *board, uint16_t move, Undo *undo) {
     board->hash            = undo->hash;
     board->pkhash          = undo->pkhash;
     board->kingAttackers   = undo->kingAttackers;
+    board->threats         = undo->threats;
     board->castleRooks     = undo->castleRooks;
     board->epSquare        = undo->epSquare;
     board->halfMoveCounter = undo->halfMoveCounter;
@@ -474,6 +481,7 @@ void revertNullMove(Board *board, Undo *undo) {
 
     // Revert information which is hard to recompute
     board->hash            = undo->hash;
+    board->threats         = undo->threats;
     board->epSquare        = undo->epSquare;
     board->halfMoveCounter = undo->halfMoveCounter;
 

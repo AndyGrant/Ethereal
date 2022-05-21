@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "bitboards.h"
 #include "board.h"
 #include "history.h"
 #include "move.h"
@@ -62,12 +63,17 @@ static void underlying_quiet_history(Thread *thread, uint16_t move, int16_t *his
 
     static int16_t NULL_HISTORY; // Always zero to handle missing CM/FM history
 
-    NodeState *const ns = &thread->states[thread->height];
+    NodeState *const ns    = &thread->states[thread->height];
+    const uint64_t threats = thread->board.threats;
 
     // Extract information from this move
     const int to    = MoveTo(move);
     const int from  = MoveFrom(move);
     const int piece = pieceType(thread->board.squares[from]);
+
+    // Determine if piece evades and/or enters a threat
+    const bool threat_from = testBit(threats, from);
+    const bool threat_to   = testBit(threats, to);
 
     // Set Counter Move History if it exists
     histories[0] = (ns-1)->continuations == NULL
@@ -78,7 +84,7 @@ static void underlying_quiet_history(Thread *thread, uint16_t move, int16_t *his
                  ? &NULL_HISTORY : &(*(ns-2)->continuations)[1][piece][to];
 
     // Set Butterfly History, which will always exist
-    histories[2] = &thread->history[thread->board.turn][from][to];
+    histories[2] = &thread->history[thread->board.turn][threat_from][threat_to][from][to];
 }
 
 

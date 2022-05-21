@@ -232,6 +232,26 @@ uint64_t allAttackersToSquare(Board *board, uint64_t occupied, int sq) {
          | (kingAttacks(sq) & board->pieces[KING]);
 }
 
+uint64_t allAttackedSquares(Board *board, int colour) {
+
+    uint64_t friendly = board->colours[ colour];
+    uint64_t occupied = board->colours[!colour] | friendly;
+
+    uint64_t pawns   = friendly &  board->pieces[PAWN  ];
+    uint64_t knights = friendly &  board->pieces[KNIGHT];
+    uint64_t bishops = friendly & (board->pieces[BISHOP] | board->pieces[QUEEN]);
+    uint64_t rooks   = friendly & (board->pieces[ROOK  ] | board->pieces[QUEEN]);
+    uint64_t kings   = friendly &  board->pieces[KING  ];
+
+    uint64_t threats         = pawnAttackSpan(pawns, ~0ULL, colour);
+    while (knights) threats |= knightAttacks(poplsb(&knights));
+    while (bishops) threats |= bishopAttacks(poplsb(&bishops), occupied);
+    while (rooks)   threats |= rookAttacks(poplsb(&rooks), occupied);
+    while (kings)   threats |= kingAttacks(poplsb(&kings));
+
+    return threats;
+}
+
 uint64_t attackersToKingSquare(Board *board) {
 
     // Wrapper for allAttackersToSquare() for use in check detection
