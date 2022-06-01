@@ -23,7 +23,6 @@
 #include "attacks.h"
 #include "bitboards.h"
 #include "board.h"
-#include "evalcache.h"
 #include "evaluate.h"
 #include "move.h"
 #include "masks.h"
@@ -440,16 +439,11 @@ const int Tempo = 20;
 
 int evaluateBoard(Thread *thread, Board *board) {
 
-    int factor = SCALE_NORMAL;
-    int phase, eval, pkeval, hashed;
+    int phase, eval, pkeval, factor = SCALE_NORMAL;
 
     // We can recognize positions we just evaluated
     if (thread->states[thread->height-1].move == NULL_MOVE)
         return -thread->states[thread->height-1].eval + 2 * Tempo;
-
-    // Check for this evaluation being cached already
-    if (!TRACE && getCachedEvaluation(thread, board, &hashed))
-        return hashed + Tempo;
 
     // Use the NNUE unless we are in an extremely unbalanced position
     if (USE_NNUE && abs(ScoreEG(board->psqtmat)) <= 2000) {
@@ -472,7 +466,7 @@ int evaluateBoard(Thread *thread, Board *board) {
 
         // Store a new Pawn King Entry if we did not have one
         if (!TRACE && ei.pkentry == NULL)
-            storeCachedPawnKingEval(thread, board, ei.passedPawns, pkeval, ei.pksafety[WHITE], ei.pksafety[BLACK]);
+            storeCachedPawnKingEval(thread, board, ei.passedPawns, pkeval, ei.pksafety);
 
         // Scale evaluation based on remaining material
         factor = evaluateScaleFactor(board, eval);
@@ -487,7 +481,6 @@ int evaluateBoard(Thread *thread, Board *board) {
     // Compute and store an interpolated evaluation from white's POV
     eval = (ScoreMG(eval) * phase
          +  ScoreEG(eval) * (24 - phase) * factor / SCALE_NORMAL) / 24;
-    storeCachedEvaluation(thread, board, eval);
 
     // Factor in the Tempo after interpolation and scaling, so that
     // if a null move is made, then we know eval = last_eval + 2 * Tempo

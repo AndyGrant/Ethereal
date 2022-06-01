@@ -170,7 +170,7 @@ void getBestMove(Thread *threads, Board *board, Limits *limits, uint16_t *best, 
             return;
 
     // Minor house keeping for starting a search
-    update_TT(); // Table has an age component
+    tt_update(); // Table has an age component
     ABORT_SIGNAL = 0; // Otherwise Threads will exit
     initTimeManagment(&info, limits);
     newSearchThreadPool(threads, board, limits, &info);
@@ -313,7 +313,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         return qsearch(thread, pv, alpha, beta);
 
     // Prefetch TT as early as reasonable
-    prefetchTTEntry(board->hash);
+    tt_prefetch(board->hash);
 
     // Ensure a fresh PV
     pv->length = 0;
@@ -352,7 +352,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     }
 
     // Step 4. Probe the Transposition Table, adjust the value, and consider cutoffs
-    if ((ttHit = getTTEntry(board->hash, thread->height, &ttMove, &ttValue, &ttEval, &ttDepth, &ttBound))) {
+    if ((ttHit = tt_probe(board->hash, thread->height, &ttMove, &ttValue, &ttEval, &ttDepth, &ttBound))) {
 
         // Only cut with a greater depth search, and do not return
         // when in a PvNode, unless we would otherwise hit a qsearch
@@ -389,7 +389,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
             || (ttBound == BOUND_LOWER && value >= beta)
             || (ttBound == BOUND_UPPER && value <= alpha)) {
 
-            storeTTEntry(board->hash, thread->height, NONE_MOVE, value, VALUE_NONE, depth, ttBound);
+            tt_store(board->hash, thread->height, NONE_MOVE, value, VALUE_NONE, depth, ttBound);
             return value;
         }
     }
@@ -419,7 +419,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
 
     // Toss the static evaluation into the TT if we won't overwrite something
     if (!ttHit && !inCheck)
-        storeTTEntry(board->hash, thread->height, NONE_MOVE, VALUE_NONE, eval, 0, BOUND_NONE);
+        tt_store(board->hash, thread->height, NONE_MOVE, VALUE_NONE, eval, 0, BOUND_NONE);
 
     // ------------------------------------------------------------------------
     // All elo estimates as of Ethereal 11.80, @ 12s+0.12 @ 1.275mnps
@@ -496,7 +496,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
 
                 // Store an entry if we don't have a better one already
                 if (value >= rBeta && (!ttHit || ttDepth < depth - 3))
-                    storeTTEntry(board->hash, thread->height, move, value, eval, depth-3, BOUND_LOWER);
+                    tt_store(board->hash, thread->height, move, value, eval, depth-3, BOUND_LOWER);
 
                 // Probcut failed high verifying the cutoff
                 if (value >= rBeta) return value;
@@ -690,7 +690,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     }
 
     // Prefetch TT for store
-    prefetchTTEntry(board->hash);
+    tt_prefetch(board->hash);
 
     // Step 20 (~760 elo). Update History counters on a fail high for a quiet move.
     // We also update Capture History Heuristics, which augment or replace MVV-LVA.
@@ -711,7 +711,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     if (!RootNode || !thread->multiPV) {
         ttBound = best >= beta    ? BOUND_LOWER
                 : best > oldAlpha ? BOUND_EXACT : BOUND_UPPER;
-        storeTTEntry(board->hash, thread->height, bestMove, best, eval, depth, ttBound);
+        tt_store(board->hash, thread->height, bestMove, best, eval, depth, ttBound);
     }
 
     return best;
@@ -728,7 +728,7 @@ int qsearch(Thread *thread, PVariation *pv, int alpha, int beta) {
     PVariation lpv;
 
     // Prefetch TT as early as reasonable
-    prefetchTTEntry(board->hash);
+    tt_prefetch(board->hash);
 
     // Ensure a fresh PV
     pv->length = 0;
@@ -753,7 +753,7 @@ int qsearch(Thread *thread, PVariation *pv, int alpha, int beta) {
         return evaluateBoard(thread, board);
 
     // Step 4. Probe the Transposition Table, adjust the value, and consider cutoffs
-    if ((ttHit = getTTEntry(board->hash, thread->height, &ttMove, &ttValue, &ttEval, &ttDepth, &ttBound))) {
+    if ((ttHit = tt_probe(board->hash, thread->height, &ttMove, &ttValue, &ttEval, &ttDepth, &ttBound))) {
 
         // Table is exact or produces a cutoff
         if (    ttBound == BOUND_EXACT
@@ -765,6 +765,10 @@ int qsearch(Thread *thread, PVariation *pv, int alpha, int beta) {
     // Save a history of the static evaluations
     eval = ns->eval = ttEval != VALUE_NONE
                     ? ttEval : evaluateBoard(thread, board);
+
+    // Toss the static evaluation into the TT if we won't overwrite something
+    if (!ttHit && !board->kingAttackers)
+        tt_store(board->hash, thread->height, NONE_MOVE, VALUE_NONE, eval, 0, BOUND_NONE);
 
     // Step 5. Eval Pruning. If a static evaluation of the board will
     // exceed beta, then we can stop the search here. Also, if the static
@@ -828,7 +832,7 @@ int qsearch(Thread *thread, PVariation *pv, int alpha, int beta) {
     // Step 8. Store results of search into the Transposition Table.
     ttBound = best >= beta    ? BOUND_LOWER
             : best > oldAlpha ? BOUND_EXACT : BOUND_UPPER;
-    storeTTEntry(board->hash, thread->height, bestMove, best, eval, 0, ttBound);
+    tt_store(board->hash, thread->height, bestMove, best, eval, 0, ttBound);
 
     return best;
 }

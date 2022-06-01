@@ -20,7 +20,6 @@
 
 #include <stdint.h>
 
-#include "evalcache.h"
 #include "types.h"
 
 #ifdef TUNE

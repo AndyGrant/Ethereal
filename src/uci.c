@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
 
     // Initialize core components of Ethereal
     initAttacks(); initMasks(); initEval();
-    initSearch(); initZobrist(); init_TT(16);
+    initSearch(); initZobrist(); tt_init(16);
     initPKNetwork(&PKNN); nnue_incbin_init();
 
     // Create the UCI-board and our threads
@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
             printf("readyok\n"), fflush(stdout);
 
         else if (strEquals(str, "ucinewgame"))
-            resetThreadPool(threads), clear_TT();
+            resetThreadPool(threads), tt_clear();
 
         else if (strStartsWith(str, "setoption"))
             uciSetOption(str, &threads, &multiPV, &chess960);
@@ -267,7 +267,7 @@ void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960) {
 
     if (strStartsWith(str, "setoption name Hash value ")) {
         int megabytes = atoi(str + strlen("setoption name Hash value "));
-        printf("info string set Hash to %dMB\n", init_TT(megabytes));
+        printf("info string set Hash to %dMB\n", tt_init(megabytes));
     }
 
     if (strStartsWith(str, "setoption name Threads value ")) {
@@ -377,7 +377,7 @@ void uciReport(Thread *threads, PVariation *pv, int alpha, int beta) {
     // interested in. Also, bound the value passed by alpha and
     // beta, since Ethereal uses a mix of fail-hard and fail-soft
 
-    int hashfull    = hashfullTT();
+    int hashfull    = tt_hashfull();
     int depth       = threads->depth;
     int seldepth    = threads->seldepth;
     int multiPV     = threads->multiPV + 1;

@@ -22,6 +22,8 @@
 #include <stdint.h>
 #include <stdalign.h>
 
+enum { FALSE, TRUE };
+
 enum { MG, EG };
 
 enum { WHITE, BLACK };

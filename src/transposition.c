@@ -1,51 +1,55 @@
-/*
-  Ethereal is a UCI chess playing engine authored by Andrew Grant.
-  <https://github.com/AndyGrant/Ethereal>     <andrew@grantnet.us>
+/******************************************************************************/
+/*                                                                            */
+/*    Ethereal is a UCI chess playing engine authored by Andrew Grant.        */
+/*    <https://github.com/AndyGrant/Ethereal>     <andrew@grantnet.us>        */
+/*                                                                            */
+/*    Ethereal is free software: you can redistribute it and/or modify        */
+/*    it under the terms of the GNU General Public License as published by    */
+/*    the Free Software Foundation, either version 3 of the License, or       */
+/*    (at your option) any later version.                                     */
+/*                                                                            */
+/*    Ethereal is distributed in the hope that it will be useful,             */
+/*    but WITHOUT ANY WARRANTY; without even the implied warranty of          */
+/*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           */
+/*    GNU General Public License for more details.                            */
+/*                                                                            */
+/*    You should have received a copy of the GNU General Public License       */
+/*    along with this program.  If not, see <http://www.gnu.org/licenses/>    */
+/*                                                                            */
+/******************************************************************************/
 
-  Ethereal is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  Ethereal is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-#include <assert.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-
-#if defined(__linux__)
-    #include <sys/mman.h>
-#endif
-
+#include "board.h"
+#include "evaluate.h"
+#include "thread.h"
 #include "transposition.h"
 #include "types.h"
+#include "zobrist.h"
 
 TTable Table; // Global Transposition Table
 
-static int value_from_TT(int value, int height) {
+/// Mate and Tablebase scores need to be adjusted relative to the Root
+/// when going into the Table and when coming out of the Table. Otherwise,
+/// we will not know when we have a "faster" vs "slower" Mate or TB Win/Loss
 
-    // When storing MATE/TB scores we factor in the search height
+static int tt_value_from(int value, int height) {
     return value >=  TBWIN_IN_MAX ? value - height
          : value <= -TBWIN_IN_MAX ? value + height : value;
 }
 
-static int value_to_TT(int value, int height) {
-
-    // When storing MATE/TB scores we factor in the search height
+static int tt_value_to(int value, int height) {
     return value >=  TBWIN_IN_MAX ? value + height
          : value <= -TBWIN_IN_MAX ? value - height : value;
 }
 
 
-int init_TT(int megabytes) {
+/// Trivial helper functions to Transposition Table handleing
+
+void tt_update() { Table.generation += TT_MASK_BOUND + 1; }
+void tt_clear() { memset(Table.buckets, 0, sizeof(TTBucket) * (Table.hashMask + 1u)); }
+void tt_prefetch(uint64_t hash) { __builtin_prefetch(&Table.buckets[hash & Table.hashMask]); }
+
+
+int tt_init(int megabytes) {
 
     const uint64_t MB = 1ull << 20;
     uint64_t keySize = 16ull;
@@ -74,31 +78,16 @@ int init_TT(int megabytes) {
     // Save the lookup mask
     Table.hashMask = (1ull << keySize) - 1u;
 
-    clear_TT(); // Clear the table and load everything into the cache
+    tt_clear(); // Clear the table and load everything into the cache
 
     // Return the number of MB actually allocated for the TTable
     return ((Table.hashMask + 1) * sizeof(TTBucket)) / MB;
 }
 
-void update_TT() {
+int tt_hashfull() {
 
-    // Age is only stored in the upper 6 MSBs
-    Table.generation += TT_MASK_BOUND + 1;
-}
-
-void clear_TT() {
-
-    // Wipe the Table in preperation for a new game
-    memset(Table.buckets, 0, sizeof(TTBucket) * (Table.hashMask + 1u));
-}
-
-int hashfullTT() {
-
-    // Take a sample of the first thousand buckets in the table
-    // in order to estimate the permill of the table that is in
-    // use for the most recent search. We do this, instead of
-    // tracking this while probing in order to avoid sharing
-    // memory between the search threads.
+    /// Estimate the permill of the table being used, by looking at a thousand
+    /// Buckets and seeing how many Entries contain a recent Transposition.
 
     int used = 0;
 
@@ -110,38 +99,34 @@ int hashfullTT() {
     return used / TT_BUCKET_NB;
 }
 
-void prefetchTTEntry(uint64_t hash) {
+bool tt_probe(uint64_t hash, int height, uint16_t *move, int *value, int *eval, int *depth, int *bound) {
 
-    TTBucket *bucket = &Table.buckets[hash & Table.hashMask];
-    __builtin_prefetch(bucket);
-}
-
-int getTTEntry(uint64_t hash, int height, uint16_t *move, int *value, int *eval, int *depth, int *bound) {
+    /// Search for a Transposition matching the provided Zobrist Hash. If one is found,
+    /// we update its age in order to indicate that it is still relevant, before copying
+    /// over its contents and signaling to the caller that an Entry was found.
 
     const uint16_t hash16 = hash >> 48;
     TTEntry *slots = Table.buckets[hash & Table.hashMask].slots;
 
-    // Search for a matching hash signature
     for (int i = 0; i < TT_BUCKET_NB; i++) {
+
         if (slots[i].hash16 == hash16) {
 
-            // Update age but retain bound type
             slots[i].generation = Table.generation | (slots[i].generation & TT_MASK_BOUND);
 
-            // Copy over the TTEntry and signal success
             *move  = slots[i].move;
-            *value = value_from_TT(slots[i].value, height);
+            *value = tt_value_from(slots[i].value, height);
             *eval  = slots[i].eval;
             *depth = slots[i].depth;
             *bound = slots[i].generation & TT_MASK_BOUND;
-            return 1;
+            return TRUE;
         }
     }
 
-    return 0;
+    return FALSE;
 }
 
-void storeTTEntry(uint64_t hash, int height, uint16_t move, int value, int eval, int depth, int bound) {
+void tt_store(uint64_t hash, int height, uint16_t move, int value, int eval, int depth, int bound) {
 
     int i;
     const uint16_t hash16 = hash >> 48;
@@ -168,8 +153,22 @@ void storeTTEntry(uint64_t hash, int height, uint16_t move, int value, int eval,
     // Finally, copy the new data into the replaced slot
     replace->depth      = (int8_t  ) depth;
     replace->generation = (uint8_t ) bound | Table.generation;
-    replace->value      = (int16_t ) value_to_TT(value, height);
+    replace->value      = (int16_t ) tt_value_to(value, height);
     replace->eval       = (int16_t ) eval;
     replace->move       = (uint16_t) move;
     replace->hash16     = (uint16_t) hash16;
+}
+
+
+/// Simple Pawn+King Evaluation Hash Table, which also stores some additional
+/// safety information for use in King Safety, when not using NNUE evaluations
+
+PKEntry* getCachedPawnKingEval(Thread *thread, const Board *board) {
+    PKEntry *pke = &thread->pktable[board->pkhash & PK_CACHE_MASK];
+    return pke->pkhash == board->pkhash ? pke : NULL;
+}
+
+void storeCachedPawnKingEval(Thread *thread, const Board *board, uint64_t passed, int eval, int safety[2]) {
+    PKEntry *pke = &thread->pktable[board->pkhash & PK_CACHE_MASK];
+    *pke = (PKEntry) { board->pkhash, passed, eval, safety[WHITE], safety[BLACK] };
 }

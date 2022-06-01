@@ -23,7 +23,6 @@
 #include <stdint.h>
 
 #include "board.h"
-#include "evalcache.h"
 #include "movepicker.h"
 #include "network.h"
 #include "search.h"
@@ -67,7 +66,6 @@ struct Thread {
     NNUEAccumulator *nnueStack;
     Undo undoStack[STACK_SIZE];
 
-    ALIGN64 EvalTable evtable;
     ALIGN64 PKTable pktable;
     ALIGN64 KillerTable killers;
     ALIGN64 CounterMoveTable cmtable;
