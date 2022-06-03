@@ -52,7 +52,7 @@ struct Thread {
 
     Board board;
     Limits *limits;
-    SearchInfo *info;
+    TimeManager *tm;
     PVariation pvs[MAX_PLY];
     PVariation mpvs[MAX_MOVES];
 
@@ -83,7 +83,7 @@ Thread* createThreadPool(int nthreads);
 void deleteThreadPool(Thread *threads);
 
 void resetThreadPool(Thread *threads);
-void newSearchThreadPool(Thread *threads, Board *board, Limits *limits, SearchInfo *info);
+void newSearchThreadPool(Thread *threads, Board *board, Limits *limits, TimeManager *tm);
 
 uint64_t nodesSearchedThreadPool(Thread *threads);
 uint64_t tbhitsThreadPool(Thread *threads);

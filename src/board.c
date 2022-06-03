@@ -32,7 +32,7 @@
 #include "movegen.h"
 #include "search.h"
 #include "thread.h"
-#include "time.h"
+#include "timeman.h"
 #include "transposition.h"
 #include "types.h"
 #include "uci.h"

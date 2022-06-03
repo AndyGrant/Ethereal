@@ -28,7 +28,7 @@
 #include "pgn.h"
 #include "search.h"
 #include "thread.h"
-#include "time.h"
+#include "timeman.h"
 #include "transposition.h"
 #include "tuner.h"
 #include "uci.h"
@@ -110,7 +110,7 @@ static void runBenchmark(int argc, char **argv) {
     }
 
     tt_init(megabytes);
-    time = getRealTime();
+    time = get_real_time();
     threads = createThreadPool(nthreads);
 
     // Initialize a "go depth <x>" search
@@ -121,12 +121,12 @@ static void runBenchmark(int argc, char **argv) {
     for (int i = 0; strcmp(Benchmarks[i], ""); i++) {
 
         // Perform the search on the position
-        limits.start = getRealTime();
+        limits.start = get_real_time();
         boardFromFEN(&board, Benchmarks[i], 0);
         getBestMove(threads, &board, &limits, &bestMoves[i], &ponderMoves[i], &scores[i]);
 
         // Stat collection for later printing
-        times[i] = getRealTime() - limits.start;
+        times[i] = get_real_time() - limits.start;
         nodes[i] = nodesSearchedThreadPool(threads);
 
         tt_clear(); // Reset TT between searches
@@ -149,7 +149,7 @@ static void runBenchmark(int argc, char **argv) {
     printf("===============================================================================\n");
 
     // Report the overall statistics
-    time = getRealTime() - time;
+    time = get_real_time() - time;
     for (int i = 0; strcmp(Benchmarks[i], ""); i++) totalNodes += nodes[i];
     printf("OVERALL: %47d nodes %12d nps\n", (int)totalNodes, (int)(1000.0f * totalNodes / (time + 1)));
 
@@ -163,7 +163,7 @@ static void runEvalBook(int argc, char **argv) {
     char line[256];
     Limits limits = {0};
     uint16_t best, ponder;
-    double start = getRealTime();
+    double start = get_real_time();
 
     FILE *book    = fopen(argv[2], "r");
     int depth     = argc > 3 ? atoi(argv[3]) : 12;
@@ -178,14 +178,14 @@ static void runEvalBook(int argc, char **argv) {
     tt_init(megabytes);
 
     while ((fgets(line, 256, book)) != NULL) {
-        limits.start = getRealTime();
+        limits.start = get_real_time();
         boardFromFEN(&board, line, 0);
         getBestMove(threads, &board, &limits, &best, &ponder, &score);
         resetThreadPool(threads); tt_clear();
         printf("FEN: %s", line);
     }
 
-    printf("Time %dms\n", (int)(getRealTime() - start));
+    printf("Time %dms\n", (int)(get_real_time() - start));
 }
 
 static void buildPSQBBBook(int argc, char **argv) {
@@ -194,7 +194,7 @@ static void buildPSQBBBook(int argc, char **argv) {
 
     char line[256];
     uint64_t positions = 0;
-    double start = getRealTime(), elapsed;
+    double start = get_real_time(), elapsed;
     FILE *fin = fopen(argv[2], "r");
     FILE *fout = fopen(argv[3], "wb");
 
@@ -212,13 +212,13 @@ static void buildPSQBBBook(int argc, char **argv) {
         fwrite(&sample, sizeof(PSQBBSample), 1, fout);
 
         if (positions++ % (1024 * 1024) == 0) {
-            elapsed = (getRealTime() - start) / 1000.0;
+            elapsed = (get_real_time() - start) / 1000.0;
             printf("\r[%.3fs] %" PRIu64 " Positions", elapsed, positions);
             fflush(stdout);
         }
     }
 
-    elapsed = (getRealTime() - start) / 1000.0;
+    elapsed = (get_real_time() - start) / 1000.0;
     printf("\r[%.3fs] %" PRIu64 " Positions\n", elapsed, positions);
 
     fclose(fin);
@@ -231,7 +231,7 @@ static void buildHalfKPBook(int argc, char **argv) {
 
     char line[256], *token, sep[] = " ";
     uint64_t positions = 0;
-    double start = getRealTime(), elapsed;
+    double start = get_real_time(), elapsed;
 
     FILE *fin  = fopen(argv[2], "r");
     FILE *fout = fopen(argv[3], "wb");
@@ -273,13 +273,13 @@ static void buildHalfKPBook(int argc, char **argv) {
         fwrite(&sample, sizeof(HalfKPSample), 1, fout);
 
         if (positions++ % (1024 * 1024) == 0) {
-            elapsed = (getRealTime() - start) / 1000.0;
+            elapsed = (get_real_time() - start) / 1000.0;
             printf("\r[%.3fs] %" PRIu64 " Positions", elapsed, positions);
             fflush(stdout);
         }
     }
 
-    elapsed = (getRealTime() - start) / 1000.0;
+    elapsed = (get_real_time() - start) / 1000.0;
     printf("\r[%.3fs] %" PRIu64 " Positions\n", elapsed, positions);
 
     fclose(fin);

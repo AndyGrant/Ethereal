@@ -22,11 +22,6 @@
 
 #include "types.h"
 
-struct SearchInfo {
-    double startTime, idealUsage, maxAlloc, maxUsage;
-    int pvFactor;
-};
-
 struct PVariation {
     int length, score;
     uint16_t line[MAX_PLY];

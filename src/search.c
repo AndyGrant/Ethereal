@@ -38,7 +38,7 @@
 #include "search.h"
 #include "syzygy.h"
 #include "thread.h"
-#include "time.h"
+#include "timeman.h"
 #include "transposition.h"
 #include "types.h"
 #include "uci.h"
@@ -161,8 +161,8 @@ void initSearch() {
 
 void getBestMove(Thread *threads, Board *board, Limits *limits, uint16_t *best, uint16_t *ponder, int *score) {
 
-    SearchInfo info = {0};
     pthread_t pthreads[threads->nthreads];
+    TimeManager tm = {0}; tm_init(limits, &tm);
 
     // Allow Syzygy to refine the move list for optimal results
     if (!limits->limitedByMoves && limits->multiPV == 1)
@@ -172,8 +172,7 @@ void getBestMove(Thread *threads, Board *board, Limits *limits, uint16_t *best, 
     // Minor house keeping for starting a search
     tt_update(); // Table has an age component
     ABORT_SIGNAL = 0; // Otherwise Threads will exit
-    initTimeManagment(&info, limits);
-    newSearchThreadPool(threads, board, limits, &info);
+    newSearchThreadPool(threads, board, limits, &tm);
 
     // Create a new thread for each of the helpers and reuse the current
     // thread for the main thread, which avoids some overhead and saves
@@ -194,10 +193,10 @@ void getBestMove(Thread *threads, Board *board, Limits *limits, uint16_t *best, 
 
 void* iterativeDeepening(void *vthread) {
 
-    Thread *const thread   = (Thread*) vthread;
-    SearchInfo *const info = thread->info;
-    Limits *const limits   = thread->limits;
-    const int mainThread   = thread->index == 0;
+    Thread *const thread  = (Thread*) vthread;
+    TimeManager *const tm = thread->tm;
+    Limits *const limits  = thread->limits;
+    const int mainThread  = thread->index == 0;
 
     // Bind when we expect to deal with NUMA
     if (thread->nthreads > 8)
@@ -224,16 +223,15 @@ void* iterativeDeepening(void *vthread) {
         if (limits->multiPV > 1) report_multipv_lines(thread);
 
         // Update clock based on score and pv changes
-        update_time_manager(thread, info, limits);
+        tm_update(thread, limits, tm);
 
         // Don't want to exit while pondering
         if (IS_PONDERING) continue;
 
         // Check for termination by any of the possible limits
-        if (   (limits->limitedBySelf  && terminateTimeManagment(info))
-            || (limits->limitedBySelf  && elapsedTime(info) > info->maxUsage)
-            || (limits->limitedByTime  && elapsedTime(info) > limits->timeLimit)
-            || (limits->limitedByDepth && thread->depth >= limits->depthLimit))
+        if (   (limits->limitedBySelf  && tm_finished(thread, tm))
+            || (limits->limitedByDepth && thread->depth >= limits->depthLimit)
+            || (limits->limitedByTime  && elapsed_time(tm) >= limits->timeLimit))
             break;
     }
 
@@ -258,7 +256,7 @@ void aspirationWindow(Thread *thread) {
         // Perform a search and consider reporting results
         pv.score = search(thread, &pv, alpha, beta, MAX(1, depth));
         if (   (report && pv.score > alpha && pv.score < beta)
-            || (report && elapsedTime(thread->info) >= WindowTimerMS))
+            || (report && elapsed_time(thread->tm) >= WindowTimerMS))
             uciReport(thread->threads, &pv, alpha, beta);
 
         // Search returned a result within our window
@@ -328,7 +326,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     // Step 2. Abort Check. Exit the search if signaled by main thread or the
     // UCI thread, or if the search time has expired outside pondering mode
     if (   (ABORT_SIGNAL && thread->depth > 1)
-        || (terminateSearchEarly(thread) && !IS_PONDERING))
+        || (tm_stop_early(thread) && !IS_PONDERING))
         longjmp(thread->jbuffer, 1);
 
     // Step 3. Check for early exit conditions. Don't take early exits in
@@ -509,6 +507,8 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     init_picker(&ns->mp, thread, ttMove);
     while ((move = select_next(&ns->mp, thread, skipQuiets)) != NONE_MOVE) {
 
+        const uint64_t starting_nodes = thread->nodes;
+
         // MultiPV and searchmoves may limit our search options
         if (RootNode && moveExaminedByMultiPV(thread, move)) continue;
         if (RootNode &&    !moveIsInRootMoves(thread, move)) continue;
@@ -581,7 +581,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         // The UCI spec allows us to output information about the current move
         // that we are going to search. We only do this from the main thread,
         // and we wait a few seconds in order to avoid floiding the output
-        if (RootNode && !thread->index && elapsedTime(thread->info) > CurrmoveTimerMS)
+        if (RootNode && !thread->index && elapsed_time(thread->tm) > CurrmoveTimerMS)
             uciReportCurrentMove(board, move, played + thread->multiPV, thread->depth);
 
         // Identify moves which are candidate singular moves
@@ -668,6 +668,10 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         // Revert the board state
         revert(thread, board, move);
 
+        // Track where nodes were spent in the Main thread at the Root
+        if (RootNode && !thread->index)
+            thread->tm->nodes[move] += thread->nodes - starting_nodes;
+
         // Step 19. Update search stats for the best move and its value. Update
         // our lower bound (alpha) if exceeded, and also update the PV in that case
         if (value > best) {
@@ -740,7 +744,7 @@ int qsearch(Thread *thread, PVariation *pv, int alpha, int beta) {
     // Step 1. Abort Check. Exit the search if signaled by main thread or the
     // UCI thread, or if the search time has expired outside pondering mode
     if (   (ABORT_SIGNAL && thread->depth > 1)
-        || (terminateSearchEarly(thread) && !IS_PONDERING))
+        || (tm_stop_early(thread) && !IS_PONDERING))
         longjmp(thread->jbuffer, 1);
 
     // Step 2. Draw Detection. Check for the fifty move rule, repetition, or insufficient

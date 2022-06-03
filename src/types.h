@@ -84,7 +84,7 @@ typedef struct Undo Undo;
 typedef struct EvalTrace EvalTrace;
 typedef struct EvalInfo EvalInfo;
 typedef struct MovePicker MovePicker;
-typedef struct SearchInfo SearchInfo;
+typedef struct TimeManager TimeManager;
 typedef struct PVariation PVariation;
 typedef struct NodeState NodeState;
 typedef struct Thread Thread;
