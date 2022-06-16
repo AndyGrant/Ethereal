@@ -412,6 +412,9 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     thread->killers[thread->height+1][0] = NONE_MOVE;
     thread->killers[thread->height+1][1] = NONE_MOVE;
 
+    // Track the # of double extensions in this line
+    ns->dextensions = RootNode ? 0 : (ns-1)->dextensions;
+
     // Beta value for ProbCut Pruning
     rBeta = MIN(beta + ProbCutMargin, MATE - MAX_PLY - 1);
 
@@ -595,8 +598,9 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         // Transposition Table and appears to beat all other moves by a fair margin. Otherwise,
         // extend for any position where our King is checked.
 
-        extension = singular ? singularity(thread, ttMove, ttValue, depth, beta) : inCheck;
+        extension = singular ? singularity(thread, ttMove, ttValue, depth, PvNode, beta) : inCheck;
         newDepth = depth + (!RootNode ? extension : 0);
+        if (extension > 1) ns->dextensions++;
 
         // Step 16. MultiCut. Sometimes candidate Singular moves are shown to be non-Singular.
         // If this happens, and the rBeta used is greater than beta, then we have multiple moves
@@ -667,6 +671,9 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
 
         // Revert the board state
         revert(thread, board, move);
+
+        // Reset the extension tracker
+        if (extension > 1) ns->dextensions--;
 
         // Track where nodes were spent in the Main thread at the Root
         if (RootNode && !thread->index)
@@ -934,7 +941,7 @@ int staticExchangeEvaluation(Board *board, uint16_t move, int threshold) {
     return board->turn != colour;
 }
 
-int singularity(Thread *thread, uint16_t ttMove, int ttValue, int depth, int beta) {
+int singularity(Thread *thread, uint16_t ttMove, int ttValue, int depth, int PvNode, int beta) {
 
     Board *const board  = &thread->board;
     NodeState *const ns = &thread->states[thread->height-1];
@@ -981,7 +988,12 @@ int singularity(Thread *thread, uint16_t ttMove, int ttValue, int depth, int bet
     // Reapply the table move we took off
     else applyLegal(thread, board, ttMove);
 
-    return value <= rBeta   ?  1 // Singular due to no cutoffs produced
-         : ttValue >=  beta ? -1 // Potential multi-cut even at current depth
-         : 0;                    // Not singular, and unlikely to produce a cutoff
+    bool double_extend = !PvNode
+                      &&  value <= rBeta - 35
+                      && (ns-1)->dextensions <= 6;
+
+    return double_extend   ?  2 // Double extension in some non-pv nodes
+         : value <= rBeta  ?  1 // Singular due to no cutoffs produced
+         : ttValue >= beta ? -1 // Potential multi-cut even at current depth
+         : 0;                   // Not singular, and unlikely to produce a cutoff
 }
