@@ -1,16 +1,22 @@
 # Ethereal
 
-Ethereal is a UCI-compliant chess engine which uses the alpha-beta framework. Ethereal is inspired by a number of open source projects and aims to serve as both a high-end engine and reference for other authors. The project strives to keep the source and its ideas, however complex, clean and digestible. To read more about some of the techniques used in Ethereal, see [Ethereal's Chess Programming Wiki Page](https://www.chessprogramming.org/Ethereal)
+Ethereal is a UCI-compliant chess engine operating under the alpha-beta framework, paired with a Neural Network for positional evaluations. Ethereal is inspired by a number of open source projects and aims to serve as both a high-end engine and reference for other authors. The project strives to keep the source and its ideas, however complex, clean and digestible. To read more about some of the techniques used in Ethereal, see [Ethereal's Chess Programming Wiki Page](https://www.chessprogramming.org/Ethereal)
 
 # Development
 
-The primary testing platform for Ethereal is [OpenBench](https://github.com/AndyGrant/OpenBench) which is a Fishtest inspired framework which has been simplified and generalized so that other engines may make use of the framework with limited effort. [The primary instance of OpenBench can be found here.](http://chess.grantnet.us/)
+The primary testing platform for Ethereal is [OpenBench](https://github.com/AndyGrant/OpenBench), a Fishtest inspired framework. OpenBench is a simplified and generalized framework, allowing many other engines to share the same framework for testing. [The primary instance of OpenBench can be found here.](http://chess.grantnet.us/) This instance houses development for a dozen or more engines, while private instances of OpenBench exist for many other engines in the open source community.
 
 All versions of Ethereal in this repository are considered official releases, and are given a unique version number which can be found in ``uci.c``, or by using the ``uci`` command inside the engine.
 
-[Elo Progression on CCRL over time 40/4](http://www.computerchess.org.uk/ccrl/404/cgi/compare_engines.cgi?family=Ethereal&print=Rating+list&print=Results+table&print=LOS+table&print=Ponder+hit+table&print=Eval+difference+table&print=Comopp+gamenum+table&print=Overlap+table&print=Score+with+common+opponents)
+The strength of Ethereal can be tracked by following various rating lists, including [CCRL's Blitz List](https://ccrl.chessdom.com/ccrl/404/), [CCRL's 40/15 List](https://ccrl.chessdom.com/ccrl/4040/), [CCRL's FRC List](https://ccrl.chessdom.com/ccrl/404FRC/), many of [FastGM's Lists](http://www.fastgm.de/#), as well as at [CEGT](http://cegt.net/) and [SPCC](https://www.sp-cc.de/).
 
-[Elo Progression on CCRL over time 40/40](http://www.computerchess.org.uk/ccrl/4040/cgi/compare_engines.cgi?family=Ethereal&print=Rating+list&print=Results+table&print=LOS+table&print=Ponder+hit+table&print=Eval+difference+table&print=Comopp+gamenum+table&print=Overlap+table&print=Score+with+common+opponents)
+# A Note about the GPLv3
+
+Ethereal, as well as the projects that support Ethereal like [OpenBench](https://github.com/AndyGrant/OpenBench) and [NNTrainer](https://github.com/AndyGrant/NNTrainer) are licensed under the GPLv3. The GPLv3 gives you, the user, the right to have access to the source code of the engine, the right to redistribute the GPLv3'ed portions of the project, as well as the right to reuse the Ethereal source in any capacity so long as you continue to comply with the GPLv3's license.
+
+Open Source chess engines have accelerated the development of computer chess in immeasurable ways. If not for the early adopters of the Open Source methods, computer chess would not be what it is today. Powerful programs like Stockfish simply would not exist in their current forms. All of this is possible because the authors have empowered users by granting them rights to the code, only asking that you carry on propagating the licenses attached to their code. This is a small ask, for such a great gift, and yet we live in a time where that gift is not appreciated by some, and worse taken advantage of.
+
+Ethereal shares in the collective knowledge generated and maintained by the Computer Chess Community. However, there are three elements of Ethereal for which explicit attribution is necessary for a good faith effort at carrying out the GPLv3. This attribution has been given when the code was committed, but is restated here for clarity: Ethereal makes use of the universally adopted [Syzygy Tablebases](https://github.com/syzygy1/tb), a project under the GPLv2 and other compatible licenses. Ethereal makes use of a forked version of [Fathom](https://github.com/jdart1/Fathom), a project under the MIT license, used to implement Syzygy. Lastly, Ethereal shares a chunk of code for dealing with the Windows Operating System, which was originally written by Texel author Peter Österlund, and has since been refined and improved in various Stockfish forks, once again under GPLv3 compatible licenses.
 
 # Configuration
 
@@ -44,3 +50,5 @@ Minimum depth to start probing table bases (although this depth is ignored when 
 # Special Thanks
 
 I would like to thank my previous instructor, Zachary Littrell, for all of his help in my endeavors. He was my Computer Science instructor for two semesters during my senior year of high school. His encouragement, mentoring, and assistance played a vital role in the development of my Computer Science skills. In addition to being a wonderful instructor, he is also an excellent friend. He provided the guidance I needed at such a crucial time in my life, allowing me to pursue Computer Science in a way I never imagined I could.
+
+
