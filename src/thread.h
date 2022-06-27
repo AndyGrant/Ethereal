@@ -38,12 +38,13 @@ enum {
 
 struct NodeState {
 
-    int eval;        // Static evaluation of the Node
-    int movedPiece;  // Moving piece, otherwise UB
-    int dextensions; // Number of Double Extensions
-    bool tactical;   // Cached moveIsTactical()
-    uint16_t move;   // Move applied at the Node
-    MovePicker mp;   // Move Picker at each ply
+    int eval;          // Static evaluation of the Node
+    int movedPiece;    // Moving piece, otherwise UB
+    int dextensions;   // Number of Double Extensions
+    bool tactical;     // Cached moveIsTactical()
+    uint16_t move;     // Move applied at the Node
+    uint16_t excluded; // Excluded move during Singular Extensions
+    MovePicker mp;     // Move Picker at each ply
 
     // Fast reference for future use for History lookups
     int16_t (*continuations)[CONT_NB][PIECE_NB][SQUARE_NB];
