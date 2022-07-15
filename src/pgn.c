@@ -29,6 +29,53 @@
 #include "move.h"
 #include "pgn.h"
 
+/// Ethereal's NNUE Data Format
+
+typedef struct HalfKPSample {
+    uint64_t occupied;   // 8-byte occupancy bitboard ( No Kings )
+    int16_t  eval;       // 2-byte int for the target evaluation
+    uint8_t  result;     // 1-byte int for result. { L=0, D=1, W=2 }
+    uint8_t  turn;       // 1-byte int for the side-to-move flag
+    uint8_t  wking;      // 1-byte int for the White King Square
+    uint8_t  bking;      // 1-byte int for the Black King Square
+    uint8_t  packed[15]; // 1-byte int per two non-King pieces
+} HalfKPSample;
+
+static void pack_bitboard(uint8_t *packed, Board *board, uint64_t pieces) {
+
+    #define encode_piece(p) (8 * pieceColour(p) + pieceType(p))
+    #define pack_pieces(p1, p2) (((p1) << 4) | (p2))
+
+    uint8_t types[32] = {0};
+    int N = (1 + popcount(pieces)) / 2;
+
+    for (int i = 0; pieces; i++) {
+        int sq = poplsb(&pieces);
+        types[i] = encode_piece(board->squares[sq]);
+    }
+
+    for (int i = 0; i < N; i++)
+        packed[i] = pack_pieces(types[i*2], types[i*2+1]);
+
+    #undef encode_piece
+    #undef pack_pieces
+}
+
+static void build_halfkp_sample(Board *board, HalfKPSample *sample, unsigned result, int16_t eval) {
+
+    const uint64_t white  = board->colours[WHITE];
+    const uint64_t black  = board->colours[BLACK];
+    const uint64_t pieces = (white | black);
+
+    sample->occupied = pieces & ~board->pieces[KING];
+    sample->eval     = board->turn == BLACK ? -eval : eval;
+    sample->result   = board->turn == BLACK ? 2u - result : result;
+    sample->turn     = board->turn;
+    sample->wking    = getlsb(white & board->pieces[KING]);
+    sample->bking    = getlsb(black & board->pieces[KING]);
+    pack_bitboard(sample->packed, board, sample->occupied);
+}
+
 
 static bool san_is_file(char chr) {
     return 'a' <= chr && chr <= 'h';
@@ -253,6 +300,9 @@ static bool pgn_read_headers(FILE *pgn, PGNData *data) {
     else if (strstr(data->buffer, "[Result \"1-0\"]") == data->buffer)
         data->result = PGN_WIN;
 
+    else if (strstr(data->buffer, "[Result \"*\"") == data->buffer)
+        data->result = PGN_UNKNOWN_RESULT;
+
     else if (strstr(data->buffer, "[FEN \"") == data->buffer) {
         *strstr(data->buffer, "\"]") = '\0';
         data->startpos = strdup(data->buffer + strlen("[FEN \""));
@@ -261,15 +311,12 @@ static bool pgn_read_headers(FILE *pgn, PGNData *data) {
     return data->buffer[0] == '[';
 }
 
-static void pgn_read_moves(FILE *pgn, PGNData *data, PGNEntry *entries, Board *board) {
+static void pgn_read_moves(FILE *pgn, FILE *bindata, PGNData *data, HalfKPSample *samples, Board *board) {
 
     Undo undo;
     double feval;
     uint16_t move;
     int eval, placed = 0, index = 0;
-
-    const char *format = "%s [%s] %d %d %d\n";
-    const char *lookup[3] = { "0.0", "0.5", "1.0" };
 
     if (fgets(data->buffer, 65536, pgn) == NULL)
         return;
@@ -292,23 +339,22 @@ static void pgn_read_moves(FILE *pgn, PGNData *data, PGNEntry *entries, Board *b
         // Use White's POV for all evaluations
         if (board->turn == BLACK) eval = -eval;
 
-        // Save each potential position for later
-        entries[placed].eval = eval;
-        entries[placed].ply  = data->plies;
-        entries[placed].use  = !board->kingAttackers && !moveIsTactical(board, move);
-        boardToFEN(board, entries[placed++].fen);
+        // Use the sample if it is quiet and within [-2000, 2000] cp
+        if (    abs(eval) <= 2000
+            && !board->kingAttackers
+            && !moveIsTactical(board, move))
+            build_halfkp_sample(board, &samples[placed++], data->result, eval);
 
         // Skip head to the end of this comment to prepare for the next Move
         index = pgn_read_until_space(data->buffer, index+1); data->plies++;
         applyMove(board, move, &undo);
     }
 
-    for (int i = 0; i < placed; i++)
-        if (entries[i].use && abs(entries[i].eval) <= 2000)
-            printf(format, entries[i].fen, lookup[data->result], entries[i].eval, entries[i].ply, data->plies);
+    if (data->result != PGN_UNKNOWN_RESULT)
+        fwrite(samples, sizeof(HalfKPSample), placed, bindata);
 }
 
-static bool process_next_pgn(FILE *pgn, PGNData *data, PGNEntry *entries, Board *board) {
+static bool process_next_pgn(FILE *pgn, FILE *bindata, PGNData *data, HalfKPSample *samples, Board *board) {
 
     // Make sure to cleanup previous PGNs
     if (data->startpos != NULL)
@@ -330,7 +376,7 @@ static bool process_next_pgn(FILE *pgn, PGNData *data, PGNEntry *entries, Board 
     boardFromFEN(board, data->startpos, 0);
 
     // Read Result & Fen and skip to Moves
-    pgn_read_moves(pgn, data, entries, board);
+    pgn_read_moves(pgn, bindata, data, samples, board);
 
     // Skip the trailing Newline of each PGN
     if (fgets(data->buffer, 65536, pgn) == NULL)
@@ -340,13 +386,14 @@ static bool process_next_pgn(FILE *pgn, PGNData *data, PGNEntry *entries, Board 
 }
 
 
-void process_pgn(const char *fname) {
+void process_pgn(const char *fin, const char *fout) {
 
-    FILE *pgn         = fopen(fname, "r");
-    PGNData *data     = calloc(1, sizeof(PGNData));
-    PGNEntry *entries = calloc(1024, sizeof(PGNEntry));
+    FILE *pgn = fopen(fin, "r");
+    FILE *bindata = fopen(fout, "wb");
+    PGNData *data = calloc(1, sizeof(PGNData));
+    HalfKPSample *samples = calloc(1024, sizeof(HalfKPSample));
 
     Board board;
-    while (process_next_pgn(pgn, data, entries, &board));
-    fclose(pgn); free(data);
+    while (process_next_pgn(pgn, bindata, data, samples, &board));
+    fclose(pgn); fclose(bindata); free(data); free(samples);
 }

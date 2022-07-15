@@ -20,7 +20,7 @@
 
 #include "types.h"
 
-enum { PGN_LOSS, PGN_DRAW, PGN_WIN, PGN_NO_RESULT };
+enum { PGN_LOSS, PGN_DRAW, PGN_WIN, PGN_NO_RESULT, PGN_UNKNOWN_RESULT };
 
 typedef struct PGNData {
     char *startpos;
@@ -28,9 +28,4 @@ typedef struct PGNData {
     char buffer[65536];
 } PGNData;
 
-typedef struct PGNEntry {
-    char fen[128];
-    int eval, use, ply;
-} PGNEntry;
-
-void process_pgn(const char *fname);
+void process_pgn(const char *fin, const char *fout);
