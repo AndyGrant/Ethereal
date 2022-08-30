@@ -139,6 +139,20 @@ static void abort_nnue(const char *reason) {
 }
 
 
+INLINE void maddubs_x4(vepi32 *acc, const vepi8 *inp, const vepi8 *wgt, int i, int j, int k) {
+
+    static const int InChunks = L1SIZE / vepi8_cnt;
+
+    vepi16 sum0 = vepi16_maubs(inp[j+0], wgt[InChunks * (i * 8 + k) + j + 0]);
+    vepi16 sum1 = vepi16_maubs(inp[j+1], wgt[InChunks * (i * 8 + k) + j + 1]);
+    vepi16 sum2 = vepi16_maubs(inp[j+2], wgt[InChunks * (i * 8 + k) + j + 2]);
+    vepi16 sum3 = vepi16_maubs(inp[j+3], wgt[InChunks * (i * 8 + k) + j + 3]);
+
+    vepi16 sumX = vepi16_add(sum0, vepi16_add(sum1, vepi16_add(sum2, sum3)));
+    *acc = vepi32_add(*acc, vepi16_madd(vepi16_one, sumX));
+}
+
+
 INLINE void halfkp_relu(NNUEAccumulator *accum, uint8_t *outputs, int turn) {
 
     // The accumulation of king-piece values has already been computed.
@@ -178,7 +192,7 @@ INLINE void halfkp_relu(NNUEAccumulator *accum, uint8_t *outputs, int turn) {
 
 INLINE void quant_affine_relu(int8_t *weights, int32_t *biases, uint8_t *inputs, float *outputs) {
 
-    assert(L1SIZE % 16 == 0 && L2SIZE % 8 == 0);
+    assert(L1SIZE % 64 == 0 && L2SIZE % 8 == 0);
 
     const int InChunks  = L1SIZE / vepi8_cnt;
     const int OutChunks = L2SIZE / 8;
@@ -188,8 +202,6 @@ INLINE void quant_affine_relu(int8_t *weights, int32_t *biases, uint8_t *inputs,
     #elif defined(USE_SSSE3)
     const vps32  zero = vps32_zero();
     #endif
-
-    const vepi16 ones = vepi16_one;
 
     const vepi8  *inp = (vepi8  *) inputs;
     const vepi8  *wgt = (vepi8  *) weights;
@@ -207,41 +219,16 @@ INLINE void quant_affine_relu(int8_t *weights, int32_t *biases, uint8_t *inputs,
         vepi32 acc6 = vepi32_zero();
         vepi32 acc7 = vepi32_zero();
 
-        for (int j = 0; j < InChunks; j += 2) {
-
-            vepi16 sum0A = vepi16_maubs(inp[j+0], wgt[InChunks * (i * 8 + 0) + j + 0]);
-            vepi16 sum0B = vepi16_maubs(inp[j+1], wgt[InChunks * (i * 8 + 0) + j + 1]);
-            acc0 = vepi32_add(acc0, vepi16_madd(ones, vepi16_add(sum0A, sum0B)));
-
-            vepi16 sum1A = vepi16_maubs(inp[j+0], wgt[InChunks * (i * 8 + 1) + j + 0]);
-            vepi16 sum1B = vepi16_maubs(inp[j+1], wgt[InChunks * (i * 8 + 1) + j + 1]);
-            acc1 = vepi32_add(acc1, vepi16_madd(ones, vepi16_add(sum1A, sum1B)));
-
-            vepi16 sum2A = vepi16_maubs(inp[j+0], wgt[InChunks * (i * 8 + 2) + j + 0]);
-            vepi16 sum2B = vepi16_maubs(inp[j+1], wgt[InChunks * (i * 8 + 2) + j + 1]);
-            acc2 = vepi32_add(acc2, vepi16_madd(ones, vepi16_add(sum2A, sum2B)));
-
-            vepi16 sum3A = vepi16_maubs(inp[j+0], wgt[InChunks * (i * 8 + 3) + j + 0]);
-            vepi16 sum3B = vepi16_maubs(inp[j+1], wgt[InChunks * (i * 8 + 3) + j + 1]);
-            acc3 = vepi32_add(acc3, vepi16_madd(ones, vepi16_add(sum3A, sum3B)));
-
-            vepi16 sum4A = vepi16_maubs(inp[j+0], wgt[InChunks * (i * 8 + 4) + j + 0]);
-            vepi16 sum4B = vepi16_maubs(inp[j+1], wgt[InChunks * (i * 8 + 4) + j + 1]);
-            acc4 = vepi32_add(acc4, vepi16_madd(ones, vepi16_add(sum4A, sum4B)));
-
-            vepi16 sum5A = vepi16_maubs(inp[j+0], wgt[InChunks * (i * 8 + 5) + j + 0]);
-            vepi16 sum5B = vepi16_maubs(inp[j+1], wgt[InChunks * (i * 8 + 5) + j + 1]);
-            acc5 = vepi32_add(acc5, vepi16_madd(ones, vepi16_add(sum5A, sum5B)));
-
-            vepi16 sum6A = vepi16_maubs(inp[j+0], wgt[InChunks * (i * 8 + 6) + j + 0]);
-            vepi16 sum6B = vepi16_maubs(inp[j+1], wgt[InChunks * (i * 8 + 6) + j + 1]);
-            acc6 = vepi32_add(acc6, vepi16_madd(ones, vepi16_add(sum6A, sum6B)));
-
-            vepi16 sum7A = vepi16_maubs(inp[j+0], wgt[InChunks * (i * 8 + 7) + j + 0]);
-            vepi16 sum7B = vepi16_maubs(inp[j+1], wgt[InChunks * (i * 8 + 7) + j + 1]);
-            acc7 = vepi32_add(acc7, vepi16_madd(ones, vepi16_add(sum7A, sum7B)));
+        for (int j = 0; j < InChunks; j += 4) {
+            maddubs_x4(&acc0, inp, wgt, i, j, 0);
+            maddubs_x4(&acc1, inp, wgt, i, j, 1);
+            maddubs_x4(&acc2, inp, wgt, i, j, 2);
+            maddubs_x4(&acc3, inp, wgt, i, j, 3);
+            maddubs_x4(&acc4, inp, wgt, i, j, 4);
+            maddubs_x4(&acc5, inp, wgt, i, j, 5);
+            maddubs_x4(&acc6, inp, wgt, i, j, 6);
+            maddubs_x4(&acc7, inp, wgt, i, j, 7);
         }
-
 
         acc0 = vepi32_hadd(acc0, acc1);
         acc2 = vepi32_hadd(acc2, acc3);
