@@ -22,7 +22,7 @@
 ### Section 1. Flag Declarations. Detect NNUE/Classic and Release/Native
 ### =========================================================================
 
-CC   = gcc
+CC   = clang
 SRC  = *.c pyrrhic/tbprobe.c
 LIBS = -lpthread -lm
 NN   = -DUSE_NNUE=0
@@ -87,19 +87,33 @@ ifneq ($(findstring __SSSE3__, $(PROPS)),)
 	CFLAGS += -DUSE_SSSE3
 endif
 
+# Determine whether we are using GCC or Clang for potential PGO
+
+ifneq ($(findstring gcc, $(CC)),)
+	PGOGEN   = -fprofile-generate
+	PGOUSE   = -fprofile-use
+endif
+
+ifneq ($(findstring clang, $(CC)),)
+	PGOMERGE = llvm-profdata merge -output=ethereal.profdata *.profraw
+	PGOGEN   = -fprofile-instr-generate
+	PGOUSE   = -fprofile-instr-use=ethereal.profdata
+endif
+
 ### =========================================================================
 ### Section 3. Build Targets Optimized For Native Use
 ### =========================================================================
 
-default:
-	$(CC) $(CFLAGS) $(SRC) $(LIBS) -o $(EXE)
-
 pgo:
-	rm -f *.gcda pyrrhic/*.gcda nnue/*.gcda
-	$(CC) -fprofile-generate $(CFLAGS) $(PGOFLAGS) $(SRC) $(LIBS) -o $(EXE)
-	./$(EXE) bench
-	$(CC) -fprofile-use $(CFLAGS) $(PGOFLAGS) $(SRC) $(LIBS) -o $(EXE)
-	rm -f *.gcda pyrrhic/*.gcda nnue/*.gcda
+	rm -f *.gcda pyrrhic/*.gcda nnue/*.gcda *.profdata *.profraw
+	$(CC) $(PGOGEN) $(CFLAGS) $(PGOFLAGS) $(SRC) $(LIBS) -o $(EXE)
+	./$(EXE) bench > /dev/null 2>&1
+	$(PGOMERGE)
+	$(CC) $(PGOUSE) $(CFLAGS) $(PGOFLAGS) $(SRC) $(LIBS) -o $(EXE)
+	rm -f *.gcda pyrrhic/*.gcda nnue/*.gcda *.profdata *.profraw
+
+basic:
+	$(CC) $(CFLAGS) $(SRC) $(LIBS) -o $(EXE)
 
 tune:
 	$(CC) $(TFLAGS) $(SRC) $(LIBS) -o $(EXE)
