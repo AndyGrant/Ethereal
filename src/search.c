@@ -245,7 +245,7 @@ void aspirationWindow(Thread *thread) {
     int alpha  = -MATE, beta = MATE, delta = WindowSize;
     int report = !thread->index && thread->limits->multiPV == 1;
 
-    // After a few depths use a previous result to form a window
+    // After a few depths use a previous result to form the window
     if (thread->depth >= WindowDepth) {
         alpha = MAX(-MATE, thread->pvs[thread->completed].score - delta);
         beta  = MIN( MATE, thread->pvs[thread->completed].score + delta);
@@ -297,10 +297,10 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     unsigned tbresult;
     int hist = 0, cmhist = 0, fmhist = 0;
     int movesSeen = 0, quietsPlayed = 0, capturesPlayed = 0, played = 0;
-    int ttHit = 0, ttValue = 0, ttEval = VALUE_NONE, ttDepth = 0, ttBound = 0;
+    int ttHit = 0, ttValue = 0, ttEval = VALUE_NONE, ttDepth = 0, tbBound, ttBound = 0;
     int R, newDepth, rAlpha, rBeta, oldAlpha = alpha;
     int inCheck, isQuiet, improving, extension, singular, skipQuiets = 0;
-    int eval, value = -MATE, best = -MATE, seeMargin[2];
+    int eval, value, best = -MATE, syzygyMax = MATE, syzygyMin = -MATE, seeMargin[2];
     uint16_t move, ttMove = NONE_MOVE, bestMove = NONE_MOVE;
     uint16_t quietsTried[MAX_MOVES], capturesTried[MAX_MOVES];
     PVariation lpv;
@@ -344,8 +344,8 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         // Mate Distance Pruning. Check to see if this line is so
         // good, or so bad, that being mated in the ply, or  mating in
         // the next one, would still not create a more extreme line
-        rAlpha = alpha > -MATE + thread->height     ? alpha : -MATE + thread->height;
-        rBeta  =  beta <  MATE - thread->height - 1 ?  beta :  MATE - thread->height - 1;
+        rAlpha = MAX(alpha, -MATE + thread->height);
+        rBeta  = MIN(beta ,  MATE - thread->height - 1);
         if (rAlpha >= rBeta) return rAlpha;
     }
 
@@ -391,17 +391,25 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         // Identify the bound based on WDL scores. For wins and losses the
         // bound is not exact because we are dependent on the height, but
         // for draws (and blessed / cursed) we know the tbresult to be exact
-        ttBound = tbresult == TB_LOSS ? BOUND_UPPER
+        tbBound = tbresult == TB_LOSS ? BOUND_UPPER
                 : tbresult == TB_WIN  ? BOUND_LOWER : BOUND_EXACT;
 
         // Check to see if the WDL value would cause a cutoff
-        if (    ttBound == BOUND_EXACT
-            || (ttBound == BOUND_LOWER && value >= beta)
-            || (ttBound == BOUND_UPPER && value <= alpha)) {
+        if (    tbBound == BOUND_EXACT
+            || (tbBound == BOUND_LOWER && value >= beta)
+            || (tbBound == BOUND_UPPER && value <= alpha)) {
 
-            tt_store(board->hash, thread->height, NONE_MOVE, value, VALUE_NONE, depth, ttBound);
+            tt_store(board->hash, thread->height, NONE_MOVE, value, VALUE_NONE, depth, tbBound);
             return value;
         }
+
+        // Never score something worse than the known Syzygy value
+        if (PvNode && tbBound == BOUND_LOWER)
+            syzygyMin = value, alpha = MAX(alpha, value);
+
+        // Never score something better than the known Syzygy value
+        if (PvNode && tbBound == BOUND_UPPER)
+            syzygyMax = value;
     }
 
     // Step 6. Initialize flags and values used by pruning and search methods
@@ -735,7 +743,12 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     // score based on how far or close the mate is to the root position
     if (played == 0) return inCheck ? -MATE + thread->height : 0;
 
-    // Step 22. Store results of search into the Transposition Table. We do not overwrite
+    // Step 22. When we found a Syzygy entry, don't report a value greater than
+    // the known bounds. For example, a non-zeroing move could be played, not be
+    // held in Syzygy, and then be scored better than the true lost value.
+    if (PvNode) best = MAX(syzygyMin, MIN(best, syzygyMax));
+
+    // Step 23. Store results of search into the Transposition Table. We do not overwrite
     // the Root entry from the first line of play we examined. We also don't store into the
     // Transposition Table while attempting to veryify singularities
     if (!ns->excluded && (!RootNode || !thread->multiPV)) {
