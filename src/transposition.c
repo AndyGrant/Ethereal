@@ -32,12 +32,14 @@ TTable Table; // Global Transposition Table
 /// we will not know when we have a "faster" vs "slower" Mate or TB Win/Loss
 
 static int tt_value_from(int value, int height) {
-    return value >=  TBWIN_IN_MAX ? value - height
+    return value ==  VALUE_NONE   ? VALUE_NONE
+         : value >=  TBWIN_IN_MAX ? value - height
          : value <= -TBWIN_IN_MAX ? value + height : value;
 }
 
 static int tt_value_to(int value, int height) {
-    return value >=  TBWIN_IN_MAX ? value + height
+    return value ==  VALUE_NONE   ? VALUE_NONE
+         : value >=  TBWIN_IN_MAX ? value + height
          : value <= -TBWIN_IN_MAX ? value - height : value;
 }
 
