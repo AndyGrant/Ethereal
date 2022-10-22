@@ -1,5 +1,6 @@
 /*
- * (c) 2015 basil, all rights reserved,
+ * Copyright (c) 2013-2020 Ronald de Man
+ * Copyright (c) 2015 Basil, all rights reserved,
  * Modifications Copyright (c) 2016-2019 by Jon Dart
  * Modifications Copyright (c) 2020-2020 by Andrew Grant
  *
@@ -123,8 +124,6 @@ void tb_free(void);
  * PARAMETERS:
  * - white, black, kings, queens, rooks, bishops, knights, pawns:
  *   The current position (bitboards).
- * - rule50:
- *   The 50-move half-move clock.
  * - ep:
  *   The en passant square (if exists).  Set to zero if there is no en passant
  *   square.
