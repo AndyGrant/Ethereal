@@ -1350,7 +1350,7 @@ static bool init_table(struct BaseEntry *be, const char *str, int type)
         } else {
           data += (uintptr_t)data & 0x01;
           for (int i = 0; i < 4; i++) {
-            mapIdx[t][i] = (uint16_t)(data + 1 - (uint8_t *)map);
+            mapIdx[t][i] = (uint16_t)((uint16_t*)data + 1 - (uint16_t *)map);
             data += 2 + 2 * read_le_u16(data);
           }
         }
