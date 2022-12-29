@@ -427,3 +427,4 @@ bool pyrrhic_legal_move(const PyrrhicPosition *pos, PyrrhicMove move) {
    PyrrhicPosition pos1;
    return pyrrhic_do_move(&pos1, pos, move);
 }
+

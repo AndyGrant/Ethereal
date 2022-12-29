@@ -203,6 +203,11 @@ static void *map_file(FD fd, map_t *mapping)
   *mapping = statbuf.st_size;
   void *data = mmap(NULL, statbuf.st_size, PROT_READ,
 			      MAP_SHARED, fd, 0);
+
+  #if defined(MADV_RANDOM)
+  madvise(data, statbuf.st_size, MADV_RANDOM);
+  #endif
+
   if (data == MAP_FAILED) {
     perror("mmap");
     return NULL;
@@ -2107,3 +2112,4 @@ static uint16_t probe_root(PyrrhicPosition *pos, int *score, unsigned *results)
         return 0;
     }
 }
+
