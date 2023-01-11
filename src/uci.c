@@ -55,7 +55,7 @@ const char *StartPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq 
 int main(int argc, char **argv) {
 
     Board board;
-    char str[8192];
+    char str[8192] = {0};
     Thread *threads;
     pthread_t pthreadsgo;
     UCIGoStruct uciGoStruct;
@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
 
     // Initialize core components of Ethereal
     initAttacks(); initMasks(); initEval();
-    initSearch(); initZobrist(); tt_init(16);
+    initSearch(); initZobrist(); tt_init(1, 16);
     initPKNetwork(&PKNN); nnue_incbin_init();
 
     // Create the UCI-board and our threads
@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
             printf("readyok\n"), fflush(stdout);
 
         else if (strEquals(str, "ucinewgame"))
-            resetThreadPool(threads), tt_clear();
+            resetThreadPool(threads), tt_clear(threads->nthreads);
 
         else if (strStartsWith(str, "setoption"))
             uciSetOption(str, &threads, &multiPV, &chess960);
@@ -267,7 +267,7 @@ void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960) {
 
     if (strStartsWith(str, "setoption name Hash value ")) {
         int megabytes = atoi(str + strlen("setoption name Hash value "));
-        printf("info string set Hash to %dMB\n", tt_init(megabytes));
+        printf("info string set Hash to %dMB\n", tt_init((*threads)->nthreads, megabytes));
     }
 
     if (strStartsWith(str, "setoption name Threads value ")) {

@@ -18,6 +18,8 @@
 /*                                                                            */
 /******************************************************************************/
 
+#include <pthread.h>
+
 #include "board.h"
 #include "evaluate.h"
 #include "thread.h"
@@ -47,11 +49,10 @@ static int tt_value_to(int value, int height) {
 /// Trivial helper functions to Transposition Table handleing
 
 void tt_update() { Table.generation += TT_MASK_BOUND + 1; }
-void tt_clear() { memset(Table.buckets, 0, sizeof(TTBucket) * (Table.hashMask + 1u)); }
 void tt_prefetch(uint64_t hash) { __builtin_prefetch(&Table.buckets[hash & Table.hashMask]); }
 
 
-int tt_init(int megabytes) {
+int tt_init(int nthreads, int megabytes) {
 
     const uint64_t MB = 1ull << 20;
     uint64_t keySize = 16ull;
@@ -80,7 +81,8 @@ int tt_init(int megabytes) {
     // Save the lookup mask
     Table.hashMask = (1ull << keySize) - 1u;
 
-    tt_clear(); // Clear the table and load everything into the cache
+    // Clear the table and load everything into the cache
+    tt_clear(nthreads);
 
     // Return the number of MB actually allocated for the TTable
     return ((Table.hashMask + 1) * sizeof(TTBucket)) / MB;
@@ -161,6 +163,45 @@ void tt_store(uint64_t hash, int height, uint16_t move, int value, int eval, int
     replace->hash16     = (uint16_t) hash16;
 }
 
+
+void tt_clear(int nthreads) {
+
+    // Only use 1/4th of the enabled search Threads
+    int nworkers = MAX(1, nthreads / 4);
+    pthread_t pthreads[nworkers];
+    struct TTClear ttclears[nworkers];
+
+    // Initalize the data passed via a void* in pthread_create()
+    for (int i = 0; i < nworkers; i++)
+        ttclears[i] = (struct TTClear) { i, nworkers };
+
+    // Launch each of the helper threads to clear their sections
+    for (int i = 1; i < nworkers; i++)
+        pthread_create(&pthreads[i], NULL, tt_clear_threaded, &ttclears[i]);
+
+    // Reuse this thread for the 0th sections of the Transposition Table
+    tt_clear_threaded((void*) &ttclears[0]);
+
+    // Join each of the helper threads after they've cleared their sections
+    for (int i = 1; i < nworkers; i++)
+        pthread_join(pthreads[i], NULL);
+}
+
+void *tt_clear_threaded(void *cargo) {
+
+    const uint64_t MB = 1ull << 20;
+    struct TTClear *ttclear = (struct TTClear*) cargo;
+
+    // Logic for dividing the Table taken from Weiss and CFish
+    const uint64_t size   = (Table.hashMask + 1) * sizeof(TTBucket);
+    const uint64_t slice  = (size + ttclear->count - 1) / ttclear->count;
+    const uint64_t blocks = (slice + 2 * MB - 1) / (2 * MB);
+    const uint64_t begin  = MIN(size, ttclear->index * blocks * 2 * MB);
+    const uint64_t end    = MIN(size, begin + blocks * 2 * MB);
+
+    memset(Table.buckets + begin / sizeof(TTBucket), 0, end - begin);
+    return NULL;
+}
 
 /// Simple Pawn+King Evaluation Hash Table, which also stores some additional
 /// safety information for use in King Safety, when not using NNUE evaluations
