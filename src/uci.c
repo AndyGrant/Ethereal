@@ -46,7 +46,6 @@ extern int MoveOverhead;          // Defined by time.c
 extern unsigned TB_PROBE_DEPTH;   // Defined by syzygy.c
 extern volatile int ABORT_SIGNAL; // Defined by search.c
 extern volatile int IS_PONDERING; // Defined by search.c
-extern volatile int ANALYSISMODE; // Defined by search.c
 extern PKNetwork PKNN;            // Defined by network.c
 
 pthread_mutex_t PONDERLOCK = PTHREAD_MUTEX_INITIALIZER;
@@ -301,13 +300,6 @@ void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960) {
     if (strStartsWith(str, "setoption name SyzygyProbeDepth value ")) {
         TB_PROBE_DEPTH = atoi(str + strlen("setoption name SyzygyProbeDepth value "));
         printf("info string set SyzygyProbeDepth to %u\n", TB_PROBE_DEPTH);
-    }
-
-    if (strStartsWith(str, "setoption name AnalysisMode value ")) {
-        if (strStartsWith(str, "setoption name AnalysisMode value true"))
-            printf("info string set AnalysisMode to true\n"), ANALYSISMODE = 1;
-        if (strStartsWith(str, "setoption name AnalysisMode value false"))
-            printf("info string set AnalysisMode to false\n"), ANALYSISMODE = 0;
     }
 
     if (strStartsWith(str, "setoption name UCI_Chess960 value ")) {

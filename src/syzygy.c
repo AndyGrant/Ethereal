@@ -23,15 +23,14 @@
 
 #include "bitboards.h"
 #include "board.h"
-#include "pyrrhic/tbprobe.h"
 #include "move.h"
 #include "movegen.h"
+#include "pyrrhic/tbprobe.h"
 #include "types.h"
 #include "uci.h"
 
-unsigned TB_PROBE_DEPTH;          // Set by UCI options
-extern int TB_LARGEST;       // Set by Pyrrhic in tb_init()
-extern volatile int ANALYSISMODE; // Defined by Search.c
+unsigned TB_PROBE_DEPTH; // Set by UCI options
+extern int TB_LARGEST;   // Set by Pyrrhic in tb_init()
 
 static uint16_t convertPyrrhicMove(Board *board, unsigned result) {
 
@@ -50,16 +49,13 @@ static uint16_t convertPyrrhicMove(Board *board, unsigned result) {
 static void removeBadWDL(Board *board, Limits *limits, unsigned result, unsigned *results) {
 
     // Remove for any moves that fail to maintain the ideal WDL outcome
-    for (int i = 0; i < MAX_MOVES && results[i] != TB_RESULT_FAILED; i++) {
-        if (TB_GET_WDL(results[i]) != TB_GET_WDL(result)) {
+    for (int i = 0; i < MAX_MOVES && results[i] != TB_RESULT_FAILED; i++)
+        if (TB_GET_WDL(results[i]) != TB_GET_WDL(result))
             limits->excludedMoves[i] = convertPyrrhicMove(board, results[i]);
-            char movestr[6]; moveToString(limits->excludedMoves[i], movestr, board->chess960);
-            printf("info string ignoring %s as per Syzygy\n", movestr);
-        }
-    }
 }
 
-int tablebasesProbeDTZ(Board *board, Limits *limits, uint16_t *best, uint16_t *ponder) {
+
+void tablebasesProbeDTZ(Board *board, Limits *limits) {
 
     unsigned results[MAX_MOVES];
     uint64_t white = board->colours[WHITE];
@@ -69,7 +65,7 @@ int tablebasesProbeDTZ(Board *board, Limits *limits, uint16_t *best, uint16_t *p
     // we have more pieces than our largest Tablebase has pieces
     if (   board->castleRooks
         || popcount(white | black) > TB_LARGEST)
-        return 0;
+        return;
 
     // Tap into Pyrrhic's API. Pyrrhic takes the board representation and the
     // fifty move rule counter, followed by the enpass square (0 if none set),
@@ -89,19 +85,10 @@ int tablebasesProbeDTZ(Board *board, Limits *limits, uint16_t *best, uint16_t *p
     if (   result == TB_RESULT_FAILED
         || result == TB_RESULT_CHECKMATE
         || result == TB_RESULT_STALEMATE)
-        return 0;
+        return;
 
-    // If doing analysis, remove sub-optimal WDL moves
-    if (ANALYSISMODE)
-        removeBadWDL(board, limits, result, results);
-
-    // Otherwise, set the best move to any which maintains the WDL
-    else {
-        *best = convertPyrrhicMove(board, result);
-        *ponder = NONE_MOVE;
-    }
-
-    return !ANALYSISMODE;
+    // Remove any moves that fail to maintain optimal WDL
+    removeBadWDL(board, limits, result, results);
 }
 
 unsigned tablebasesProbeWDL(Board *board, int depth, int height) {

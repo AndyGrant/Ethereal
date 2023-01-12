@@ -165,15 +165,14 @@ void getBestMove(Thread *threads, Board *board, Limits *limits, uint16_t *best, 
     pthread_t pthreads[threads->nthreads];
     TimeManager tm = {0}; tm_init(limits, &tm);
 
-    // Allow Syzygy to refine the move list for optimal results
-    if (!limits->limitedByMoves && limits->multiPV == 1)
-        if (tablebasesProbeDTZ(board, limits, best, ponder))
-            return;
-
     // Minor house keeping for starting a search
     tt_update(); // Table has an age component
     ABORT_SIGNAL = 0; // Otherwise Threads will exit
     newSearchThreadPool(threads, board, limits, &tm);
+
+    // Allow Syzygy to refine the move list for optimal results
+    if (!limits->limitedByMoves && limits->multiPV == 1)
+        tablebasesProbeDTZ(board, limits);
 
     // Create a new thread for each of the helpers and reuse the current
     // thread for the main thread, which avoids some overhead and saves

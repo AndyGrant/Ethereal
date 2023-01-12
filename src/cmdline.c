@@ -136,7 +136,7 @@ static void runEvalBook(int argc, char **argv) {
         limits.start = get_real_time();
         boardFromFEN(&board, line, 0);
         getBestMove(threads, &board, &limits, &best, &ponder, &score);
-        resetThreadPool(threads); tt_clear(tt_clear);
+        resetThreadPool(threads); tt_clear(nthreads);
         printf("FEN: %s", line);
     }
 
