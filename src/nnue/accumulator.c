@@ -103,11 +103,8 @@ void nnue_refresh_accumulator(NNUEAccumulator *accum, Board *board, int colour, 
         int index = nnue_index(board, relsq, colour, poplsb(&pieces));
         vepi16* inputs  = (vepi16*) &in_weights[index * KPSIZE];
 
-        for (int i = 0; i < KPSIZE / vepi16_cnt; i += 4) {
-            outputs[i+0] = vepi16_add(biases[i+0], inputs[i+0]);
-            outputs[i+1] = vepi16_add(biases[i+1], inputs[i+1]);
-            outputs[i+2] = vepi16_add(biases[i+2], inputs[i+2]);
-            outputs[i+3] = vepi16_add(biases[i+3], inputs[i+3]);
+        for (int i = 0; i < KPSIZE / vepi16_cnt; i++) {
+            outputs[i] = vepi16_add(biases[i], inputs[i]);
         }
     }
 
@@ -119,11 +116,8 @@ void nnue_refresh_accumulator(NNUEAccumulator *accum, Board *board, int colour, 
         int index = nnue_index(board, relsq, colour, poplsb(&pieces));
         vepi16* inputs  = (vepi16*) &in_weights[index * KPSIZE];
 
-        for (int i = 0; i < KPSIZE / vepi16_cnt; i += 4) {
-            outputs[i+0] = vepi16_add(outputs[i+0], inputs[i+0]);
-            outputs[i+1] = vepi16_add(outputs[i+1], inputs[i+1]);
-            outputs[i+2] = vepi16_add(outputs[i+2], inputs[i+2]);
-            outputs[i+3] = vepi16_add(outputs[i+3], inputs[i+3]);
+        for (int i = 0; i < KPSIZE / vepi16_cnt; i++) {
+            outputs[i] = vepi16_add(outputs[i], inputs[i]);
         }
     }
 }
@@ -194,11 +188,8 @@ void nnue_update_accumulator(NNUEAccumulator *accum, Board *board, int wrelksq, 
             const int index = remove_list[colour][0];
             vepi16* inputs  = (vepi16*) &in_weights[index * KPSIZE];
 
-            for (int j = 0; j < KPSIZE / vepi16_cnt; j += 4) {
-                outputs[j+0] = vepi16_sub(priors[j+0], inputs[j+0]);
-                outputs[j+1] = vepi16_sub(priors[j+1], inputs[j+1]);
-                outputs[j+2] = vepi16_sub(priors[j+2], inputs[j+2]);
-                outputs[j+3] = vepi16_sub(priors[j+3], inputs[j+3]);
+            for (int j = 0; j < KPSIZE / vepi16_cnt; j++) {
+                outputs[j] = vepi16_sub(priors[j], inputs[j]);
             }
         }
 
@@ -207,11 +198,8 @@ void nnue_update_accumulator(NNUEAccumulator *accum, Board *board, int wrelksq, 
             const int index = remove_list[colour][i];
             vepi16* inputs  = (vepi16*) &in_weights[index * KPSIZE];
 
-            for (int j = 0; j < KPSIZE / vepi16_cnt; j += 4) {
-                outputs[j+0] = vepi16_sub(outputs[j+0], inputs[j+0]);
-                outputs[j+1] = vepi16_sub(outputs[j+1], inputs[j+1]);
-                outputs[j+2] = vepi16_sub(outputs[j+2], inputs[j+2]);
-                outputs[j+3] = vepi16_sub(outputs[j+3], inputs[j+3]);
+            for (int j = 0; j < KPSIZE / vepi16_cnt; j++) {
+                outputs[j] = vepi16_sub(outputs[j], inputs[j]);
             }
         }
 
@@ -220,11 +208,8 @@ void nnue_update_accumulator(NNUEAccumulator *accum, Board *board, int wrelksq, 
             const int index = add_list[colour][i];
             vepi16* inputs  = (vepi16*) &in_weights[index * KPSIZE];
 
-            for (int j = 0; j < KPSIZE / vepi16_cnt; j += 4) {
-                outputs[j+0] = vepi16_add(outputs[j+0], inputs[j+0]);
-                outputs[j+1] = vepi16_add(outputs[j+1], inputs[j+1]);
-                outputs[j+2] = vepi16_add(outputs[j+2], inputs[j+2]);
-                outputs[j+3] = vepi16_add(outputs[j+3], inputs[j+3]);
+            for (int j = 0; j < KPSIZE / vepi16_cnt; j++) {
+                outputs[j] = vepi16_add(outputs[j], inputs[j]);
             }
         }
     }
