@@ -182,7 +182,11 @@ void nnue_update_accumulator(NNUEAccumulator *accum, Board *board, int wrelksq, 
         return;
     }
 
-    vepi16 registers[16];
+    // These registers are paired with a load/store below, which, in theory, should not be necessary.
+    // However, these act as a guide for compilers to produce much more efficient asm.
+    // With    - https://godbolt.org/z/P86G8GWdf
+    // Without - https://godbolt.org/z/hf3sfjojz
+    vepi16 registers[NUM_REGS];
 
     for (int colour = WHITE; colour <= BLACK; colour++) {
 
@@ -191,31 +195,32 @@ void nnue_update_accumulator(NNUEAccumulator *accum, Board *board, int wrelksq, 
 
         int16_t* dest = &accum->values[colour][0];
         int16_t* src  = &(accum-1)->values[colour][0];
-
-        for (int o = 0; o < KPSIZE; o += 16 * vepi16_cnt) {
-            const vepi16* inputs  = (vepi16*) &src[o];
-                  vepi16* outputs = (vepi16*) &dest[o];
+        
+        // Update the accumulator by loading a section, applying all changes, and then moving on.
+        for (int offset = 0; offset < KPSIZE; offset += NUM_REGS * vepi16_cnt) {
+            const vepi16* inputs  = (vepi16*) &src[offset];
+                  vepi16* outputs = (vepi16*) &dest[offset];
             
-            for (int i = 0; i < 16; i++)
+            for (int i = 0; i < NUM_REGS; i++)
                 registers[i] = vepi16_load(&inputs[i]);
             
             for (int r = 0; r < remove; r++) {
-                const int index = remove_list[colour][r];
-                const vepi16* weights = (vepi16*) &in_weights[index * KPSIZE + o];
+                const int index       = remove_list[colour][r];
+                const vepi16* weights = (vepi16*) &in_weights[index * KPSIZE + offset];
 
-                for (int i = 0; i < 16; i++)
+                for (int i = 0; i < NUM_REGS; i++)
                     registers[i] = vepi16_sub(registers[i], weights[i]);
             }
 
             for (int a = 0; a < add; a++) {
-                const int index = add_list[colour][a];
-                const vepi16* weights = (vepi16*) &in_weights[index * KPSIZE + o];
+                const int index       = add_list[colour][a];
+                const vepi16* weights = (vepi16*) &in_weights[index * KPSIZE + offset];
 
-                for (int i = 0; i < 16; i++)
+                for (int i = 0; i < NUM_REGS; i++)
                     registers[i] = vepi16_add(registers[i], weights[i]);
             }
 
-            for (int i = 0; i < 16; i++)
+            for (int i = 0; i < NUM_REGS; i++)
                 vepi16_store(&outputs[i], registers[i]);
         }
     }
