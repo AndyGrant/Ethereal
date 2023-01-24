@@ -182,50 +182,41 @@ void nnue_update_accumulator(NNUEAccumulator *accum, Board *board, int wrelksq, 
         return;
     }
 
+    vepi16 registers[16];
+
     for (int colour = WHITE; colour <= BLACK; colour++) {
 
         if (refreshed[colour])
             continue;
 
-        vepi16* outputs = (vepi16*) &accum->values[colour][0];
-        vepi16* priors  = (vepi16*) &(accum-1)->values[colour][0];
+        int16_t* dest = &accum->values[colour][0];
+        int16_t* src  = &(accum-1)->values[colour][0];
 
-        {
-            const int index = remove_list[colour][0];
-            vepi16* inputs  = (vepi16*) &in_weights[index * KPSIZE];
+        for (int o = 0; o < KPSIZE; o += 16 * vepi16_cnt) {
+            const vepi16* inputs  = (vepi16*) &src[o];
+                  vepi16* outputs = (vepi16*) &dest[o];
+            
+            for (int i = 0; i < 16; i++)
+                registers[i] = vepi16_load(&inputs[i]);
+            
+            for (int r = 0; r < remove; r++) {
+                const int index = remove_list[colour][r];
+                const vepi16* weights = (vepi16*) &in_weights[index * KPSIZE + o];
 
-            for (int j = 0; j < KPSIZE / vepi16_cnt; j += 4) {
-                outputs[j+0] = vepi16_sub(priors[j+0], inputs[j+0]);
-                outputs[j+1] = vepi16_sub(priors[j+1], inputs[j+1]);
-                outputs[j+2] = vepi16_sub(priors[j+2], inputs[j+2]);
-                outputs[j+3] = vepi16_sub(priors[j+3], inputs[j+3]);
+                for (int i = 0; i < 16; i++)
+                    registers[i] = vepi16_sub(registers[i], weights[i]);
             }
-        }
 
-        for (int i = 1; i < remove; i++) {
+            for (int a = 0; a < add; a++) {
+                const int index = add_list[colour][a];
+                const vepi16* weights = (vepi16*) &in_weights[index * KPSIZE + o];
 
-            const int index = remove_list[colour][i];
-            vepi16* inputs  = (vepi16*) &in_weights[index * KPSIZE];
-
-            for (int j = 0; j < KPSIZE / vepi16_cnt; j += 4) {
-                outputs[j+0] = vepi16_sub(outputs[j+0], inputs[j+0]);
-                outputs[j+1] = vepi16_sub(outputs[j+1], inputs[j+1]);
-                outputs[j+2] = vepi16_sub(outputs[j+2], inputs[j+2]);
-                outputs[j+3] = vepi16_sub(outputs[j+3], inputs[j+3]);
+                for (int i = 0; i < 16; i++)
+                    registers[i] = vepi16_add(registers[i], weights[i]);
             }
-        }
 
-        for (int i = 0; i < add; i++) {
-
-            const int index = add_list[colour][i];
-            vepi16* inputs  = (vepi16*) &in_weights[index * KPSIZE];
-
-            for (int j = 0; j < KPSIZE / vepi16_cnt; j += 4) {
-                outputs[j+0] = vepi16_add(outputs[j+0], inputs[j+0]);
-                outputs[j+1] = vepi16_add(outputs[j+1], inputs[j+1]);
-                outputs[j+2] = vepi16_add(outputs[j+2], inputs[j+2]);
-                outputs[j+3] = vepi16_add(outputs[j+3], inputs[j+3]);
-            }
+            for (int i = 0; i < 16; i++)
+                vepi16_store(&outputs[i], registers[i]);
         }
     }
 
