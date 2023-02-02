@@ -30,8 +30,6 @@
 #define vepi32_cnt 4
 #define vps32_cnt  4
 
-#define vepi16_load  _mm_load_si128
-#define vepi16_store _mm_store_si128
 #define vepi16_add   _mm_add_epi16
 #define vepi16_sub   _mm_sub_epi16
 #define vepi16_max   _mm_max_epi16
