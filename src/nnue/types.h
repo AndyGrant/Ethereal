@@ -39,6 +39,8 @@
 #define L3SIZE  16
 #define OUTSIZE 1
 
+#define NUM_REGS 16
+
 typedef struct NNUEDelta {
     int piece, from, to;
 } NNUEDelta;
