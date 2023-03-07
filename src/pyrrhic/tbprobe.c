@@ -976,21 +976,17 @@ static size_t PawnIdx[2][6][24];
 static size_t PawnFactorFile[6][4];
 static size_t PawnFactorRank[6][6];
 
-static void init_indices(void)
+static void init_indices(void) 
 {
-  int i, j, k;
-
   // Binomial[k][n] = Bin(n, k)
-  for (i = 0; i < 7; i++)
-    for (j = 0; j < 64; j++) {
-      size_t f = 1;
-      size_t l = 1;
-      for (k = 0; k < i; k++) {
-        f *= (j - k);
-        l *= (k + 1);
-      }
-      Binomial[i][j] = f / l;
+  Binomial[0][0] = 1;
+  for (int n = 1; n < 64; n++) {
+    Binomial[0][n] = 1;
+    Binomial[1][n] = n;
+    for (int k = 2; k < 7 && k <= n; k++) {
+      Binomial[k][n] =  Binomial[k - 1][n - 1] + (k < n ? Binomial[k    ][n - 1] : 0);
     }
+  }
 
   for (i = 0; i < 6; i++) {
     size_t s = 0;
