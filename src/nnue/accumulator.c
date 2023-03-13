@@ -58,33 +58,23 @@ static int nnue_index(Board *board, int relksq, int colour, int sq) {
 
 int nnue_can_update(NNUEAccumulator *accum, Board *board, int colour) {
 
-    const NNUEAccumulator *start = board->thread->nnueStack;
-
-    // We can't recurse to update if we are at the start, or if our King has moved.
-    if (   (accum == start)
-        || (accum->changes && accum->deltas[0].piece == makePiece(KING, colour)))
-        return 0;
-
-    // We can always update if our parent accum is accurate, without a King move
-    if ((accum-1)->accurate[colour])
-        return 1;
-
-    // Otherwise, search back through the tree to find an accurate accum
-    while (accum != start) {
-
-        // We found it, so we can update the entire tree
-        if (accum->accurate[colour])
-            return 1;
+    // Search back through the tree to find an accurate accum
+    while (accum != board->thread->nnueStack) {
 
         // A King move prevents the entire tree from being updated
         if (   accum->changes
             && accum->deltas[0].piece == makePiece(KING, colour))
-            return 0;
+            return FALSE;
 
+        // Step back, since the root can't be accurate
         accum = accum - 1;
+
+        // We found it, so we can update the entire tree
+        if (accum->accurate[colour])
+            return TRUE;
     }
 
-    return 0;
+    return FALSE;
 }
 
 void nnue_refresh_accumulator(NNUEAccumulator *accum, Board *board, int colour, int relsq) {
