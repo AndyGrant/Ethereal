@@ -64,7 +64,9 @@ int apply(Thread *thread, Board *board, uint16_t move) {
         ns->continuations = NULL;
         ns->move          = NULL_MOVE;
 
+        // Prefetch the next tt-entry as soon as we have the Key
         applyNullMove(board, &thread->undoStack[thread->height]);
+        tt_prefetch(board->hash);
     }
 
     else {
@@ -74,8 +76,11 @@ int apply(Thread *thread, Board *board, uint16_t move) {
         ns->continuations = &thread->continuation[ns->tactical][ns->movedPiece][MoveTo(move)];
         ns->move          = move;
 
-        // Apply the move and reject if illegal
+        // Prefetch the next tt-entry as soon as we have the Key
         applyMove(board, move, &thread->undoStack[thread->height]);
+        tt_prefetch(board->hash);
+
+        // Reject the move if it was illegal
         if (!moveWasLegal(board))
             return revertMove(board, move, &thread->undoStack[thread->height]), 0;
     }

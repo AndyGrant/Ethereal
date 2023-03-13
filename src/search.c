@@ -311,9 +311,6 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     if (depth <= 0 && !board->kingAttackers)
         return qsearch(thread, pv, alpha, beta);
 
-    // Prefetch TT as early as reasonable
-    tt_prefetch(board->hash);
-
     // Ensure a fresh PV
     pv->length = 0;
 
@@ -723,9 +720,6 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         }
     }
 
-    // Prefetch TT for store
-    tt_prefetch(board->hash);
-
     // Step 19 (~760 elo). Update History counters on a fail high for a quiet move.
     // We also update Capture History Heuristics, which augment or replace MVV-LVA.
 
@@ -766,9 +760,6 @@ int qsearch(Thread *thread, PVariation *pv, int alpha, int beta) {
     int ttHit, ttValue = 0, ttEval = VALUE_NONE, ttDepth = 0, ttBound = 0;
     uint16_t move, ttMove = NONE_MOVE, bestMove = NONE_MOVE;
     PVariation lpv;
-
-    // Prefetch TT as early as reasonable
-    tt_prefetch(board->hash);
 
     // Ensure a fresh PV
     pv->length = 0;
