@@ -39,7 +39,8 @@ INLINE void nnue_push(Board *board) {
     if (USE_NNUE && board->thread != NULL) {
         const int height = board->thread->height;
         NNUEAccumulator *accum = &board->thread->nnueStack[height+1];
-        accum->accurate = 0; accum->changes = 0;
+        accum->accurate[WHITE] = accum->accurate[BLACK] = FALSE;
+        accum->changes = 0;
     }
 }
 
@@ -60,7 +61,6 @@ INLINE void nnue_remove_piece(Board *board, int piece, int sq) {
         nnue_move_piece(board, piece, sq, SQUARE_NB);
 }
 
-int nnue_can_update(NNUEAccumulator *accum, Board *board);
-void nnue_refresh_accumulators(NNUEAccumulator *accum, Board *board, int wrelksq, int brelksq);
+int nnue_can_update(NNUEAccumulator *accum, Board *board, int colour);
 void nnue_refresh_accumulator(NNUEAccumulator *accum, Board *board, int colour, int relksq);
-void nnue_update_accumulator(NNUEAccumulator *accum, Board *board, int wrelksq, int brelksq);
+void nnue_update_accumulator(NNUEAccumulator *accum, Board *board, int colour, int relksq);

@@ -56,32 +56,35 @@ static int nnue_index(Board *board, int relksq, int colour, int sq) {
 }
 
 
-int nnue_can_update(NNUEAccumulator *accum, Board *board) {
+int nnue_can_update(NNUEAccumulator *accum, Board *board, int colour) {
 
-    NNUEAccumulator *start = board->thread->nnueStack;
+    const NNUEAccumulator *start = board->thread->nnueStack;
 
-    if (accum == start) return 0;
+    // We can't recurse to update if we are at the start, or if our King has moved.
+    if (   (accum == start)
+        || (accum->changes && accum->deltas[0].piece == makePiece(KING, colour)))
+        return 0;
 
-    if ((accum-1)->accurate) return 1;
+    // We can always update if our parent accum is accurate, without a King move
+    if ((accum-1)->accurate[colour])
+        return 1;
 
+    // Otherwise, search back through the tree to find an accurate accum
     while (accum != start) {
 
-        if (accum->accurate)
+        // We found it, so we can update the entire tree
+        if (accum->accurate[colour])
             return 1;
 
-        if (accum->changes && pieceType(accum->deltas[0].piece) == KING)
+        // A King move prevents the entire tree from being updated
+        if (   accum->changes
+            && accum->deltas[0].piece == makePiece(KING, colour))
             return 0;
 
         accum = accum - 1;
     }
 
     return 0;
-}
-
-void nnue_refresh_accumulators(NNUEAccumulator *accum, Board *board, int wrelksq, int brelksq) {
-    nnue_refresh_accumulator(accum, board, WHITE, wrelksq);
-    nnue_refresh_accumulator(accum, board, BLACK, brelksq);
-    accum->accurate = 1;
 }
 
 void nnue_refresh_accumulator(NNUEAccumulator *accum, Board *board, int colour, int relsq) {
@@ -125,95 +128,71 @@ void nnue_refresh_accumulator(NNUEAccumulator *accum, Board *board, int colour, 
         for (int i = 0; i < NUM_REGS; i++)
             outputs[i] = registers[i];
     }
+
+    accum->accurate[colour] = TRUE;
 }
 
-void nnue_update_accumulator(NNUEAccumulator *accum, Board *board, int wrelksq, int brelksq) {
+void nnue_update_accumulator(NNUEAccumulator *accum, Board *board, int colour, int relksq) {
 
-    int add_list[2][3], remove_list[2][3];
-    int add = 0, remove = 0, refreshed[2] = { 0, 0 };
+    int add = 0, remove = 0;
+    int add_list[3], remove_list[3];
     vepi16 *inputs, *outputs, *weights, registers[NUM_REGS];
 
-    // Recurse and update all out of date children
-    if (!(accum-1)->accurate)
-        nnue_update_accumulator((accum-1), board, wrelksq, brelksq);
+    // Recurse and update all out of our date parents
+    if (!(accum-1)->accurate[colour])
+        nnue_update_accumulator((accum-1), board, colour, relksq);
 
     // The last move was a NULL move so we can cheat and copy
     if (!accum->changes) {
-        memcpy(accum->values, (accum-1)->values, sizeof(int16_t) * L1SIZE);
-        accum->accurate = 1;
+        memcpy(&accum->values[colour], &(accum-1)->values[colour], sizeof(int16_t) * KPSIZE);
+        accum->accurate[colour] = TRUE;
         return;
     }
 
-    for (int i = 0; i < accum->changes; i++) {
+    // Determine the features that have changed, by looping through them
+    for (NNUEDelta *x = &accum->deltas[0]; x < &accum->deltas[0] + accum->changes; x++) {
 
-        const NNUEDelta *delta = &accum->deltas[i];
-
-        // Fully recompute a colour if its King has moved
-        if (pieceType(delta->piece) == KING) {
-            int colour = pieceColour(delta->piece);
-            int relksq = colour == WHITE ? wrelksq : brelksq;
-            nnue_refresh_accumulator(accum, board, colour, relksq);
-            refreshed[colour] = 1;
+        // HalfKP does not concern with KxK relations
+        if (pieceType(x->piece) == KING)
             continue;
-        }
 
         // Moving or placing a Piece to a Square
-        if (delta->to != SQUARE_NB) {
-            add_list[WHITE][add  ] = nnue_index_delta(delta->piece, wrelksq, WHITE, delta->to);
-            add_list[BLACK][add++] = nnue_index_delta(delta->piece, brelksq, BLACK, delta->to);
-        }
+        if (x->to != SQUARE_NB)
+            add_list[add++] = nnue_index_delta(x->piece, relksq, colour, x->to);
 
         // Moving or deleting a Piece from a Square
-        if (delta->from != SQUARE_NB) {
-            remove_list[WHITE][remove  ] = nnue_index_delta(delta->piece, wrelksq, WHITE, delta->from);
-            remove_list[BLACK][remove++] = nnue_index_delta(delta->piece, brelksq, BLACK, delta->from);
+        if (x->from != SQUARE_NB)
+            remove_list[remove++] = nnue_index_delta(x->piece, relksq, colour, x->from);
+    }
+
+    for (int offset = 0; offset < KPSIZE; offset += NUM_REGS * vepi16_cnt) {
+
+        outputs = (vepi16*) &(accum-0)->values[colour][offset];
+        inputs  = (vepi16*) &(accum-1)->values[colour][offset];
+
+        for (int i = 0; i < NUM_REGS; i++)
+            registers[i] = inputs[i];
+
+        for (int i = 0; i < add; i++) {
+
+            weights = (vepi16*) &in_weights[add_list[i] * KPSIZE + offset];
+
+            for (int j = 0; j < NUM_REGS; j++)
+                registers[j] = vepi16_add(registers[j], weights[j]);
         }
-    }
 
-    // ------------------------------------------------------------------------------------------
+        for (int i = 0; i < remove; i++) {
 
+            weights = (vepi16*) &in_weights[remove_list[i] * KPSIZE + offset];
 
-    if (!add && !remove) {
-        int old = refreshed[WHITE] ? BLACK : WHITE;
-        memcpy(accum->values[old], (accum-1)->values[old], sizeof(int16_t) * KPSIZE);
-        accum->accurate = 1;
-        return;
-    }
-
-    for (int colour = WHITE; colour <= BLACK; colour++) {
-
-        if (refreshed[colour])
-            continue;
-
-        for (int offset = 0; offset < KPSIZE; offset += NUM_REGS * vepi16_cnt) {
-
-            outputs = (vepi16*) &(accum-0)->values[colour][offset];
-            inputs  = (vepi16*) &(accum-1)->values[colour][offset];
-
-            for (int i = 0; i < NUM_REGS; i++)
-                registers[i] = inputs[i];
-
-            for (int i = 0; i < add; i++) {
-
-                weights = (vepi16*) &in_weights[add_list[colour][i] * KPSIZE + offset];
-
-                for (int j = 0; j < NUM_REGS; j++)
-                    registers[j] = vepi16_add(registers[j], weights[j]);
-            }
-
-            for (int i = 0; i < remove; i++) {
-
-                weights = (vepi16*) &in_weights[remove_list[colour][i] * KPSIZE + offset];
-
-                for (int j = 0; j < NUM_REGS; j++)
-                    registers[j] = vepi16_sub(registers[j], weights[j]);
-            }
-
-            for (int i = 0; i < NUM_REGS; i++)
-                outputs[i] = registers[i];
+            for (int j = 0; j < NUM_REGS; j++)
+                registers[j] = vepi16_sub(registers[j], weights[j]);
         }
+
+        for (int i = 0; i < NUM_REGS; i++)
+            outputs[i] = registers[i];
     }
 
-    accum->accurate = 1;
+    accum->accurate[colour] = TRUE;
     return;
 }

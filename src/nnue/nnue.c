@@ -483,15 +483,26 @@ int nnue_evaluate(Thread *thread, Board *board) {
 
     NNUEAccumulator *accum = &thread->nnueStack[thread->height];
 
-    if (!accum->accurate) {
+    if (!accum->accurate[WHITE]) {
 
         // Possible to recurse and incrementally update each
-        if (nnue_can_update(accum, board))
-            nnue_update_accumulator(accum, board, wrelksq, brelksq);
+        if (nnue_can_update(accum, board, WHITE))
+            nnue_update_accumulator(accum, board, WHITE, wrelksq);
 
         // History is missing, we must refresh completely
         else
-            nnue_refresh_accumulators(accum, board, wrelksq, brelksq);
+            nnue_refresh_accumulator(accum, board, WHITE, wrelksq);
+    }
+
+    if (!accum->accurate[BLACK]) {
+
+        // Possible to recurse and incrementally update each
+        if (nnue_can_update(accum, board, BLACK))
+            nnue_update_accumulator(accum, board, BLACK, brelksq);
+
+        // History is missing, we must refresh completely
+        else
+            nnue_refresh_accumulator(accum, board, BLACK, brelksq);
     }
 
     // Feed-forward the entire evaluation function
