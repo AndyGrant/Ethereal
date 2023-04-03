@@ -160,6 +160,39 @@ void initSearch() {
     }
 }
 
+void *start_search_threads(void *arguments) {
+
+    // Unpack the UCIGoStruct that was cast to void*
+    Thread *threads =  ((UCIGoStruct*) arguments)->threads;
+    Board  *board   =  ((UCIGoStruct*) arguments)->board;
+    Limits *limits  = &((UCIGoStruct*) arguments)->limits;
+
+    int score;
+    char str[6];
+    uint16_t best = NONE_MOVE, ponder = NONE_MOVE;
+
+    // Execute search, setting best and ponder moves
+    getBestMove(threads, board, limits, &best, &ponder, &score);
+
+    // UCI spec does not want reports until out of pondering
+    while (IS_PONDERING);
+
+    // Report best move ( we should always have one )
+    moveToString(best, str, board->chess960);
+    printf("bestmove %s", str);
+
+    // Report ponder move ( if we have one )
+    if (ponder != NONE_MOVE) {
+        moveToString(ponder, str, board->chess960);
+        printf(" ponder %s", str);
+    }
+
+    // Make sure this all gets reported
+    printf("\n"); fflush(stdout);
+
+    return NULL;
+}
+
 void getBestMove(Thread *threads, Board *board, Limits *limits, uint16_t *best, uint16_t *ponder, int *score) {
 
     pthread_t pthreads[threads->nthreads];
