@@ -28,6 +28,7 @@ struct PVariation {
 };
 
 void initSearch();
+void *start_search_threads(void *arguments);
 void getBestMove(Thread *threads, Board *board, Limits *limits, uint16_t *best, uint16_t *ponder, int *score);
 void* iterativeDeepening(void *vthread);
 void aspirationWindow(Thread *thread);

@@ -22,7 +22,7 @@
 
 #include "types.h"
 
-#define VERSION_ID "14.07"
+#define VERSION_ID "14.08"
 
 #ifndef LICENSE_OWNER
     #define LICENSE_OWNER "Unlicensed"
@@ -47,13 +47,12 @@ struct Limits {
 };
 
 struct UCIGoStruct {
-    int multiPV;
-    char str[512];
-    Board *board;
     Thread *threads;
+    Board  *board;
+    Limits  limits;
 };
 
-void *uciGo(void *cargo);
+void uciGo(UCIGoStruct *ucigo, pthread_t *pthread, Thread *threads, Board *board, int multiPV, char *str);
 void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960);
 void uciPosition(char *str, Board *board, int chess960);
 
