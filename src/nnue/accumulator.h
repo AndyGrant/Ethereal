@@ -35,10 +35,14 @@ INLINE void nnue_delete_accumulators(NNUEAccumulator* ptr) {
     align_free(ptr);
 }
 
+INLINE void nnue_pop(Board *board) {
+    if (USE_NNUE && board->thread != NULL)
+        --board->thread->nnuePointer;
+}
+
 INLINE void nnue_push(Board *board) {
     if (USE_NNUE && board->thread != NULL) {
-        const int height = board->thread->height;
-        NNUEAccumulator *accum = &board->thread->nnueStack[height+1];
+        NNUEAccumulator *accum = ++board->thread->nnuePointer;
         accum->accurate[WHITE] = accum->accurate[BLACK] = FALSE;
         accum->changes = 0;
     }
@@ -46,8 +50,7 @@ INLINE void nnue_push(Board *board) {
 
 INLINE void nnue_move_piece(Board *board, int piece, int from, int to) {
     if (USE_NNUE && board->thread != NULL) {
-        const int height = board->thread->height;
-        NNUEAccumulator *accum = &board->thread->nnueStack[height+1];
+        NNUEAccumulator *accum = board->thread->nnuePointer;
         accum->deltas[accum->changes++] = (NNUEDelta) { piece, from, to };
     }
 }

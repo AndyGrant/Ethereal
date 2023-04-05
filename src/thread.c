@@ -102,6 +102,7 @@ void newSearchThreadPool(Thread *threads, Board *board, Limits *limits, TimeMana
 
         threads[i].nnueStack[0].accurate[WHITE] = 0;
         threads[i].nnueStack[0].accurate[BLACK] = 0;
+        threads[i].nnuePointer = &threads[i].nnueStack[0];
 
         memset(threads[i].nodeStates, 0, sizeof(NodeState) * STACK_SIZE);
     }

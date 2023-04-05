@@ -481,7 +481,7 @@ int nnue_evaluate(Thread *thread, Board *board) {
     ALIGN64 float outN1[L1SIZE];
     ALIGN64 float outN2[L1SIZE];
 
-    NNUEAccumulator *accum = &thread->nnueStack[thread->height];
+    NNUEAccumulator *accum = thread->nnuePointer;
 
     if (!accum->accurate[WHITE]) {
 

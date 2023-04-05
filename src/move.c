@@ -379,8 +379,6 @@ void applyNullMove(Board *board, Undo *undo) {
     }
 
     board->threats = allAttackedSquares(board, !board->turn);
-
-    nnue_push(board);
 }
 
 
@@ -411,6 +409,9 @@ void revertMove(Board *board, uint16_t move, Undo *undo) {
     board->turn = !board->turn;
     board->numMoves--;
     board->fullMoveCounter--;
+
+    // Update Accumulator pointer
+    nnue_pop(board);
 
     if (MoveType(move) == NORMAL_MOVE) {
 

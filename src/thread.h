@@ -65,7 +65,7 @@ struct Thread {
     int depth, seldepth, height, completed;
 
     NodeState *states, nodeStates[STACK_SIZE];
-    NNUEAccumulator *nnueStack;
+    NNUEAccumulator *nnueStack, *nnuePointer;
     Undo undoStack[STACK_SIZE];
 
     ALIGN64 PKTable pktable;

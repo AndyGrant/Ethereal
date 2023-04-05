@@ -132,13 +132,6 @@ void nnue_update_accumulator(NNUEAccumulator *accum, Board *board, int colour, i
     if (!(accum-1)->accurate[colour])
         nnue_update_accumulator((accum-1), board, colour, relksq);
 
-    // The last move was a NULL move so we can cheat and copy
-    if (!accum->changes) {
-        memcpy(&accum->values[colour], &(accum-1)->values[colour], sizeof(int16_t) * KPSIZE);
-        accum->accurate[colour] = TRUE;
-        return;
-    }
-
     // Determine the features that have changed, by looping through them
     for (NNUEDelta *x = &accum->deltas[0]; x < &accum->deltas[0] + accum->changes; x++) {
 
