@@ -287,7 +287,7 @@ void aspirationWindow(Thread *thread) {
     while (1) {
 
         // Perform a search and consider reporting results
-        pv.score = search(thread, &pv, alpha, beta, MAX(1, depth));
+        pv.score = search(thread, &pv, alpha, beta, MAX(1, depth), FALSE);
         if (   (report && pv.score > alpha && pv.score < beta)
             || (report && elapsed_time(thread->tm) >= WindowTimerMS))
             uciReport(thread->threads, &pv, alpha, beta);
@@ -319,7 +319,7 @@ void aspirationWindow(Thread *thread) {
     }
 }
 
-int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
+int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, bool cutnode) {
 
     Board *const board   = &thread->board;
     NodeState *const ns  = &thread->states[thread->height];
@@ -515,7 +515,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         R = 4 + depth / 6 + MIN(3, (eval - beta) / 200) + (ns-1)->tactical;
 
         apply(thread, board, NULL_MOVE);
-        value = -search(thread, &lpv, -beta, -beta+1, depth-R);
+        value = -search(thread, &lpv, -beta, -beta+1, depth-R, !cutnode);
         revert(thread, board, NULL_MOVE);
 
         // Don't return unproven TB-Wins or Mates
@@ -546,7 +546,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
 
                 // For low depths, or after the above, verify with a reduced search
                 if (depth < 2 * ProbCutDepth || value >= rBeta)
-                    value = -search(thread, &lpv, -rBeta, -rBeta+1, depth-4);
+                    value = -search(thread, &lpv, -rBeta, -rBeta+1, depth-4, !cutnode);
 
                 // Revert the board state
                 revert(thread, board, move);
@@ -561,7 +561,15 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         }
     }
 
-    // Step 11. Initialize the Move Picker and being searching through each
+    // Step 11. Internal Iterative Reductions. Artifically lower the depth on cutnodes
+    // that are high enough up in the search tree that we would expect to have found
+    // a Transposition. This is a modernized approach to Internal Iterative Deepening
+    if (   cutnode
+        && depth >= 7
+        && ttMove == NONE_MOVE)
+        depth -= 1;
+
+    // Step 12. Initialize the Move Picker and being searching through each
     // move one at a time, until we run out or a move generates a cutoff. We
     // reuse an already initialized MovePicker to verify Singular Extension
     if (!ns->excluded) init_picker(&ns->mp, thread, ttMove);
@@ -581,7 +589,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         hist = !isQuiet ? get_capture_history(thread, move)
              : get_quiet_history(thread, move, &cmhist, &fmhist);
 
-        // Step 12 (~80 elo). Late Move Pruning / Move Count Pruning. If we
+        // Step 13 (~80 elo). Late Move Pruning / Move Count Pruning. If we
         // have seen many moves in this position already, and we don't expect
         // anything from this move, we can skip all the remaining quiets
         if (   best > -TBWIN_IN_MAX
@@ -589,7 +597,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
             && movesSeen >= LateMovePruningCounts[improving][depth])
             skipQuiets = 1;
 
-        // Step 13 (~175 elo). Quiet Move Pruning. Prune any quiet move that meets one
+        // Step 14 (~175 elo). Quiet Move Pruning. Prune any quiet move that meets one
         // of the criteria below, only after proving a non mated line exists
         if (isQuiet && best > -TBWIN_IN_MAX) {
 
@@ -597,7 +605,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
             int lmrDepth = MAX(0, depth - LMRTable[MIN(depth, 63)][MIN(played, 63)]);
             int fmpMargin = FutilityMarginBase + lmrDepth * FutilityMarginPerDepth;
 
-            // Step 13A (~3 elo). Futility Pruning. If our score is far below alpha,
+            // Step 14A (~3 elo). Futility Pruning. If our score is far below alpha,
             // and we don't expect anything from this move, we can skip all other quiets
             if (   !inCheck
                 &&  eval + fmpMargin <= alpha
@@ -605,7 +613,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
                 &&  hist < FutilityPruningHistoryLimit[improving])
                 skipQuiets = 1;
 
-            // Step 13B (~2.5 elo). Futility Pruning. If our score is not only far
+            // Step 14B (~2.5 elo). Futility Pruning. If our score is not only far
             // below alpha but still far below alpha after adding the Futility Margin,
             // we can somewhat safely skip all quiet moves after this one
             if (   !inCheck
@@ -613,7 +621,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
                 &&  eval + fmpMargin + FutilityMarginNoHistory <= alpha)
                 skipQuiets = 1;
 
-            // Step 13C (~10 elo). Continuation Pruning. Moves with poor counter
+            // Step 14C (~10 elo). Continuation Pruning. Moves with poor counter
             // or follow-up move history are pruned near the leaf nodes of the search
             if (   ns->mp.stage > STAGE_COUNTER_MOVE
                 && lmrDepth <= ContinuationPruningDepth[improving]
@@ -621,7 +629,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
                 continue;
         }
 
-        // Step 14 (~42 elo). Static Exchange Evaluation Pruning. Prune moves which fail
+        // Step 15 (~42 elo). Static Exchange Evaluation Pruning. Prune moves which fail
         // to beat a depth dependent SEE threshold. The use of the Move Picker's stage
         // is a speedup, which assumes that good noisy moves have a positive SEE
         if (    best > -TBWIN_IN_MAX
@@ -651,15 +659,15 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
                  &&  ttDepth >= depth - 3
                  && (ttBound & BOUND_LOWER);
 
-        // Step 15 (~60 elo). Extensions. Search an additional ply when the move comes from the
+        // Step 16 (~60 elo). Extensions. Search an additional ply when the move comes from the
         // Transposition Table and appears to beat all other moves by a fair margin. Otherwise,
         // extend for any position where our King is checked.
 
-        extension = singular ? singularity(thread, ttMove, ttValue, depth, PvNode, alpha, beta) : inCheck;
+        extension = singular ? singularity(thread, ttMove, ttValue, depth, PvNode, alpha, beta, cutnode) : inCheck;
         newDepth = depth + (!RootNode ? extension : 0);
         if (extension > 1) ns->dextensions++;
 
-        // Step 16. MultiCut. Sometimes candidate Singular moves are shown to be non-Singular.
+        // Step 17. MultiCut. Sometimes candidate Singular moves are shown to be non-Singular.
         // If this happens, and the rBeta used is greater than beta, then we have multiple moves
         // which appear to beat beta at a reduced depth. singularity() sets the stage to STAGE_DONE
 
@@ -668,7 +676,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
 
         if (depth > 2 && played > 1) {
 
-            // Step 17A (~249 elo). Quiet Late Move Reductions. Reduce the search depth
+            // Step 18A (~249 elo). Quiet Late Move Reductions. Reduce the search depth
             // of Quiet moves after we've explored the main line. If a reduced search
             // manages to beat alpha, against our expectations, we perform a research
 
@@ -690,7 +698,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
                 R -= MAX(-2, MIN(2, hist / 5000));
             }
 
-            // Step 17B (~3 elo). Noisy Late Move Reductions. The same as Step 17A, but
+            // Step 18B (~3 elo). Noisy Late Move Reductions. The same as Step 18A, but
             // only applied to Tactical moves, based mostly on the Capture History scores
 
             else {
@@ -706,7 +714,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
             R = MIN(depth - 1, MAX(R, 1));
 
             // Perform reduced depth search on a Null Window
-            value = -search(thread, &lpv, -alpha-1, -alpha, newDepth-R);
+            value = -search(thread, &lpv, -alpha-1, -alpha, newDepth-R, true);
 
             // Abandon searching here if we could not beat alpha
             doFullSearch = value > alpha && R != 1;
@@ -716,11 +724,11 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
 
         // Full depth search on a null window
         if (doFullSearch)
-            value = -search(thread, &lpv, -alpha-1, -alpha, newDepth-1);
+            value = -search(thread, &lpv, -alpha-1, -alpha, newDepth-1, !cutnode);
 
         // Full depth search on a full window for some PvNodes
         if (PvNode && (played == 1 || value > alpha))
-            value = -search(thread, &lpv, -beta, -alpha, newDepth-1);
+            value = -search(thread, &lpv, -beta, -alpha, newDepth-1, FALSE);
 
         // Revert the board state
         revert(thread, board, move);
@@ -732,7 +740,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         if (RootNode && !thread->index)
             thread->tm->nodes[move] += thread->nodes - starting_nodes;
 
-        // Step 18. Update search stats for the best move and its value. Update
+        // Step 19. Update search stats for the best move and its value. Update
         // our lower bound (alpha) if exceeded, and also update the PV in that case
         if (value > best) {
 
@@ -753,7 +761,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
         }
     }
 
-    // Step 19 (~760 elo). Update History counters on a fail high for a quiet move.
+    // Step 20 (~760 elo). Update History counters on a fail high for a quiet move.
     // We also update Capture History Heuristics, which augment or replace MVV-LVA.
 
     if (best >= beta && !moveIsTactical(board, bestMove))
@@ -762,17 +770,17 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth) {
     if (best >= beta)
         update_capture_histories(thread, bestMove, capturesTried, capturesPlayed, depth);
 
-    // Step 20. Stalemate and Checkmate detection. If no moves were found to
+    // Step 21. Stalemate and Checkmate detection. If no moves were found to
     // be legal then we are either mated or stalemated, For mates, return a
     // score based on how far or close the mate is to the root position
     if (played == 0) return inCheck ? -MATE + thread->height : 0;
 
-    // Step 21. When we found a Syzygy entry, don't report a value greater than
+    // Step 22. When we found a Syzygy entry, don't report a value greater than
     // the known bounds. For example, a non-zeroing move could be played, not be
     // held in Syzygy, and then be scored better than the true lost value.
     if (PvNode) best = MAX(syzygyMin, MIN(best, syzygyMax));
 
-    // Step 22. Store results of search into the Transposition Table. We do not overwrite
+    // Step 23. Store results of search into the Transposition Table. We do not overwrite
     // the Root entry from the first line of play we examined. We also don't store into the
     // Transposition Table while attempting to veryify singularities
     if (!ns->excluded && (!RootNode || !thread->multiPV)) {
@@ -994,7 +1002,7 @@ int staticExchangeEvaluation(Board *board, uint16_t move, int threshold) {
     return board->turn != colour;
 }
 
-int singularity(Thread *thread, uint16_t ttMove, int ttValue, int depth, int PvNode, int alpha, int beta) {
+int singularity(Thread *thread, uint16_t ttMove, int ttValue, int depth, int PvNode, int alpha, int beta, bool cutnode) {
 
     Board *const board  = &thread->board;
     NodeState *const ns = &thread->states[thread->height-1];
@@ -1007,7 +1015,7 @@ int singularity(Thread *thread, uint16_t ttMove, int ttValue, int depth, int PvN
 
     // Search on a null rBeta window, excluding the tt-move
     ns->excluded = ttMove;
-    value = search(thread, &lpv, rBeta-1, rBeta, (depth - 1) / 2);
+    value = search(thread, &lpv, rBeta-1, rBeta, (depth - 1) / 2, cutnode);
     ns->excluded = NONE_MOVE;
 
     // We reused the Move Picker, so make sure we cleanup
