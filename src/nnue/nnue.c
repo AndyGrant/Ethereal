@@ -476,12 +476,11 @@ int nnue_evaluate(Thread *thread, Board *board) {
     int wrelksq = relativeSquare(WHITE, getlsb(white & kings));
     int brelksq = relativeSquare(BLACK, getlsb(black & kings));
 
-    // Large enough to handle layer computations
-    ALIGN64 uint8_t out8[L1SIZE];
-    ALIGN64 float outN1[L1SIZE];
-    ALIGN64 float outN2[L1SIZE];
+    NNUEAccumulator *accum = thread->nnue->current;
 
-    NNUEAccumulator *accum = thread->nnuePointer;
+    ALIGN64 uint8_t out8[L1SIZE];
+    ALIGN64 float   outN1[L1SIZE];
+    ALIGN64 float   outN2[L1SIZE];
 
     if (!accum->accurate[WHITE]) {
 
@@ -491,7 +490,7 @@ int nnue_evaluate(Thread *thread, Board *board) {
 
         // History is missing, we must refresh completely
         else
-            nnue_refresh_accumulator(accum, board, WHITE, wrelksq);
+            nnue_refresh_accumulator(thread->nnue, accum, board, WHITE, wrelksq);
     }
 
     if (!accum->accurate[BLACK]) {
@@ -502,14 +501,14 @@ int nnue_evaluate(Thread *thread, Board *board) {
 
         // History is missing, we must refresh completely
         else
-            nnue_refresh_accumulator(accum, board, BLACK, brelksq);
+            nnue_refresh_accumulator(thread->nnue, accum, board, BLACK, brelksq);
     }
 
     // Feed-forward the entire evaluation function
     halfkp_relu(accum, out8, board->turn);
-    quant_affine_relu(l1_weights, l1_biases, out8, outN1);
+    quant_affine_relu(l1_weights, l1_biases, out8,  outN1);
     float_affine_relu(l2_weights, l2_biases, outN1, outN2);
-    output_transform(l3_weights, l3_biases, outN2, outN1);
+    output_transform (l3_weights, l3_biases, outN2, outN1);
 
     // Perform the dequantization step and upscale the Midgame
     mg_eval = 140 * ((int)(outN1[0]) >> SHIFT_L1) / 100;

@@ -50,3 +50,14 @@ typedef struct NNUEAccumulator {
     NNUEDelta deltas[3];
     ALIGN64 int16_t values[COLOUR_NB][KPSIZE];
 } NNUEAccumulator;
+
+typedef struct NNUEAccumulatorTableEntry {
+    NNUEAccumulator accumulator;
+    uint64_t occupancy[COLOUR_NB][COLOUR_NB][PIECE_NB-1];
+} NNUEAccumulatorTableEntry;
+
+typedef struct NNUEEvaluator {
+    NNUEAccumulator stack[MAX_PLY + 4];         // Each ply of search
+    NNUEAccumulator *current;                   // Pointer of the current stack location
+    NNUEAccumulatorTableEntry table[SQUARE_NB]; // Finny table with Accumulators for each square
+} NNUEEvaluator;

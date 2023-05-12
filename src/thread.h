@@ -64,9 +64,10 @@ struct Thread {
     uint64_t nodes, tbhits;
     int depth, seldepth, height, completed;
 
-    NodeState *states, nodeStates[STACK_SIZE];
-    NNUEAccumulator *nnueStack, *nnuePointer;
+    NNUEEvaluator *nnue;
+
     Undo undoStack[STACK_SIZE];
+    NodeState *states, nodeStates[STACK_SIZE];
 
     ALIGN64 PKTable pktable;
     ALIGN64 KillerTable killers;

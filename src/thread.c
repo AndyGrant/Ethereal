@@ -43,13 +43,13 @@ Thread* createThreadPool(int nthreads) {
         for (int j = 0; j < STACK_SIZE; j++)
             threads[i].nodeStates[j].continuations = NULL;
 
-        // Must dynamically allocate for the ALIGNs needed
-        threads[i].nnueStack = nnue_create_accumulators();
-
         // Threads will know of each other
-        threads[i].index = i;
-        threads[i].threads = threads;
+        threads[i].index    = i;
+        threads[i].threads  = threads;
         threads[i].nthreads = nthreads;
+
+        // Accumulator stack and table require alignment
+        threads[i].nnue     = nnue_create_evaluator();
     }
 
     return threads;
@@ -58,7 +58,7 @@ Thread* createThreadPool(int nthreads) {
 void deleteThreadPool(Thread *threads) {
 
     for (int i = 0; i < threads->nthreads; i++)
-        nnue_delete_accumulators(threads[i].nnueStack);
+        nnue_delete_accumulators(threads[i].nnue);
 
     free(threads);
 }
@@ -100,9 +100,10 @@ void newSearchThreadPool(Thread *threads, Board *board, Limits *limits, TimeMana
         memcpy(&threads[i].board, board, sizeof(Board));
         threads[i].board.thread = &threads[i];
 
-        threads[i].nnueStack[0].accurate[WHITE] = 0;
-        threads[i].nnueStack[0].accurate[BLACK] = 0;
-        threads[i].nnuePointer = &threads[i].nnueStack[0];
+        // Reset the accumulator stack. The table can remain
+        threads[i].nnue->current = &threads[i].nnue->stack[0];
+        threads[i].nnue->current->accurate[WHITE] = 0;
+        threads[i].nnue->current->accurate[BLACK] = 0;
 
         memset(threads[i].nodeStates, 0, sizeof(NodeState) * STACK_SIZE);
     }

@@ -30,16 +30,13 @@
 #include "../thread.h"
 #include "../types.h"
 
-extern ALIGN64 int16_t in_weights[INSIZE * KPSIZE];
-extern ALIGN64 int16_t in_biases[KPSIZE];
-
 
 static int sq64_to_sq32(int sq) {
     static const int Mirror[] = { 3, 2, 1, 0, 0, 1, 2, 3 };
     return ((sq >> 1) & ~0x3) + Mirror[sq & 0x7];
 }
 
-static int nnue_index_delta(int piece, int relksq, int colour, int sq) {
+static int nnue_index(int piece, int relksq, int colour, int sq) {
 
     const int ptype   = pieceType(piece);
     const int pcolour = pieceColour(piece);
@@ -51,15 +48,10 @@ static int nnue_index_delta(int piece, int relksq, int colour, int sq) {
     return 640 * sq64_to_sq32(mksq) + (64 * (5 * (colour == pcolour) + ptype)) + mpsq;
 }
 
-static int nnue_index(Board *board, int relksq, int colour, int sq) {
-    return nnue_index_delta(board->squares[sq], relksq, colour, sq);
-}
-
-
 int nnue_can_update(NNUEAccumulator *accum, Board *board, int colour) {
 
     // Search back through the tree to find an accurate accum
-    while (accum != board->thread->nnueStack) {
+    while (accum != board->thread->nnue->stack) {
 
         // A King move prevents the entire tree from being updated
         if (   accum->changes
@@ -75,51 +67,6 @@ int nnue_can_update(NNUEAccumulator *accum, Board *board, int colour) {
     }
 
     return FALSE;
-}
-
-void nnue_refresh_accumulator(NNUEAccumulator *accum, Board *board, int colour, int relsq) {
-
-    const uint64_t white = board->colours[WHITE];
-    const uint64_t black = board->colours[BLACK];
-    const uint64_t kings = board->pieces[KING];
-
-    int indices[32], count = 0;
-    uint64_t pieces = (white | black) & ~kings;
-    vepi16 *biases, *outputs, *weights, registers[NUM_REGS];
-
-    // Compute the list of indices just once, to then be used multiple
-    // times while updating the accumulator using a tiling method
-
-    while (pieces) {
-        const int sq = poplsb(&pieces);
-        indices[count++] = nnue_index(board, relsq, colour, sq);
-    }
-
-    // Refresh completely, using all pieces as inputs except the Kings
-    // We do this by tiling over the accumulator, to get the compiler to
-    // produce more optimal code that does not emit extra move instructions
-
-    for (int offset = 0; offset < KPSIZE; offset += NUM_REGS * vepi16_cnt) {
-
-        biases  = (vepi16*) &in_biases[offset];
-        outputs = (vepi16*) &accum->values[colour][offset];
-
-        for (int i = 0; i < NUM_REGS; i++)
-            registers[i] = biases[i];
-
-        for (int i = 0; i < count; i++) {
-
-            weights = (vepi16*) &in_weights[indices[i] * KPSIZE + offset];
-
-            for (int j = 0; j < NUM_REGS; j++)
-                registers[j] = vepi16_add(registers[j], weights[j]);
-        }
-
-        for (int i = 0; i < NUM_REGS; i++)
-            outputs[i] = registers[i];
-    }
-
-    accum->accurate[colour] = TRUE;
 }
 
 void nnue_update_accumulator(NNUEAccumulator *accum, Board *board, int colour, int relksq) {
@@ -141,11 +88,11 @@ void nnue_update_accumulator(NNUEAccumulator *accum, Board *board, int colour, i
 
         // Moving or placing a Piece to a Square
         if (x->to != SQUARE_NB)
-            add_list[add++] = nnue_index_delta(x->piece, relksq, colour, x->to);
+            add_list[add++] = nnue_index(x->piece, relksq, colour, x->to);
 
         // Moving or deleting a Piece from a Square
         if (x->from != SQUARE_NB)
-            remove_list[remove++] = nnue_index_delta(x->piece, relksq, colour, x->from);
+            remove_list[remove++] = nnue_index(x->piece, relksq, colour, x->from);
     }
 
     for (int offset = 0; offset < KPSIZE; offset += NUM_REGS * vepi16_cnt) {
@@ -178,4 +125,62 @@ void nnue_update_accumulator(NNUEAccumulator *accum, Board *board, int colour, i
 
     accum->accurate[colour] = TRUE;
     return;
+}
+
+void nnue_refresh_accumulator(NNUEEvaluator *nnue, NNUEAccumulator *accum, Board *board, int colour, int relsq) {
+
+    vepi16 *outputs, *weights, registers[NUM_REGS];
+    const int ksq = getlsb(board->pieces[KING] & board->colours[colour]);
+    NNUEAccumulatorTableEntry *entry = &nnue->table[ksq];
+
+    int set_indexes[32], set_count = 0;
+    int unset_indexes[32], unset_count = 0;
+
+    for (int c = WHITE; c <= BLACK; c++) {
+
+        for (int pt = PAWN; pt <= QUEEN; pt++) {
+
+            uint64_t pieces   = board->pieces[pt] & board->colours[c];
+            uint64_t to_set   = pieces & ~entry->occupancy[colour][c][pt];
+            uint64_t to_unset = entry->occupancy[colour][c][pt] & ~pieces;
+
+            while (to_set)
+                set_indexes[set_count++] = nnue_index(makePiece(pt, c), relsq, colour, poplsb(&to_set));
+
+            while (to_unset)
+                unset_indexes[unset_count++] = nnue_index(makePiece(pt, c), relsq, colour, poplsb(&to_unset));
+
+            entry->occupancy[colour][c][pt] = pieces;
+        }
+    }
+
+    for (int offset = 0; offset < KPSIZE; offset += NUM_REGS * vepi16_cnt) {
+
+        outputs = (vepi16*) &entry->accumulator.values[colour][offset];
+
+        for (int i = 0; i < NUM_REGS; i++)
+            registers[i] = outputs[i];
+
+        for (int i = 0; i < set_count; i++) {
+
+            weights = (vepi16*) &in_weights[set_indexes[i] * KPSIZE + offset];
+
+            for (int j = 0; j < NUM_REGS; j++)
+                registers[j] = vepi16_add(registers[j], weights[j]);
+        }
+
+        for (int i = 0; i < unset_count; i++) {
+
+            weights = (vepi16*) &in_weights[unset_indexes[i] * KPSIZE + offset];
+
+            for (int j = 0; j < NUM_REGS; j++)
+                registers[j] = vepi16_sub(registers[j], weights[j]);
+        }
+
+        for (int i = 0; i < NUM_REGS; i++)
+            outputs[i] = registers[i];
+    }
+
+    memcpy(accum->values[colour], entry->accumulator.values[colour], sizeof(int16_t) * KPSIZE);
+    accum->accurate[colour] = TRUE;
 }

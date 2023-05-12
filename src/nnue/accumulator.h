@@ -27,22 +27,34 @@
 #include "../thread.h"
 #include "../types.h"
 
-INLINE NNUEAccumulator* nnue_create_accumulators() {
-    return align_malloc(sizeof(NNUEAccumulator) * (MAX_PLY + 4));
+extern ALIGN64 int16_t in_weights[INSIZE * KPSIZE];
+extern ALIGN64 int16_t in_biases[KPSIZE];
+
+INLINE NNUEEvaluator* nnue_create_evaluator() {
+
+    NNUEEvaluator* nnue = align_malloc(sizeof(NNUEEvaluator));
+
+    for (size_t i = 0; i < SQUARE_NB; i++) {
+        memset(nnue->table[i].occupancy, 0, sizeof(nnue->table[i].occupancy));
+        memcpy(nnue->table[i].accumulator.values[WHITE], in_biases, sizeof(int16_t) * KPSIZE);
+        memcpy(nnue->table[i].accumulator.values[BLACK], in_biases, sizeof(int16_t) * KPSIZE);
+    }
+
+    return nnue;
 }
 
-INLINE void nnue_delete_accumulators(NNUEAccumulator* ptr) {
+INLINE void nnue_delete_accumulators(NNUEEvaluator* ptr) {
     align_free(ptr);
 }
 
 INLINE void nnue_pop(Board *board) {
     if (USE_NNUE && board->thread != NULL)
-        --board->thread->nnuePointer;
+        --board->thread->nnue->current;
 }
 
 INLINE void nnue_push(Board *board) {
     if (USE_NNUE && board->thread != NULL) {
-        NNUEAccumulator *accum = ++board->thread->nnuePointer;
+        NNUEAccumulator *accum = ++board->thread->nnue->current;
         accum->accurate[WHITE] = accum->accurate[BLACK] = FALSE;
         accum->changes = 0;
     }
@@ -50,7 +62,7 @@ INLINE void nnue_push(Board *board) {
 
 INLINE void nnue_move_piece(Board *board, int piece, int from, int to) {
     if (USE_NNUE && board->thread != NULL) {
-        NNUEAccumulator *accum = board->thread->nnuePointer;
+        NNUEAccumulator *accum = board->thread->nnue->current;
         accum->deltas[accum->changes++] = (NNUEDelta) { piece, from, to };
     }
 }
@@ -65,5 +77,5 @@ INLINE void nnue_remove_piece(Board *board, int piece, int sq) {
 }
 
 int nnue_can_update(NNUEAccumulator *accum, Board *board, int colour);
-void nnue_refresh_accumulator(NNUEAccumulator *accum, Board *board, int colour, int relksq);
 void nnue_update_accumulator(NNUEAccumulator *accum, Board *board, int colour, int relksq);
+void nnue_refresh_accumulator(NNUEEvaluator *nnue, NNUEAccumulator *accum, Board *board, int colour, int relksq);
