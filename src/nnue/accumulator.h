@@ -34,11 +34,15 @@ INLINE NNUEEvaluator* nnue_create_evaluator() {
 
     NNUEEvaluator* nnue = align_malloc(sizeof(NNUEEvaluator));
 
+    #if USE_NNUE
+
     for (size_t i = 0; i < SQUARE_NB; i++) {
         memset(nnue->table[i].occupancy, 0, sizeof(nnue->table[i].occupancy));
         memcpy(nnue->table[i].accumulator.values[WHITE], in_biases, sizeof(int16_t) * KPSIZE);
         memcpy(nnue->table[i].accumulator.values[BLACK], in_biases, sizeof(int16_t) * KPSIZE);
     }
+
+    #endif
 
     return nnue;
 }
