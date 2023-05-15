@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
     // Initialize core components of Ethereal
     initAttacks(); initMasks(); initEval();
     initSearch(); initZobrist(); tt_init(1, 16);
-    initPKNetwork(&PKNN); nnue_incbin_init();
+    initPKNetwork(); nnue_incbin_init();
 
     // Create the UCI-board and our threads
     threads = createThreadPool(1);

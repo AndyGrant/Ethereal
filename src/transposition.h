@@ -87,9 +87,8 @@ int tt_hashfull();
 bool tt_probe(uint64_t hash, int height, uint16_t *move, int *value, int *eval, int *depth, int *bound);
 void tt_store(uint64_t hash, int height, uint16_t move, int value, int eval, int depth, int bound);
 
-
 struct TTClear { int index, count; };
-void tt_clear();
+void tt_clear(int nthreads);
 void *tt_clear_threaded(void *cargo);
 
 /// The Pawn King table contains saved evaluations, and additional Pawn information
