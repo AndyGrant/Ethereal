@@ -784,8 +784,9 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, bool 
     // the Root entry from the first line of play we examined. We also don't store into the
     // Transposition Table while attempting to veryify singularities
     if (!ns->excluded && (!RootNode || !thread->multiPV)) {
-        ttBound = best >= beta    ? BOUND_LOWER
-                : best > oldAlpha ? BOUND_EXACT : BOUND_UPPER;
+        ttBound  = best >= beta    ? BOUND_LOWER
+                 : best > oldAlpha ? BOUND_EXACT : BOUND_UPPER;
+        bestMove = ttBound == BOUND_UPPER ? NONE_MOVE : bestMove;
         tt_store(board->hash, thread->height, bestMove, best, eval, depth, ttBound);
     }
 

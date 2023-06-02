@@ -154,12 +154,15 @@ void tt_store(uint64_t hash, int height, uint16_t move, int value, int eval, int
         && depth < replace->depth - 2)
         return;
 
+    // Don't overwrite a move if we don't have a new one
+    if (move || hash16 != replace->hash16)
+        replace->move = (uint16_t) move;
+
     // Finally, copy the new data into the replaced slot
     replace->depth      = (int8_t  ) depth;
     replace->generation = (uint8_t ) bound | Table.generation;
     replace->value      = (int16_t ) tt_value_to(value, height);
     replace->eval       = (int16_t ) eval;
-    replace->move       = (uint16_t) move;
     replace->hash16     = (uint16_t) hash16;
 }
 
