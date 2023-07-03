@@ -18,12 +18,15 @@
 
 #pragma once
 
+#include <stdbool.h>
+
 #include "types.h"
 
 enum { PGN_LOSS, PGN_DRAW, PGN_WIN, PGN_NO_RESULT, PGN_UNKNOWN_RESULT };
 
 typedef struct PGNData {
     char *startpos;
+    bool is_white, is_black;
     int result, plies;
     char buffer[65536];
 } PGNData;

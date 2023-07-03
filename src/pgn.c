@@ -291,7 +291,13 @@ static bool pgn_read_headers(FILE *pgn, PGNData *data) {
     if (fgets(data->buffer, 65536, pgn) == NULL)
         return false;
 
-    if (strstr(data->buffer, "[Result \"0-1\"]") == data->buffer)
+    if (strstr(data->buffer, "[White \"Ethereal") == data->buffer)
+        data->is_white = true;
+
+    else if (strstr(data->buffer, "[Black \"Ethereal") == data->buffer)
+        data->is_black = true;
+
+    else if (strstr(data->buffer, "[Result \"0-1\"]") == data->buffer)
         data->result = PGN_LOSS;
 
     else if (strstr(data->buffer, "[Result \"1/2-1/2\"]") == data->buffer)
@@ -342,7 +348,8 @@ static void pgn_read_moves(FILE *pgn, FILE *bindata, PGNData *data, HalfKPSample
         // Use the sample if it is quiet and within [-2000, 2000] cp
         if (    abs(eval) <= 2000
             && !board->kingAttackers
-            && !moveIsTactical(board, move))
+            && !moveIsTactical(board, move)
+            && (board->turn == WHITE ? data->is_white : data->is_black))
             build_halfkp_sample(board, &samples[placed++], data->result, eval);
 
         // Skip head to the end of this comment to prepare for the next Move
@@ -362,6 +369,8 @@ static bool process_next_pgn(FILE *pgn, FILE *bindata, PGNData *data, HalfKPSamp
 
     // Clear the current PGN to the blank state
     data->startpos = NULL;
+    data->is_white = false;
+    data->is_black = false;
     data->result   = PGN_NO_RESULT;
     data->plies    = 0;
 
@@ -374,6 +383,10 @@ static bool process_next_pgn(FILE *pgn, FILE *bindata, PGNData *data, HalfKPSamp
 
     // Init the board, let Ethereal determine FRC
     boardFromFEN(board, data->startpos, 0);
+
+    // Use all positions if neither matched Ethereal
+    if (!data->is_white && !data->is_black)
+        data->is_white = data->is_black = true;
 
     // Read Result & Fen and skip to Moves
     pgn_read_moves(pgn, bindata, data, samples, board);
