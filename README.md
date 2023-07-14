@@ -1,3 +1,5 @@
+With the introduction of NNUE, the cost of training networks and competing with top engines, while still making an original effort, has gone up significantly. As a result, Ethereal moved to being commercial with the release of NNUE, a move which was met by support from the community, in order to ensure I could continue to work on the project. To purchase a copy of Ethereal, you can head to [the official webpage](http://chess.grantnet.us/Ethereal), to read more.
+
 # Ethereal
 
 Ethereal is a UCI-compliant chess engine operating under the alpha-beta framework, paired with a Neural Network for positional evaluations. Ethereal is inspired by a number of open source projects and aims to serve as both a high-end engine and reference for other authors. The project strives to keep the source and its ideas, however complex, clean and digestible. To read more about some of the techniques used in Ethereal, see [Ethereal's Chess Programming Wiki Page](https://www.chessprogramming.org/Ethereal)
