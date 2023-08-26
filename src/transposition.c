@@ -137,7 +137,7 @@ void tt_store(uint64_t hash, int height, uint16_t move, int value, int eval, int
     TTEntry *slots = Table.buckets[hash & Table.hashMask].slots;
     TTEntry *replace = slots; // &slots[0]
 
-    // Find a matching hash, or replace using MAX(x1, x2, x3),
+    // Find a matching hash, or replace using MIN(x1, x2, x3),
     // where xN equals the depth minus 4 times the age difference
     for (i = 0; i < TT_BUCKET_NB && slots[i].hash16 != hash16; i++)
         if (   replace->depth - ((259 + Table.generation - replace->generation) & TT_MASK_AGE)
