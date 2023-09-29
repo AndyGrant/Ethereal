@@ -37,6 +37,12 @@
 #include "nnue/accumulator.h"
 #include "nnue/types.h"
 
+#if 1
+    #define TUNEABLE
+#endif
+
+extern TUNEABLE int SEEPieceValues[];
+
 static void updateCastleZobrist(Board *board, uint64_t oldRooks, uint64_t newRooks) {
     uint64_t diff = oldRooks ^ newRooks;
     while (diff)

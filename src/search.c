@@ -45,6 +45,75 @@
 #include "uci.h"
 #include "windows.h"
 
+
+#if 1
+    #define TUNEABLE
+#endif
+
+extern TUNEABLE float LMRBase;
+extern TUNEABLE float LMRDivisor;
+
+extern TUNEABLE float LMPNonImpBase;
+extern TUNEABLE float LMRNonImpFactor;
+extern TUNEABLE float LMPImpBase;
+extern TUNEABLE float LMRImpFactor;
+
+extern TUNEABLE int LMPDepth;
+
+extern TUNEABLE int WindowDepth;
+extern TUNEABLE int WindowSize;
+extern TUNEABLE int WindowTimerMS;
+
+extern TUNEABLE int CurrmoveTimerMS;
+
+extern TUNEABLE int TTResearchMargin;
+
+extern TUNEABLE int BetaPruningDepth;
+extern TUNEABLE int BetaMargin;
+
+extern TUNEABLE int AlphaPruningDepth;
+extern TUNEABLE int AlphaMargin;
+
+extern TUNEABLE int NullMovePruningDepth;
+extern TUNEABLE int NMPBase;
+extern TUNEABLE int NMPDepthDivisor;
+extern TUNEABLE int NMPEvalCap;
+extern TUNEABLE int NMPEvalDivisor ;
+
+extern TUNEABLE int ProbCutDepth;
+extern TUNEABLE int ProbCutMargin;
+
+extern TUNEABLE int IIRDepth;
+
+extern TUNEABLE int SingularDepth;
+extern TUNEABLE int SingularTTDepth;
+extern TUNEABLE int SingularDoubleMargin;
+
+extern TUNEABLE int FutilityPruningDepth;
+extern TUNEABLE int FutilityMarginBase;
+extern TUNEABLE int FutilityMarginPerDepth;
+extern TUNEABLE int FutilityMarginNoHistory;
+extern TUNEABLE int FutilityPruningHistoryLimit[2];
+
+extern TUNEABLE int ContinuationPruningDepth[2];
+extern TUNEABLE int ContinuationPruningHistoryLimit[2];
+
+extern TUNEABLE int LateMovePruningDepth;
+
+extern TUNEABLE int LMRHistoryCap;
+extern TUNEABLE int LMRHistoryDivisor;
+extern TUNEABLE int LMRCaptureHistoryDivisor;
+extern TUNEABLE int LMRCaptureBase;
+
+extern TUNEABLE int SEEPruningDepth;
+extern TUNEABLE int SEEQuietMargin;
+extern TUNEABLE int SEENoisyMargin;
+extern TUNEABLE int SEEPieceValues[];
+
+extern TUNEABLE int QSSeeMargin;
+extern TUNEABLE int QSDeltaMargin;
+
+
 int LMRTable[64][64];
 int LateMovePruningCounts[2][9];
 
@@ -152,11 +221,11 @@ void initSearch() {
     // Init Late Move Reductions Table
     for (int depth = 1; depth < 64; depth++)
         for (int played = 1; played < 64; played++)
-            LMRTable[depth][played] = 0.75 + log(depth) * log(played) / 2.25;
+            LMRTable[depth][played] = LMRBase + log(depth) * log(played) / LMRDivisor;
 
-    for (int depth = 1; depth < 9; depth++) {
-        LateMovePruningCounts[0][depth] = 2.5 + 2 * depth * depth / 4.5;
-        LateMovePruningCounts[1][depth] = 4.0 + 4 * depth * depth / 4.5;
+    for (int depth = 1; depth <= LMPDepth; depth++) {
+        LateMovePruningCounts[0][depth] = LMPNonImpBase + LMRNonImpFactor * depth * depth;
+        LateMovePruningCounts[1][depth] = LMPImpBase    + LMRImpFactor    * depth * depth;
     }
 }
 
@@ -515,7 +584,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, bool 
         && (!ttHit || !(ttBound & BOUND_UPPER) || ttValue >= beta)) {
 
         // Dynamic R based on Depth, Eval, and Tactical state
-        R = 4 + depth / 6 + MIN(3, (eval - beta) / 200) + (ns-1)->tactical;
+        R = NMPBase + depth / NMPDepthDivisor + MIN(NMPEvalCap, (eval - beta) / NMPEvalDivisor) + (ns-1)->tactical;
 
         apply(thread, board, NULL_MOVE);
         value = -search(thread, &lpv, -beta, -beta+1, depth-R, !cutnode);
@@ -568,7 +637,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, bool 
     // that are high enough up in the search tree that we would expect to have found
     // a Transposition. This is a modernized approach to Internal Iterative Deepening
     if (   cutnode
-        && depth >= 7
+        && depth >= IIRDepth
         && ttMove == NONE_MOVE)
         depth -= 1;
 
@@ -657,9 +726,9 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, bool 
 
         // Identify moves which are candidate singular moves
         singular =  !RootNode
-                 &&  depth >= 8
+                 &&  depth >= SingularDepth
                  &&  move == ttMove
-                 &&  ttDepth >= depth - 3
+                 &&  ttDepth >= depth - SingularTTDepth
                  && (ttBound & BOUND_LOWER);
 
         // Step 16 (~60 elo). Extensions. Search an additional ply when the move comes from the
@@ -698,7 +767,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, bool 
                 R -= ns->mp.stage < STAGE_QUIET;
 
                 // Adjust based on history scores
-                R -= MAX(-2, MIN(2, hist / 5000));
+                R -= MAX(-LMRHistoryCap, MIN(LMRHistoryCap, hist / LMRHistoryDivisor));
             }
 
             // Step 18B (~3 elo). Noisy Late Move Reductions. The same as Step 18A, but
@@ -707,7 +776,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, bool 
             else {
 
                 // Initialize R based on Capture History
-                R = 2 - (hist / 5000);
+                R = LMRCaptureBase - (hist / LMRCaptureHistoryDivisor);
 
                 // Reduce for moves that give check
                 R -= !!board->kingAttackers;
@@ -1033,7 +1102,7 @@ int singularity(Thread *thread, uint16_t ttMove, int ttValue, int depth, int PvN
     else applyLegal(thread, board, ttMove);
 
     bool double_extend = !PvNode
-                      &&  value < rBeta - 15
+                      &&  value < rBeta - SingularDoubleMargin
                       && (ns-1)->dextensions <= 6;
 
     return double_extend    ?  2 // Double extension in some non-pv nodes

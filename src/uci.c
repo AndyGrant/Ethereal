@@ -42,6 +42,76 @@
 #include "uci.h"
 #include "zobrist.h"
 
+
+#if 1
+    #define TUNEABLE
+#endif
+
+TUNEABLE float LMRBase    = 0.75;
+TUNEABLE float LMRDivisor = 2.25;
+
+TUNEABLE float LMPNonImpBase   = 2.50;
+TUNEABLE float LMRNonImpFactor = 2 / 4.5;
+TUNEABLE float LMPImpBase      = 4.00;
+TUNEABLE float LMRImpFactor    = 4 / 4.5;
+
+TUNEABLE int LMPDepth = 8;
+
+TUNEABLE int WindowDepth   = 5;
+TUNEABLE int WindowSize    = 10;
+TUNEABLE int WindowTimerMS = 2500;
+
+TUNEABLE int CurrmoveTimerMS = 2500;
+
+TUNEABLE int TTResearchMargin = 128;
+
+TUNEABLE int BetaPruningDepth = 8;
+TUNEABLE int BetaMargin = 75;
+
+TUNEABLE int AlphaPruningDepth = 5;
+TUNEABLE int AlphaMargin = 3000;
+
+TUNEABLE int NullMovePruningDepth = 2;
+TUNEABLE int NMPBase              = 4;
+TUNEABLE int NMPDepthDivisor      = 6;
+TUNEABLE int NMPEvalCap           = 3;
+TUNEABLE int NMPEvalDivisor       = 200;
+
+TUNEABLE int ProbCutDepth = 5;
+TUNEABLE int ProbCutMargin = 100;
+
+TUNEABLE int IIRDepth = 7;
+
+TUNEABLE int SingularDepth = 8;
+TUNEABLE int SingularTTDepth = 3;
+TUNEABLE int SingularDoubleMargin = 15;
+
+TUNEABLE int FutilityPruningDepth = 8;
+TUNEABLE int FutilityMarginBase = 92;
+TUNEABLE int FutilityMarginPerDepth = 59;
+TUNEABLE int FutilityMarginNoHistory = 158;
+TUNEABLE int FutilityPruningHistoryLimit[] = { 12000, 6000 };
+
+TUNEABLE int ContinuationPruningDepth[] = { 3, 2 };
+TUNEABLE int ContinuationPruningHistoryLimit[] = { -1000, -2500 };
+
+TUNEABLE int LateMovePruningDepth = 8;
+
+TUNEABLE int LMRHistoryCap = 2;
+TUNEABLE int LMRHistoryDivisor = 5000;
+TUNEABLE int LMRCaptureHistoryDivisor = 5000;
+TUNEABLE int LMRCaptureBase = 2;
+
+TUNEABLE int SEEPruningDepth = 9;
+TUNEABLE int SEEQuietMargin = -64;
+TUNEABLE int SEENoisyMargin = -19;
+TUNEABLE int SEEPieceValues[] = { 100,  450,  450,  675, 1300,    0,    0,    0 };
+
+TUNEABLE int QSSeeMargin = 110;
+TUNEABLE int QSDeltaMargin = 150;
+
+
+
 extern int MoveOverhead;          // Defined by time.c
 extern unsigned TB_PROBE_DEPTH;   // Defined by syzygy.c
 extern volatile int ABORT_SIGNAL; // Defined by search.c
