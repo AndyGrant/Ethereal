@@ -115,7 +115,7 @@ extern TUNEABLE int QSDeltaMargin;
 
 
 int LMRTable[64][64];
-int LateMovePruningCounts[2][9];
+int LateMovePruningCounts[2][20];
 
 volatile int ABORT_SIGNAL; // Global ABORT flag for threads
 volatile int IS_PONDERING; // Global PONDER flag for threads

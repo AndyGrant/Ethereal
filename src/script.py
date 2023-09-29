@@ -63,7 +63,20 @@ def generate_set_option(name, index, dtype):
         '}\n'
     ])
 
+def generate_spsa_input(name, index, dtype, value):
+
+    real_name2 = name if index == None else '%s_%d' % (name, index)
+    type_str = 'int' if dtype == int else 'float'
+
+    c = max(0.5, value / 10) if dtype == int else value / 10
+
+    return ', '.join([real_name2, type_str, str(value), '-32000', '32000', str(c), '0.002'])
+
+
 uci_prompts = []
+set_options = []
+spsa_inputs = []
+
 
 for line in parameters:
 
@@ -74,18 +87,24 @@ for line in parameters:
     if not is_array:
         value = dtype(line.split('=')[1].rstrip(';'))
         uci_prompts.append(generate_uci_prompt(name, value))
-
-        print (generate_set_option(name, None, dtype))
+        set_options.append(generate_set_option(name, None, dtype))
+        spsa_inputs.append(generate_spsa_input(name, None, dtype, value))
 
     else:
         for idx, value in enumerate(map(dtype, line.rstrip(' ;}').split('{')[1].split(','))):
             uci_prompts.append(generate_uci_prompt('%s_%d' % (name, idx), value))
-            print (generate_set_option(name, idx, dtype))
+            set_options.append(generate_set_option(name, idx, dtype))
+            spsa_inputs.append(generate_spsa_input(name, idx, dtype, value))
 
 
 for prompt in uci_prompts:
     print (prompt)
 
+for option in set_options:
+    print (option)
+
+for spsa in spsa_inputs:
+    print (spsa)
 
 
 
