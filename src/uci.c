@@ -176,6 +176,63 @@ int main(int argc, char **argv) {
             printf("option name Ponder type check default false\n");
             printf("option name AnalysisMode type check default false\n");
             printf("option name UCI_Chess960 type check default false\n");
+
+            printf("option name LMRBase type string default 0.75\n");
+            printf("option name LMRDivisor type string default 2.25\n");
+            printf("option name LMPNonImpBase type string default 2.5\n");
+            printf("option name LMRNonImpFactor type string default 0.444\n");
+            printf("option name LMPImpBase type string default 4.0\n");
+            printf("option name LMRImpFactor type string default 0.888\n");
+            printf("option name LMPDepth type string default 8\n");
+            printf("option name WindowDepth type string default 5\n");
+            printf("option name WindowSize type string default 10\n");
+            printf("option name WindowTimerMS type string default 2500\n");
+            printf("option name CurrmoveTimerMS type string default 2500\n");
+            printf("option name TTResearchMargin type string default 128\n");
+            printf("option name BetaPruningDepth type string default 8\n");
+            printf("option name BetaMargin type string default 75\n");
+            printf("option name AlphaPruningDepth type string default 5\n");
+            printf("option name AlphaMargin type string default 3000\n");
+            printf("option name NullMovePruningDepth type string default 2\n");
+            printf("option name NMPBase type string default 4\n");
+            printf("option name NMPDepthDivisor type string default 6\n");
+            printf("option name NMPEvalCap type string default 3\n");
+            printf("option name NMPEvalDivisor type string default 200\n");
+            printf("option name ProbCutDepth type string default 5\n");
+            printf("option name ProbCutMargin type string default 100\n");
+            printf("option name IIRDepth type string default 7\n");
+            printf("option name SingularDepth type string default 8\n");
+            printf("option name SingularTTDepth type string default 3\n");
+            printf("option name SingularDoubleMargin type string default 15\n");
+            printf("option name FutilityPruningDepth type string default 8\n");
+            printf("option name FutilityMarginBase type string default 92\n");
+            printf("option name FutilityMarginPerDepth type string default 59\n");
+            printf("option name FutilityMarginNoHistory type string default 158\n");
+            printf("option name FutilityPruningHistoryLimit_0 type string default 12000\n");
+            printf("option name FutilityPruningHistoryLimit_1 type string default 6000\n");
+            printf("option name ContinuationPruningDepth_0 type string default 3\n");
+            printf("option name ContinuationPruningDepth_1 type string default 2\n");
+            printf("option name ContinuationPruningHistoryLimit_0 type string default -1000\n");
+            printf("option name ContinuationPruningHistoryLimit_1 type string default -2500\n");
+            printf("option name LateMovePruningDepth type string default 8\n");
+            printf("option name LMRHistoryCap type string default 2\n");
+            printf("option name LMRHistoryDivisor type string default 5000\n");
+            printf("option name LMRCaptureHistoryDivisor type string default 5000\n");
+            printf("option name LMRCaptureBase type string default 2\n");
+            printf("option name SEEPruningDepth type string default 9\n");
+            printf("option name SEEQuietMargin type string default -64\n");
+            printf("option name SEENoisyMargin type string default -19\n");
+            printf("option name SEEPieceValues_0 type string default 100\n");
+            printf("option name SEEPieceValues_1 type string default 450\n");
+            printf("option name SEEPieceValues_2 type string default 450\n");
+            printf("option name SEEPieceValues_3 type string default 675\n");
+            printf("option name SEEPieceValues_4 type string default 1300\n");
+            printf("option name SEEPieceValues_5 type string default 0\n");
+            printf("option name SEEPieceValues_6 type string default 0\n");
+            printf("option name SEEPieceValues_7 type string default 0\n");
+            printf("option name QSSeeMargin type string default 110\n");
+            printf("option name QSDeltaMargin type string default 150\n");
+
             printf("info string licensed to " LICENSE_OWNER "\n");
             printf("uciok\n"), fflush(stdout);
         }
@@ -345,7 +402,284 @@ void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960) {
             printf("info string set UCI_Chess960 to false\n"), *chess960 = 0;
     }
 
+    if (strStartsWith(str, "setoption name LMRBase value ")) {
+        char *ptr = str + strlen("setoption name LMRBase value ");
+        LMRBase = atof(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name LMRDivisor value ")) {
+        char *ptr = str + strlen("setoption name LMRDivisor value ");
+        LMRDivisor = atof(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name LMPNonImpBase value ")) {
+        char *ptr = str + strlen("setoption name LMPNonImpBase value ");
+        LMPNonImpBase = atof(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name LMRNonImpFactor value ")) {
+        char *ptr = str + strlen("setoption name LMRNonImpFactor value ");
+        LMRNonImpFactor = atof(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name LMPImpBase value ")) {
+        char *ptr = str + strlen("setoption name LMPImpBase value ");
+        LMPImpBase = atof(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name LMRImpFactor value ")) {
+        char *ptr = str + strlen("setoption name LMRImpFactor value ");
+        LMRImpFactor = atof(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name LMPDepth value ")) {
+        char *ptr = str + strlen("setoption name LMPDepth value ");
+        LMPDepth = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name WindowDepth value ")) {
+        char *ptr = str + strlen("setoption name WindowDepth value ");
+        WindowDepth = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name WindowSize value ")) {
+        char *ptr = str + strlen("setoption name WindowSize value ");
+        WindowSize = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name WindowTimerMS value ")) {
+        char *ptr = str + strlen("setoption name WindowTimerMS value ");
+        WindowTimerMS = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name CurrmoveTimerMS value ")) {
+        char *ptr = str + strlen("setoption name CurrmoveTimerMS value ");
+        CurrmoveTimerMS = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name TTResearchMargin value ")) {
+        char *ptr = str + strlen("setoption name TTResearchMargin value ");
+        TTResearchMargin = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name BetaPruningDepth value ")) {
+        char *ptr = str + strlen("setoption name BetaPruningDepth value ");
+        BetaPruningDepth = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name BetaMargin value ")) {
+        char *ptr = str + strlen("setoption name BetaMargin value ");
+        BetaMargin = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name AlphaPruningDepth value ")) {
+        char *ptr = str + strlen("setoption name AlphaPruningDepth value ");
+        AlphaPruningDepth = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name AlphaMargin value ")) {
+        char *ptr = str + strlen("setoption name AlphaMargin value ");
+        AlphaMargin = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name NullMovePruningDepth value ")) {
+        char *ptr = str + strlen("setoption name NullMovePruningDepth value ");
+        NullMovePruningDepth = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name NMPBase value ")) {
+        char *ptr = str + strlen("setoption name NMPBase value ");
+        NMPBase = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name NMPDepthDivisor value ")) {
+        char *ptr = str + strlen("setoption name NMPDepthDivisor value ");
+        NMPDepthDivisor = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name NMPEvalCap value ")) {
+        char *ptr = str + strlen("setoption name NMPEvalCap value ");
+        NMPEvalCap = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name NMPEvalDivisor value ")) {
+        char *ptr = str + strlen("setoption name NMPEvalDivisor value ");
+        NMPEvalDivisor = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name ProbCutDepth value ")) {
+        char *ptr = str + strlen("setoption name ProbCutDepth value ");
+        ProbCutDepth = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name ProbCutMargin value ")) {
+        char *ptr = str + strlen("setoption name ProbCutMargin value ");
+        ProbCutMargin = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name IIRDepth value ")) {
+        char *ptr = str + strlen("setoption name IIRDepth value ");
+        IIRDepth = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name SingularDepth value ")) {
+        char *ptr = str + strlen("setoption name SingularDepth value ");
+        SingularDepth = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name SingularTTDepth value ")) {
+        char *ptr = str + strlen("setoption name SingularTTDepth value ");
+        SingularTTDepth = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name SingularDoubleMargin value ")) {
+        char *ptr = str + strlen("setoption name SingularDoubleMargin value ");
+        SingularDoubleMargin = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name FutilityPruningDepth value ")) {
+        char *ptr = str + strlen("setoption name FutilityPruningDepth value ");
+        FutilityPruningDepth = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name FutilityMarginBase value ")) {
+        char *ptr = str + strlen("setoption name FutilityMarginBase value ");
+        FutilityMarginBase = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name FutilityMarginPerDepth value ")) {
+        char *ptr = str + strlen("setoption name FutilityMarginPerDepth value ");
+        FutilityMarginPerDepth = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name FutilityMarginNoHistory value ")) {
+        char *ptr = str + strlen("setoption name FutilityMarginNoHistory value ");
+        FutilityMarginNoHistory = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name FutilityPruningHistoryLimit_0 value ")) {
+        char *ptr = str + strlen("setoption name FutilityPruningHistoryLimit_0 value ");
+        FutilityPruningHistoryLimit[0] = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name FutilityPruningHistoryLimit_1 value ")) {
+        char *ptr = str + strlen("setoption name FutilityPruningHistoryLimit_1 value ");
+        FutilityPruningHistoryLimit[1] = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name ContinuationPruningDepth_0 value ")) {
+        char *ptr = str + strlen("setoption name ContinuationPruningDepth_0 value ");
+        ContinuationPruningDepth[0] = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name ContinuationPruningDepth_1 value ")) {
+        char *ptr = str + strlen("setoption name ContinuationPruningDepth_1 value ");
+        ContinuationPruningDepth[1] = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name ContinuationPruningHistoryLimit_0 value ")) {
+        char *ptr = str + strlen("setoption name ContinuationPruningHistoryLimit_0 value ");
+        ContinuationPruningHistoryLimit[0] = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name ContinuationPruningHistoryLimit_1 value ")) {
+        char *ptr = str + strlen("setoption name ContinuationPruningHistoryLimit_1 value ");
+        ContinuationPruningHistoryLimit[1] = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name LateMovePruningDepth value ")) {
+        char *ptr = str + strlen("setoption name LateMovePruningDepth value ");
+        LateMovePruningDepth = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name LMRHistoryCap value ")) {
+        char *ptr = str + strlen("setoption name LMRHistoryCap value ");
+        LMRHistoryCap = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name LMRHistoryDivisor value ")) {
+        char *ptr = str + strlen("setoption name LMRHistoryDivisor value ");
+        LMRHistoryDivisor = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name LMRCaptureHistoryDivisor value ")) {
+        char *ptr = str + strlen("setoption name LMRCaptureHistoryDivisor value ");
+        LMRCaptureHistoryDivisor = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name LMRCaptureBase value ")) {
+        char *ptr = str + strlen("setoption name LMRCaptureBase value ");
+        LMRCaptureBase = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name SEEPruningDepth value ")) {
+        char *ptr = str + strlen("setoption name SEEPruningDepth value ");
+        SEEPruningDepth = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name SEEQuietMargin value ")) {
+        char *ptr = str + strlen("setoption name SEEQuietMargin value ");
+        SEEQuietMargin = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name SEENoisyMargin value ")) {
+        char *ptr = str + strlen("setoption name SEENoisyMargin value ");
+        SEENoisyMargin = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name SEEPieceValues_0 value ")) {
+        char *ptr = str + strlen("setoption name SEEPieceValues_0 value ");
+        SEEPieceValues[0] = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name SEEPieceValues_1 value ")) {
+        char *ptr = str + strlen("setoption name SEEPieceValues_1 value ");
+        SEEPieceValues[1] = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name SEEPieceValues_2 value ")) {
+        char *ptr = str + strlen("setoption name SEEPieceValues_2 value ");
+        SEEPieceValues[2] = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name SEEPieceValues_3 value ")) {
+        char *ptr = str + strlen("setoption name SEEPieceValues_3 value ");
+        SEEPieceValues[3] = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name SEEPieceValues_4 value ")) {
+        char *ptr = str + strlen("setoption name SEEPieceValues_4 value ");
+        SEEPieceValues[4] = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name SEEPieceValues_5 value ")) {
+        char *ptr = str + strlen("setoption name SEEPieceValues_5 value ");
+        SEEPieceValues[5] = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name SEEPieceValues_6 value ")) {
+        char *ptr = str + strlen("setoption name SEEPieceValues_6 value ");
+        SEEPieceValues[6] = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name SEEPieceValues_7 value ")) {
+        char *ptr = str + strlen("setoption name SEEPieceValues_7 value ");
+        SEEPieceValues[7] = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name QSSeeMargin value ")) {
+        char *ptr = str + strlen("setoption name QSSeeMargin value ");
+        QSSeeMargin = atoi(ptr);
+    }
+
+    if (strStartsWith(str, "setoption name QSDeltaMargin value ")) {
+        char *ptr = str + strlen("setoption name QSDeltaMargin value ");
+        QSDeltaMargin = atoi(ptr);
+    }
+
     fflush(stdout);
+
+    initSearch();
 }
 
 void uciPosition(char *str, Board *board, int chess960) {
