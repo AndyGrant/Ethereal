@@ -44,24 +44,24 @@ static const int WindowTimerMS = 2500;
 
 static const int CurrmoveTimerMS = 2500;
 
-static const int TTResearchMargin = 128;
+static const int TTResearchMargin = 131;
 
 static const int BetaPruningDepth = 8;
-static const int BetaMargin = 75;
+static const int BetaMargin = 63;
 
 static const int AlphaPruningDepth = 5;
-static const int AlphaMargin = 3000;
+static const int AlphaMargin = 3193;
 
 static const int NullMovePruningDepth = 2;
 
 static const int ProbCutDepth = 5;
-static const int ProbCutMargin = 100;
+static const int ProbCutMargin = 98;
 
 static const int FutilityPruningDepth = 8;
-static const int FutilityMarginBase = 92;
-static const int FutilityMarginPerDepth = 59;
-static const int FutilityMarginNoHistory = 158;
-static const int FutilityPruningHistoryLimit[] = { 12000, 6000 };
+static const int FutilityMarginBase = 88;
+static const int FutilityMarginPerDepth = 52;
+static const int FutilityMarginNoHistory = 153;
+static const int FutilityPruningHistoryLimit[] = { 13261, 6004 };
 
 static const int ContinuationPruningDepth[] = { 3, 2 };
 static const int ContinuationPruningHistoryLimit[] = { -1000, -2500 };
@@ -72,9 +72,9 @@ static const int SEEPruningDepth = 9;
 static const int SEEQuietMargin = -64;
 static const int SEENoisyMargin = -19;
 static const int SEEPieceValues[] = {
-     100,  450,  450,  675,
-    1300,    0,    0,    0,
+     105,  416,  449,  668,
+    1328,    0,    0,    0,
 };
 
-static const int QSSeeMargin = 110;
-static const int QSDeltaMargin = 150;
+static const int QSSeeMargin = 115;
+static const int QSDeltaMargin = 149;
