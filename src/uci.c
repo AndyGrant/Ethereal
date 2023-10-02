@@ -752,7 +752,7 @@ void uciReport(Thread *threads, PVariation *pv, int alpha, int beta) {
 
     // If the score is MATE or MATED in X, convert to X
     int score   = bounded >=  MATE_IN_MAX ?  (MATE - bounded + 1) / 2
-                : bounded <= -MATE_IN_MAX ? -(bounded + MATE)     / 2 : bounded;
+                : bounded <= -MATE_IN_MAX ? -(bounded + MATE)     / 2 : 100 * bounded / 186;
 
     // Two possible score types, mate and cp = centipawns
     char *type  = abs(bounded) >= MATE_IN_MAX ? "mate" : "cp";
