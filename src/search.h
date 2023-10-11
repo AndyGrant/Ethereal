@@ -38,43 +38,43 @@ int qsearch(Thread *thread, PVariation *pv, int alpha, int beta);
 int staticExchangeEvaluation(Board *board, uint16_t move, int threshold);
 int singularity(Thread *thread, uint16_t ttMove, int ttValue, int depth, int PvNode, int alpha, int beta, bool cutnode);
 
-static const int WindowDepth   = 5;
+static const int WindowDepth   = 4;
 static const int WindowSize    = 10;
 static const int WindowTimerMS = 2500;
 
 static const int CurrmoveTimerMS = 2500;
 
-static const int TTResearchMargin = 128;
+static const int TTResearchMargin = 137;
 
 static const int BetaPruningDepth = 8;
-static const int BetaMargin = 75;
+static const int BetaMargin = 62;
 
-static const int AlphaPruningDepth = 5;
-static const int AlphaMargin = 3000;
+static const int AlphaPruningDepth = 4;
+static const int AlphaMargin = 3328;
 
 static const int NullMovePruningDepth = 2;
 
 static const int ProbCutDepth = 5;
-static const int ProbCutMargin = 100;
+static const int ProbCutMargin = 98;
 
 static const int FutilityPruningDepth = 8;
-static const int FutilityMarginBase = 92;
-static const int FutilityMarginPerDepth = 59;
-static const int FutilityMarginNoHistory = 158;
-static const int FutilityPruningHistoryLimit[] = { 12000, 6000 };
+static const int FutilityMarginBase = 76;
+static const int FutilityMarginPerDepth = 51;
+static const int FutilityMarginNoHistory = 162;
+static const int FutilityPruningHistoryLimit[] = { 13954, 5789 };
 
 static const int ContinuationPruningDepth[] = { 3, 2 };
 static const int ContinuationPruningHistoryLimit[] = { -1000, -2500 };
 
-static const int LateMovePruningDepth = 8;
+static const int LateMovePruningDepth = 7;
 
 static const int SEEPruningDepth = 9;
 static const int SEEQuietMargin = -64;
 static const int SEENoisyMargin = -19;
 static const int SEEPieceValues[] = {
-     100,  450,  450,  675,
-    1300,    0,    0,    0,
+     104,  419,  447,  693,
+    1316,    0,    0,    0,
 };
 
-static const int QSSeeMargin = 110;
-static const int QSDeltaMargin = 150;
+static const int QSSeeMargin = 116;
+static const int QSDeltaMargin = 149;

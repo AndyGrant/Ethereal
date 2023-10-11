@@ -46,7 +46,7 @@
 #include "windows.h"
 
 int LMRTable[64][64];
-int LateMovePruningCounts[2][9];
+int LateMovePruningCounts[2][11];
 
 volatile int ABORT_SIGNAL; // Global ABORT flag for threads
 volatile int IS_PONDERING; // Global PONDER flag for threads
@@ -152,11 +152,11 @@ void initSearch() {
     // Init Late Move Reductions Table
     for (int depth = 1; depth < 64; depth++)
         for (int played = 1; played < 64; played++)
-            LMRTable[depth][played] = 0.75 + log(depth) * log(played) / 2.25;
+            LMRTable[depth][played] = 0.8180 + log(depth) * log(played) / 2.4760;
 
-    for (int depth = 1; depth < 9; depth++) {
-        LateMovePruningCounts[0][depth] = 2.5 + 2 * depth * depth / 4.5;
-        LateMovePruningCounts[1][depth] = 4.0 + 4 * depth * depth / 4.5;
+    for (int depth = 1; depth <= 10; depth++) {
+        LateMovePruningCounts[0][depth] = 2.1719 + 0.4048 * depth * depth;
+        LateMovePruningCounts[1][depth] = 3.9498 + 0.7760 * depth * depth;
     }
 }
 
@@ -515,7 +515,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, bool 
         && (!ttHit || !(ttBound & BOUND_UPPER) || ttValue >= beta)) {
 
         // Dynamic R based on Depth, Eval, and Tactical state
-        R = 4 + depth / 6 + MIN(3, (eval - beta) / 200) + (ns-1)->tactical;
+        R = 4 + depth / 5 + MIN(3, (eval - beta) / 191) + (ns-1)->tactical;
 
         apply(thread, board, NULL_MOVE);
         value = -search(thread, &lpv, -beta, -beta+1, depth-R, !cutnode);
@@ -698,7 +698,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, bool 
                 R -= ns->mp.stage < STAGE_QUIET;
 
                 // Adjust based on history scores
-                R -= MAX(-2, MIN(2, hist / 5000));
+                R -= MAX(-2, MIN(2, hist / 5770));
             }
 
             // Step 18B (~3 elo). Noisy Late Move Reductions. The same as Step 18A, but
@@ -707,7 +707,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, bool 
             else {
 
                 // Initialize R based on Capture History
-                R = 2 - (hist / 5000);
+                R = 2 - (hist / 5128);
 
                 // Reduce for moves that give check
                 R -= !!board->kingAttackers;
@@ -1033,7 +1033,7 @@ int singularity(Thread *thread, uint16_t ttMove, int ttValue, int depth, int PvN
     else applyLegal(thread, board, ttMove);
 
     bool double_extend = !PvNode
-                      &&  value < rBeta - 15
+                      &&  value < rBeta - 16
                       && (ns-1)->dextensions <= 6;
 
     return double_extend    ?  2 // Double extension in some non-pv nodes

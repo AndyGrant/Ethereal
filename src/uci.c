@@ -42,6 +42,8 @@
 #include "uci.h"
 #include "zobrist.h"
 
+int NORMALIZE_EVAL = 1;
+
 extern int MoveOverhead;          // Defined by time.c
 extern unsigned TB_PROBE_DEPTH;   // Defined by syzygy.c
 extern volatile int ABORT_SIGNAL; // Defined by search.c
@@ -104,7 +106,7 @@ int main(int argc, char **argv) {
             printf("option name SyzygyPath type string default <empty>\n");
             printf("option name SyzygyProbeDepth type spin default 0 min 0 max 127\n");
             printf("option name Ponder type check default false\n");
-            printf("option name AnalysisMode type check default false\n");
+            printf("option name Normalize type check default true\n");
             printf("option name UCI_Chess960 type check default false\n");
             printf("info string licensed to " LICENSE_OWNER "\n");
             printf("uciok\n"), fflush(stdout);
@@ -228,6 +230,7 @@ void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960) {
     //  MoveOverhead        : Overhead on time allocation to avoid time losses
     //  SyzygyPath          : Path to Syzygy Tablebases
     //  SyzygyProbeDepth    : Minimal Depth to probe the highest cardinality Tablebase
+    //  Normalize           : Normalize UCI output to hope that +1.00 is 50% Won, 50% Drawn
     //  UCI_Chess960        : Set when playing FRC, but not required in order to work
 
     if (strStartsWith(str, "setoption name Hash value ")) {
@@ -266,6 +269,13 @@ void uciSetOption(char *str, Thread **threads, int *multiPV, int *chess960) {
     if (strStartsWith(str, "setoption name SyzygyProbeDepth value ")) {
         TB_PROBE_DEPTH = atoi(str + strlen("setoption name SyzygyProbeDepth value "));
         printf("info string set SyzygyProbeDepth to %u\n", TB_PROBE_DEPTH);
+    }
+
+    if (strStartsWith(str, "setoption name Normalize value ")) {
+        if (strStartsWith(str, "setoption name Normalize value true"))
+            printf("info string set Normalize to true\n"), NORMALIZE_EVAL = 1;
+        if (strStartsWith(str, "setoption name Normalize value false"))
+            printf("info string set Normalize to false\n"), NORMALIZE_EVAL = 0;
     }
 
     if (strStartsWith(str, "setoption name UCI_Chess960 value ")) {
@@ -347,8 +357,9 @@ void uciReport(Thread *threads, PVariation *pv, int alpha, int beta) {
     int nps         = (int)(1000 * (nodes / (1 + elapsed)));
 
     // If the score is MATE or MATED in X, convert to X
-    int score   = bounded >=  MATE_IN_MAX ?  (MATE - bounded + 1) / 2
-                : bounded <= -MATE_IN_MAX ? -(bounded + MATE)     / 2 : bounded;
+    int score = bounded >=  MATE_IN_MAX ?  (MATE - bounded + 1) / 2
+              : bounded <= -MATE_IN_MAX ? -(bounded + MATE)     / 2
+              : NORMALIZE_EVAL ? 100 * bounded / 186 : bounded;
 
     // Two possible score types, mate and cp = centipawns
     char *type  = abs(bounded) >= MATE_IN_MAX ? "mate" : "cp";
