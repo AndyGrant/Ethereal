@@ -58,7 +58,7 @@ Thread* createThreadPool(int nthreads) {
 void deleteThreadPool(Thread *threads) {
 
     for (int i = 0; i < threads->nthreads; i++)
-        nnue_delete_accumulators(threads[i].nnue);
+        nnue_delete_evaluator(threads[i].nnue);
 
     free(threads);
 }
@@ -100,12 +100,8 @@ void newSearchThreadPool(Thread *threads, Board *board, Limits *limits, TimeMana
         memcpy(&threads[i].board, board, sizeof(Board));
         threads[i].board.thread = &threads[i];
 
-        // Reset the accumulator stack. The table can remain
-        threads[i].nnue->current = &threads[i].nnue->stack[0];
-        threads[i].nnue->current->accurate[WHITE] = 0;
-        threads[i].nnue->current->accurate[BLACK] = 0;
-
         memset(threads[i].nodeStates, 0, sizeof(NodeState) * STACK_SIZE);
+        nnue_reset_evaluator(threads[i].nnue);
     }
 }
 

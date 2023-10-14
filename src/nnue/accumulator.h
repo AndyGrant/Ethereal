@@ -31,25 +31,32 @@ extern ALIGN64 int16_t in_weights[INSIZE * KPSIZE];
 extern ALIGN64 int16_t in_biases[KPSIZE];
 
 INLINE NNUEEvaluator* nnue_create_evaluator() {
+    return align_malloc(sizeof(NNUEEvaluator));
+}
 
-    NNUEEvaluator* nnue = align_malloc(sizeof(NNUEEvaluator));
+INLINE void nnue_reset_evaluator(NNUEEvaluator* ptr) {
 
     #if USE_NNUE
 
-    for (size_t i = 0; i < SQUARE_NB; i++) {
-        memset(nnue->table[i].occupancy, 0, sizeof(nnue->table[i].occupancy));
-        memcpy(nnue->table[i].accumulator.values[WHITE], in_biases, sizeof(int16_t) * KPSIZE);
-        memcpy(nnue->table[i].accumulator.values[BLACK], in_biases, sizeof(int16_t) * KPSIZE);
-    }
+        // Reset the Finny table Accumulators
+        for (size_t i = 0; i < SQUARE_NB; i++) {
+            memset(ptr->table[i].occupancy, 0, sizeof(ptr->table[i].occupancy));
+            memcpy(ptr->table[i].accumulator.values[WHITE], in_biases, sizeof(int16_t) * KPSIZE);
+            memcpy(ptr->table[i].accumulator.values[BLACK], in_biases, sizeof(int16_t) * KPSIZE);
+        }
+
+        // Reset the base of the Accumulator stack
+        ptr->current = &ptr->stack[0];
+        ptr->current->accurate[WHITE] = 0;
+        ptr->current->accurate[BLACK] = 0;
 
     #endif
-
-    return nnue;
 }
 
-INLINE void nnue_delete_accumulators(NNUEEvaluator* ptr) {
+INLINE void nnue_delete_evaluator(NNUEEvaluator* ptr) {
     align_free(ptr);
 }
+
 
 INLINE void nnue_pop(Board *board) {
     if (USE_NNUE && board->thread != NULL)
