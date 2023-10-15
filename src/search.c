@@ -152,11 +152,11 @@ void initSearch() {
     // Init Late Move Reductions Table
     for (int depth = 1; depth < 64; depth++)
         for (int played = 1; played < 64; played++)
-            LMRTable[depth][played] = 0.8180 + log(depth) * log(played) / 2.4760;
+            LMRTable[depth][played] = 0.7844 + log(depth) * log(played) / 2.4696;
 
     for (int depth = 1; depth <= 10; depth++) {
-        LateMovePruningCounts[0][depth] = 2.1719 + 0.4048 * depth * depth;
-        LateMovePruningCounts[1][depth] = 3.9498 + 0.7760 * depth * depth;
+        LateMovePruningCounts[0][depth] = 2.0767 + 0.3743 * depth * depth;
+        LateMovePruningCounts[1][depth] = 3.8733 + 0.7124 * depth * depth;
     }
 }
 
@@ -698,7 +698,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, bool 
                 R -= ns->mp.stage < STAGE_QUIET;
 
                 // Adjust based on history scores
-                R -= MAX(-2, MIN(2, hist / 5770));
+                R -= MAX(-2, MIN(2, hist / 6167));
             }
 
             // Step 18B (~3 elo). Noisy Late Move Reductions. The same as Step 18A, but
@@ -707,7 +707,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, bool 
             else {
 
                 // Initialize R based on Capture History
-                R = 2 - (hist / 5128);
+                R = 3 - (hist / 4952);
 
                 // Reduce for moves that give check
                 R -= !!board->kingAttackers;
