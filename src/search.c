@@ -488,7 +488,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, bool 
         && !inCheck
         && !ns->excluded
         &&  depth <= BetaPruningDepth
-        &&  eval - BetaMargin * depth > beta)
+        &&  eval - BetaMargin * MAX(0, (depth - improving)) >= beta)
         return eval;
 
     // Step 8 (~3 elo). Alpha Pruning for main search loop. The idea is
