@@ -47,7 +47,7 @@ static const int CurrmoveTimerMS = 2500;
 static const int TTResearchMargin = 141;
 
 static const int BetaPruningDepth = 8;
-static const int BetaMargin = 57;
+static const int BetaMargin = 65;
 
 static const int AlphaPruningDepth = 4;
 static const int AlphaMargin = 3488;
