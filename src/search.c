@@ -698,7 +698,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, bool 
                 R -= ns->mp.stage < STAGE_QUIET;
 
                 // Adjust based on history scores
-                R -= MAX(-2, MIN(2, hist / 6167));
+                R -= MAX(-2, hist / 6167);
             }
 
             // Step 18B (~3 elo). Noisy Late Move Reductions. The same as Step 18A, but
