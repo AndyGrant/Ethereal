@@ -638,7 +638,7 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, bool 
         if (    best > -TBWIN_IN_MAX
             &&  depth <= SEEPruningDepth
             &&  ns->mp.stage > STAGE_GOOD_NOISY
-            && !staticExchangeEvaluation(board, move, seeMargin[isQuiet]))
+            && !staticExchangeEvaluation(board, move, seeMargin[isQuiet] - hist / 128))
             continue;
 
         // Apply move, skip if move is illegal
