@@ -567,9 +567,9 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, bool 
     // Step 11. Internal Iterative Reductions. Artifically lower the depth on cutnodes
     // that are high enough up in the search tree that we would expect to have found
     // a Transposition. This is a modernized approach to Internal Iterative Deepening
-    if (   cutnode
-        && depth >= 7
-        && ttMove == NONE_MOVE)
+    if (    cutnode
+        &&  depth >= 7
+        && (ttMove == NONE_MOVE || ttDepth + 4 < depth))
         depth -= 1;
 
     // Step 12. Initialize the Move Picker and being searching through each
