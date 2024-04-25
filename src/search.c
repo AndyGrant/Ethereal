@@ -719,8 +719,21 @@ int search(Thread *thread, PVariation *pv, int alpha, int beta, int depth, bool 
             // Perform reduced depth search on a Null Window
             value = -search(thread, &lpv, -alpha-1, -alpha, newDepth-R, true);
 
+            if (value > alpha && R > 1) {
+
+                const int lmrDepth = newDepth - R;
+
+                newDepth += value > best + 35;
+                newDepth -= value < best + newDepth;
+
+                if (newDepth - 1 > lmrDepth)
+                    value = -search(thread, &lpv, -alpha-1, -alpha, newDepth-1, !cutnode);
+
+                doFullSearch = false;
+            }
+
             // Abandon searching here if we could not beat alpha
-            doFullSearch = value > alpha && R != 1;
+            else doFullSearch = value > alpha && R != 1;
         }
 
         else doFullSearch = !PvNode || played > 1;
