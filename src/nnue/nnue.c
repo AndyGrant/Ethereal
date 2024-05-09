@@ -138,63 +138,31 @@ static void abort_nnue(const char *reason) {
     fflush(stdout); exit(EXIT_FAILURE);
 }
 
+INLINE vepi8 vepi16_relu_packu(vepi16 in0, vepi16 in1) {
+    vepi16 shiftA = vepi16_srai(in0, SHIFT_L0);
+    vepi16 shiftB = vepi16_srai(in1, SHIFT_L0);
+    return vepi16_packu(shiftA, shiftB);
+}
 
-INLINE void maddubs_x4(vepi32 *acc, const vepi8 *inp, const vepi8 *wgt, int i, int j, int k) {
+INLINE void relu_maddubs_x4(vepi32 *acc, const vepi16 *inp, const vepi8 *wgt, int i, int j, int k) {
 
     static const int InChunks = L1SIZE / vepi8_cnt;
 
-    vepi16 sum0 = vepi16_maubs(inp[j+0], wgt[InChunks * (i * 8 + k) + j + 0]);
-    vepi16 sum1 = vepi16_maubs(inp[j+1], wgt[InChunks * (i * 8 + k) + j + 1]);
-    vepi16 sum2 = vepi16_maubs(inp[j+2], wgt[InChunks * (i * 8 + k) + j + 2]);
-    vepi16 sum3 = vepi16_maubs(inp[j+3], wgt[InChunks * (i * 8 + k) + j + 3]);
+    vepi16 sum0 = vepi16_maubs(vepi16_relu_packu(inp[0], inp[1]), wgt[InChunks * (i * 8 + k) + j + 0]);
+    vepi16 sum1 = vepi16_maubs(vepi16_relu_packu(inp[2], inp[3]), wgt[InChunks * (i * 8 + k) + j + 1]);
+    vepi16 sum2 = vepi16_maubs(vepi16_relu_packu(inp[4], inp[5]), wgt[InChunks * (i * 8 + k) + j + 2]);
+    vepi16 sum3 = vepi16_maubs(vepi16_relu_packu(inp[6], inp[7]), wgt[InChunks * (i * 8 + k) + j + 3]);
 
     vepi16 sumX = vepi16_add(sum0, vepi16_add(sum1, vepi16_add(sum2, sum3)));
     *acc = vepi32_add(*acc, vepi16_madd(vepi16_one, sumX));
 }
 
-
-INLINE void halfkp_relu(NNUEAccumulator *accum, uint8_t *outputs, int turn) {
-
-    // The accumulation of king-piece values has already been computed.
-    // Perform the ReLU operation on each accumuatlor, and place them
-    // such that the side-to-move is first, then the non-side-to-move
-
-    assert(KPSIZE % 64 == 0);
-
-    vepi16 *in_white = (vepi16 *) &accum->values[WHITE];
-    vepi16 *in_black = (vepi16 *) &accum->values[BLACK];
-
-    vepi8 *out_white = (vepi8 *) (turn == WHITE ? outputs : &outputs[KPSIZE]);
-    vepi8 *out_black = (vepi8 *) (turn == BLACK ? outputs : &outputs[KPSIZE]);
-
-    for (int i = 0; i < KPSIZE / vepi8_cnt; i += 2) {
-
-        vepi16 shift0A = vepi16_srai(in_white[(i + 0) * 2 + 0], SHIFT_L0);
-        vepi16 shift0B = vepi16_srai(in_white[(i + 0) * 2 + 1], SHIFT_L0);
-        vepi16 shift1A = vepi16_srai(in_white[(i + 1) * 2 + 0], SHIFT_L0);
-        vepi16 shift1B = vepi16_srai(in_white[(i + 1) * 2 + 1], SHIFT_L0);
-
-        out_white[i+0] = vepi16_packu(shift0A, shift0B);
-        out_white[i+1] = vepi16_packu(shift1A, shift1B);
-    }
-
-    for (int i = 0; i < KPSIZE / vepi8_cnt; i += 2) {
-
-        vepi16 shift0A = vepi16_srai(in_black[(i + 0) * 2 + 0], SHIFT_L0);
-        vepi16 shift0B = vepi16_srai(in_black[(i + 0) * 2 + 1], SHIFT_L0);
-        vepi16 shift1A = vepi16_srai(in_black[(i + 1) * 2 + 0], SHIFT_L0);
-        vepi16 shift1B = vepi16_srai(in_black[(i + 1) * 2 + 1], SHIFT_L0);
-
-        out_black[i+0] = vepi16_packu(shift0A, shift0B);
-        out_black[i+1] = vepi16_packu(shift1A, shift1B);
-    }
-}
-
-INLINE void quant_affine_relu(int8_t *weights, int32_t *biases, uint8_t *inputs, float *outputs) {
+INLINE void halfkp_relu_quant_affine_relu(int8_t *weights, int32_t *biases, int16_t *us_accum, int16_t *opp_accum, float *outputs) {
 
     assert(L1SIZE % 64 == 0 && L2SIZE % 8 == 0);
+    assert(L1SIZE == KPSIZE * 2);
 
-    const int InChunks  = L1SIZE / vepi8_cnt;
+    const int InChunks  = KPSIZE / vepi8_cnt;
     const int OutChunks = L2SIZE / 8;
 
     #if defined(USE_AVX2) || defined(USE_AVX)
@@ -203,7 +171,8 @@ INLINE void quant_affine_relu(int8_t *weights, int32_t *biases, uint8_t *inputs,
     const vps32  zero = vps32_zero();
     #endif
 
-    const vepi8  *inp = (vepi8  *) inputs;
+    const vepi8  *us  = (vepi8  *) us_accum;
+    const vepi8  *opp = (vepi8  *) opp_accum;
     const vepi8  *wgt = (vepi8  *) weights;
     const vepi32 *bia = (vepi32 *) biases;
     vps32 *const out  = (vps32  *) outputs;
@@ -220,14 +189,23 @@ INLINE void quant_affine_relu(int8_t *weights, int32_t *biases, uint8_t *inputs,
         vepi32 acc7 = vepi32_zero();
 
         for (int j = 0; j < InChunks; j += 4) {
-            maddubs_x4(&acc0, inp, wgt, i, j, 0);
-            maddubs_x4(&acc1, inp, wgt, i, j, 1);
-            maddubs_x4(&acc2, inp, wgt, i, j, 2);
-            maddubs_x4(&acc3, inp, wgt, i, j, 3);
-            maddubs_x4(&acc4, inp, wgt, i, j, 4);
-            maddubs_x4(&acc5, inp, wgt, i, j, 5);
-            maddubs_x4(&acc6, inp, wgt, i, j, 6);
-            maddubs_x4(&acc7, inp, wgt, i, j, 7);
+            relu_maddubs_x4(&acc0, &us [j * 2], wgt, i, j, 0);
+            relu_maddubs_x4(&acc1, &us [j * 2], wgt, i, j, 1);
+            relu_maddubs_x4(&acc2, &us [j * 2], wgt, i, j, 2);
+            relu_maddubs_x4(&acc3, &us [j * 2], wgt, i, j, 3);
+            relu_maddubs_x4(&acc4, &us [j * 2], wgt, i, j, 4);
+            relu_maddubs_x4(&acc5, &us [j * 2], wgt, i, j, 5);
+            relu_maddubs_x4(&acc6, &us [j * 2], wgt, i, j, 6);
+            relu_maddubs_x4(&acc7, &us [j * 2], wgt, i, j, 7);
+
+            relu_maddubs_x4(&acc0, &opp[j * 2], wgt + InChunks, i, j, 0);
+            relu_maddubs_x4(&acc1, &opp[j * 2], wgt + InChunks, i, j, 1);
+            relu_maddubs_x4(&acc2, &opp[j * 2], wgt + InChunks, i, j, 2);
+            relu_maddubs_x4(&acc3, &opp[j * 2], wgt + InChunks, i, j, 3);
+            relu_maddubs_x4(&acc4, &opp[j * 2], wgt + InChunks, i, j, 4);
+            relu_maddubs_x4(&acc5, &opp[j * 2], wgt + InChunks, i, j, 5);
+            relu_maddubs_x4(&acc6, &opp[j * 2], wgt + InChunks, i, j, 6);
+            relu_maddubs_x4(&acc7, &opp[j * 2], wgt + InChunks, i, j, 7);
         }
 
         acc0 = vepi32_hadd(acc0, acc1);
@@ -478,7 +456,6 @@ int nnue_evaluate(Thread *thread, Board *board) {
 
     NNUEAccumulator *accum = thread->nnue->current;
 
-    ALIGN64 uint8_t out8[L1SIZE];
     ALIGN64 float   outN1[L1SIZE];
     ALIGN64 float   outN2[L1SIZE];
 
@@ -505,8 +482,7 @@ int nnue_evaluate(Thread *thread, Board *board) {
     }
 
     // Feed-forward the entire evaluation function
-    halfkp_relu(accum, out8, board->turn);
-    quant_affine_relu(l1_weights, l1_biases, out8,  outN1);
+    halfkp_relu_quant_affine_relu(l1_weights, l1_biases, accum->values[board->turn], accum->values[!board->turn], outN1);
     float_affine_relu(l2_weights, l2_biases, outN1, outN2);
     output_transform (l3_weights, l3_biases, outN2, outN1);
 
