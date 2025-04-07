@@ -236,7 +236,23 @@ void* iterativeDeepening(void *vthread) {
         bindThisThread(thread->index);
 
     // Perform iterative deepening until exit conditions
+// Comment the following line to disable sparse depths
+#define SPARSE_DEPTHS
+#ifdef SPARSE_DEPTHS
+    /*
+     * Added by Danielzapirtan at 20250407
+     * Sparse depths: only round numbers, inspired from the Ackermann function
+     * Search is speeded up in the context of low branching factor
+     */
+    const int DEPTH_COUNT = 12;
+    const int depths[] = { 4, 5, 7, 9, 11, 15, 19, 23, 31, 39, 47, 63, 0 };
+    int depth_index;
+    for (depth_index = 0; depth_index < DEPTH_COUNT; depth_index++) {
+	thread->depth = depths[depth_index];
+#else
+    // Original code
     for (thread->depth = 1; thread->depth < MAX_PLY; thread->depth++) {
+#endif
 
         // If we abort to here, we stop searching
         #if defined(_WIN32) || defined(_WIN64)
