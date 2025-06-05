@@ -39,6 +39,8 @@ struct TimeManager {
 
 double get_real_time();
 double elapsed_time(const TimeManager *tm);
+TimeManager *create_tm();
+void delete_tm(TimeManager *tm);
 void tm_init(const Limits *limits, TimeManager *tm);
 void tm_update(const Thread *thread, const Limits *limits, TimeManager *tm);
 bool tm_finished(const Thread *thread, const TimeManager *tm);

@@ -196,12 +196,12 @@ void *start_search_threads(void *arguments) {
 void getBestMove(Thread *threads, Board *board, Limits *limits, uint16_t *best, uint16_t *ponder, int *score) {
 
     pthread_t pthreads[threads->nthreads];
-    TimeManager tm = {0}; tm_init(limits, &tm);
+    TimeManager *tm = create_tm(); tm_init(limits, tm);
 
     // Minor house keeping for starting a search
     tt_update(); // Table has an age component
     ABORT_SIGNAL = 0; // Otherwise Threads will exit
-    newSearchThreadPool(threads, board, limits, &tm);
+    newSearchThreadPool(threads, board, limits, tm);
 
     // Allow Syzygy to refine the move list for optimal results
     if (!limits->limitedByMoves && limits->multiPV == 1)
@@ -222,6 +222,8 @@ void getBestMove(Thread *threads, Board *board, Limits *limits, uint16_t *best, 
 
     // Pick the best of our completed threads
     select_from_threads(threads, best, ponder, score);
+
+    delete_tm(tm);
 }
 
 void* iterativeDeepening(void *vthread) {

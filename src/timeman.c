@@ -46,6 +46,14 @@ double elapsed_time(const TimeManager *tm) {
 }
 
 
+TimeManager *create_tm() {
+    return calloc(1, sizeof(TimeManager));
+}
+
+void delete_tm(TimeManager *tm) {
+    free(tm);
+}
+
 void tm_init(const Limits *limits, TimeManager *tm) {
 
     tm->pv_stability = 0; // Clear our stability time usage heuristic
